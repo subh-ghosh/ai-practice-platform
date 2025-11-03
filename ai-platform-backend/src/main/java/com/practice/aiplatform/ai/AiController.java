@@ -10,6 +10,9 @@ import reactor.core.publisher.Mono;
 
 import java.security.Principal;
 
+// DTO for the hint request
+record HintRequest(Long questionId) {}
+
 @RestController
 @RequestMapping("/api/ai")
 public class AiController {
@@ -29,7 +32,7 @@ public class AiController {
 
     @PostMapping("/generate-question")
     public Mono<Question> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
-
+        // ... (this method remains unchanged)
         String email = principal.getName();
 
         Student student = studentRepository.findByEmail(email)
@@ -40,16 +43,20 @@ public class AiController {
                     Question newQuestion = new Question();
                     newQuestion.setQuestionText(questionText);
                     newQuestion.setStudent(student);
-
-                    // --- ADD THESE 3 LINES ---
                     newQuestion.setSubject(request.subject());
                     newQuestion.setTopic(request.topic());
                     newQuestion.setDifficulty(request.difficulty());
-                    // -------------------------
-
                     Question savedQuestion = questionRepository.save(newQuestion);
-
                     return Mono.just(savedQuestion);
                 });
+    }
+
+    // --- ADD THIS NEW METHOD ---
+    @PostMapping("/get-hint")
+    public Mono<String> getHint(@RequestBody HintRequest request) {
+        Question question = questionRepository.findById(request.questionId())
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+
+        return geminiService.getHint(question.getQuestionText());
     }
 }

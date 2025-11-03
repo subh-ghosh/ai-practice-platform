@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+record GetAnswerRequest(Long questionId) {}
+
 @RestController
 @RequestMapping("/api/practice")
 public class PracticeController {
@@ -137,5 +139,37 @@ public class PracticeController {
                 historyList
         );
         return ResponseEntity.ok(historyDto);
+    }
+
+    @PostMapping("/get-answer")
+    public Mono<ResponseEntity<Answer>> getAnswer(@RequestBody GetAnswerRequest request, Principal principal) {
+        Student student = studentRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        Question question = questionRepository.findById(request.questionId())
+                .orElseThrow(() -> new RuntimeException("Question not found"));
+
+        if (!question.getStudent().getId().equals(student.getId())) {
+            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+        }
+
+        // Call Gemini to get the correct answer
+        return geminiService.getCorrectAnswer(question.getQuestionText())
+                .flatMap(answerText -> {
+                    Answer newAnswer = new Answer();
+                    newAnswer.setAnswerText(answerText); // The AI-generated answer
+                    newAnswer.setQuestion(question);
+                    newAnswer.setStudent(student);
+
+                    // Set special fields for a "revealed" answer
+                    newAnswer.setIsCorrect(false); // They didn't get it right
+                    newAnswer.setEvaluationStatus("REVEALED");
+                    newAnswer.setFeedback("This is the AI-generated correct answer.");
+                    newAnswer.setHint(null); // No hint needed
+
+                    Answer savedAnswer = answerRepository.save(newAnswer);
+
+                    return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(savedAnswer));
+                });
     }
 }

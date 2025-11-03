@@ -100,4 +100,43 @@ public class GeminiService {
             return "Error: Could not parse AI response.";
         }
     }
+    /**
+     * Calls the Gemini API to generate a hint for a question.
+     *
+     * @param questionText The original question.
+     * @return A Mono<String> containing the AI's hint.
+     */
+    public Mono<String> getHint(String questionText) {
+
+        String prompt = String.format(
+                "You are a helpful teaching assistant. A student is stuck on the following question: " +
+                        "\"%s\"\n\n" +
+                        "Your task is to provide a single, concise, and helpful hint to guide them toward the solution. " +
+                        "Do NOT provide the full answer. Only return the hint text.",
+                questionText
+        );
+
+        return callGeminiApi(prompt)
+                .map(this::extractTextFromResponse);
+    }
+
+    /**
+     * Calls the Gemini API to generate a full, correct answer for a question.
+     *
+     * @param questionText The original question.
+     * @return A Mono<String> containing the AI's correct answer.
+     */
+    public Mono<String> getCorrectAnswer(String questionText) {
+
+        String prompt = String.format(
+                "You are an expert in this subject. A student has asked for the correct answer to the following question: " +
+                        "\"%s\"\n\n" +
+                        "Your task is to provide a correct, well-explained answer. " +
+                        "Start by providing the direct answer, then provide a step-by-step explanation.",
+                questionText
+        );
+
+        return callGeminiApi(prompt)
+                .map(this::extractTextFromResponse);
+    }
 }
