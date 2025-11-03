@@ -106,7 +106,3 @@ npm run dev
 
 
 Access App: Open your browser and navigate to the local frontend server, typically http://localhost:5173/.
-
-Now that the Canvas document is corrected, we can focus on your final project tasks.
-
-We were deciding between: Refining the UI (upgrading Subject/Difficulty inputs) or Image Upload (the complex S3 feature). Which one is next?
