@@ -51,12 +51,17 @@ public class AiController {
                 });
     }
 
-    // --- ADD THIS NEW METHOD ---
     @PostMapping("/get-hint")
     public Mono<String> getHint(@RequestBody HintRequest request) {
         Question question = questionRepository.findById(request.questionId())
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
-        return geminiService.getHint(question.getQuestionText());
+        // --- UPDATED METHOD CALL ---
+        return geminiService.getHint(
+                question.getQuestionText(),
+                question.getSubject(),
+                question.getTopic(),
+                question.getDifficulty()
+        );
     }
 }

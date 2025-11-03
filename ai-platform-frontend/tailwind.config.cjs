@@ -6,5 +6,9 @@ module.exports = withMT({
   theme: {
     extend: {},
   },
-  plugins: [],
+  // --- ADD THE PLUGINS SECTION ---
+  plugins: [
+    require("@tailwindcss/typography"),
+  ],
+  // -----------------------------
 });

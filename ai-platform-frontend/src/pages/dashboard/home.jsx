@@ -15,13 +15,21 @@ import {
   DialogHeader,
   DialogBody,
   DialogFooter,
+  Popover,
+  PopoverHandler,
+  PopoverContent,
 } from "@material-tailwind/react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/api";
 
+// --- NEW IMPORTS ---
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+// -------------------
+
+
 // --- HELPER FUNCTIONS ---
 
-// Helper for the feedback title (e.g., "Feedback: Correct!")
 function DynamicFeedbackTitle({ status }) {
   let title = "Feedback: Incorrect";
   let color = "red";
@@ -42,7 +50,6 @@ function DynamicFeedbackTitle({ status }) {
   );
 }
 
-// Helper to format the date and time
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
   try {
@@ -60,7 +67,6 @@ function formatDateTime(isoString) {
   }
 }
 
-// Helper to get the correct status chip
 const getStatusChip = (status) => {
   if (!status) {
     return <Chip variant="gradient" color="blue-gray" value="N/A" className="py-0.5 px-2 text-[11px] font-medium w-fit" />;
@@ -105,6 +111,8 @@ export function Home() {
   const [loadingAnswer, setLoadingAnswer] = useState(false);
 
   const [selectedHistory, setSelectedHistory] = useState(null);
+  const [openPopover, setOpenPopover] = useState(false);
+
   const handleOpenModal = (historyItem) => setSelectedHistory(historyItem);
   const handleCloseModal = () => setSelectedHistory(null);
 
@@ -229,16 +237,16 @@ export function Home() {
     setLoadingHint(false);
   };
 
-  // Handle "Get Answer"
-  const handleGetAnswer = async () => {
+  // This function runs when "Confirm" is clicked in the popover
+  const confirmGetAnswer = async () => {
+    setOpenPopover(false);
     if (!currentQuestion) return;
-    if (!window.confirm("Are you sure you want to reveal the answer? This will be saved to your history.")) {
-      return;
-    }
+
     setLoadingAnswer(true);
     setFeedback(null);
     setHint(null);
     setError(null);
+
     try {
       const response = await api.post("/api/practice/get-answer", {
         questionId: currentQuestion.id,
@@ -303,8 +311,11 @@ export function Home() {
               <Typography variant="h6" color="blue-gray" className="mb-2">
                 Your Question:
               </Typography>
-              <div className="p-4 border rounded-lg bg-blue-gray-50 mb-4 whitespace-pre-wrap">
-                <Typography>{currentQuestion.questionText}</Typography>
+              {/* --- UPDATE 1: Use ReactMarkdown for Question --- */}
+              <div className="p-4 border rounded-lg bg-blue-gray-50 mb-4 whitespace-pre-wrap prose prose-sm max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {currentQuestion.questionText}
+                </ReactMarkdown>
               </div>
 
               <Textarea
@@ -330,15 +341,45 @@ export function Home() {
                 >
                   {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
                 </Button>
-                <Button
-                  type="button"
-                  color="red"
-                  variant="outlined"
-                  onClick={handleGetAnswer}
-                  disabled={submitting || loadingHint || loadingAnswer}
-                >
-                  {loadingAnswer ? <Spinner className="h-4 w-4" /> : "Get Answer"}
-                </Button>
+
+                <Popover open={openPopover} handler={setOpenPopover} placement="top">
+                  <PopoverHandler>
+                    <Button
+                      type="button"
+                      color="red"
+                      variant="outlined"
+                      disabled={submitting || loadingHint || loadingAnswer}
+                      loading={loadingAnswer}
+                    >
+                      Get Answer
+                    </Button>
+                  </PopoverHandler>
+                  <PopoverContent className="w-64 z-50">
+                    <Typography variant="h6" color="blue-gray" className="mb-2">
+                      Confirm
+                    </Typography>
+                    <Typography variant="small" color="blue-gray" className="mb-4">
+                      Reveal the answer? This will be saved to your history.
+                    </Typography>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="text"
+                        size="sm"
+                        onClick={() => setOpenPopover(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="gradient"
+                        color="red"
+                        size="sm"
+                        onClick={confirmGetAnswer}
+                      >
+                        Confirm
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
             </form>
           )}
@@ -352,27 +393,30 @@ export function Home() {
                 </svg>
                 Hint
               </Typography>
-              <Typography className="whitespace-pre-wrap ml-7">
-                {hint}
-              </Typography>
+              {/* --- UPDATE 2: Use ReactMarkdown for Hint --- */}
+              <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {hint}
+                </ReactMarkdown>
+              </div>
             </div>
           )}
 
-          {/* Feedback Section (now uses feedback object directly) */}
+          {/* Feedback Section */}
           {feedback && (
             <div className="mt-6 p-4 border rounded-lg">
               <DynamicFeedbackTitle status={feedback.evaluationStatus} />
 
-              {/* --- THIS IS THE FIX --- */}
-              <Typography className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap">
-                {feedback.evaluationStatus === 'REVEALED'
-                  ? feedback.answerText  // Show the AI-generated answer
-                  : feedback.feedback   // Show the evaluation feedback
-                }
-              </Typography>
-              {/* --- END OF FIX --- */}
+              {/* --- UPDATE 3: Use ReactMarkdown for Feedback/Answer --- */}
+              <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {feedback.evaluationStatus === 'REVEALED'
+                    ? feedback.answerText
+                    : feedback.feedback
+                  }
+                </ReactMarkdown>
+              </div>
 
-              {/* Show hint only if it's NOT a revealed answer */}
               {feedback.hint && feedback.evaluationStatus !== 'REVEALED' && (
                 <div className="mt-4 p-4 border border-blue-500 rounded-lg bg-blue-50">
                   <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
@@ -381,9 +425,12 @@ export function Home() {
                     </svg>
                     Hint
                   </Typography>
-                  <Typography className="whitespace-pre-wrap ml-7">
-                    {feedback.hint}
-                  </Typography>
+                  {/* --- UPDATE 4: Use ReactMarkdown for Feedback Hint --- */}
+                  <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {feedback.hint}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               )}
             </div>
@@ -428,7 +475,7 @@ export function Home() {
                   <tr>
                     {[
                       "SL", "Question", "Subject", "Topic", "Difficulty",
-                      "Status", "Your Answer", "Submitted At" // Changed from Generated At
+                      "Status", "Your Answer", "Submitted At"
                     ].map((el) => (
                       <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
                         <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
@@ -444,6 +491,7 @@ export function Home() {
                       const {
                         questionId, questionText, subject, topic, difficulty,
                         evaluationStatus, answerText, submittedAt,
+                        generatedAt
                       } = item;
                       const className = "py-3 px-5 border-b border-blue-gray-50";
 
@@ -455,47 +503,39 @@ export function Home() {
                           onClick={() => handleOpenModal(item)}
                           className="cursor-pointer hover:bg-blue-gray-50"
                         >
-                          {/* SL Number */}
                           <td className={className}>
                             <Typography className="text-xs font-normal text-blue-gray-500">
                               {index + 1}
                             </Typography>
                           </td>
-                          {/* Question */}
                           <td className={className}>
                             <Typography className="text-xs font-normal text-blue-gray-500">
                               {questionText.substring(0, 40)}...
                             </Typography>
                           </td>
-                          {/* Subject */}
                           <td className={className}>
                             <Typography className="text-xs font-normal text-blue-gray-500">
                               {subject}
                             </Typography>
                           </td>
-                          {/* Topic */}
                           <td className={className}>
                             <Typography className="text-xs font-normal text-blue-gray-500">
                               {topic}
                             </Typography>
                           </td>
-                          {/* Difficulty */}
                           <td className={className}>
                             <Typography className="text-xs font-normal text-blue-gray-500">
                               {difficulty}
                             </Typography>
                           </td>
-                          {/* Status */}
                           <td className={className}>
                             {getStatusChip(evaluationStatus)}
                           </td>
-                          {/* Answer */}
                           <td className={className}>
                             <Typography className="text-xs font-normal text-blue-gray-500">
                               {answerText ? `${answerText.substring(0, 40)}...` : "Not Answered"}
                             </Typography>
                           </td>
-                          {/* Submitted At */}
                           <td className={className}>
                             <Typography className="text-xs font-normal text-blue-gray-500">
                               {formatDateTime(submittedAt)}
@@ -507,7 +547,6 @@ export function Home() {
                   )}
                 </tbody>
               </table>
-              {/* "Load More" Button */}
               {filteredHistory.length > visibleHistory.length && (
                 <div className="mt-4 flex justify-center p-4">
                   <Button variant="text" onClick={handleLoadMore}>
@@ -547,30 +586,36 @@ export function Home() {
                 </Typography>
 
                 <Typography variant="h6" color="blue-gray" className="mt-2">Question</Typography>
-                <Typography className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap">
-                  {selectedHistory.questionText}
-                </Typography>
+                {/* --- UPDATE 5: Use ReactMarkdown in Modal --- */}
+                <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {selectedHistory.questionText}
+                  </ReactMarkdown>
+                </div>
               </div>
               <div>
                 <Typography variant="h6" color="blue-gray">Your Answer</Typography>
-                <Typography className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap">
-                  {selectedHistory.answerText || "No answer submitted."}
-                </Typography>
+                {/* --- UPDATE 6: Use ReactMarkdown in Modal --- */}
+                <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {selectedHistory.answerText || "No answer submitted."}
+                  </ReactMarkdown>
+                </div>
               </div>
               <div>
                 <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
 
-                {/* --- THIS IS THE SAME FIX, APPLIED TO THE MODAL --- */}
-                <Typography className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap">
-                  {selectedHistory.evaluationStatus === 'REVEALED'
-                    ? selectedHistory.answerText  // Show the AI-generated answer
-                    : selectedHistory.feedback   // Show the evaluation feedback
-                  }
-                </Typography>
-                {/* --- END OF FIX --- */}
+                {/* --- UPDATE 7: Use ReactMarkdown in Modal --- */}
+                <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {selectedHistory.evaluationStatus === 'REVEALED'
+                      ? selectedHistory.answerText
+                      : selectedHistory.feedback
+                    }
+                  </ReactMarkdown>
+                </div>
               </div>
 
-              {/* Show hint only if it's NOT a revealed answer */}
               {selectedHistory.hint && selectedHistory.evaluationStatus !== 'REVEALED' && (
                 <div className="mt-2 p-4 border border-blue-500 rounded-lg bg-blue-50">
                   <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
@@ -579,9 +624,12 @@ export function Home() {
                     </svg>
                     Hint
                   </Typography>
-                  <Typography className="whitespace-pre-wrap ml-7">
-                    {selectedHistory.hint}
-                  </Typography>
+                  {/* --- UPDATE 8: Use ReactMarkdown in Modal --- */}
+                  <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {selectedHistory.hint}
+                    </ReactMarkdown>
+                  </div>
                 </div>
               )}
             </>
