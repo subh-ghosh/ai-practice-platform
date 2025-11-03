@@ -9,9 +9,9 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Getter // <-- Generates all getter methods (e.g., getSubmittedAt())
-@Setter // <-- Generates all setter methods (e.g., setSubmittedAt(...))
-@NoArgsConstructor // <-- Generates a default constructor
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "answers")
 public class Answer {
@@ -20,9 +20,9 @@ public class Answer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // This is the "owning" side of the one-to-one relationship
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "question_id", nullable = false, unique = true)
+    // This is the "owning" side of the many-to-one relationship
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_id", nullable = false)
     @JsonIgnore
     private Question question;
 
@@ -36,11 +36,8 @@ public class Answer {
 
     private Boolean isCorrect;
 
-    // --- NEW FIELD 1 ---
-    // This will store "CORRECT", "INCORRECT", or "CLOSE"
     private String evaluationStatus;
 
-    // --- NEW FIELD 2 ---
     @Column(columnDefinition = "TEXT")
     private String hint;
 
@@ -48,5 +45,10 @@ public class Answer {
     private String feedback;
 
     private LocalDateTime submittedAt;
-}
 
+    // Automatically sets the timestamp when a new answer is created
+    @PrePersist
+    protected void onSubmit() {
+        submittedAt = LocalDateTime.now();
+    }
+}

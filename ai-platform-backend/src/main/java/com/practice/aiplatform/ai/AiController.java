@@ -35,12 +35,17 @@ public class AiController {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found with email: " + email));
 
-        // --- UPDATED to pass all 3 fields ---
         return geminiService.generateQuestion(request.subject(), request.difficulty(), request.topic())
                 .flatMap(questionText -> {
                     Question newQuestion = new Question();
                     newQuestion.setQuestionText(questionText);
                     newQuestion.setStudent(student);
+
+                    // --- ADD THESE 3 LINES ---
+                    newQuestion.setSubject(request.subject());
+                    newQuestion.setTopic(request.topic());
+                    newQuestion.setDifficulty(request.difficulty());
+                    // -------------------------
 
                     Question savedQuestion = questionRepository.save(newQuestion);
 

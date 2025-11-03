@@ -27,6 +27,31 @@ export const routes = [
     ],
   },
   {
+    layout: "dashboard",
+    title: "Account Pages",
+    pages: [
+      {
+        icon: <UserCircleIcon {...icon} />,
+        name: "Profile",
+        path: "/profile",
+        element: <Profile />,
+      },
+      // These are the boilerplate pages, you can customize them later
+      {
+        icon: <TableCellsIcon {...icon} />,
+        name: "Tables (Example)",
+        path: "/tables",
+        element: <Tables />,
+      },
+      {
+        icon: <InformationCircleIcon {...icon} />,
+        name: "Notifications (Example)",
+        path: "/notifications",
+        element: <Notifications />,
+      },
+    ],
+  },
+  {
     title: "auth pages",
     layout: "auth",
     pages: [

@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.security.Principal; // <-- IMPORT THIS
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -28,10 +28,8 @@ public class PracticeController {
     private GeminiService geminiService;
 
     @PostMapping("/submit")
-    // 1. Add "Principal principal"
     public Mono<ResponseEntity<Answer>> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
 
-        // 2. Find the student by their email
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -41,15 +39,13 @@ public class PracticeController {
         if (!question.getStudent().getId().equals(student.getId())) {
             return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
         }
-        if (question.getAnswer() != null) {
-            return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(question.getAnswer()));
-        }
 
         Answer newAnswer = new Answer();
         newAnswer.setAnswerText(request.answerText());
         newAnswer.setQuestion(question);
-        newAnswer.setStudent(student); // Use the real student
-        newAnswer.setSubmittedAt(LocalDateTime.now());
+        newAnswer.setStudent(student);
+        // Note: submittedAt is now handled by @PrePersist in the Answer entity
+
         Answer savedAnswer = answerRepository.save(newAnswer);
 
         return geminiService.evaluateAnswer(question.getQuestionText(), savedAnswer.getAnswerText())
@@ -99,27 +95,40 @@ public class PracticeController {
     }
 
     @GetMapping("/history")
-    // 1. Change studentId param to "Principal principal"
     public ResponseEntity<PracticeHistoryDto> getHistory(Principal principal) {
 
-        // 2. Find the student using the new method
-        Optional<Student> studentOptional = studentRepository.findByEmailWithHistory(principal.getName());
+        // 1. Find the student using the simple findByEmail method
+        Optional<Student> studentOptional = studentRepository.findByEmail(principal.getName());
 
         if (studentOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         Student student = studentOptional.get();
 
-        List<PracticeHistoryDto.QuestionAnswerDto> historyList = student.getQuestions().stream()
-                .map(question -> new PracticeHistoryDto.QuestionAnswerDto(
-                        question.getId(),
-                        question.getQuestionText(),
-                        question.getGeneratedAt(),
-                        question.getAnswer() != null ? question.getAnswer().getAnswerText() : null,
-                        question.getAnswer() != null ? question.getAnswer().getIsCorrect() : null,
-                        question.getAnswer() != null ? question.getAnswer().getFeedback() : null,
-                        question.getAnswer() != null ? question.getAnswer().getSubmittedAt() : null
-                ))
+        // 2. Fetch all ANSWERS for this student (sorted by latest first)
+        List<Answer> answers = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
+
+        // 3. Map the List<Answer> to the List<QuestionAnswerDto>
+        List<PracticeHistoryDto.QuestionAnswerDto> historyList = answers.stream()
+                .map(answer -> {
+                    // Get the parent question for each answer
+                    Question question = answer.getQuestion();
+
+                    return new PracticeHistoryDto.QuestionAnswerDto(
+                            question.getId(),
+                            question.getQuestionText(),
+                            question.getSubject(),
+                            question.getTopic(),
+                            question.getDifficulty(),
+                            question.getGeneratedAt(),
+                            answer.getAnswerText(),
+                            answer.getIsCorrect(),
+                            answer.getEvaluationStatus(),
+                            answer.getHint(),
+                            answer.getFeedback(),
+                            answer.getSubmittedAt()
+                    );
+                })
                 .toList();
 
         PracticeHistoryDto historyDto = new PracticeHistoryDto(
