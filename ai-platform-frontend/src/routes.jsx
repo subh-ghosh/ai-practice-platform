@@ -5,8 +5,19 @@ import {
   InformationCircleIcon,
   ServerStackIcon,
   RectangleStackIcon,
+  ChartPieIcon,
+  PencilIcon,
 } from "@heroicons/react/24/solid";
-import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
+
+// Import all dashboard pages from the main barrel file
+import {
+  Home,
+  Practice,
+  Profile,
+  Tables,
+  Notifications,
+} from "@/pages/dashboard";
+
 import { SignIn, SignUp } from "@/pages/auth";
 
 const icon = {
@@ -16,13 +27,19 @@ const icon = {
 export const routes = [
   {
     layout: "dashboard",
-    title: "Main Practice Hub", // This is the sidebar section title
+    title: "Main Practice Hub",
     pages: [
       {
-        icon: <HomeIcon {...icon} />,
-        name: "Practice", // This is the sidebar link text
-        path: "/practice", // <-- UPDATED from /home
+        icon: <ChartPieIcon {...icon} />,
+        name: "Dashboard",
+        path: "/home",
         element: <Home />,
+      },
+      {
+        icon: <PencilIcon {...icon} />,
+        name: "Practice",
+        path: "/practice",
+        element: <Practice />,
       },
     ],
   },
@@ -36,7 +53,6 @@ export const routes = [
         path: "/profile",
         element: <Profile />,
       },
-      // These are the boilerplate pages, you can customize them later
       {
         icon: <TableCellsIcon {...icon} />,
         name: "Tables (Example)",

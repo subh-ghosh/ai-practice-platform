@@ -1,650 +1,455 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
+import api from "@/api";
 import {
   Typography,
   Card,
   CardHeader,
   CardBody,
-  Button,
-  Input,
-  Textarea,
+  IconButton,
+  Menu,
+  MenuHandler,
+  MenuList,
+  MenuItem,
+  Avatar,
+  Tooltip,
+  Progress,
   Spinner,
   Chip,
-  Select,
-  Option,
-  Dialog,
-  DialogHeader,
-  DialogBody,
-  DialogFooter,
-  Popover,
-  PopoverHandler,
-  PopoverContent,
 } from "@material-tailwind/react";
-import { useAuth } from "@/context/AuthContext";
-import api from "@/api";
-
-// --- NEW IMPORTS ---
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-// -------------------
-
+import {
+  EllipsisVerticalIcon,
+  ArrowUpIcon,
+} from "@heroicons/react/24/outline";
+import { StatisticsCard } from "@/widgets/cards";
+import { StatisticsChart } from "@/widgets/charts";
+import { chartsConfig } from "@/configs";
+import {
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon,
+  EyeIcon,
+  ChartBarIcon,
+  ArrowPathIcon,
+  CheckIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
 
 // --- HELPER FUNCTIONS ---
-
-function DynamicFeedbackTitle({ status }) {
-  let title = "Feedback: Incorrect";
-  let color = "red";
-  if (status === "CORRECT") {
-    title = "Feedback: Correct!";
-    color = "green";
-  } else if (status === "CLOSE") {
-    title = "Feedback: Close!";
-    color = "orange";
-  } else if (status === "REVEALED") {
-    title = "Answer Revealed";
-    color = "blue";
-  }
-  return (
-    <Typography variant="h5" color={color}>
-      {title}
-    </Typography>
-  );
-}
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
   try {
     const date = new Date(isoString);
     return date.toLocaleString(undefined, {
-      year: 'numeric',
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
   } catch (error) {
-    console.error("Error formatting date:", error);
     return "Invalid Date";
   }
 }
 
-const getStatusChip = (status) => {
-  if (!status) {
-    return <Chip variant="gradient" color="blue-gray" value="N/A" className="py-0.5 px-2 text-[11px] font-medium w-fit" />;
+function formatDuration(seconds) {
+  if (seconds < 60) {
+    return `${seconds.toFixed(1)}s`;
   }
-  switch (status.toUpperCase()) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = (seconds % 60).toFixed(0);
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
+// Base config for our line charts
+const lineChartOptions = {
+  ...chartsConfig,
+  chart: {
+    ...chartsConfig.chart,
+    type: "line",
+  },
+  colors: ["#fff"], // Line color will be white
+  stroke: {
+    lineCap: "round",
+    curve: 'smooth',
+  },
+  markers: {
+    size: 5,
+  },
+  xaxis: {
+    ...chartsConfig.xaxis,
+    type: "category",
+    labels: {
+      ...chartsConfig.xaxis.labels,
+      style: { colors: "#fff" }, // X-axis labels white
+    },
+  },
+  yaxis: {
+    ...chartsConfig.yaxis,
+    labels: {
+      ...chartsConfig.yaxis.labels,
+      style: { colors: "#fff" }, // Y-axis labels white
+    }
+  },
+  grid: {
+    ...chartsConfig.grid,
+    borderColor: "#ffffff40", // Lighter grid lines
+  },
+  tooltip: {
+    theme: "dark",
+    x: {
+      format: "dd MMM yyyy",
+    },
+  },
+};
+
+// Helper for the new overview feed
+const getOverviewIcon = (status) => {
+  switch (status?.toUpperCase()) {
     case "CORRECT":
-      return <Chip variant="gradient" color="green" value="Correct" className="py-0.5 px-2 text-[11px] font-medium w-fit" />;
-    case "CLOSE":
-      return <Chip variant="gradient" color="orange" value="Close" className="py-0.5 px-2 text-[11px] font-medium w-fit" />;
-    case "REVEALED":
-      return <Chip variant="gradient" color="blue" value="Revealed" className="py-0.5 px-2 text-[11px] font-medium w-fit" />;
+      return { Icon: CheckCircleIcon, color: "text-green-500" };
     case "INCORRECT":
+    case "CLOSE":
+      return { Icon: XCircleIcon, color: "text-red-500" };
+    case "REVEALED":
+      return { Icon: EyeIcon, color: "text-blue-500" };
     default:
-      return <Chip variant="gradient" color="red" value="Incorrect" className="py-0.5 px-2 text-[11px] font-medium w-fit" />;
+      return { Icon: ClockIcon, color: "text-gray-500" };
   }
 };
 
 // --- MAIN COMPONENT ---
 
 export function Home() {
-  const { user } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [allHistory, setAllHistory] = useState([]);
-  const [itemsToShow, setItemsToShow] = useState(10);
-  const [loadingHistory, setLoadingHistory] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const [subject, setSubject] = useState("Java");
-  const [topic, setTopic] = useState("Object Oriented Programming");
-  const [difficulty, setDifficulty] = useState("High School");
-
-  const [generating, setGenerating] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
-  const [currentAnswer, setCurrentAnswer] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [feedback, setFeedback] = useState(null);
-  const [textareaRows, setTextareaRows] = useState(5);
-
-  const [hint, setHint] = useState(null);
-  const [loadingHint, setLoadingHint] = useState(false);
-  const [loadingAnswer, setLoadingAnswer] = useState(false);
-
-  const [selectedHistory, setSelectedHistory] = useState(null);
-  const [openPopover, setOpenPopover] = useState(false);
-
-  const handleOpenModal = (historyItem) => setSelectedHistory(historyItem);
-  const handleCloseModal = () => setSelectedHistory(null);
-
-  // Fetch practice history
-  const fetchHistory = async () => {
-    setLoadingHistory(true);
-    setError(null);
-    if (!user) return;
-    try {
-      const response = await api.get(`/api/practice/history`);
-      const sortedHistory = (response.data.history || []).sort(
-        (a, b) => new Date(b.submittedAt) - new Date(a.generatedAt)
-      );
-      setAllHistory(sortedHistory);
-      setItemsToShow(10);
-    } catch (err) {
-      console.error("Error fetching history:", err);
-      setError("Could not load practice history.");
-    }
-    setLoadingHistory(false);
-  };
-
   useEffect(() => {
-    if (user) {
-      fetchHistory();
-    }
-  }, [user]);
+    const fetchAllData = async () => {
+      try {
+        setLoading(true);
+        const [summaryRes, timeSeriesRes] = await Promise.all([
+          api.get("/api/stats/summary"),
+          api.get("/api/stats/timeseries")
+        ]);
 
-  // Filtered history
-  const filteredHistory = useMemo(() => {
-    if (!searchTerm) {
-      return allHistory;
-    }
-    const lowerSearch = searchTerm.toLowerCase();
-    return allHistory.filter(item =>
-      item.questionText.toLowerCase().includes(lowerSearch) ||
-      item.subject.toLowerCase().includes(lowerSearch) ||
-      item.topic.toLowerCase().includes(lowerSearch) ||
-      item.difficulty.toLowerCase().includes(lowerSearch) ||
-      (item.answerText && item.answerText.toLowerCase().includes(lowerSearch))
+        setStats(summaryRes.data);
+        setTimeSeriesData(timeSeriesRes.data);
+
+      } catch (err) {
+        console.error("Error fetching stats:", err);
+        setError("Could not load statistics.");
+      }
+      setLoading(false);
+    };
+
+    fetchAllData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64 mt-12">
+        <Spinner className="h-12 w-12" />
+      </div>
     );
-  }, [allHistory, searchTerm]);
+  }
 
-  // Visible history
-  const visibleHistory = useMemo(() => {
-    return filteredHistory.slice(0, itemsToShow);
-  }, [filteredHistory, itemsToShow]);
+  if (error || !stats) {
+    return (
+      <Typography color="red" className="text-center mt-12">
+        {error || "Statistics data is unavailable."}
+      </Typography>
+    );
+  }
 
-  // Handle "Load More" click
-  const handleLoadMore = () => {
-    setItemsToShow(prev => prev + 10);
+  // --- CHART CONFIGURATIONS ---
+
+  const chartLabels = timeSeriesData.map(d => new Date(d.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }));
+
+  const accuracyChart = {
+    ...lineChartOptions,
+    series: [
+      {
+        name: "Accuracy",
+        data: timeSeriesData.map(d => d.accuracy.toFixed(1)),
+      },
+    ],
+    options: {
+      ...lineChartOptions.options,
+      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
+      yaxis: {
+        ...lineChartOptions.yaxis, min: 0, max: 100,
+        labels: { ...lineChartOptions.yaxis.labels, formatter: (value) => `${value}%` },
+      },
+      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (value) => `${value}%` } },
+    },
   };
 
-  // Handle resizing of textarea (with a cap)
-  const handleAnswerChange = (e) => {
-    const { value } = e.target;
-    setCurrentAnswer(value);
-    const newRowCount = (value.match(/\n/g) || []).length + 1;
-    setTextareaRows(Math.min(Math.max(5, newRowCount), 15));
+  const speedChart = {
+    ...lineChartOptions,
+    series: [
+      {
+        name: "Avg. Speed",
+        data: timeSeriesData.map(d => d.averageSpeedSeconds.toFixed(1)),
+      },
+    ],
+    options: {
+      ...lineChartOptions.options,
+      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
+      yaxis: { ...lineChartOptions.yaxis, labels: { ...lineChartOptions.yaxis.labels, formatter: (value) => formatDuration(value) } },
+      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (value) => formatDuration(value) } },
+    },
   };
 
-  // Handle generating a new question
-  const handleGenerateQuestion = async () => {
-    setGenerating(true);
-    setCurrentQuestion(null);
-    setCurrentAnswer("");
-    setFeedback(null);
-    setHint(null);
-    setError(null);
-    setTextareaRows(5);
-    try {
-      const response = await api.post("/api/ai/generate-question", {
-        subject,
-        topic,
-        difficulty,
-      });
-      setCurrentQuestion(response.data);
-    } catch (err) {
-      console.error("Error generating question:", err);
-      setError("Failed to generate a new question. Please try again.");
-    }
-    setGenerating(false);
+  const breakdownChart = {
+    type: "pie",
+    height: 220,
+    series: [stats.correctCount, stats.incorrectCount, stats.revealedCount],
+    options: {
+      ...chartsConfig,
+      chart: { ...chartsConfig.chart, type: "pie" },
+      title: { show: "" },
+      dataLabels: { enabled: false },
+      colors: ["#28a745", "#dc3545", "#6b7280"], // Green, Red, Gray
+      legend: { show: true, position: 'bottom', labels: { colors: "#37474f" } },
+      labels: ["Correct", "Incorrect", "Revealed"],
+    },
   };
 
-  // Handle submitting an answer
-  const handleSubmitAnswer = async (e) => {
-    e.preventDefault();
-    if (!currentQuestion || !currentAnswer) return;
-    setSubmitting(true);
-    setFeedback(null);
-    setHint(null);
-    setError(null);
-    try {
-      const response = await api.post("/api/practice/submit", {
-        questionId: currentQuestion.id,
-        answerText: currentAnswer,
-      });
-      setFeedback(response.data);
-      fetchHistory();
-    } catch (err) {
-      console.error("Error submitting answer:", err);
-      setError("Failed to submit your answer. Please try again.");
-    }
-    setSubmitting(false);
-  };
-
-  // Handle "Get Hint"
-  const handleGetHint = async () => {
-    if (!currentQuestion) return;
-    setLoadingHint(true);
-    setHint(null);
-    setError(null);
-    try {
-      const response = await api.post("/api/ai/get-hint", {
-        questionId: currentQuestion.id,
-      });
-      setHint(response.data);
-    } catch (err) {
-      console.error("Error getting hint:", err);
-      setError("Failed to get a hint. Please try again.");
-    }
-    setLoadingHint(false);
-  };
-
-  // This function runs when "Confirm" is clicked in the popover
-  const confirmGetAnswer = async () => {
-    setOpenPopover(false);
-    if (!currentQuestion) return;
-
-    setLoadingAnswer(true);
-    setFeedback(null);
-    setHint(null);
-    setError(null);
-
-    try {
-      const response = await api.post("/api/practice/get-answer", {
-        questionId: currentQuestion.id,
-      });
-      setFeedback(response.data);
-      fetchHistory();
-    } catch (err) {
-      console.error("Error getting answer:", err);
-      setError("Failed to get the answer. Please try again.");
-    }
-    setLoadingAnswer(false);
-  };
-
+  // --- Statistics Card Data (Dynamic) ---
+  const statisticsCardsData = [
+    {
+      title: "Total Attempts",
+      icon: ArrowPathIcon,
+      color: "gray",
+      value: stats.totalAttempts,
+      footer: { label: "in total" },
+    },
+    {
+      title: "Correct Answers",
+      icon: CheckIcon,
+      color: "green",
+      value: stats.correctCount,
+      footer: { label: "in total" },
+    },
+    {
+      title: "Incorrect Answers",
+      icon: XMarkIcon,
+      color: "red",
+      value: stats.incorrectCount,
+      footer: { label: "in total" },
+    },
+    {
+      title: "Overall Accuracy",
+      icon: ChartBarIcon,
+      color: "blue",
+      value: `${stats.accuracyPercentage.toFixed(1)}%`,
+      footer: { label: "of graded attempts" },
+    },
+  ];
 
   return (
     <div className="mt-12">
-      {/* AI Question Generator Card */}
-      <Card className="mb-12">
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
-            AI Question Generator
-          </Typography>
-        </CardHeader>
-        <CardBody className="p-6">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <Input
-              label="Subject (e.g., JAVA, DBMS, Math)"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-            />
-            <Input
-              label="Topic (e.g., Inheritance, SQL Joins)"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-            />
-            <Select
-              label="Difficulty"
-              value={difficulty}
-              onChange={(val) => setDifficulty(val)}
-            >
-              <Option value="School">School</Option>
-              <Option value="High School">High School</Option>
-              <Option value="Graduation">Graduation</Option>
-              <Option value="Post Graduation">Post Graduation</Option>
-              <Option value="Research">Research</Option>
-            </Select>
-          </div>
-          <div className="mt-6 flex justify-start">
-            <Button onClick={handleGenerateQuestion} disabled={generating} className="w-full md:w-1/3">
-              {generating ? <Spinner className="h-4 w-4" /> : "Generate New Question"}
-            </Button>
-          </div>
-
-          {error && (
-            <Typography color="red" className="mt-4 text-sm">
-              {error}
-            </Typography>
-          )}
-
-          {currentQuestion && (
-            <form onSubmit={handleSubmitAnswer} className="mt-6">
-              <Typography variant="h6" color="blue-gray" className="mb-2">
-                Your Question:
+      {/* --- ROW 1: STATS CARDS (4 Cards) --- */}
+      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+        {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
+          <StatisticsCard
+            key={title}
+            {...rest}
+            title={title}
+            icon={React.createElement(icon, {
+              className: "w-6 h-6 text-white",
+            })}
+            footer={
+              <Typography className="font-normal text-blue-gray-600">
+                {footer.label}
               </Typography>
-              {/* --- UPDATE 1: Use ReactMarkdown for Question --- */}
-              <div className="p-4 border rounded-lg bg-blue-gray-50 mb-4 whitespace-pre-wrap prose prose-sm max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {currentQuestion.questionText}
-                </ReactMarkdown>
-              </div>
+            }
+          />
+        ))}
+      </div>
 
-              <Textarea
-                label="Your Answer"
-                value={currentAnswer}
-                onChange={handleAnswerChange}
-                rows={textareaRows}
-                required
-              />
+      {/* --- ROW 2: CHARTS (3 Charts) --- */}
+      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+        <StatisticsChart
+          key="accuracy-chart"
+          chart={accuracyChart}
+          color="green" // <-- PROP ADDED
+          title="Daily Accuracy"
+          description="Percentage of correct answers over time."
+          footer={<Typography variant="small" className="font-normal text-blue-gray-600">Updated just now</Typography>}
+        />
+        <StatisticsChart
+          key="speed-chart"
+          chart={speedChart}
+          color="amber" // <-- PROP ADDED
+          title="Average Answer Speed"
+          description="Average time to a correct submission."
+          footer={<Typography variant="small" className="font-normal text-blue-gray-600">Updated just now</Typography>}
+        />
+        <StatisticsChart
+          key="breakdown-chart"
+          chart={breakdownChart}
+          color="blue" // <-- PROP ADDED
+          title="Answer Breakdown"
+          description="Summary of all practice attempts."
+          footer={<Typography variant="small" className="font-normal text-blue-gray-600">Updated just now</Typography>}
+        />
+      </div>
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Button
-                  type="submit"
-                  disabled={submitting || loadingHint || loadingAnswer}
-                >
-                  {submitting ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={handleGetHint}
-                  disabled={submitting || loadingHint || loadingAnswer}
-                >
-                  {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
-                </Button>
-
-                <Popover open={openPopover} handler={setOpenPopover} placement="top">
-                  <PopoverHandler>
-                    <Button
-                      type="button"
-                      color="red"
-                      variant="outlined"
-                      disabled={submitting || loadingHint || loadingAnswer}
-                      loading={loadingAnswer}
-                    >
-                      Get Answer
-                    </Button>
-                  </PopoverHandler>
-                  <PopoverContent className="w-64 z-50">
-                    <Typography variant="h6" color="blue-gray" className="mb-2">
-                      Confirm
-                    </Typography>
-                    <Typography variant="small" color="blue-gray" className="mb-4">
-                      Reveal the answer? This will be saved to your history.
-                    </Typography>
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="text"
-                        size="sm"
-                        onClick={() => setOpenPopover(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="gradient"
-                        color="red"
-                        size="sm"
-                        onClick={confirmGetAnswer}
-                      >
-                        Confirm
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </form>
-          )}
-
-          {/* Standalone Hint Display */}
-          {hint && (
-            <div className="mt-4 p-4 border border-blue-500 rounded-lg bg-blue-50">
-              <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z" clipRule="evenodd" />
-                </svg>
-                Hint
+      {/* --- ROW 3: TABLE & FEED (2 items) --- */}
+      <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
+        {/* Recent Activity Table (col-span-2) */}
+        <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm">
+          <CardHeader
+            floated={false}
+            shadow={false}
+            color="transparent"
+            className="m-0 flex items-center justify-between p-6"
+          >
+            <div>
+              <Typography variant="h6" color="blue-gray" className="mb-1">
+                Recent Activity
               </Typography>
-              {/* --- UPDATE 2: Use ReactMarkdown for Hint --- */}
-              <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {hint}
-                </ReactMarkdown>
-              </div>
+              <Typography
+                variant="small"
+                className="flex items-center gap-1 font-normal text-blue-gray-600"
+              >
+                <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
+                <strong>{stats.totalAttempts} attempts</strong> in total
+              </Typography>
             </div>
-          )}
-
-          {/* Feedback Section */}
-          {feedback && (
-            <div className="mt-6 p-4 border rounded-lg">
-              <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-
-              {/* --- UPDATE 3: Use ReactMarkdown for Feedback/Answer --- */}
-              <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {feedback.evaluationStatus === 'REVEALED'
-                    ? feedback.answerText
-                    : feedback.feedback
-                  }
-                </ReactMarkdown>
-              </div>
-
-              {feedback.hint && feedback.evaluationStatus !== 'REVEALED' && (
-                <div className="mt-4 p-4 border border-blue-500 rounded-lg bg-blue-50">
-                  <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z" clipRule="evenodd" />
-                    </svg>
-                    Hint
-                  </Typography>
-                  {/* --- UPDATE 4: Use ReactMarkdown for Feedback Hint --- */}
-                  <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {feedback.hint}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </CardBody>
-      </Card>
-
-      {/* Practice History Card */}
-      <Card>
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <Typography variant="h6" color="white">
-              Practice History
-            </Typography>
-            <div className="w-full md:w-72">
-              <Input
-                label="Search History"
-                color="white"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-          {loadingHistory ? (
-            <div className="flex justify-center p-8">
-              <Spinner className="h-8 w-8" />
-            </div>
-          ) : visibleHistory.length === 0 ? (
-            <Typography className="p-6 text-center">
-              {searchTerm
-                ? "No history items match your search."
-                : "You haven't completed any questions yet."
-              }
-            </Typography>
-          ) : (
-            <>
-              <table className="w-full min-w-[640px] table-auto">
-                <thead>
-                  <tr>
-                    {[
-                      "SL", "Question", "Subject", "Topic", "Difficulty",
-                      "Status", "Your Answer", "Submitted At"
-                    ].map((el) => (
-                      <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
-                        <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
+            {/* You can add a Menu here later if you want */}
+          </CardHeader>
+          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
+            <table className="w-full min-w-[640px] table-auto">
+              <thead>
+                <tr>
+                  {["Question", "Subject", "Status", "Submitted"].map(
+                    (el) => (
+                      <th
+                        key={el}
+                        className="border-b border-blue-gray-50 py-3 px-6 text-left"
+                      >
+                        <Typography
+                          variant="small"
+                          className="text-[11px] font-medium uppercase text-blue-gray-400"
+                        >
                           {el}
                         </Typography>
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleHistory.map(
-                    (item, index) => {
-                      const {
-                        questionId, questionText, subject, topic, difficulty,
-                        evaluationStatus, answerText, submittedAt,
-                        generatedAt
-                      } = item;
-                      const className = "py-3 px-5 border-b border-blue-gray-50";
-
-                      const uniqueKey = `${questionId}-${submittedAt}`;
-
-                      return (
-                        <tr
-                          key={uniqueKey}
-                          onClick={() => handleOpenModal(item)}
-                          className="cursor-pointer hover:bg-blue-gray-50"
-                        >
-                          <td className={className}>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {index + 1}
-                            </Typography>
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {questionText.substring(0, 40)}...
-                            </Typography>
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {subject}
-                            </Typography>
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {topic}
-                            </Typography>
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {difficulty}
-                            </Typography>
-                          </td>
-                          <td className={className}>
-                            {getStatusChip(evaluationStatus)}
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {answerText ? `${answerText.substring(0, 40)}...` : "Not Answered"}
-                            </Typography>
-                          </td>
-                          <td className={className}>
-                            <Typography className="text-xs font-normal text-blue-gray-500">
-                              {formatDateTime(submittedAt)}
-                            </Typography>
-                          </td>
-                        </tr>
-                      );
-                    }
+                    )
                   )}
-                </tbody>
-              </table>
-              {filteredHistory.length > visibleHistory.length && (
-                <div className="mt-4 flex justify-center p-4">
-                  <Button variant="text" onClick={handleLoadMore}>
-                    Load More
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </CardBody>
-      </Card>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.recentActivity.map(
+                  (item, key) => {
+                    const className = `py-3 px-5 ${
+                      key === stats.recentActivity.length - 1
+                        ? ""
+                        : "border-b border-blue-gray-50"
+                    }`;
+                    const uniqueKey = `${item.questionId}-${item.submittedAt}`;
 
-      {/* History Detail Modal (Dialog) */}
-      <Dialog open={selectedHistory !== null} handler={handleCloseModal} size="lg">
-        <DialogHeader>Practice Result</DialogHeader>
-        <DialogBody divider className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
-          {selectedHistory && (
-            <>
-              <div>
-                <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
-                  <Typography variant="small">
-                    <span className="font-semibold text-blue-gray-600">Subject:</span> {selectedHistory.subject}
-                  </Typography>
-                  <Typography variant="small">
-                    <span className="font-semibold text-blue-gray-600">Topic:</span> {selectedHistory.topic}
-                  </Typography>
-                  <Typography variant="small">
-                    <span className="font-semibold text-blue-gray-600">Difficulty:</span> {selectedHistory.difficulty}
-                  </Typography>
-                </div>
+                    return (
+                      <tr key={uniqueKey}>
+                        <td className={className}>
+                          <Typography className="text-xs font-normal text-blue-gray-500">
+                            {item.questionText.substring(0, 40)}...
+                          </Typography>
+                        </td>
+                        <td className={className}>
+                          <Typography
+                            variant="small"
+                            className="text-xs font-medium text-blue-gray-600"
+                          >
+                            {item.subject}
+                          </Typography>
+                        </td>
+                        <td className={className}>
+                          <Chip
+                            variant="gradient"
+                            color={
+                              item.evaluationStatus === "CORRECT" ? "green" :
+                              item.evaluationStatus === "REVEALED" ? "blue" :
+                              item.evaluationStatus === "CLOSE" ? "orange" : "red"
+                            }
+                            value={item.evaluationStatus.toLowerCase()}
+                            className="py-0.5 px-2 text-[11px] font-medium w-fit"
+                          />
+                        </td>
+                        <td className={className}>
+                           <Typography className="text-xs font-normal text-blue-gray-500">
+                            {formatDateTime(item.submittedAt)}
+                          </Typography>
+                        </td>
+                      </tr>
+                    );
+                  }
+                )}
+              </tbody>
+            </table>
+          </CardBody>
+        </Card>
 
-                <Typography variant="small" color="blue-gray">
-                  <span className="font-semibold">Question Generated:</span> {formatDateTime(selectedHistory.generatedAt)}
-                </Typography>
-                <Typography variant="small" color="blue-gray" className="font-semibold">
-                  Answer Submitted: {formatDateTime(selectedHistory.submittedAt)}
-                </Typography>
-
-                <Typography variant="h6" color="blue-gray" className="mt-2">Question</Typography>
-                {/* --- UPDATE 5: Use ReactMarkdown in Modal --- */}
-                <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {selectedHistory.questionText}
-                  </ReactMarkdown>
-                </div>
-              </div>
-              <div>
-                <Typography variant="h6" color="blue-gray">Your Answer</Typography>
-                {/* --- UPDATE 6: Use ReactMarkdown in Modal --- */}
-                <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {selectedHistory.answerText || "No answer submitted."}
-                  </ReactMarkdown>
-                </div>
-              </div>
-              <div>
-                <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
-
-                {/* --- UPDATE 7: Use ReactMarkdown in Modal --- */}
-                <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {selectedHistory.evaluationStatus === 'REVEALED'
-                      ? selectedHistory.answerText
-                      : selectedHistory.feedback
-                    }
-                  </ReactMarkdown>
-                </div>
-              </div>
-
-              {selectedHistory.hint && selectedHistory.evaluationStatus !== 'REVEALED' && (
-                <div className="mt-2 p-4 border border-blue-500 rounded-lg bg-blue-50">
-                  <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z" clipRule="evenodd" />
-                    </svg>
-                    Hint
-                  </Typography>
-                  {/* --- UPDATE 8: Use ReactMarkdown in Modal --- */}
-                  <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {selectedHistory.hint}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-        </DialogBody>
-        <DialogFooter>
-          <Button
-            variant="text"
-            color="blue-gray"
-            onClick={handleCloseModal}
+        {/* Submission Overview (col-span-1) */}
+        <Card className="border border-blue-gray-100 shadow-sm">
+          <CardHeader
+            floated={false}
+            shadow={false}
+            color="transparent"
+            className="m-0 p-6"
           >
-            <span>Close</span>
-          </Button>
-        </DialogFooter>
-      </Dialog>
+            <Typography variant="h6" color="blue-gray" className="mb-2">
+              Submission Overview
+            </Typography>
+            <Typography
+              variant="small"
+              className="flex items-center gap-1 font-normal text-blue-gray-600"
+            >
+              Your latest 5 attempts.
+            </Typography>
+          </CardHeader>
+          <CardBody className="pt-0">
+            {stats.recentActivity.map(
+              (item, key) => {
+                const { Icon, color } = getOverviewIcon(item.evaluationStatus);
+                return (
+                  <div key={key} className="flex items-start gap-4 py-3">
+                    <div
+                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
+                        key === stats.recentActivity.length - 1
+                          ? "after:h-0"
+                          : "after:h-4/6"
+                      }`}
+                    >
+                      <Icon className={`!w-5 !h-5 ${color}`} />
+                    </div>
+                    <div>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="block font-medium"
+                      >
+                        {item.subject}: {item.topic.substring(0, 20)}...
+                      </Typography>
+                      <Typography
+                        as="span"
+                        variant="small"
+                        className="text-xs font-medium text-blue-gray-500"
+                      >
+                        {formatDateTime(item.submittedAt)}
+                      </Typography>
+                    </div>
+                  </div>
+                )
+              }
+            )}
+          </CardBody>
+        </Card>
+      </div>
     </div>
   );
 }
