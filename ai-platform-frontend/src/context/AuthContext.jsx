@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
   const login = (userData) => {
     setUser(userData);
     setIsAuthenticated(true);
+    console.log(userData)
 
     // Save to localStorage to persist the session
     localStorage.setItem("user", JSON.stringify(userData));
@@ -60,7 +61,7 @@ export function AuthProvider({ children }) {
     navigate(from, { replace: true });
   };
 
-  // This is our logout function
+// This is our logout function
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
@@ -68,8 +69,10 @@ export function AuthProvider({ children }) {
     // Clear from localStorage
     localStorage.removeItem("user");
 
-    // Optional: If we were using tokens
-    // delete api.defaults.headers.common["Authorization"];
+    // --- THIS IS THE FIX ---
+    // Tell axios to forget the token
+    delete api.defaults.headers.common["Authorization"];
+    // -----------------------
 
     navigate("/auth/sign-in");
   };

@@ -1,48 +1,68 @@
 package com.practice.aiplatform.security;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Creates a Bean for the BCrypt Password Encoder
-    // This is the industry-standard hashing algorithm
+    // We keep all the JWT and UserDetails code,
+    // but we will just permit all requests for now.
+
+    @Autowired
+    private StudentDetailsService studentDetailsService;
+
+    @Autowired
+    private JwtRequestFilter jwtRequestFilter;
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // This method configures our web security rules
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authBuilder =
+                http.getSharedObject(AuthenticationManagerBuilder.class);
+        authBuilder.userDetailsService(studentDetailsService)
+                .passwordEncoder(passwordEncoder());
+        return authBuilder.build();
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Disable CSRF (Cross-Site Request Forgery) - common for JSON APIs
+                .cors(withDefaults()) // Keep CORS enabled
                 .csrf(AbstractHttpConfigurer::disable)
-
-                // Start authorizing HTTP requests
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Allow anyone (permitAll) to access these specific URLs
-                        .requestMatchers("/api/students/register").permitAll()
-                        .requestMatchers("/api/students/login").permitAll()
-                        .requestMatchers("/api/ai/generate-question").permitAll()
-
-                        // --- NEW RULE ---
-                        // Allow access to all practice endpoints (history, submit, etc.)
-                        .requestMatchers("/api/practice/**").permitAll()
-
-                        // 2. Any other request (anyRequest) must be authenticated
-                        .anyRequest().authenticated()
-                );
+                                // --- THIS IS THE "FIX IT ANYHOW" CHANGE ---
+                                // We are permitting EVERY request.
+                                // This is insecure for production, but it will get your app working.
+                                .anyRequest().permitAll()
+                        // ------------------------------------------
+                )
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                // We still add the filter, even though it's not strictly needed,
+                // so we don't have to change other files.
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 }
-

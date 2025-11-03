@@ -15,8 +15,6 @@ public class GeminiService {
     private final WebClient webClient;
     private final String apiKey;
 
-    // We inject the specific "geminiWebClient" bean we created in WebClientConfig
-    // We also inject the API key from our application.properties file
     public GeminiService(@Qualifier("geminiWebClient") WebClient webClient,
                          @Value("${gemini.api.key}") String apiKey) {
         this.webClient = webClient;
@@ -26,16 +24,19 @@ public class GeminiService {
     /**
      * Calls the Gemini API to generate a new question.
      *
-     * @param subject    The subject of the question (e.g., "Calculus")
-     * @param difficulty The difficulty of the question (e.g., "University")
+     * @param subject    The subject of the question (e.g., "Java")
+     * @param difficulty The difficulty of the question (e.g., "Graduation")
+     * @param topic      The specific topic (e.g., "Inheritance")
      * @return A Mono<String> containing the clean question text.
      */
-    public Mono<String> generateQuestion(String subject, String difficulty) {
-        // Build a prompt for the AI
+    // --- UPDATED SIGNATURE ---
+    public Mono<String> generateQuestion(String subject, String difficulty, String topic) {
+
+        // --- UPDATED PROMPT ---
         String prompt = String.format(
-                "Generate one practice question for a %s student on the subject of %s. " +
+                "Generate one practice question for a %s level student on the subject of %s, focusing specifically on the topic of %s. " +
                         "Only return the question text, with no other formatting or introductory phrases.",
-                difficulty, subject
+                difficulty, subject, topic
         );
 
         return callGeminiApi(prompt)
@@ -50,28 +51,24 @@ public class GeminiService {
      * @return A Mono<String> containing the AI's feedback.
      */
     public Mono<String> evaluateAnswer(String questionText, String answerText) {
-        // Build a prompt for evaluation
+
         String prompt = String.format(
                 "A student was given the following question: \"%s\"\n" +
-                        "The student provided this answer: \"%s\"\n" +
-                        "First, determine if the answer is 'CORRECT' or 'INCORRECT'. " +
-                        "Then, provide constructive feedback for the student. " +
-                        "Format your response as 'CORRECT: [Your feedback]' or 'INCORRECT: [Your feedback]'.",
+                        "The student provided this answer: \"%s\"\n\n" +
+                        "Your task is to evaluate this answer line by line.\n" +
+                        "1. On the very first line, write ONLY the single word 'CORRECT', 'INCORRECT', or 'CLOSE'.\n" +
+                        "   - Use 'CLOSE' if the student's answer is on the right track but has a key flaw or is partially correct.\n" +
+                        "2. On the next line, begin your detailed, constructive feedback.\n" +
+                        "3. If the answer is 'INCORRECT' or 'CLOSE', add a new line at the very end starting with the exact text '[HINT]' followed by a detailed and informative hint to guide the student towards the correct solution or next steps.",
                 questionText, answerText
         );
 
         return callGeminiApi(prompt)
-                .map(this::extractTextFromResponse); // Parse the response
+                .map(this::extractTextFromResponse);
     }
 
-    /**
-     * A private helper method to make the actual API call.
-     *
-     * @param prompt The prompt to send to the AI.
-     * @return A Mono<GeminiResponse> containing the full, parsed JSON response.
-     */
+
     private Mono<GeminiResponse> callGeminiApi(String prompt) {
-        // This is the JSON structure the Gemini API expects
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(
@@ -82,33 +79,25 @@ public class GeminiService {
 
         return this.webClient.post()
                 .uri(uriBuilder -> uriBuilder
-                        .path(":generateContent")
+                        // --- Using the model that we know works ---
+                        .path("/v1beta/models/gemini-2.0-flash:generateContent")
                         .queryParam("key", this.apiKey)
                         .build())
                 .bodyValue(requestBody)
                 .retrieve()
-                .bodyToMono(GeminiResponse.class) // Automatically parse the JSON into our DTO
-                .log(); // Log the request/response for debugging
+                .bodyToMono(GeminiResponse.class)
+                .log();
     }
 
-    /**
-     * A private helper method to safely parse the GeminiResponse object.
-     *
-     * @param response The parsed GeminiResponse object.
-     * @return The clean text from the AI, or an error message.
-     */
+
     private String extractTextFromResponse(GeminiResponse response) {
         try {
-            // Navigate the nested JSON structure to get the text
             return response.candidates().get(0)
                     .content().parts().get(0)
                     .text();
         } catch (Exception e) {
-            // Handle cases where the response is not as expected
             System.err.println("Error parsing Gemini response: " + e.getMessage());
             return "Error: Could not parse AI response.";
         }
     }
 }
-
-

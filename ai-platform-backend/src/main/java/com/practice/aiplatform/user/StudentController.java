@@ -1,11 +1,20 @@
 package com.practice.aiplatform.user;
 
+// --- ADD THIS IMPORT ---
+import com.practice.aiplatform.security.JwtUtil;
+// -----------------------
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+
+// --- ADD THIS DTO (can be in this file or its own .java file) ---
+// This record defines the JSON object we will send back on successful login
+record LoginResponse(Long id, String email, String firstName, String token) {}
+// ----------------------------------------------------------------
 
 @RestController
 @RequestMapping("/api/students")
@@ -14,10 +23,16 @@ public class StudentController {
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // --- INJECT JWTUTIL ---
+    private final JwtUtil jwtUtil;
+
     // Constructor Injection: Spring automatically provides the beans
-    public StudentController(StudentRepository studentRepository, PasswordEncoder passwordEncoder) {
+    public StudentController(StudentRepository studentRepository,
+                             PasswordEncoder passwordEncoder,
+                             JwtUtil jwtUtil) { // Add JwtUtil to the constructor
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil; // Add this line
     }
 
     @PostMapping("/register")
@@ -39,31 +54,45 @@ public class StudentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(savedStudent);
     }
 
+    // --- THIS IS THE UPDATED /login METHOD ---
     @PostMapping("/login")
-    public ResponseEntity<Student> loginStudent(@RequestBody LoginRequest loginRequest) {
-        // --- START OF NEW DEBUG LOGGING ---
+    public ResponseEntity<LoginResponse> loginStudent(@RequestBody LoginRequest loginRequest) {
+
+        // --- START OF DEBUG LOGGING (can be removed later) ---
         System.out.println("--- LOGIN ATTEMPT ---");
         System.out.println("Email provided: " + loginRequest.email());
+        // --- END OF DEBUG LOGGING ---
 
         Optional<Student> studentOptional = studentRepository.findByEmail(loginRequest.email());
 
         if (studentOptional.isPresent()) {
             Student student = studentOptional.get();
             String storedHash = student.getPassword();
+            String rawPasswordFromRequest = loginRequest.password();
+
+            // --- START OF DEBUG LOGGING (can be removed later) ---
             System.out.println("User found in database.");
             System.out.println("Stored Hash: " + storedHash);
+            // --- END OF DEBUG LOGGING ---
 
-            String rawPasswordFromRequest = loginRequest.password();
-            System.out.println("Raw password from request: " + rawPasswordFromRequest);
+            if (passwordEncoder.matches(rawPasswordFromRequest, storedHash)) {
 
-            boolean matches = passwordEncoder.matches(rawPasswordFromRequest, storedHash);
-            System.out.println("Do they match? " + matches);
+                // --- START OF NEW JWT LOGIC ---
+                // 1. Generate a JWT token
+                String token = jwtUtil.generateToken(student);
+                System.out.println("Login SUCCESSFUL. Token generated: " + token);
 
-            if (matches) {
-                System.out.println("Login SUCCESSFUL.");
-                System.out.println("---------------------");
-                student.setPassword(null); // Don't send hash back
-                return ResponseEntity.ok(student);
+                // 2. Create the response object
+                LoginResponse response = new LoginResponse(
+                        student.getId(),
+                        student.getEmail(),
+                        student.getFirstName(),
+                        token
+                );
+
+                // 3. Return the response with the token
+                return ResponseEntity.ok(response);
+                // --- END OF NEW JWT LOGIC ---
             } else {
                 System.out.println("Login FAILED: Passwords do not match.");
             }
@@ -72,10 +101,7 @@ public class StudentController {
         }
 
         System.out.println("---------------------");
-        // --- END OF NEW DEBUG LOGGING ---
-
         // If user not found or password mismatch
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }
-

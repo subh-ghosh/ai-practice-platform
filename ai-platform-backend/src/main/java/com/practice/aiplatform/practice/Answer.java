@@ -36,6 +36,14 @@ public class Answer {
 
     private Boolean isCorrect;
 
+    // --- NEW FIELD 1 ---
+    // This will store "CORRECT", "INCORRECT", or "CLOSE"
+    private String evaluationStatus;
+
+    // --- NEW FIELD 2 ---
+    @Column(columnDefinition = "TEXT")
+    private String hint;
+
     @Column(columnDefinition = "TEXT")
     private String feedback;
 

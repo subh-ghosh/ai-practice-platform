@@ -7,11 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono; // We still need this for GeminiService
+import reactor.core.publisher.Mono;
 
+import java.security.Principal; // <-- IMPORT THIS
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional; // We will use Optional, not Mono, for database calls
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/practice")
@@ -19,93 +20,94 @@ public class PracticeController {
 
     @Autowired
     private QuestionRepository questionRepository;
-
     @Autowired
     private AnswerRepository answerRepository;
-
     @Autowired
     private StudentRepository studentRepository;
-
     @Autowired
     private GeminiService geminiService;
 
-    // --- THIS IS THE UPDATED METHOD ---
-    // It now returns a simple ResponseEntity, not a Mono
     @PostMapping("/submit")
-    public ResponseEntity<Answer> submitAnswer(@RequestBody SubmitAnswerRequest request) {
+    // 1. Add "Principal principal"
+    public Mono<ResponseEntity<Answer>> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
 
-        // We will use a placeholder student for now.
-        // In a real app, you'd get this from the security context.
-        // .findById() returns an Optional, so we use .orElseThrow()
-        Student student = studentRepository.findById(1L) // Placeholder: find student with ID 1
-                .orElseThrow(() -> new RuntimeException("Placeholder student not found"));
+        // 2. Find the student by their email
+        Student student = studentRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
         Question question = questionRepository.findById(request.questionId())
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
-        // Check 1: Does this student own this question?
         if (!question.getStudent().getId().equals(student.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
         }
-
-        // Check 2: Has this question already been answered?
         if (question.getAnswer() != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(question.getAnswer());
+            return Mono.just(ResponseEntity.status(HttpStatus.CONFLICT).body(question.getAnswer()));
         }
 
-        // 1. Create a new answer using the NO-ARGUMENT constructor
         Answer newAnswer = new Answer();
-
-        // 2. Set the fields manually
         newAnswer.setAnswerText(request.answerText());
         newAnswer.setQuestion(question);
-        newAnswer.setStudent(student);
+        newAnswer.setStudent(student); // Use the real student
         newAnswer.setSubmittedAt(LocalDateTime.now());
-
-        // Save the initial answer (without feedback)
-        // We save it here so we have an ID
         Answer savedAnswer = answerRepository.save(newAnswer);
 
-        // Now, call AI for evaluation (asynchronous)
-        // We call .block() to "wait" for the Mono to finish.
-        String feedback = geminiService.evaluateAnswer(question.getQuestionText(), savedAnswer.getAnswerText())
-                .block(); // This waits for the AI response
+        return geminiService.evaluateAnswer(question.getQuestionText(), savedAnswer.getAnswerText())
+                .flatMap(feedback -> {
+                    String evaluationStatus;
+                    String cleanFeedback = "";
+                    String hint = null;
 
-        // Parse AI Feedback
-        boolean isCorrect;
-        String cleanFeedback;
+                    if (feedback == null || feedback.trim().isEmpty()) {
+                        evaluationStatus = "INCORRECT";
+                        cleanFeedback = "No response from AI.";
+                    } else {
+                        String[] lines = feedback.trim().split("\n", 2);
+                        String firstLine = lines[0].trim().toUpperCase();
+                        String restOfFeedback = (lines.length > 1) ? lines[1].trim() : "No feedback provided.";
 
-        if (feedback != null && feedback.startsWith("CORRECT:")) {
-            isCorrect = true;
-            cleanFeedback = feedback.substring("CORRECT:".length()).trim();
-        } else if (feedback != null && feedback.startsWith("INCORRECT:")) {
-            isCorrect = false;
-            cleanFeedback = feedback.substring("INCORRECT:".length()).trim();
-        } else {
-            isCorrect = false; // Default to incorrect if format is wrong
-            cleanFeedback = feedback;
-        }
+                        if (firstLine.equals("CORRECT")) {
+                            evaluationStatus = "CORRECT";
+                            cleanFeedback = restOfFeedback;
+                        } else if (firstLine.equals("CLOSE")) {
+                            evaluationStatus = "CLOSE";
+                            cleanFeedback = restOfFeedback;
+                        } else {
+                            evaluationStatus = "INCORRECT";
+                            cleanFeedback = (lines.length > 1) ? feedback : "No feedback provided.";
+                        }
 
-        // Update the answer with feedback
-        savedAnswer.setIsCorrect(isCorrect);
-        savedAnswer.setFeedback(cleanFeedback);
+                        if (!evaluationStatus.equals("CORRECT")) {
+                            String hintMarker = "[HINT]";
+                            int hintIndex = cleanFeedback.toUpperCase().indexOf(hintMarker);
 
-        // Save the updated answer
-        Answer finalAnswer = answerRepository.save(savedAnswer);
-        return ResponseEntity.status(HttpStatus.CREATED).body(finalAnswer);
+                            if (hintIndex != -1) {
+                                hint = cleanFeedback.substring(hintIndex + hintMarker.length()).trim();
+                                cleanFeedback = cleanFeedback.substring(0, hintIndex).trim();
+                            }
+                        }
+                    }
+
+                    savedAnswer.setIsCorrect(evaluationStatus.equals("CORRECT"));
+                    savedAnswer.setEvaluationStatus(evaluationStatus);
+                    savedAnswer.setFeedback(cleanFeedback);
+                    savedAnswer.setHint(hint);
+                    Answer finalAnswer = answerRepository.save(savedAnswer);
+
+                    return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(finalAnswer));
+                });
     }
 
-    // This method needs to be blocking too
     @GetMapping("/history")
-    public ResponseEntity<PracticeHistoryDto> getHistory(@RequestParam Long studentId) {
+    // 1. Change studentId param to "Principal principal"
+    public ResponseEntity<PracticeHistoryDto> getHistory(Principal principal) {
 
-        // Use .findById() which returns Optional
-        Optional<Student> studentOptional = studentRepository.findById(studentId);
+        // 2. Find the student using the new method
+        Optional<Student> studentOptional = studentRepository.findByEmailWithHistory(principal.getName());
 
         if (studentOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
         Student student = studentOptional.get();
 
         List<PracticeHistoryDto.QuestionAnswerDto> historyList = student.getQuestions().stream()
@@ -128,4 +130,3 @@ public class PracticeController {
         return ResponseEntity.ok(historyDto);
     }
 }
-

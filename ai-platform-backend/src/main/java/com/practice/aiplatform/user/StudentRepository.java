@@ -1,23 +1,22 @@
 package com.practice.aiplatform.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query; // <-- ADD THIS IMPORT
+import org.springframework.data.repository.query.Param; // <-- ADD THIS IMPORT
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
-/**
- * This is the Repository interface for our Student entity.
- * It gives us all the built-in database operations (save, find, delete, etc.).
- */
-@Repository // Tells Spring this is a bean that should be managed
+@Repository
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
-    /**
-     * Spring Data JPA is smart. By simply defining this method,
-     * it will automatically generate the SQL query:
-     * "SELECT * FROM students WHERE email = ?"
-     *
-     * We use Optional in case no student is found with that email.
-     */
     Optional<Student> findByEmail(String email);
 
+    // --- ADD THIS NEW METHOD ---
+    /**
+     * Finds a student by email and also fetches all their questions
+     * and the corresponding answers in a single query (solves N+1 problem).
+     */
+    @Query("SELECT s FROM Student s LEFT JOIN FETCH s.questions q LEFT JOIN FETCH q.answer WHERE s.email = :email")
+    Optional<Student> findByEmailWithHistory(@Param("email") String email);
+    // --- END OF NEW METHOD ---
 }
