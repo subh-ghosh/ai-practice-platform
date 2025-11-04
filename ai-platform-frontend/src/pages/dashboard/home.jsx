@@ -15,6 +15,7 @@ import {
   Progress,
   Spinner, // From your original logic
   Chip,    // From your original logic
+  Button,  // <-- ADDED THIS IMPORT
 } from "@material-tailwind/react";
 import {
   EllipsisVerticalIcon,
@@ -32,7 +33,9 @@ import {
   ArrowPathIcon,// From your original logic
   CheckIcon,    // From your original logic
   XMarkIcon,    // From your original logic
+  PencilIcon,   // <-- ADDED THIS IMPORT
 } from "@heroicons/react/24/solid";
+import { Link } from "react-router-dom"; // <-- ADDED THIS IMPORT
 import { useAuth } from "@/context/AuthContext"; // <-- ADDED THIS IMPORT
 
 // --- HELPER FUNCTIONS (From original logic) ---
@@ -53,6 +56,7 @@ function formatDateTime(isoString) {
 }
 
 function formatDuration(seconds) {
+  if (!seconds) return "0s"; // Added check
   if (seconds < 60) {
     return `${seconds.toFixed(1)}s`;
   }
@@ -123,7 +127,7 @@ const getOverviewIcon = (status) => {
 export function Home() {
   const { user } = useAuth(); // <-- ADDED THIS LINE
   const [stats, setStats] = useState(null);
-  const [timeSeriesData, setTimeSeriesData] = useState([]);
+  const [timeSeriesData, setTimeSeriesData] = useState(null); // <-- FIXED: Was []
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -131,13 +135,21 @@ export function Home() {
     const fetchAllData = async () => {
       try {
         setLoading(true);
+        setError(null);
+        setStats(null);
+        setTimeSeriesData(null);
+
         const [summaryRes, timeSeriesRes] = await Promise.all([
           api.get("/api/stats/summary"),
           api.get("/api/stats/timeseries")
         ]);
 
-        setStats(summaryRes.data);
-        setTimeSeriesData(timeSeriesRes.data);
+        if (summaryRes.data && timeSeriesRes.data) {
+          setStats(summaryRes.data);
+          setTimeSeriesData(timeSeriesRes.data);
+        } else {
+          throw new Error("Received empty or invalid data from API");
+        }
 
       } catch (err) {
         console.error("Error fetching stats:", err);
@@ -157,10 +169,18 @@ export function Home() {
     );
   }
 
-  if (error || !stats) {
+  if (error) { // <-- FIXED: Added this guard
     return (
       <Typography color="red" className="text-center mt-12">
-        {error || "Statistics data is unavailable."}
+        {error}
+      </Typography>
+    );
+  }
+
+  if (!stats || !timeSeriesData) { // <-- FIXED: Added this guard
+    return (
+      <Typography color="gray" className="text-center mt-12">
+        No statistics data available yet.
       </Typography>
     );
   }
@@ -257,18 +277,19 @@ export function Home() {
   // --- JSX RENDER (Using new layout with original logic) ---
 
   return (
-    <div className="mt-12">
-      {/* --- ADDED THIS WELCOME BLOCK --- */}
-      <div className="mb-12 flex items-baseline gap-2">
-        <Typography variant="h5" color="blue-gray" className="font-normal">
+    // --- 1. MOVED EVERYTHING UP ---
+    <div className="mt-8">
+
+      {/* --- 2. MADE TEXT BIGGER --- */}
+      <div className="mb-12 flex items-baseline gap-3">
+        <Typography variant="h4" color="blue-gray" className="font-normal">
           Welcome,
         </Typography>
-        <Typography variant="h2" color="blue-gray" className="font-bold">
+        <Typography variant="h1" color="blue-gray" className="font-bold">
           {user.firstName}
         </Typography>
       </div>
-      {/* --- END OF WELCOME BLOCK --- */}
-
+      {/* --- END OF CHANGES --- */}
 
       {/* --- ROW 1: STATS CARDS (Dynamic) --- */}
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
@@ -364,7 +385,13 @@ export function Home() {
                 <strong>{stats.totalAttempts} attempts</strong> in total
               </Typography>
             </div>
-            {/* Removed the Menu/Ellipsis icon from the new style to match your original */}
+            {/* Added Link to Practice Page */}
+            <Link to="/dashboard/practice">
+              <Button variant="text" size="sm" className="flex items-center gap-2">
+                <PencilIcon className="h-4 w-4" />
+                Start Practice
+              </Button>
+            </Link>
           </CardHeader>
           <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
             <table className="w-full min-w-[640px] table-auto">
