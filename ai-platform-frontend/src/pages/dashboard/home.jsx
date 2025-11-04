@@ -33,6 +33,7 @@ import {
   CheckIcon,    // From your original logic
   XMarkIcon,    // From your original logic
 } from "@heroicons/react/24/solid";
+import { useAuth } from "@/context/AuthContext"; // <-- ADDED THIS IMPORT
 
 // --- HELPER FUNCTIONS (From original logic) ---
 
@@ -120,6 +121,7 @@ const getOverviewIcon = (status) => {
 // --- MAIN COMPONENT ---
 
 export function Home() {
+  const { user } = useAuth(); // <-- ADDED THIS LINE
   const [stats, setStats] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -256,6 +258,18 @@ export function Home() {
 
   return (
     <div className="mt-12">
+      {/* --- ADDED THIS WELCOME BLOCK --- */}
+      <div className="mb-12 flex items-baseline gap-2">
+        <Typography variant="h5" color="blue-gray" className="font-normal">
+          Welcome,
+        </Typography>
+        <Typography variant="h2" color="blue-gray" className="font-bold">
+          {user.firstName}
+        </Typography>
+      </div>
+      {/* --- END OF WELCOME BLOCK --- */}
+
+
       {/* --- ROW 1: STATS CARDS (Dynamic) --- */}
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
         {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (

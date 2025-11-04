@@ -57,7 +57,7 @@ export function AuthProvider({ children }) {
     // api.defaults.headers.common["Authorization"] = `Bearer ${userData.token}`;
 
     // --- FIX: Navigate to the "from" location or fallback to home ---
-    const from = location.state?.from?.pathname || "/dashboard/practice";
+    const from = location.state?.from?.pathname || "/dashboard/home";
     navigate(from, { replace: true });
   };
 
