@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "@/api";
+import api from "@/api"; // From your original logic
 import {
   Typography,
   Card,
@@ -13,8 +13,8 @@ import {
   Avatar,
   Tooltip,
   Progress,
-  Spinner,
-  Chip,
+  Spinner, // From your original logic
+  Chip,    // From your original logic
 } from "@material-tailwind/react";
 import {
   EllipsisVerticalIcon,
@@ -22,19 +22,19 @@ import {
 } from "@heroicons/react/24/outline";
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
-import { chartsConfig } from "@/configs";
+import { chartsConfig } from "@/configs"; // From your original logic
 import {
   CheckCircleIcon,
   ClockIcon,
-  XCircleIcon,
-  EyeIcon,
-  ChartBarIcon,
-  ArrowPathIcon,
-  CheckIcon,
-  XMarkIcon,
+  XCircleIcon,  // From your original logic
+  EyeIcon,      // From your original logic
+  ChartBarIcon, // From your original logic
+  ArrowPathIcon,// From your original logic
+  CheckIcon,    // From your original logic
+  XMarkIcon,    // From your original logic
 } from "@heroicons/react/24/solid";
 
-// --- HELPER FUNCTIONS ---
+// --- HELPER FUNCTIONS (From original logic) ---
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
@@ -67,7 +67,7 @@ const lineChartOptions = {
     ...chartsConfig.chart,
     type: "line",
   },
-  colors: ["#fff"], // Line color will be white
+  // colors: ["#fff"], // Line color - Will be set in individual charts
   stroke: {
     lineCap: "round",
     curve: 'smooth',
@@ -80,19 +80,19 @@ const lineChartOptions = {
     type: "category",
     labels: {
       ...chartsConfig.xaxis.labels,
-      style: { colors: "#fff" }, // X-axis labels white
+      style: { colors: "#37474f" }, // CHANGED: X-axis labels dark
     },
   },
   yaxis: {
     ...chartsConfig.yaxis,
     labels: {
       ...chartsConfig.yaxis.labels,
-      style: { colors: "#fff" }, // Y-axis labels white
+      style: { colors: "#37474f" }, // CHANGED: Y-axis labels dark
     }
   },
   grid: {
     ...chartsConfig.grid,
-    borderColor: "#ffffff40", // Lighter grid lines
+    borderColor: "#e0e0e0", // CHANGED: Lighter grid lines for white bg
   },
   tooltip: {
     theme: "dark",
@@ -163,12 +163,46 @@ export function Home() {
     );
   }
 
-  // --- CHART CONFIGURATIONS ---
+  // --- DYNAMIC DATA CONFIGURATIONS (From original logic) ---
 
-  const chartLabels = timeSeriesData.map(d => new Date(d.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' }));
+  // --- Statistics Card Data (Dynamic) ---
+  const statisticsCardsData = [
+    {
+      title: "Total Attempts",
+      icon: ArrowPathIcon,
+      color: "gray",
+      value: stats.totalAttempts,
+      footer: { value: "", label: "in total" }, // Adapted to new footer style
+    },
+    {
+      title: "Correct Answers",
+      icon: CheckIcon,
+      color: "green",
+      value: stats.correctCount,
+      footer: { value: "", label: "in total" }, // Adapted to new footer style
+    },
+    {
+      title: "Incorrect Answers",
+      icon: XMarkIcon,
+      color: "red",
+      value: stats.incorrectCount,
+      footer: { value: "", label: "in total" }, // Adapted to new footer style
+    },
+    {
+      title: "Overall Accuracy",
+      icon: ChartBarIcon,
+      color: "blue",
+      value: `${stats.accuracyPercentage.toFixed(1)}%`,
+      footer: { value: "", label: "of graded attempts" }, // Adapted to new footer style
+    },
+  ];
+
+  // --- Chart Configurations (Dynamic) ---
+  const chartLabels = timeSeriesData.map(d => new Date(d.date).toLocaleString('en-US', { day: 'numeric', month: 'short' }));
 
   const accuracyChart = {
     ...lineChartOptions,
+    colors: ["#28a745"], // CHANGED: Set line color to green
     series: [
       {
         name: "Accuracy",
@@ -188,6 +222,7 @@ export function Home() {
 
   const speedChart = {
     ...lineChartOptions,
+    colors: ["#fbbf24"], // CHANGED: Set line color to amber
     series: [
       {
         name: "Avg. Speed",
@@ -217,41 +252,11 @@ export function Home() {
     },
   };
 
-  // --- Statistics Card Data (Dynamic) ---
-  const statisticsCardsData = [
-    {
-      title: "Total Attempts",
-      icon: ArrowPathIcon,
-      color: "gray",
-      value: stats.totalAttempts,
-      footer: { label: "in total" },
-    },
-    {
-      title: "Correct Answers",
-      icon: CheckIcon,
-      color: "green",
-      value: stats.correctCount,
-      footer: { label: "in total" },
-    },
-    {
-      title: "Incorrect Answers",
-      icon: XMarkIcon,
-      color: "red",
-      value: stats.incorrectCount,
-      footer: { label: "in total" },
-    },
-    {
-      title: "Overall Accuracy",
-      icon: ChartBarIcon,
-      color: "blue",
-      value: `${stats.accuracyPercentage.toFixed(1)}%`,
-      footer: { label: "of graded attempts" },
-    },
-  ];
+  // --- JSX RENDER (Using new layout with original logic) ---
 
   return (
     <div className="mt-12">
-      {/* --- ROW 1: STATS CARDS (4 Cards) --- */}
+      {/* --- ROW 1: STATS CARDS (Dynamic) --- */}
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
         {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
           <StatisticsCard
@@ -263,6 +268,7 @@ export function Home() {
             })}
             footer={
               <Typography className="font-normal text-blue-gray-600">
+                {/* Adapted to new footer style (no strong tag needed) */}
                 {footer.label}
               </Typography>
             }
@@ -270,35 +276,59 @@ export function Home() {
         ))}
       </div>
 
-      {/* --- ROW 2: CHARTS (3 Charts) --- */}
+      {/* --- ROW 2: CHARTS (Dynamic) --- */}
       <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
         <StatisticsChart
           key="accuracy-chart"
           chart={accuracyChart}
-          color="green" // <-- PROP ADDED
+          color="white" // CHANGED
           title="Daily Accuracy"
           description="Percentage of correct answers over time."
-          footer={<Typography variant="small" className="font-normal text-blue-gray-600">Updated just now</Typography>}
+          footer={
+            <Typography
+              variant="small"
+              className="flex items-center font-normal text-blue-gray-600"
+            >
+              <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+              &nbsp;Updated just now
+            </Typography>
+          }
         />
         <StatisticsChart
           key="speed-chart"
           chart={speedChart}
-          color="amber" // <-- PROP ADDED
+          color="white" // CHANGED
           title="Average Answer Speed"
           description="Average time to a correct submission."
-          footer={<Typography variant="small" className="font-normal text-blue-gray-600">Updated just now</Typography>}
+          footer={
+            <Typography
+              variant="small"
+              className="flex items-center font-normal text-blue-gray-600"
+            >
+              <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+              &nbsp;Updated just now
+            </Typography>
+          }
         />
         <StatisticsChart
           key="breakdown-chart"
           chart={breakdownChart}
-          color="blue" // <-- PROP ADDED
+          color="white" // CHANGED
           title="Answer Breakdown"
           description="Summary of all practice attempts."
-          footer={<Typography variant="small" className="font-normal text-blue-gray-600">Updated just now</Typography>}
+          footer={
+            <Typography
+              variant="small"
+              className="flex items-center font-normal text-blue-gray-600"
+            >
+              <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+              &nbsp;Updated just now
+            </Typography>
+          }
         />
       </div>
 
-      {/* --- ROW 3: TABLE & FEED (2 items) --- */}
+      {/* --- ROW 3: TABLE & FEED (Dynamic) --- */}
       <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
         {/* Recent Activity Table (col-span-2) */}
         <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm">
@@ -320,7 +350,7 @@ export function Home() {
                 <strong>{stats.totalAttempts} attempts</strong> in total
               </Typography>
             </div>
-            {/* You can add a Menu here later if you want */}
+            {/* Removed the Menu/Ellipsis icon from the new style to match your original */}
           </CardHeader>
           <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
             <table className="w-full min-w-[640px] table-auto">
@@ -357,6 +387,7 @@ export function Home() {
                       <tr key={uniqueKey}>
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
+                            {/* Using substring logic from original */}
                             {item.questionText.substring(0, 40)}...
                           </Typography>
                         </td>
@@ -369,6 +400,7 @@ export function Home() {
                           </Typography>
                         </td>
                         <td className={className}>
+                           {/* Using Chip logic from original */}
                           <Chip
                             variant="gradient"
                             color={
@@ -382,6 +414,7 @@ export function Home() {
                         </td>
                         <td className={className}>
                            <Typography className="text-xs font-normal text-blue-gray-500">
+                            {/* Using formatDateTime helper from original */}
                             {formatDateTime(item.submittedAt)}
                           </Typography>
                         </td>
@@ -409,15 +442,18 @@ export function Home() {
               variant="small"
               className="flex items-center gap-1 font-normal text-blue-gray-600"
             >
+              {/* Using text from original */}
               Your latest 5 attempts.
             </Typography>
           </CardHeader>
           <CardBody className="pt-0">
+            {/* Using map and helper logic from original */}
             {stats.recentActivity.map(
               (item, key) => {
                 const { Icon, color } = getOverviewIcon(item.evaluationStatus);
+                const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
                 return (
-                  <div key={key} className="flex items-start gap-4 py-3">
+                  <div key={uniqueKey} className="flex items-start gap-4 py-3">
                     <div
                       className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
                         key === stats.recentActivity.length - 1
