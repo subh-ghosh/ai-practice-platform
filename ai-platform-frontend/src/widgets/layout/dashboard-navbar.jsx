@@ -4,13 +4,11 @@ import {
   Typography,
   Button,
   IconButton,
-  Breadcrumbs, // Kept the import, but we'll remove the component
-  Input,
   Menu,
   MenuHandler,
   MenuList,
   MenuItem,
-  Avatar,
+  Badge,
 } from "@material-tailwind/react";
 import { useNotifications } from "@/context/NotificationContext.jsx";
 import {
@@ -18,22 +16,46 @@ import {
   Cog6ToothIcon,
   BellIcon,
   ClockIcon,
-  CreditCardIcon,
   Bars3Icon,
 } from "@heroicons/react/24/solid";
 import {
   useMaterialTailwindController,
   setOpenConfigurator,
   setOpenSidenav,
-} from "@/context"; // Fixed import path to use alias
-import { useAuth } from "@/context/AuthContext"; // Fixed import path to use alias
+} from "@/context";
+import { useAuth } from "@/context/AuthContext";
+import { useCallback } from "react";
 
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
   const { fixedNavbar, openSidenav } = controller;
   const { pathname } = useLocation();
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
-  const { user, logout } = useAuth(); // Get user and logout
+  const { user, logout } = useAuth();
+
+  const {
+    notifications = [],
+    unreadCount = 0,
+    loading,
+    markRead,
+  } = useNotifications();
+
+  const handleMarkRead = useCallback(
+    async (id) => {
+      try {
+        await Promise.resolve(markRead?.(id));
+      } catch (err) {
+        // keep menu usable even if markRead fails
+        // optionally plug in a toast here
+        console.error("Failed to mark notification read:", err);
+      }
+    },
+    [markRead]
+  );
+
+  const safeUnread = Number.isFinite(Number(unreadCount))
+    ? Number(unreadCount)
+    : 0;
 
   return (
     <Navbar
@@ -48,34 +70,11 @@ export function DashboardNavbar() {
     >
       <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
         <div className="capitalize">
-          {/* --- BREADCRUMBS REMOVED ---
-          <Breadcrumbs
-            className={`bg-transparent p-0 transition-all ${
-              fixedNavbar ? "mt-1" : ""
-            }`}
-          >
-            <Link to={`/${layout}`}>
-              <Typography
-                variant="small"
-                color="blue-gray"
-                className="font-normal opacity-50 transition-all hover:text-blue-500 hover:opacity-100"
-              >
-                {layout}
-              </Typography>
-            </Link>
-            <Typography
-              variant="small"
-              color="blue-gray"
-              className="font-normal"
-            >
-              {page}
-            </Typography>
-          </Breadcrumbs>
-          --- END REMOVED --- */}
           <Typography variant="h6" color="blue-gray">
             {page}
           </Typography>
         </div>
+
         <div className="flex items-center">
           <IconButton
             variant="text"
@@ -95,7 +94,7 @@ export function DashboardNavbar() {
                 className="hidden items-center gap-1 px-4 xl:flex normal-case"
               >
                 <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
-                Hi, {user.firstName}
+                Hi, {user?.firstName ?? "User"}
               </Button>
             </MenuHandler>
             <MenuList>
@@ -106,49 +105,98 @@ export function DashboardNavbar() {
               </MenuItem>
             </MenuList>
           </Menu>
-          {/* Mobile hamburger icon for user menu (optional) */}
-          <IconButton
-            variant="text"
-            color="blue-gray"
-            className="grid xl:hidden"
-          >
+
+          <IconButton variant="text" color="blue-gray" className="grid xl:hidden">
             <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
           </IconButton>
 
+          {/* --- NOTIFICATION MENU (DYNAMIC) --- */}
           <Menu>
             <MenuHandler>
               <IconButton variant="text" color="blue-gray">
-                <BellIcon className="h-5 w-5 text-blue-gray-500" />
+                <Badge
+                  content={safeUnread || 0}
+                  withBorder
+                  color="red"
+                  invisible={!safeUnread}
+                  className="z-10 top-1"
+                >
+                  <BellIcon className="h-5 w-5 text-blue-gray-500" />
+                </Badge>
               </IconButton>
             </MenuHandler>
-            <MenuList className="w-max border-0">
-              <MenuItem className="flex items-center gap-3">
-                <Avatar
-                  src="https://demos.creative-tim.com/material-dashboard/assets/img/team-2.jpg"
-                  alt="item-1"
-                  size="sm"
-                  variant="circular"
-                />
-                <div>
-                  <Typography
-                    variant="small"
-                    color="blue-gray"
-                    className="mb-1 font-normal"
-                  >
-                    <strong>New message</strong> from Laur
+
+            <MenuList className="w-full max-w-xs border-0">
+              {loading && (
+                <MenuItem className="flex items-center gap-3">
+                  <Typography variant="small" color="blue-gray" className="font-normal">
+                    Loading notifications...
                   </Typography>
-                  <Typography
-                    variant="small"
-                    color="blue-gray"
-                    className="flex items-center gap-1 text-xs font-normal opacity-60"
-                  >
-                    <ClockIcon className="h-3.5 w-3.s5" /> 13 minutes ago
+                </MenuItem>
+              )}
+
+              {!loading && !safeUnread && (
+                <MenuItem className="flex items-center gap-3">
+                  <Typography variant="small" color="blue-gray" className="font-normal">
+                    No new notifications
                   </Typography>
-                </div>
-              </MenuItem>
-              {/* ... other menu items ... */}
+                </MenuItem>
+              )}
+
+              {!loading &&
+                safeUnread > 0 &&
+                notifications.slice(0, 5).map((n) => (
+                  <MenuItem
+                    key={n.id}
+                    className="flex items-start gap-3 whitespace-normal"
+                    onClick={() => handleMarkRead(n.id)}
+                  >
+                    <div className="relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] after:h-4/6">
+                      <ClockIcon className="!w-5 !h-5 text-blue-gray-500" />
+                    </div>
+                    <div>
+                      <Typography
+                        variant="small"
+                        color="blue-gray"
+                        className="mb-1 font-semibold uppercase text-xs"
+                      >
+                        {n.type}
+                      </Typography>
+                      <Typography variant="small" color="blue-gray" className="font-normal">
+                        {n.message}
+                      </Typography>
+                      <Typography
+                        as="span"
+                        variant="small"
+                        className="text-xs font-medium text-blue-gray-400"
+                      >
+                        {new Date(n.createdAt).toLocaleString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: false,
+                        })}
+                      </Typography>
+                    </div>
+                  </MenuItem>
+                ))}
+
+              <hr className="my-2 border-blue-gray-50" />
+
+              <Link to="/dashboard/notifications">
+                <MenuItem className="flex items-center justify-center gap-3">
+                  <Typography variant="small" color="blue-500" className="font-medium">
+                    View all notifications
+                  </Typography>
+                </MenuItem>
+              </Link>
             </MenuList>
           </Menu>
+          {/* --- END OF NOTIFICATION MENU --- */}
+
           <IconButton
             variant="text"
             color="blue-gray"
@@ -165,4 +213,3 @@ export function DashboardNavbar() {
 DashboardNavbar.displayName = "/src/widgets/layout/dashboard-navbar.jsx";
 
 export default DashboardNavbar;
-
