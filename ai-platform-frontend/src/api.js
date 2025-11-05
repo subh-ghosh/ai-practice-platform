@@ -4,10 +4,17 @@ const api = axios.create({
   baseURL: 'http://localhost:8081',
 });
 
-// --- THIS IS THE NEW INTERCEPTOR ---
-// This function runs before *every* request is sent
+// --- THIS IS THE UPDATED INTERCEPTOR ---
 api.interceptors.request.use(
   (config) => {
+    // Don't send a token for public login or register routes
+    if (
+      config.url === '/api/students/login' ||
+      config.url === '/api/students/register'
+    ) {
+      return config;
+    }
+
     // 1. Get the 'user' string from localStorage
     const userString = localStorage.getItem('user');
 
@@ -26,6 +33,6 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-// --- END OF NEW INTERCEPTOR ---
+// --- END OF UPDATED INTERCEPTOR ---
 
 export default api;
