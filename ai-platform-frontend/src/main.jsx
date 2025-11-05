@@ -7,22 +7,25 @@ import { BrowserRouter } from "react-router-dom";
 import { ThemeProvider } from "@material-tailwind/react";
 import { MaterialTailwindControllerProvider } from "@/context";
 import { AuthProvider } from "@/context/AuthContext";
-import { NotificationProvider } from "@/context/NotificationContext.jsx"; // Import our new provider
+import { NotificationProvider } from "@/context/NotificationContext.jsx";
+import { ThemeProvider as AppThemeProvider } from "@/context/ThemeContext.jsx"; // 👈 --- ADD THIS
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <ThemeProvider>
         <MaterialTailwindControllerProvider>
-          {}
-          <AuthProvider>
-            <NotificationProvider>
-            <App />
-                      </NotificationProvider>
-          </AuthProvider>
+          {/* 👇 --- WRAP HERE --- */}
+          <AppThemeProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <App />
+              </NotificationProvider>
+            </AuthProvider>
+          </AppThemeProvider>
+          {/* 👆 --- END WRAP --- */}
         </MaterialTailwindControllerProvider>
       </ThemeProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
-

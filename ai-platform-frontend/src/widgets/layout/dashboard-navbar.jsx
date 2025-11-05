@@ -13,34 +13,33 @@ import {
 import { useNotifications } from "@/context/NotificationContext.jsx";
 import {
   UserCircleIcon,
-  Cog6ToothIcon,
+  // 👇 --- REMOVED Cog6ToothIcon ---
   BellIcon,
   ClockIcon,
   Bars3Icon,
 } from "@heroicons/react/24/solid";
 import {
   useMaterialTailwindController,
-  setOpenConfigurator,
+  // 👇 --- REMOVED setOpenConfigurator ---
   setOpenSidenav,
 } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import { useCallback } from "react";
+import { ThemeToggle } from "./ThemeToggle"; // 👈 --- ADD THIS
 
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
-  const { fixedNavbar, openSidenav } = controller;
+const { fixedNavbar, openSidenav } = controller;
   const { pathname } = useLocation();
-  const [layout, page] = pathname.split("/").filter((el) => el !== "");
+const [layout, page] = pathname.split("/").filter((el) => el !== "");
   const { user, logout } = useAuth();
-
-  const {
+const {
     notifications = [],
     unreadCount = 0,
     loading,
     markRead,
   } = useNotifications();
-
-  const handleMarkRead = useCallback(
+const handleMarkRead = useCallback(
     async (id) => {
       try {
         await Promise.resolve(markRead?.(id));
@@ -52,12 +51,10 @@ export function DashboardNavbar() {
     },
     [markRead]
   );
-
-  const safeUnread = Number.isFinite(Number(unreadCount))
+const safeUnread = Number.isFinite(Number(unreadCount))
     ? Number(unreadCount)
     : 0;
-
-  return (
+return (
     <Navbar
       color={fixedNavbar ? "white" : "transparent"}
       className={`rounded-xl transition-all ${
@@ -69,7 +66,8 @@ export function DashboardNavbar() {
       blurred={fixedNavbar}
     >
       <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
-        <div className="capitalize">
+
+ <div className="capitalize">
           <Typography variant="h6" color="blue-gray">
             {page}
           </Typography>
@@ -79,7 +77,8 @@ export function DashboardNavbar() {
           <IconButton
             variant="text"
             color="blue-gray"
-            className="grid xl:hidden"
+
+className="grid xl:hidden"
             onClick={() => setOpenSidenav(dispatch, !openSidenav)}
           >
             <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
@@ -88,20 +87,23 @@ export function DashboardNavbar() {
           {/* USER MENU */}
           <Menu>
             <MenuHandler>
-              <Button
+
+  <Button
                 variant="text"
                 color="blue-gray"
                 className="hidden items-center gap-1 px-4 xl:flex normal-case"
               >
                 <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
-                Hi, {user?.firstName ?? "User"}
+
+     Hi, {user?.firstName ?? "User"}
               </Button>
             </MenuHandler>
             <MenuList>
               <MenuItem onClick={logout}>
                 <Typography color="red" className="font-medium">
                   Log Out
-                </Typography>
+
+              </Typography>
               </MenuItem>
             </MenuList>
           </Menu>
@@ -110,77 +112,92 @@ export function DashboardNavbar() {
             <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
           </IconButton>
 
-          {/* --- NOTIFICATION MENU (DYNAMIC) --- */}
+
+{/* --- NOTIFICATION MENU (DYNAMIC) --- */}
           <Menu>
             <MenuHandler>
               <IconButton variant="text" color="blue-gray">
                 <Badge
-                  content={safeUnread || 0}
+                  content={safeUnread ||
+0}
                   withBorder
                   color="red"
                   invisible={!safeUnread}
                   className="z-10 top-1"
                 >
-                  <BellIcon className="h-5 w-5 text-blue-gray-500" />
+
+       <BellIcon className="h-5 w-5 text-blue-gray-500" />
                 </Badge>
               </IconButton>
             </MenuHandler>
 
             <MenuList className="w-full max-w-xs border-0">
               {loading && (
-                <MenuItem className="flex items-center gap-3">
+
+<MenuItem className="flex items-center gap-3">
                   <Typography variant="small" color="blue-gray" className="font-normal">
                     Loading notifications...
                   </Typography>
                 </MenuItem>
               )}
 
-              {!loading && !safeUnread && (
+
+       {!loading && !safeUnread && (
                 <MenuItem className="flex items-center gap-3">
                   <Typography variant="small" color="blue-gray" className="font-normal">
                     No new notifications
                   </Typography>
-                </MenuItem>
+
+       </MenuItem>
               )}
 
               {!loading &&
                 safeUnread > 0 &&
                 notifications.slice(0, 5).map((n) => (
                   <MenuItem
-                    key={n.id}
+
+            key={n.id}
                     className="flex items-start gap-3 whitespace-normal"
                     onClick={() => handleMarkRead(n.id)}
                   >
-                    <div className="relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] after:h-4/6">
+                    <div className="relative p-1 after:absolute after:-bottom-6
+after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] after:h-4/6">
                       <ClockIcon className="!w-5 !h-5 text-blue-gray-500" />
                     </div>
                     <div>
                       <Typography
-                        variant="small"
+
+                 variant="small"
                         color="blue-gray"
                         className="mb-1 font-semibold uppercase text-xs"
                       >
-                        {n.type}
+
+              {n.type}
                       </Typography>
                       <Typography variant="small" color="blue-gray" className="font-normal">
                         {n.message}
-                      </Typography>
+
+       </Typography>
                       <Typography
                         as="span"
                         variant="small"
-                        className="text-xs font-medium text-blue-gray-400"
+
+ className="text-xs font-medium text-blue-gray-400"
                       >
                         {new Date(n.createdAt).toLocaleString(undefined, {
                           year: "numeric",
-                          month: "short",
+
+    month: "short",
                           day: "2-digit",
                           hour: "2-digit",
                           minute: "2-digit",
-                          second: "2-digit",
+
+            second: "2-digit",
                           hour12: false,
                         })}
                       </Typography>
-                    </div>
+
+      </div>
                   </MenuItem>
                 ))}
 
@@ -188,22 +205,21 @@ export function DashboardNavbar() {
 
               <Link to="/dashboard/notifications">
                 <MenuItem className="flex items-center justify-center gap-3">
-                  <Typography variant="small" color="blue-500" className="font-medium">
+                  {/* --- THIS IS THE FIX --- */}
+                  <Typography variant="small" color="blue" className="font-medium">
                     View all notifications
                   </Typography>
+                  {/* --- END OF FIX --- */}
                 </MenuItem>
               </Link>
             </MenuList>
-          </Menu>
+
+     </Menu>
           {/* --- END OF NOTIFICATION MENU --- */}
 
-          <IconButton
-            variant="text"
-            color="blue-gray"
-            onClick={() => setOpenConfigurator(dispatch, true)}
-          >
-            <Cog6ToothIcon className="h-5 w-5 text-blue-gray-500" />
-          </IconButton>
+          {/* 👇 --- THIS IS THE REPLACEMENT --- */}
+          <ThemeToggle />
+
         </div>
       </div>
     </Navbar>

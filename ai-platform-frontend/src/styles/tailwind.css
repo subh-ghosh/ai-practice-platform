@@ -2,4 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* (optional) your global tweaks can live here */
+/* 👇 ADDED THIS SECTION */
+@layer base {
+  html {
+    /* Default (light) mode colors */
+    @apply bg-gray-50 text-blue-gray-900;
+  }
+  html.dark {
+    /* Dark mode colors */
+    @apply bg-gray-900 text-blue-gray-50;
+  }
+}

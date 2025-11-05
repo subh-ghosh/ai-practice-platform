@@ -10,21 +10,20 @@ import {
 import {
   useMaterialTailwindController,
   setOpenSidenav,
-} from "../../context"; // <-- FIXED IMPORT PATH
+} from "../../context";
+// <-- FIXED IMPORT PATH
 
 export function Sidenav({ brandImg, brandName, routes }) {
   const [controller, dispatch] = useMaterialTailwindController();
-  const { sidenavColor, sidenavType, openSidenav } = controller;
+const { sidenavColor, sidenavType, openSidenav } = controller;
   const sidenavTypes = {
     dark: "bg-gradient-to-br from-gray-800 to-gray-900",
     white: "bg-white shadow-sm",
     transparent: "bg-transparent",
   };
-
-  // Filter routes: Only keep items that belong to the "dashboard" layout.
-  const dashboardRoutes = routes.filter(({ layout }) => layout === "dashboard");
-
-  return (
+// Filter routes: Only keep items that belong to the "dashboard" layout.
+const dashboardRoutes = routes.filter(({ layout }) => layout === "dashboard");
+return (
     <aside
       className={`${sidenavTypes[sidenavType]} ${
         openSidenav ? "translate-x-0" : "-translate-x-80"
@@ -34,7 +33,8 @@ export function Sidenav({ brandImg, brandName, routes }) {
         <Link to="/" className="py-6 px-8 text-center">
           <Typography
             variant="h6"
-            color={sidenavType === "dark" ? "white" : "blue-gray"}
+
+color={sidenavType === "dark" ? "white" : "blue-gray"}
           >
             {brandName}
           </Typography>
@@ -44,7 +44,8 @@ export function Sidenav({ brandImg, brandName, routes }) {
           color="white"
           size="sm"
           ripple={false}
-          className="absolute right-0 top-0 grid rounded-br-none rounded-tl-none xl:hidden"
+
+    className="absolute right-0 top-0 grid rounded-br-none rounded-tl-none xl:hidden"
           onClick={() => setOpenSidenav(dispatch, false)}
         >
           <XMarkIcon strokeWidth={2.5} className="h-5 w-5 text-white" />
@@ -53,45 +54,56 @@ export function Sidenav({ brandImg, brandName, routes }) {
       <div className="m-4">
         {dashboardRoutes.map(({ layout, title, pages }, key) => (
           <ul key={key} className="mb-4 flex flex-col gap-1">
-            {title && (
+
+         {title && (
               <li className="mx-3.5 mt-4 mb-2">
                 <Typography
                   variant="small"
-                  color={sidenavType === "dark" ? "white" : "blue-gray"}
+                  color={sidenavType === "dark" ?
+"white" : "blue-gray"}
                   className="font-black uppercase opacity-75"
                 >
                   {title}
                 </Typography>
               </li>
             )}
-            {pages.map(({ icon, name, path }) => (
+
+          {pages.map(({ icon, name, path }) => (
               <li key={name}>
                 <NavLink to={`/${layout}${path}`}>
                   {({ isActive }) => (
                     <Button
-                      variant={isActive ? "gradient" : "text"}
+
+            variant={isActive ? "gradient" : "text"}
+                      // --- THIS IS THE FIX ---
                       color={
                         isActive
-                          ? sidenavColor
-                          : sidenavType === "dark"
+                          ? (sidenavColor === "dark" ? "gray" : sidenavColor) // Remap 'dark' to 'gray'
+
+               : (sidenavType === "dark"
                           ? "white"
-                          : "blue-gray"
+                          : "blue-gray")
                       }
-                      className="flex items-center gap-4 px-4 capitalize"
+                      // --- END OF FIX ---
+
+                className="flex items-center gap-4 px-4 capitalize"
                       fullWidth
                     >
                       {icon}
-                      <Typography
+
+      <Typography
                         color="inherit"
                         className="font-medium capitalize"
                       >
-                        {name}
+
+ {name}
                       </Typography>
                     </Button>
                   )}
                 </NavLink>
               </li>
-            ))}
+
+   ))}
           </ul>
         ))}
       </div>
@@ -103,7 +115,6 @@ Sidenav.defaultProps = {
   brandImg: "/img/logo-ct.png",
   brandName: "AI Practice Platform",
 };
-
 Sidenav.propTypes = {
   brandImg: PropTypes.string,
   brandName: PropTypes.string,
@@ -112,4 +123,3 @@ Sidenav.propTypes = {
 
 Sidenav.displayName = "/src/widgets/layout/sidenav.jsx";
 export default Sidenav;
-

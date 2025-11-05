@@ -5,8 +5,8 @@ import {
   UserPlusIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/solid";
-import { Navbar, Footer } from "@/widgets/layout";
 import routes from "@/routes";
+import { ThemeToggle } from "@/widgets/layout/ThemeToggle"; // 👈 --- ADD THIS
 
 export function Auth() {
   const navbarRoutes = [
@@ -25,7 +25,8 @@ export function Auth() {
       path: "/auth/sign-up",
       icon: UserPlusIcon,
     },
-    {
+
+{
       name: "sign in",
       path: "/auth/sign-in",
       icon: ArrowRightOnRectangleIcon,
@@ -33,7 +34,14 @@ export function Auth() {
   ];
 
   return (
-    <div className="relative min-h-screen w-full">
+    // 👇 --- MODIFIED: Added dark:bg-gray-900
+    <div className="relative min-h-screen w-full dark:bg-gray-900">
+
+      {/* 👇 --- ADD THIS DIV FOR THE TOGGLE --- */}
+      <div className="fixed top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
+
       <Routes>
         {routes.map(
           ({ layout, pages }) =>
@@ -41,7 +49,8 @@ export function Auth() {
             pages.map(({ path, element }) => (
               <Route exact path={path} element={element} />
             ))
-        )}
+
+      )}
       </Routes>
     </div>
   );
