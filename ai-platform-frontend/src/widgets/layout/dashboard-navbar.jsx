@@ -12,6 +12,7 @@ import {
   MenuItem,
   Avatar,
 } from "@material-tailwind/react";
+import { useNotifications } from "@/context/NotificationContext.jsx";
 import {
   UserCircleIcon,
   Cog6ToothIcon,

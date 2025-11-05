@@ -53,15 +53,10 @@ export const routes = [
         path: "/profile",
         element: <Profile />,
       },
-      {
-        icon: <TableCellsIcon {...icon} />,
-        name: "Tables (Example)",
-        path: "/tables",
-        element: <Tables />,
-      },
+      
       {
         icon: <InformationCircleIcon {...icon} />,
-        name: "Notifications (Example)",
+        name: "Notifications ",
         path: "/notifications",
         element: <Notifications />,
       },

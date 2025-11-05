@@ -171,7 +171,7 @@ export function Profile() {
                       "full name": `${user.firstName} ${user.lastName || ""}`,
                       "email": user.email,
                       "gender": user.gender ? (user.gender.charAt(0).toUpperCase() + user.gender.slice(1)) : 'Not set',
-                      "location": "India (Example)",
+                      "location": "India",
                     }}
                     action={
                       <Tooltip content="Edit Profile">

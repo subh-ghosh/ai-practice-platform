@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import com.practice.aiplatform.notifications.NotificationService;
 
 import java.security.Principal;
 
@@ -16,11 +17,16 @@ public class StudentController {
 
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notificationService;
 
-    public StudentController(StudentRepository studentRepository,
-                             PasswordEncoder passwordEncoder) {
+    public StudentController(
+            StudentRepository studentRepository,
+            PasswordEncoder passwordEncoder,
+            NotificationService notificationService
+    ) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
+        this.notificationService = notificationService;
     }
 
     @GetMapping("/profile")
@@ -50,6 +56,10 @@ public class StudentController {
         if (req.gender() != null)    student.setGender(req.gender().trim().toLowerCase());
 
         studentRepository.save(student);
+
+        // 🔔 notify on profile update
+        notificationService.notify(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
+
         String token = extractBearer(auth);
         return ResponseEntity.ok(toDto(student, token));
     }

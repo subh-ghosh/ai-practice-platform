@@ -1,25 +1,28 @@
 package com.practice.aiplatform.user;
 
 import com.practice.aiplatform.security.JwtUtil;
+import com.practice.aiplatform.notifications.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-record RegisterRequest(String firstName, String lastName, String email, String password) {}
-// you already have: record LoginRequest(String email, String password) {}
-
 @RestController
 @RequestMapping("/api/students")
 public class StudentAuthController {
 
+    private final NotificationService notificationService;
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public StudentAuthController(StudentRepository studentRepository,
-                                 PasswordEncoder passwordEncoder,
-                                 JwtUtil jwtUtil) {
+    public StudentAuthController(
+            NotificationService notificationService,
+            StudentRepository studentRepository,
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil
+    ) {
+        this.notificationService = notificationService;
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -42,6 +45,10 @@ public class StudentAuthController {
                 req.lastName().trim()
         );
         studentRepository.save(student);
+
+        // notify register
+        notificationService.notify(student.getId(), "REGISTER", "Welcome, you have registered successfully.");
+
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -53,9 +60,9 @@ public class StudentAuthController {
         }
 
         boolean ok = passwordEncoder.matches(req.password(), student.getPassword());
-        // MIGRATION PATH: if DB still has plaintext for older users, accept once and re-hash
+        // plaintext migration path
         if (!ok && req.password().equals(student.getPassword())) {
-            student.setPassword(passwordEncoder.encode(req.password())); // upgrade to hash
+            student.setPassword(passwordEncoder.encode(req.password()));
             studentRepository.save(student);
             ok = true;
         }
@@ -73,6 +80,10 @@ public class StudentAuthController {
                 student.getGender(),
                 token
         );
+
+        // notify login
+        notificationService.notify(student.getId(), "LOGIN", "You logged in successfully.");
+
         return ResponseEntity.ok(dto);
     }
 }

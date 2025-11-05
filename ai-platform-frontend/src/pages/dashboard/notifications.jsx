@@ -1,83 +1,32 @@
 import React from "react";
-import {
-  Typography,
-  Alert,
-  Card,
-  CardHeader,
-  CardBody,
-} from "@material-tailwind/react";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import { Typography, Card, CardHeader, CardBody, Button } from "@material-tailwind/react";
+import { useNotifications } from "@/context/NotificationContext.jsx";
 
 export function Notifications() {
-  const [showAlerts, setShowAlerts] = React.useState({
-    blue: true,
-    green: true,
-    orange: true,
-    red: true,
-  });
-  const [showAlertsWithIcon, setShowAlertsWithIcon] = React.useState({
-    blue: true,
-    green: true,
-    orange: true,
-    red: true,
-  });
-  const alerts = ["gray", "green", "orange", "red"];
+  const { notifications, loading, error, markRead, reload } = useNotifications();
 
   return (
-    <div className="mx-auto my-20 flex max-w-screen-lg flex-col gap-8">
+    <div className="mt-12">
       <Card>
-        <CardHeader
-          color="transparent"
-          floated={false}
-          shadow={false}
-          className="m-0 p-4"
-        >
-          <Typography variant="h5" color="blue-gray">
-            Alerts
-          </Typography>
+        <CardHeader floated={false} shadow={false} className="rounded-none m-0 p-4">
+          <div className="flex items-center justify-between">
+            <Typography variant="h5" color="blue-gray">Notifications</Typography>
+            <Button size="sm" variant="text" onClick={reload}>Refresh</Button>
+          </div>
         </CardHeader>
-        <CardBody className="flex flex-col gap-4 p-4">
-          {alerts.map((color) => (
-            <Alert
-              key={color}
-              open={showAlerts[color]}
-              color={color}
-              onClose={() => setShowAlerts((current) => ({ ...current, [color]: false }))}
-            >
-              A simple {color} alert with an <a href="#">example link</a>. Give
-              it a click if you like.
-            </Alert>
-          ))}
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader
-          color="transparent"
-          floated={false}
-          shadow={false}
-          className="m-0 p-4"
-        >
-          <Typography variant="h5" color="blue-gray">
-            Alerts with Icon
-          </Typography>
-        </CardHeader>
-        <CardBody className="flex flex-col gap-4 p-4">
-          {alerts.map((color) => (
-            <Alert
-              key={color}
-              open={showAlertsWithIcon[color]}
-              color={color}
-              icon={
-                <InformationCircleIcon strokeWidth={2} className="h-6 w-6" />
-              }
-              onClose={() => setShowAlertsWithIcon((current) => ({
-                ...current,
-                [color]: false,
-              }))}
-            >
-              A simple {color} alert with an <a href="#">example link</a>. Give
-              it a click if you like.
-            </Alert>
+        <CardBody className="flex flex-col gap-3 p-4">
+          {loading && <Typography>Loading...</Typography>}
+          {error && <Typography color="red">{error}</Typography>}
+          {!loading && notifications.length === 0 && <Typography>No new notifications.</Typography>}
+          {notifications.map(n => (
+            <div key={n.id} className="flex items-start justify-between border border-blue-gray-50 rounded-lg p-3">
+              <div>
+                <Typography variant="small" className="font-medium">{n.type}</Typography>
+                <Typography variant="paragraph">{n.message}</Typography>
+                <Typography variant="small" color="gray">{new Date(n.createdAt).toLocaleString()}</Typography>
+              </div>
+              <Button size="sm" onClick={() => markRead(n.id)}>Mark read</Button>
+            </div>
           ))}
         </CardBody>
       </Card>
