@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import api from "@/api"; // From your original logic
+import api from "@/api";
+// From your original logic
 import {
   Typography,
   Card,
@@ -36,46 +37,48 @@ import {
   PencilIcon,   // <-- ADDED THIS IMPORT
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom"; // <-- ADDED THIS IMPORT
-import { useAuth } from "@/context/AuthContext"; // <-- ADDED THIS IMPORT
+import { useAuth } from "@/context/AuthContext";
+// <-- ADDED THIS IMPORT
 
 // --- HELPER FUNCTIONS (From original logic) ---
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
-  try {
+try {
     const date = new Date(isoString);
-    return date.toLocaleString(undefined, {
+return date.toLocaleString(undefined, {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  } catch (error) {
+} catch (error) {
     return "Invalid Date";
   }
 }
 
 function formatDuration(seconds) {
-  if (!seconds) return "0s"; // Added check
+  if (!seconds) return "0s";
+// Added check
   if (seconds < 60) {
     return `${seconds.toFixed(1)}s`;
-  }
+}
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = (seconds % 60).toFixed(0);
   return `${minutes}m ${remainingSeconds}s`;
 }
 
-// Base config for our line charts
+// --- CORRECTED CHART OPTIONS ---
+// This is the base "options" object for the line charts
 const lineChartOptions = {
   ...chartsConfig,
   chart: {
     ...chartsConfig.chart,
     type: "line",
   },
-  // colors: ["#fff"], // Line color - Will be set in individual charts
   stroke: {
     lineCap: "round",
-    curve: 'smooth',
+    curve: "smooth",
   },
   markers: {
     size: 5,
@@ -85,53 +88,61 @@ const lineChartOptions = {
     type: "category",
     labels: {
       ...chartsConfig.xaxis.labels,
-      style: { colors: "#37474f" }, // CHANGED: X-axis labels dark
+      style: {
+        ...chartsConfig.xaxis.labels.style,
+        colors: "#37474f",
+      },
     },
   },
   yaxis: {
     ...chartsConfig.yaxis,
     labels: {
       ...chartsConfig.yaxis.labels,
-      style: { colors: "#37474f" }, // CHANGED: Y-axis labels dark
-    }
+      style: {
+        ...chartsConfig.yaxis.labels.style,
+        colors: "#37474f",
+      },
+    },
   },
   grid: {
     ...chartsConfig.grid,
-    borderColor: "#e0e0e0", // CHANGED: Lighter grid lines for white bg
+    borderColor: "#e0e0e0",
   },
   tooltip: {
+    ...chartsConfig.tooltip,
     theme: "dark",
     x: {
       format: "dd MMM yyyy",
     },
   },
 };
+// --- END OF CORRECTION ---
 
 // Helper for the new overview feed
 const getOverviewIcon = (status) => {
   switch (status?.toUpperCase()) {
     case "CORRECT":
       return { Icon: CheckCircleIcon, color: "text-green-500" };
-    case "INCORRECT":
+case "INCORRECT":
     case "CLOSE":
       return { Icon: XCircleIcon, color: "text-red-500" };
-    case "REVEALED":
+case "REVEALED":
       return { Icon: EyeIcon, color: "text-blue-500" };
-    default:
+default:
       return { Icon: ClockIcon, color: "text-gray-500" };
   }
 };
-
 // --- MAIN COMPONENT ---
 
 export function Home() {
-  const { user } = useAuth(); // <-- ADDED THIS LINE
+  const { user } = useAuth();
+// <-- ADDED THIS LINE
   const [stats, setStats] = useState(null);
-  const [timeSeriesData, setTimeSeriesData] = useState(null); // <-- FIXED: Was []
+  const [timeSeriesData, setTimeSeriesData] = useState(null);
+// <-- FIXED: Was []
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
+useEffect(() => {
     const fetchAllData = async () => {
       try {
         setLoading(true);
@@ -144,7 +155,8 @@ export function Home() {
           api.get("/api/stats/timeseries")
         ]);
 
-        if (summaryRes.data && timeSeriesRes.data) {
+        
+if (summaryRes.data && timeSeriesRes.data) {
           setStats(summaryRes.data);
           setTimeSeriesData(timeSeriesRes.data);
         } else {
@@ -155,19 +167,19 @@ export function Home() {
         console.error("Error fetching stats:", err);
         setError("Could not load statistics.");
       }
-      setLoading(false);
+   
+   setLoading(false);
     };
 
     fetchAllData();
   }, []);
-
-  if (loading) {
+if (loading) {
     return (
       <div className="flex justify-center items-center h-64 mt-12">
         <Spinner className="h-12 w-12" />
       </div>
     );
-  }
+}
 
   if (error) { // <-- FIXED: Added this guard
     return (
@@ -175,7 +187,7 @@ export function Home() {
         {error}
       </Typography>
     );
-  }
+}
 
   if (!stats || !timeSeriesData) { // <-- FIXED: Added this guard
     return (
@@ -183,7 +195,7 @@ export function Home() {
         No statistics data available yet.
       </Typography>
     );
-  }
+}
 
   // --- DYNAMIC DATA CONFIGURATIONS (From original logic) ---
 
@@ -199,7 +211,8 @@ export function Home() {
     {
       title: "Correct Answers",
       icon: CheckIcon,
-      color: "green",
+  
+    color: "green",
       value: stats.correctCount,
       footer: { value: "", label: "in total" }, // Adapted to new footer style
     },
@@ -211,20 +224,21 @@ export function Home() {
       footer: { value: "", label: "in total" }, // Adapted to new footer style
     },
     {
-      title: "Overall Accuracy",
+     
+ title: "Overall Accuracy",
       icon: ChartBarIcon,
       color: "blue",
       value: `${stats.accuracyPercentage.toFixed(1)}%`,
       footer: { value: "", label: "of graded attempts" }, // Adapted to new footer style
     },
   ];
-
-  // --- Chart Configurations (Dynamic) ---
+// --- Chart Configurations (Dynamic) ---
   const chartLabels = timeSeriesData.map(d => new Date(d.date).toLocaleString('en-US', { day: 'numeric', month: 'short' }));
-
+  
+  // --- CORRECTED CHART DEFINITIONS ---
   const accuracyChart = {
-    ...lineChartOptions,
-    colors: ["#28a745"], // CHANGED: Set line color to green
+    type: "line",
+    height: 220,
     series: [
       {
         name: "Accuracy",
@@ -232,10 +246,16 @@ export function Home() {
       },
     ],
     options: {
-      ...lineChartOptions.options,
-      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
+      ...lineChartOptions,
+      colors: ["#28a745"],
+      xaxis: {
+        ...lineChartOptions.xaxis,
+        categories: chartLabels,
+      },
       yaxis: {
-        ...lineChartOptions.yaxis, min: 0, max: 100,
+        ...lineChartOptions.yaxis,
+        min: 0,
+max: 100,
         labels: { ...lineChartOptions.yaxis.labels, formatter: (value) => `${value}%` },
       },
       tooltip: { ...lineChartOptions.tooltip, y: { formatter: (value) => `${value}%` } },
@@ -243,8 +263,8 @@ export function Home() {
   };
 
   const speedChart = {
-    ...lineChartOptions,
-    colors: ["#fbbf24"], // CHANGED: Set line color to amber
+    type: "line",
+    height: 220,
     series: [
       {
         name: "Avg. Speed",
@@ -252,14 +272,22 @@ export function Home() {
       },
     ],
     options: {
-      ...lineChartOptions.options,
-      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
-      yaxis: { ...lineChartOptions.yaxis, labels: { ...lineChartOptions.yaxis.labels, formatter: (value) => formatDuration(value) } },
+      ...lineChartOptions,
+      colors: ["#fbbf24"],
+      xaxis: {
+        ...lineChartOptions.xaxis,
+        categories: chartLabels,
+      },
+      yaxis: {
+        ...lineChartOptions.yaxis,
+        labels: { ...lineChartOptions.yaxis.labels, formatter: (value) => formatDuration(value) } 
+},
       tooltip: { ...lineChartOptions.tooltip, y: { formatter: (value) => formatDuration(value) } },
     },
   };
+  // --- END OF CORRECTION ---
 
-  const breakdownChart = {
+const breakdownChart = {
     type: "pie",
     height: 220,
     series: [stats.correctCount, stats.incorrectCount, stats.revealedCount],
@@ -270,7 +298,8 @@ export function Home() {
       dataLabels: { enabled: false },
       colors: ["#28a745", "#dc3545", "#6b7280"], // Green, Red, Gray
       legend: { show: true, position: 'bottom', labels: { colors: "#37474f" } },
-      labels: ["Correct", "Incorrect", "Revealed"],
+      labels: ["Correct", 
+"Incorrect", "Revealed"],
     },
   };
 
@@ -286,7 +315,8 @@ export function Home() {
           Welcome,
         </Typography>
         <Typography variant="h1" color="blue-gray" className="font-bold">
-          {user.firstName}
+ 
+         {user.firstName}
         </Typography>
       </div>
       {/* --- END OF CHANGES --- */}
@@ -296,14 +326,16 @@ export function Home() {
         {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
           <StatisticsCard
             key={title}
-            {...rest}
+  
+          {...rest}
             title={title}
             icon={React.createElement(icon, {
               className: "w-6 h-6 text-white",
             })}
             footer={
               <Typography className="font-normal text-blue-gray-600">
-                {/* Adapted to new footer style (no strong tag needed) */}
+        
+        {/* Adapted to new footer style (no strong tag needed) */}
                 {footer.label}
               </Typography>
             }
@@ -312,48 +344,54 @@ export function Home() {
       </div>
 
       {/* --- ROW 2: CHARTS (Dynamic) --- */}
-      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+   
+   <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
         <StatisticsChart
           key="accuracy-chart"
           chart={accuracyChart}
-          color="white" // CHANGED
+          color="white" // 👈 --- THIS IS THE FIX ---
           title="Daily Accuracy"
           description="Percentage of correct answers over time."
           footer={
             <Typography
-              variant="small"
+  
+            variant="small"
               className="flex items-center font-normal text-blue-gray-600"
             >
               <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
               &nbsp;Updated just now
             </Typography>
           }
-        />
+  
+      />
         <StatisticsChart
           key="speed-chart"
           chart={speedChart}
-          color="white" // CHANGED
+          color="white" // 👈 --- THIS IS THE FIX ---
           title="Average Answer Speed"
           description="Average time to a correct submission."
           footer={
             <Typography
-              variant="small"
+     
+         variant="small"
               className="flex items-center font-normal text-blue-gray-600"
             >
               <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
               &nbsp;Updated just now
             </Typography>
           }
-        />
+     
+   />
         <StatisticsChart
           key="breakdown-chart"
           chart={breakdownChart}
-          color="white" // CHANGED
+          color="white" // 👈 --- THIS IS THE FIX ---
           title="Answer Breakdown"
           description="Summary of all practice attempts."
           footer={
             <Typography
-              variant="small"
+          
+    variant="small"
               className="flex items-center font-normal text-blue-gray-600"
             >
               <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
@@ -361,7 +399,8 @@ export function Home() {
             </Typography>
           }
         />
-      </div>
+  
+    </div>
 
       {/* --- ROW 3: TABLE & FEED (Dynamic) --- */}
       <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -370,26 +409,30 @@ export function Home() {
           <CardHeader
             floated={false}
             shadow={false}
-            color="transparent"
+          
+  color="transparent"
             className="m-0 flex items-center justify-between p-6"
           >
             <div>
               <Typography variant="h6" color="blue-gray" className="mb-1">
                 Recent Activity
               </Typography>
-              <Typography
+            
+  <Typography
                 variant="small"
                 className="flex items-center gap-1 font-normal text-blue-gray-600"
               >
                 <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
                 <strong>{stats.totalAttempts} attempts</strong> in total
-              </Typography>
+        
+      </Typography>
             </div>
             {/* Added Link to Practice Page */}
             <Link to="/dashboard/practice">
               <Button variant="text" size="sm" className="flex items-center gap-2">
                 <PencilIcon className="h-4 w-4" />
-                Start Practice
+             
+   Start Practice
               </Button>
             </Link>
           </CardHeader>
@@ -397,71 +440,88 @@ export function Home() {
             <table className="w-full min-w-[640px] table-auto">
               <thead>
                 <tr>
-                  {["Question", "Subject", "Status", "Submitted"].map(
+ 
+                 {["Question", "Subject", "Status", "Submitted"].map(
                     (el) => (
                       <th
                         key={el}
-                        className="border-b border-blue-gray-50 py-3 px-6 text-left"
+            
+            className="border-b border-blue-gray-50 py-3 px-6 text-left"
                       >
                         <Typography
                           variant="small"
-                          className="text-[11px] font-medium uppercase text-blue-gray-400"
+            
+              className="text-[11px] font-medium uppercase text-blue-gray-400"
                         >
                           {el}
                         </Typography>
-                      </th>
+         
+             </th>
                     )
                   )}
                 </tr>
               </thead>
               <tbody>
-                {stats.recentActivity.map(
+     
+           {stats.recentActivity.map(
                   (item, key) => {
                     const className = `py-3 px-5 ${
                       key === stats.recentActivity.length - 1
-                        ? ""
+                 
+       ? ""
                         : "border-b border-blue-gray-50"
                     }`;
-                    const uniqueKey = `${item.questionId}-${item.submittedAt}`;
+const uniqueKey = `${item.questionId}-${item.submittedAt}`;
 
                     return (
                       <tr key={uniqueKey}>
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
-                            {/* Using substring logic from original */}
+                  
+          {/* Using substring logic from original */}
                             {item.questionText.substring(0, 40)}...
                           </Typography>
                         </td>
-                        <td className={className}>
+     
+                   <td className={className}>
                           <Typography
                             variant="small"
-                            className="text-xs font-medium text-blue-gray-600"
+                          
+  className="text-xs font-medium text-blue-gray-600"
                           >
                             {item.subject}
                           </Typography>
-                        </td>
+                
+        </td>
                         <td className={className}>
                            {/* Using Chip logic from original */}
                           <Chip
-                            variant="gradient"
+        
+                    variant="gradient"
                             color={
-                              item.evaluationStatus === "CORRECT" ? "green" :
-                              item.evaluationStatus === "REVEALED" ? "blue" :
-                              item.evaluationStatus === "CLOSE" ? "orange" : "red"
+                              item.evaluationStatus === "CORRECT" ?
+"green" :
+                              item.evaluationStatus === "REVEALED" ?
+"blue" :
+                              item.evaluationStatus === "CLOSE" ?
+"orange" : "red"
                             }
                             value={item.evaluationStatus.toLowerCase()}
                             className="py-0.5 px-2 text-[11px] font-medium w-fit"
-                          />
+          
+                />
                         </td>
                         <td className={className}>
                            <Typography className="text-xs font-normal text-blue-gray-500">
-                            {/* Using formatDateTime helper from original */}
+     
+                       {/* Using formatDateTime helper from original */}
                             {formatDateTime(item.submittedAt)}
                           </Typography>
-                        </td>
+                 
+       </td>
                       </tr>
                     );
-                  }
+}
                 )}
               </tbody>
             </table>
@@ -471,7 +531,8 @@ export function Home() {
         {/* Submission Overview (col-span-1) */}
         <Card className="border border-blue-gray-100 shadow-sm">
           <CardHeader
-            floated={false}
+       
+     floated={false}
             shadow={false}
             color="transparent"
             className="m-0 p-6"
@@ -479,51 +540,60 @@ export function Home() {
             <Typography variant="h6" color="blue-gray" className="mb-2">
               Submission Overview
             </Typography>
-            <Typography
+      
+      <Typography
               variant="small"
               className="flex items-center gap-1 font-normal text-blue-gray-600"
             >
               {/* Using text from original */}
               Your latest 5 attempts.
-            </Typography>
+</Typography>
           </CardHeader>
           <CardBody className="pt-0">
             {/* Using map and helper logic from original */}
             {stats.recentActivity.map(
               (item, key) => {
                 const { Icon, color } = getOverviewIcon(item.evaluationStatus);
-                const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
+        
+        const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
                 return (
                   <div key={uniqueKey} className="flex items-start gap-4 py-3">
                     <div
-                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
+                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 
+after:bg-blue-gray-50 after:content-[''] ${
                         key === stats.recentActivity.length - 1
                           ? "after:h-0"
                           : "after:h-4/6"
-                      }`}
+                
+      }`}
                     >
                       <Icon className={`!w-5 !h-5 ${color}`} />
                     </div>
                     <div>
-                      <Typography
+        
+              <Typography
                         variant="small"
                         color="blue-gray"
                         className="block font-medium"
-                      >
+             
+         >
                         {item.subject}: {item.topic.substring(0, 20)}...
                       </Typography>
                       <Typography
-                        as="span"
+                     
+   as="span"
                         variant="small"
                         className="text-xs font-medium text-blue-gray-500"
                       >
                         {formatDateTime(item.submittedAt)}
-                      </Typography>
+ 
+                     </Typography>
                     </div>
                   </div>
                 )
               }
-            )}
+           
+ )}
           </CardBody>
         </Card>
       </div>
