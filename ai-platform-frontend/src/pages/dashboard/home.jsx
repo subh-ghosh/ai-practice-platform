@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import api from "@/api";
-// From your original logic
 import {
   Typography,
   Card,
@@ -14,9 +13,9 @@ import {
   Avatar,
   Tooltip,
   Progress,
-  Spinner, // From your original logic
-  Chip,    // From your original logic
-  Button,  // <-- ADDED THIS IMPORT
+  Spinner,
+  Chip,
+  Button,
 } from "@material-tailwind/react";
 import {
   EllipsisVerticalIcon,
@@ -24,23 +23,22 @@ import {
 } from "@heroicons/react/24/outline";
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
-import { chartsConfig } from "@/configs"; // From your original logic
+import { chartsConfig } from "@/configs";
 import {
   CheckCircleIcon,
   ClockIcon,
-  XCircleIcon,  // From your original logic
-  EyeIcon,      // From your original logic
-  ChartBarIcon, // From your original logic
-  ArrowPathIcon,// From your original logic
-  CheckIcon,    // From your original logic
-  XMarkIcon,    // From your original logic
-  PencilIcon,   // <-- ADDED THIS IMPORT
+  XCircleIcon,
+  EyeIcon,
+  ChartBarIcon,
+  ArrowPathIcon,
+  CheckIcon,
+  XMarkIcon,
+  PencilIcon,
 } from "@heroicons/react/24/solid";
-import { Link } from "react-router-dom"; // <-- ADDED THIS IMPORT
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-// <-- ADDED THIS IMPORT
 
-// --- HELPER FUNCTIONS (From original logic) ---
+// --- HELPER FUNCTIONS ---
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
@@ -59,7 +57,6 @@ function formatDateTime(isoString) {
 
 function formatDuration(seconds) {
   if (!seconds) return "0s";
-  // Added check
   if (seconds < 60) {
     return `${seconds.toFixed(1)}s`;
   }
@@ -68,8 +65,7 @@ function formatDuration(seconds) {
   return `${minutes}m ${remainingSeconds}s`;
 }
 
-// --- CORRECTED CHART OPTIONS ---
-// This is the base "options" object for the line charts
+// Base config for our line charts
 const lineChartOptions = {
   ...chartsConfig,
   chart: {
@@ -78,7 +74,7 @@ const lineChartOptions = {
   },
   stroke: {
     lineCap: "round",
-    curve: "smooth",
+    curve: 'smooth',
   },
   markers: {
     size: 5,
@@ -90,7 +86,7 @@ const lineChartOptions = {
       ...chartsConfig.xaxis.labels,
       style: {
         ...chartsConfig.xaxis.labels.style,
-        colors: "#37474f",
+        colors: "#37474f", // Note: CSS overrides this in dark mode
       },
     },
   },
@@ -100,7 +96,7 @@ const lineChartOptions = {
       ...chartsConfig.yaxis.labels,
       style: {
         ...chartsConfig.yaxis.labels.style,
-        colors: "#37474f",
+        colors: "#37474f", // Note: CSS overrides this in dark mode
       },
     },
   },
@@ -116,7 +112,6 @@ const lineChartOptions = {
     },
   },
 };
-// --- END OF CORRECTION ---
 
 // Helper for the new overview feed
 const getOverviewIcon = (status) => {
@@ -132,14 +127,13 @@ const getOverviewIcon = (status) => {
       return { Icon: ClockIcon, color: "text-gray-500" };
   }
 };
+
 // --- MAIN COMPONENT ---
 
 export function Home() {
   const { user } = useAuth();
-  // <-- ADDED THIS LINE
   const [stats, setStats] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState(null);
-  // <-- FIXED: Was []
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   useEffect(() => {
@@ -180,7 +174,7 @@ export function Home() {
     );
   }
 
-  if (error) { // <-- FIXED: Added this guard
+  if (error) {
     return (
       <Typography color="red" className="text-center mt-12">
         {error}
@@ -188,7 +182,7 @@ export function Home() {
     );
   }
 
-  if (!stats || !timeSeriesData) { // <-- FIXED: Added this guard
+  if (!stats || !timeSeriesData) {
     return (
       <Typography color="gray" className="text-center mt-12">
         No statistics data available yet.
@@ -196,43 +190,41 @@ export function Home() {
     );
   }
 
-  // --- DYNAMIC DATA CONFIGURATIONS (From original logic) ---
+  // --- DYNAMIC DATA CONFIGURATIONS ---
 
-  // --- Statistics Card Data (Dynamic) ---
   const statisticsCardsData = [
     {
       title: "Total Attempts",
       icon: ArrowPathIcon,
       color: "gray",
       value: stats.totalAttempts,
-      footer: { value: "", label: "in total" }, // Adapted to new footer style
+      footer: { value: "", label: "in total" },
     },
     {
       title: "Correct Answers",
       icon: CheckIcon,
       color: "green",
       value: stats.correctCount,
-      footer: { value: "", label: "in total" }, // Adapted to new footer style
+      footer: { value: "", label: "in total" },
     },
     {
       title: "Incorrect Answers",
       icon: XMarkIcon,
       color: "red",
       value: stats.incorrectCount,
-      footer: { value: "", label: "in total" }, // Adapted to new footer style
+      footer: { value: "", label: "in total" },
     },
     {
        title: "Overall Accuracy",
       icon: ChartBarIcon,
       color: "blue",
       value: `${stats.accuracyPercentage.toFixed(1)}%`,
-      footer: { value: "", label: "of graded attempts" }, // Adapted to new footer style
+      footer: { value: "", label: "of graded attempts" },
     },
   ];
-  // --- Chart Configurations (Dynamic) ---
+
   const chartLabels = timeSeriesData.map(d => new Date(d.date).toLocaleString('en-US', { day: 'numeric', month: 'short' }));
 
-  // --- CORRECTED CHART DEFINITIONS ---
   const accuracyChart = {
     type: "line",
     height: 220,
@@ -282,7 +274,6 @@ export function Home() {
       tooltip: { ...lineChartOptions.tooltip, y: { formatter: (value) => formatDuration(value) } },
     },
   };
-  // --- END OF CORRECTION ---
 
   const breakdownChart = {
     type: "pie",
@@ -295,18 +286,12 @@ export function Home() {
       dataLabels: { enabled: false },
       colors: ["#28a745", "#dc3545", "#6b7280"], // Green, Red, Gray
       legend: { show: true, position: 'bottom', labels: { colors: "#37474f" } },
-      labels: ["Correct",
-"Incorrect", "Revealed"],
+      labels: ["Correct", "Incorrect", "Revealed"],
     },
   };
 
-  // --- JSX RENDER (Using new layout with original logic) ---
-
   return (
-    // --- 1. MOVED EVERYTHING UP ---
     <div className="mt-8">
-
-      {/* --- 2. MADE TEXT BIGGER --- */}
       <div className="mb-12 flex items-baseline gap-3">
         <Typography variant="h4" color="blue-gray" className="font-normal">
           Welcome,
@@ -315,9 +300,8 @@ export function Home() {
            {user.firstName}
         </Typography>
       </div>
-      {/* --- END OF CHANGES --- */}
 
-      {/* --- ROW 1: STATS CARDS (Dynamic) --- */}
+      {/* --- ROW 1: STATS CARDS --- */}
       <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
         {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
           <StatisticsCard
@@ -329,7 +313,6 @@ export function Home() {
             })}
             footer={
               <Typography className="font-normal text-blue-gray-600">
-                {/* Adapted to new footer style (no strong tag needed) */}
                 {footer.label}
               </Typography>
             }
@@ -337,7 +320,7 @@ export function Home() {
         ))}
       </div>
 
-      {/* --- ROW 2: CHARTS (Dynamic) --- */}
+      {/* --- ROW 2: CHARTS --- */}
        <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
         <StatisticsChart
           key="accuracy-chart"
@@ -389,12 +372,9 @@ export function Home() {
         />
       </div>
 
-      {/* --- ROW 3: TABLE & FEED (Dynamic) --- */}
+      {/* --- ROW 3: TABLE & FEED --- */}
       <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-
-        {/* --- THIS IS THE FIX --- */}
         <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        {/* --- END OF FIX --- */}
           <CardHeader
             floated={false}
             shadow={false}
@@ -413,7 +393,6 @@ export function Home() {
                 <strong>{stats.totalAttempts} attempts</strong> in total
               </Typography>
             </div>
-            {/* Added Link to Practice Page */}
             <Link to="/dashboard/practice">
               <Button variant="text" size="sm" className="flex items-center gap-2">
                 <PencilIcon className="h-4 w-4" />
@@ -456,7 +435,6 @@ export function Home() {
                       <tr key={uniqueKey}>
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
-                           {/* Using substring logic from original */}
                             {item.questionText.substring(0, 40)}...
                           </Typography>
                         </td>
@@ -469,16 +447,12 @@ export function Home() {
                           </Typography>
                          </td>
                         <td className={className}>
-                           {/* Using Chip logic from original */}
                           <Chip
                              variant="gradient"
                             color={
-                              item.evaluationStatus === "CORRECT" ?
-"green" :
-                              item.evaluationStatus === "REVEALED" ?
-"blue" :
-                              item.evaluationStatus === "CLOSE" ?
-"orange" : "red"
+                              item.evaluationStatus === "CORRECT" ? "green" :
+                              item.evaluationStatus === "REVEALED" ? "blue" :
+                              item.evaluationStatus === "CLOSE" ? "orange" : "red"
                             }
                             value={item.evaluationStatus.toLowerCase()}
                             className="py-0.5 px-2 text-[11px] font-medium w-fit"
@@ -486,7 +460,6 @@ export function Home() {
                         </td>
                         <td className={className}>
                            <Typography className="text-xs font-normal text-blue-gray-500">
-                             {/* Using formatDateTime helper from original */}
                             {formatDateTime(item.submittedAt)}
                           </Typography>
                          </td>
@@ -499,9 +472,7 @@ export function Home() {
           </CardBody>
         </Card>
 
-        {/* --- THIS IS THE FIX --- */}
         <Card className="border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-        {/* --- END OF FIX --- */}
           <CardHeader
              floated={false}
             shadow={false}
@@ -515,12 +486,10 @@ export function Home() {
               variant="small"
               className="flex items-center gap-1 font-normal text-blue-gray-600"
             >
-              {/* Using text from original */}
               Your latest 5 attempts.
             </Typography>
           </CardHeader>
           <CardBody className="pt-0">
-            {/* Using map and helper logic from original */}
             {stats.recentActivity.map(
               (item, key) => {
                 const { Icon, color } = getOverviewIcon(item.evaluationStatus);
@@ -529,7 +498,7 @@ export function Home() {
                   <div key={uniqueKey} className="flex items-start gap-4 py-3">
                     <div
                       className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4
-after:bg-blue-gray-50 after:content-[''] ${
+ after:bg-blue-gray-50 after:content-[''] ${
                         key === stats.recentActivity.length - 1
                           ? "after:h-0"
                           : "after:h-4/6"

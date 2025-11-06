@@ -30,15 +30,17 @@ return (
       } fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72 rounded-xl transition-transform duration-300 xl:translate-x-0 border border-blue-gray-100`}
     >
       <div className={`relative`}>
-        <Link to="/" className="py-6 px-8 text-center">
+        {/* --- THIS IS THE FIX --- */}
+        <Link to="/" className="flex items-center gap-4 py-6 px-8">
+          <img src={brandImg} alt="Brand Logo" className="h-8 w-8" />
           <Typography
             variant="h6"
-
-color={sidenavType === "dark" ? "white" : "blue-gray"}
+            color={sidenavType === "dark" ? "white" : "blue-gray"}
           >
             {brandName}
           </Typography>
         </Link>
+        {/* --- END OF FIX --- */}
         <IconButton
           variant="text"
           color="white"
@@ -75,16 +77,14 @@ color={sidenavType === "dark" ? "white" : "blue-gray"}
                     <Button
 
             variant={isActive ? "gradient" : "text"}
-                      // --- THIS IS THE FIX ---
                       color={
                         isActive
-                          ? (sidenavColor === "dark" ? "gray" : sidenavColor) // Remap 'dark' to 'gray'
+                          ? (sidenavColor === "dark" ? "gray" : sidenavColor)
 
                : (sidenavType === "dark"
                           ? "white"
                           : "blue-gray")
                       }
-                      // --- END OF FIX ---
 
                 className="flex items-center gap-4 px-4 capitalize"
                       fullWidth

@@ -259,7 +259,6 @@ return (
         <CardBody className="p-6">
           <div
 className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {/* --- THIS IS THE FIX --- */}
             <Input
               label="Subject (e.g., JAVA, DBMS, Math)"
               value={subject}
@@ -278,7 +277,6 @@ className="grid grid-cols-1 gap-6 md:grid-cols-3">
               onChange={(val) => setDifficulty(val)}
               color={theme === 'dark' ? 'white' : 'gray'}
             >
-            {/* --- END OF FIX --- */}
               <Option value="School">School</Option>
               <Option value="High School">High School</Option>
               <Option value="Graduation">Graduation</Option>
@@ -313,15 +311,14 @@ className="grid grid-cols-1 gap-6 md:grid-cols-3">
                 </ReactMarkdown>
               </div>
 
-              {/* --- THIS IS THE FIX (color prop removed) --- */}
               <Textarea
                 label="Your Answer"
                 value={currentAnswer}
                 onChange={handleAnswerChange}
                 rows={textareaRows}
                 required
+                // No color prop here - it's styled by tailwind.css
               />
-              {/* --- END OF FIX --- */}
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button
@@ -468,7 +465,7 @@ className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="w-full md:w-72">
               <Input
                 label="Search History"
-                color="white"
+                color={theme === 'dark' ? 'white' : 'gray'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -649,6 +646,7 @@ return (
 
                 <div className="mt-2
 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
+                  {/* --- THIS IS THE FIX (gfm typo) --- */}
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {selectedHistory.evaluationStatus === 'REVEALED'
                       ?
