@@ -5,10 +5,11 @@ import {
   CardBody,
   Typography,
 } from "@material-tailwind/react";
-
 export function ProfileInfoCard({ title, description, details, action }) {
   return (
-    <Card color="transparent" shadow={false}>
+    // --- THIS IS THE FIX ---
+    <Card shadow={false} className="dark:bg-gray-800 dark:border-gray-700">
+    {/* --- END OF FIX --- */}
       <CardHeader
         color="transparent"
         shadow={false}
@@ -18,7 +19,8 @@ export function ProfileInfoCard({ title, description, details, action }) {
         <Typography variant="h6" color="blue-gray">
           {title}
         </Typography>
-        {action}
+
+   {action}
       </CardHeader>
       <CardBody className="p-0">
         {description && (
@@ -28,7 +30,8 @@ export function ProfileInfoCard({ title, description, details, action }) {
           >
             {description}
           </Typography>
-        )}
+
+ )}
         {description && details ? (
           <hr className="my-8 border-blue-gray-50" />
         ) : null}
@@ -36,26 +39,31 @@ export function ProfileInfoCard({ title, description, details, action }) {
           <ul className="flex flex-col gap-4 p-0">
             {Object.keys(details).map((el, key) => (
               <li key={key} className="flex items-center gap-4">
-                <Typography
+
+         <Typography
                   variant="small"
                   color="blue-gray"
                   className="font-semibold capitalize"
                 >
                   {el}:
-                </Typography>
-                {typeof details[el] === "string" ? (
+
+              </Typography>
+                {typeof details[el] === "string" ?
+(
                   <Typography
                     variant="small"
                     className="font-normal text-blue-gray-500"
                   >
                     {details[el]}
-                  </Typography>
+
+               </Typography>
                 ) : (
                   details[el]
                 )}
               </li>
             ))}
-          </ul>
+
+   </ul>
         )}
       </CardBody>
     </Card>
@@ -67,7 +75,6 @@ ProfileInfoCard.defaultProps = {
   description: null,
   details: {},
 };
-
 ProfileInfoCard.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.node,

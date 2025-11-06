@@ -13,19 +13,18 @@ import {
 import { useNotifications } from "@/context/NotificationContext.jsx";
 import {
   UserCircleIcon,
-  // 👇 --- REMOVED Cog6ToothIcon ---
   BellIcon,
   ClockIcon,
   Bars3Icon,
 } from "@heroicons/react/24/solid";
 import {
   useMaterialTailwindController,
-  // 👇 --- REMOVED setOpenConfigurator ---
   setOpenSidenav,
 } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import { useCallback } from "react";
-import { ThemeToggle } from "./ThemeToggle"; // 👈 --- ADD THIS
+import { ThemeToggle } from "./ThemeToggle";
+import { useTheme } from "@/context/ThemeContext";
 
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
@@ -33,6 +32,7 @@ const { fixedNavbar, openSidenav } = controller;
   const { pathname } = useLocation();
 const [layout, page] = pathname.split("/").filter((el) => el !== "");
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
 const {
     notifications = [],
     unreadCount = 0,
@@ -44,8 +44,6 @@ const handleMarkRead = useCallback(
       try {
         await Promise.resolve(markRead?.(id));
       } catch (err) {
-        // keep menu usable even if markRead fails
-        // optionally plug in a toast here
         console.error("Failed to mark notification read:", err);
       }
     },
@@ -98,12 +96,11 @@ className="grid xl:hidden"
      Hi, {user?.firstName ?? "User"}
               </Button>
             </MenuHandler>
-            <MenuList>
-              <MenuItem onClick={logout}>
+            <MenuList className={theme === 'dark' ? "dark:bg-gray-800 dark:border-gray-700" : ""}>
+              <MenuItem onClick={logout} className={theme === 'dark' ? "dark:hover:bg-gray-700" : ""}>
                 <Typography color="red" className="font-medium">
                   Log Out
-
-              </Typography>
+                </Typography>
               </MenuItem>
             </MenuList>
           </Menu>
@@ -131,11 +128,10 @@ className="grid xl:hidden"
               </IconButton>
             </MenuHandler>
 
-            <MenuList className="w-full max-w-xs border-0">
+            <MenuList className={`w-full max-w-xs border-0 ${theme === 'dark' ? "dark:bg-gray-800 dark:border-gray-700" : ""}`}>
               {loading && (
-
-<MenuItem className="flex items-center gap-3">
-                  <Typography variant="small" color="blue-gray" className="font-normal">
+                <MenuItem className={`flex items-center gap-3 ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}>
+                  <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="font-normal">
                     Loading notifications...
                   </Typography>
                 </MenuItem>
@@ -143,8 +139,8 @@ className="grid xl:hidden"
 
 
        {!loading && !safeUnread && (
-                <MenuItem className="flex items-center gap-3">
-                  <Typography variant="small" color="blue-gray" className="font-normal">
+                <MenuItem className={`flex items-center gap-3 ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}>
+                  <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="font-normal">
                     No new notifications
                   </Typography>
 
@@ -157,7 +153,7 @@ className="grid xl:hidden"
                   <MenuItem
 
             key={n.id}
-                    className="flex items-start gap-3 whitespace-normal"
+                    className={`flex items-start gap-3 whitespace-normal ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}
                     onClick={() => handleMarkRead(n.id)}
                   >
                     <div className="relative p-1 after:absolute after:-bottom-6
@@ -165,25 +161,23 @@ after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:co
                       <ClockIcon className="!w-5 !h-5 text-blue-gray-500" />
                     </div>
                     <div>
+                      {/* --- THIS IS THE FIX --- */}
                       <Typography
-
-                 variant="small"
-                        color="blue-gray"
+                         variant="small"
+                        color={theme === 'dark' ? 'white' : 'blue-gray'}
                         className="mb-1 font-semibold uppercase text-xs"
                       >
-
-              {n.type}
+                        {n.type}
                       </Typography>
-                      <Typography variant="small" color="blue-gray" className="font-normal">
+                      <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="font-normal">
                         {n.message}
-
-       </Typography>
+                      </Typography>
                       <Typography
                         as="span"
                         variant="small"
-
- className="text-xs font-medium text-blue-gray-400"
+                        className="text-xs font-medium text-blue-gray-400 dark:text-gray-500"
                       >
+                      {/* --- END OF FIX --- */}
                         {new Date(n.createdAt).toLocaleString(undefined, {
                           year: "numeric",
 
@@ -201,15 +195,14 @@ after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:co
                   </MenuItem>
                 ))}
 
-              <hr className="my-2 border-blue-gray-50" />
+              <hr className="my-2 border-blue-gray-50 dark:border-gray-700" />
 
               <Link to="/dashboard/notifications">
-                <MenuItem className="flex items-center justify-center gap-3">
-                  {/* --- THIS IS THE FIX --- */}
-                  <Typography variant="small" color="blue" className="font-medium">
+                <MenuItem className={`flex items-center justify-center gap-3 ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}>
+
+          <Typography variant="small" color="blue" className="font-medium">
                     View all notifications
                   </Typography>
-                  {/* --- END OF FIX --- */}
                 </MenuItem>
               </Link>
             </MenuList>
@@ -217,7 +210,6 @@ after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:co
      </Menu>
           {/* --- END OF NOTIFICATION MENU --- */}
 
-          {/* 👇 --- THIS IS THE REPLACEMENT --- */}
           <ThemeToggle />
 
         </div>

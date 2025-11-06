@@ -1,4 +1,3 @@
-// src/pages/auth/sign-in.jsx
 import {
   Card,
   Input,
@@ -9,7 +8,10 @@ import {
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext"; // 👈 --- ADD THIS IMPORT
+
 export function SignIn() {
+  const { theme } = useTheme(); // 👈 --- ADD THIS LINE
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -45,102 +47,99 @@ return (
           <Typography variant="h2" className="font-bold mb-2">
             Sign In
           </Typography>
+          {/* --- THIS IS THE FIX --- */}
           <Typography
             variant="paragraph"
-
-           color="blue-gray"
+            color={theme === 'dark' ? 'white' : 'blue-gray'}
             className="text-lg font-normal"
           >
             Enter your email and password to Sign In.
           </Typography>
+          {/* --- END OF FIX --- */}
         </div>
 
-        <Card
-          shadow={false}
-          className="mt-8
-mb-2 w-full max-w-screen-sm p-6 border border-blue-gray-100"
+        {/* --- Card component is REMOVED --- */}
+        <form
+          onSubmit={handleSubmit}
+          className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2"
         >
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             {error && (
-              <Alert color="red" className="mt-[-4px]">
+              <Alert color="red" className="mb-4">
                 {error}
               </Alert>
             )}
 
 
-           <div className="flex flex-col gap-6">
+           <div className="mb-1 flex flex-col gap-6">
               <div>
+                {/* --- THIS IS THE FIX --- */}
                 <Typography
                   variant="small"
-                  color="blue-gray"
-                  className="mb-1 font-medium"
-
-               >
+                  color={theme === 'dark' ? 'white' : 'blue-gray'}
+                  className="-mb-3 font-medium"
+                >
                   Your email
                 </Typography>
-
                 <Input
                   size="lg"
-
-  type="email"
                   placeholder="name@mail.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  // 👇 --- REMOVED className ---
-                  labelProps={{ className: "!before:content-none !after:content-none" }}
-                  containerProps={{
-                    className:
-                      "[&>label]:!before:content-none [&>label]:!after:content-none",
-
-   }}
+                  labelProps={{ className: "before:content-none after:content-none" }}
+                  color={theme === 'dark' ? 'white' : 'gray'}
                 />
+                {/* --- END OF FIX --- */}
               </div>
 
               <div>
+                {/* --- THIS IS THE FIX --- */}
                 <Typography
                   variant="small"
-                  color="blue-gray"
-
-                 className="mb-1 font-medium"
+                  color={theme === 'dark' ? 'white' : 'blue-gray'}
+                  className="-mb-3 font-medium"
                 >
                   Password
                 </Typography>
-
                 <Input
-
-  size="lg"
+                  size="lg"
                   type="password"
                   placeholder="********"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  // 👇 --- REMOVED className ---
-                  labelProps={{ className: "!before:content-none !after:content-none" }}
-                  containerProps={{
-                    className:
-                      "[&>label]:!before:content-none [&>label]:!after:content-none",
-                  }}
-
-
+                  labelProps={{ className: "before:content-none after:content-none" }}
+                  color={theme === 'dark' ? 'white' : 'gray'}
                 />
+                {/* --- END OF FIX --- */}
               </div>
             </div>
 
-            <Button type="submit" className="mt-2" fullWidth disabled={submitting}>
-              {submitting ?
-"Signing in..." : "Sign In"}
+            {/* --- THIS IS THE FIX --- */}
+            <Button
+              type="submit"
+              className="mt-6"
+              fullWidth
+              disabled={submitting}
+              variant={theme === 'dark' ? 'outlined' : 'gradient'}
+              color={theme === 'dark' ? 'white' : 'blue'}
+            >
+              {submitting ? "Signing in..." : "Sign In"}
             </Button>
+            {/* --- END OF FIX --- */}
 
+            {/* --- THIS IS THE FIX --- */}
             <Typography
               variant="paragraph"
-              className="text-center text-blue-gray-500 font-medium"
+              color={theme === 'dark' ? 'white' : 'blue-gray'}
+              className="text-center font-medium mt-4"
             >
               Not registered?
-<Link to="/auth/sign-up" className="text-gray-900 ml-1">
+              <Link to="/auth/sign-up" className="text-gray-900 dark:text-blue-400 ml-1">
                 Create account
               </Link>
             </Typography>
+            {/* --- END OF FIX --- */}
           </form>
-        </Card>
+        {/* --- Card component is REMOVED --- */}
       </div>
 
       {/* right – image */}

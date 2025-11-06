@@ -20,7 +20,6 @@ export function reducer(state, action) {
     case "FIXED_NAVBAR": {
       return { ...state, fixedNavbar: action.value };
 }
-    // 👇 --- REMOVED 'OPEN_CONFIGURATOR' CASE ---
     default: {
       throw new Error(`Unhandled action type: ${action.type}`);
 }
@@ -28,14 +27,21 @@ export function reducer(state, action) {
 }
 
 export function MaterialTailwindControllerProvider({ children }) {
+  // --- THIS IS THE FIX ---
+  // Read initial theme from localStorage or system preference
+  const savedTheme = localStorage.getItem("theme");
+  const userMedia = window.matchMedia("(prefers-color-scheme: dark)");
+  const initialTheme = savedTheme ? savedTheme : (userMedia.matches ? "dark" : "light");
+
   const initialState = {
     openSidenav: false,
     sidenavColor: "dark",
-    sidenavType: "white",
+    sidenavType: initialTheme === 'dark' ? 'dark' : 'white', // Sync with theme
     transparentNavbar: true,
     fixedNavbar: false,
-    // 👇 --- REMOVED 'openConfigurator' ---
   };
+  // --- END OF FIX ---
+
 const [controller, dispatch] = React.useReducer(reducer, initialState);
   const value = React.useMemo(
     () => [controller, dispatch],
@@ -75,4 +81,3 @@ export const setTransparentNavbar = (dispatch, value) =>
   dispatch({ type: "TRANSPARENT_NAVBAR", value });
 export const setFixedNavbar = (dispatch, value) =>
   dispatch({ type: "FIXED_NAVBAR", value });
-// 👇 --- REMOVED 'setOpenConfigurator' EXPORT ---

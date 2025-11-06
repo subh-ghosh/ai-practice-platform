@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 👇 ADDED THIS SECTION */
 @layer base {
   html {
     /* Default (light) mode colors */
@@ -12,4 +11,178 @@
     /* Dark mode colors */
     @apply bg-gray-900 text-blue-gray-50;
   }
+}
+
+@layer components {
+  /*
+    This targets all cards *inside* our dashboard content area.
+  */
+  .dark .dashboard-content .mt-card {
+    background-color: theme('colors.gray.800') !important;
+    border-color: theme('colors.gray.700') !important;
+    color: theme('colors.gray.200') !important;
+  }
+
+  /* Fix text colors inside dashboard cards for dark mode */
+  .dark .dashboard-content .mt-card-header,
+  .dark .dashboard-content .mt-card-body,
+  .dark .dashboard-content .mt-card-footer {
+     color: theme('colors.gray.200');
+  }
+
+  /* Fix Typography colors that are hardcoded */
+  .dark .dashboard-content [class*="text-blue-gray-900"] {
+    color: theme('colors.white');
+  }
+  .dark .dashboard-content [class*="text-gray-900"] {
+    color: theme('colors.white');
+  }
+  .dark .dashboard-content [class*="text-blue-gray-600"] {
+    color: theme('colors.gray.300');
+  }
+  .dark .dashboard-content [class*="text-blue-gray-500"] {
+    color: theme('colors.gray.400');
+  }
+  .dark .dashboard-content [class*="text-blue-gray-400"] {
+    color: theme('colors.gray.500');
+  }
+
+  /* Fix Chart header colors (that were set to 'transparent') */
+  .dark .dashboard-content .mt-card-header-gradient.mt-card-header-transparent {
+     background-color: transparent !important;
+     background-image: none !important;
+     border-color: transparent !important;
+  }
+
+  /* Fix headers (Practice, Notifications) */
+  .dark .dashboard-content .mt-card-header-gradient.mt-card-header-gray,
+  .dark .dashboard-content .mt-card-header[color="transparent"] {
+    background-color: theme('colors.gray.800') !important;
+    background-image: none !important;
+  }
+
+  /* Fix borders */
+  .dark .dashboard-content [class*="border-blue-gray-50"] {
+    border-color: theme('colors.gray.700');
+  }
+  .dark .dashboard-content [class*="border-blue-gray-100"] {
+    border-color: theme('colors.gray.700');
+  }
+
+  /* --- Fix for Profile Page Tabs --- */
+  .dark .dashboard-content .mt-tabs-header {
+    background-color: theme('colors.gray.700') !important;
+  }
+  .dark .dashboard-content .mt-tab {
+    color: theme('colors.gray.300') !important;
+  }
+  .dark .dashboard-content .mt-tab-indicator {
+    background-color: theme('colors.white') !important;
+    color: theme('colors.gray.900') !important;
+  }
+  .dark .dashboard-content .mt-tab.mt-tab-active {
+    color: theme('colors.gray.900') !important;
+  }
+
+  /* --- Fix for Inputs & Textarea --- */
+  .dark .dashboard-content .mt-input-label,
+  .dark .dashboard-content .mt-select-label,
+  .dark .dashboard-content .mt-textarea-label {
+     color: theme('colors.gray.400') !important;
+  }
+  .dark .dashboard-content .mt-input-label::before,
+  .dark .dashboard-content .mt-select-label::before,
+  .dark .dashboard-content .mt-textarea-label::before,
+  .dark .dashboard-content .mt-input-label::after,
+  .dark .dashboard-content .mt-select-label::after,
+  .dark .dashboard-content .mt-textarea-label::after {
+    border-color: theme('colors.gray.500') !important;
+  }
+
+  /* Fix input/select/textarea borders and text */
+  .dark .dashboard-content .mt-input,
+  .dark .dashboard-content .mt-select > button,
+  .dark .dashboard-content .mt-textarea > textarea {
+    border-color: theme('colors.gray.600') !important;
+    color: theme('colors.gray.200') !important;
+  }
+
+  /* Fix search input in Practice History */
+  .dark .dashboard-content .mt-input-label-white {
+    color: theme('colors.gray.400');
+  }
+  .dark .dashboard-content .mt-input-white {
+    border-color: theme('colors.gray.600');
+    color: theme('colors.white');
+  }
+  .dark .dashboard-content .mt-radio label {
+    color: theme('colors.gray.200') !important;
+  }
+
+  /* Fix prose (markdown) backgrounds */
+  .dark .dashboard-content .prose {
+    color: theme('colors.gray.200');
+  }
+  .dark .dashboard-content [class*="bg-blue-gray-50"] {
+    background-color: theme('colors.gray.700');
+  }
+
+  /* Fix notification card text & background */
+  .dark .dashboard-content .mt-card-body [class*="text-blue-gray"] {
+    color: theme('colors.gray.300');
+  }
+  .dark .dashboard-content .mt-card-body [class*="text-gray"] {
+    color: theme('colors.gray.400');
+  }
+  .dark .dashboard-content .mt-card-body > div[key] {
+    background-color: theme('colors.gray.700');
+    border-color: theme('colors.gray.600');
+  }
+
+  /* Fix Pie Chart legend text */
+  .dark .dashboard-content .apexcharts-legend-text {
+    color: theme('colors.gray.200') !important;
+  }
+
+  /* --- THIS IS THE FIX --- */
+  /* Fix Popover / Modal / Menu backgrounds */
+  .dark .mt-popover,
+  .dark .mt-menu-list {
+    background-color: theme('colors.gray.800') !important;
+    border-color: theme('colors.gray.700') !important;
+  }
+  .dark .mt-menu-item {
+    color: theme('colors.gray.200') !important;
+  }
+  .dark .mt-menu-item:hover {
+    background-color: theme('colors.gray.700') !important;
+  }
+  .dark .mt-dialog {
+    background-color: theme('colors.gray.800') !important;
+  }
+  .dark .mt-dialog-header {
+    color: theme('colors.gray.200') !important;
+  }
+  .dark .mt-dialog-body {
+    border-color: theme('colors.gray.700') !important;
+    color: theme('colors.gray.300') !important;
+  }
+  .dark .mt-dialog-footer {
+    border-color: theme('colors.gray.700') !important;
+  }
+
+  /* Fix text inside menus (like notifications) */
+  .dark .mt-menu-list [class*="text-blue-gray-500"] {
+    color: theme('colors.gray.400') !important;
+  }
+  .dark .mt-menu-list [class*="text-blue-gray-400"] {
+    color: theme('colors.gray.500') !important;
+  }
+  .dark .mt-menu-list [class*="text-blue-gray-900"] {
+    color: theme('colors.gray.100') !important;
+  }
+  .dark .mt-menu-list .mt-menu-item a {
+    color: theme('colors.blue.400') !important;
+  }
+  /* --- END OF FIX --- */
 }

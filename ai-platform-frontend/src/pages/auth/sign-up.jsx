@@ -1,7 +1,6 @@
 import {
   Card,
   Input,
-  // 👇 --- REMOVED Checkbox ---
   Button,
   Typography,
   Alert,
@@ -9,8 +8,10 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import api from "@/api";
+import { useTheme } from "@/context/ThemeContext";
 
 export function SignUp() {
+  const { theme } = useTheme();
   const [firstName, setFirstName] = useState("");
 const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -56,11 +57,11 @@ navigate("/auth/sign-in");
           className="h-full w-full object-cover rounded-3xl"
         />
       </div>
-      <div className="w-full lg:w-3/S5 flex flex-col items-center justify-center">
+      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center">
         <div className="text-center">
 
 <Typography variant="h2" className="font-bold mb-4">Join Us Today</Typography>
-          <Typography variant="paragraph" color="blue-gray" className="text-lg font-normal">
+          <Typography variant="paragraph" color={theme === 'dark' ? 'white' : 'blue-gray'} className="text-lg font-normal">
             Enter your details to register.
           </Typography>
         </div>
@@ -73,47 +74,46 @@ navigate("/auth/sign-in");
           )}
 
           <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
               First Name
             </Typography>
             <Input
-
-    size="lg"
+              size="lg"
               placeholder="John"
-              // 👇 --- REMOVED className ---
               labelProps={{ className: "before:content-none after:content-none" }}
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              color={theme === 'dark' ? 'white' : 'gray'}
             />
 
 
-      <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+      <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
               Last Name
             </Typography>
             <Input
               size="lg"
               placeholder="Doe"
-              // 👇 --- REMOVED className ---
               labelProps={{ className: "before:content-none after:content-none" }}
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
+              color={theme === 'dark' ? 'white' : 'gray'}
             />
 
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
               Your email
             </Typography>
 
         <Input
               size="lg"
               placeholder="name@mail.com"
-              // 👇 --- REMOVED className ---
               labelProps={{ className: "before:content-none after:content-none" }}
               value={email}
               onChange={(e) =>
 setEmail(e.target.value)}
+              color={theme === 'dark' ? 'white' : 'gray'}
             />
 
-            <Typography variant="small" color="blue-gray" className="-mb-3 font-medium">
+            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
               Password
             </Typography>
             <Input
@@ -121,20 +121,28 @@ setEmail(e.target.value)}
               size="lg"
 
         placeholder="********"
-              // 👇 --- REMOVED className ---
               labelProps={{ className: "before:content-none after:content-none" }}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              color={theme === 'dark' ? 'white' : 'gray'}
             />
           </div>
 
-          <Button type="submit" className="mt-6" fullWidth>
+          {/* --- THIS IS THE FIX --- */}
+          <Button
+            type="submit"
+            className="mt-6"
+            fullWidth
+            variant={theme === 'dark' ? 'outlined' : 'gradient'}
+            color={theme === 'dark' ? 'white' : 'blue'}
+          >
             Register Now
           </Button>
+          {/* --- END OF FIX --- */}
 
-          <Typography variant="paragraph" className="text-center text-blue-gray-500 font-medium mt-4">
+          <Typography variant="paragraph" color={theme === 'dark' ? 'white' : 'blue-gray'} className="text-center font-medium mt-4">
             Already have an account?
-<Link to="/auth/sign-in" className="text-gray-900 ml-1">Sign in</Link>
+<Link to="/auth/sign-in" className="text-gray-900 dark:text-blue-400 ml-1">Sign in</Link>
           </Typography>
         </form>
 

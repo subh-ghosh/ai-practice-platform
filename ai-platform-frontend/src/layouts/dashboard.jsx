@@ -1,44 +1,50 @@
 import { Routes, Route } from "react-router-dom";
-// 👇 --- REMOVED Cog6ToothIcon ---
 import {
   Sidenav,
   DashboardNavbar,
   Footer,
 } from "@/widgets/layout";
-// 👇 --- REMOVED Configurator ---
 import routes from "@/routes";
-// 👇 --- REMOVED setOpenConfigurator ---
-import { useMaterialTailwindController } from "@/context";
+import { useMaterialTailwindController, setSidenavType } from "@/context"; // 👈 --- IMPORT setSidenavType
+import { useTheme } from "@/context/ThemeContext"; // 👈 --- IMPORT useTheme
+import React from "react"; // 👈 --- IMPORT React
 
 export function Dashboard() {
-  const [controller] = useMaterialTailwindController(); // 👈 --- MODIFIED (removed dispatch)
+  const [controller, dispatch] = useMaterialTailwindController(); // 👈 --- GET dispatch
   const { sidenavType } = controller;
+  const { theme } = useTheme(); // 👈 --- GET theme
+
+  // --- THIS IS THE FIX ---
+  // Syncs the sidenav's visual style (light/dark) with the global theme
+  React.useEffect(() => {
+    if (theme === "dark") {
+      setSidenavType(dispatch, "dark");
+    } else {
+      setSidenavType(dispatch, "white");
+    }
+  }, [theme, dispatch]);
+  // --- END OF FIX ---
 
   return (
-    // 👇 --- MODIFIED: Added dark:bg-gray-950
-    <div className="min-h-screen bg-blue-gray-50/50 dark:bg-gray-950">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Sidenav
         routes={routes}
         brandImg={
           sidenavType === "dark" ? "/img/logo-ct.png" : "/img/logo-ct-dark.png"
         }
       />
-      <div className="p-4 xl:ml-80">
+      <div className="p-4 xl:ml-80 dashboard-content">
         <DashboardNavbar />
-
-        {/* 👇 --- REMOVED CONFIGURATOR AND ITS BUTTON --- */}
 
         <Routes>
           {routes.map(
-
-          ({ layout, pages }) =>
+            ({ layout, pages }) =>
               layout === "dashboard" &&
               pages.map(({ path, element }) => (
                 <Route exact path={path} element={element} />
               ))
           )}
-
-  </Routes>
+        </Routes>
         <div className="text-blue-gray-600">
           <Footer />
         </div>
