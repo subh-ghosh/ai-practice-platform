@@ -14,25 +14,26 @@
 }
 
 @layer components {
-  /* ============================================================
-     🔹 BASE STRUCTURE + CARD STYLING
-  ============================================================ */
+  /*
+    This targets all cards *inside* our dashboard content area.
+  */
   .dark .dashboard-content .mt-card {
     background-color: theme('colors.gray.800') !important;
     border-color: theme('colors.gray.700') !important;
     color: theme('colors.gray.200') !important;
   }
 
+  /* Fix text colors inside dashboard cards for dark mode */
   .dark .dashboard-content .mt-card-header,
   .dark .dashboard-content .mt-card-body,
   .dark .dashboard-content .mt-card-footer {
-    color: theme('colors.gray.200');
+     color: theme('colors.gray.200');
   }
 
-  /* ============================================================
-     🔹 TYPOGRAPHY COLOR FIXES
-  ============================================================ */
-  .dark .dashboard-content [class*="text-blue-gray-900"],
+  /* Fix Typography colors that are hardcoded */
+  .dark .dashboard-content [class*="text-blue-gray-900"] {
+    color: theme('colors.white');
+  }
   .dark .dashboard-content [class*="text-gray-900"] {
     color: theme('colors.white');
   }
@@ -46,29 +47,29 @@
     color: theme('colors.gray.500');
   }
 
-  /* ============================================================
-     🔹 HEADER + BORDER FIXES
-  ============================================================ */
+  /* Fix Chart header colors (that were set to 'transparent') */
   .dark .dashboard-content .mt-card-header-gradient.mt-card-header-transparent {
-    background-color: transparent !important;
-    background-image: none !important;
-    border-color: transparent !important;
+     background-color: transparent !important;
+     background-image: none !important;
+     border-color: transparent !important;
   }
 
+  /* Fix headers (Practice, Notifications) */
   .dark .dashboard-content .mt-card-header-gradient.mt-card-header-gray,
   .dark .dashboard-content .mt-card-header[color="transparent"] {
     background-color: theme('colors.gray.800') !important;
     background-image: none !important;
   }
 
-  .dark .dashboard-content [class*="border-blue-gray-50"],
+  /* Fix borders */
+  .dark .dashboard-content [class*="border-blue-gray-50"] {
+    border-color: theme('colors.gray.700');
+  }
   .dark .dashboard-content [class*="border-blue-gray-100"] {
     border-color: theme('colors.gray.700');
   }
 
-  /* ============================================================
-     🔹 PROFILE PAGE TABS
-  ============================================================ */
+  /* --- Fix for Profile Page Tabs --- */
   .dark .dashboard-content .mt-tabs-header {
     background-color: theme('colors.gray.700') !important;
   }
@@ -83,30 +84,30 @@
     color: theme('colors.gray.900') !important;
   }
 
-  /* ============================================================
-     🔹 INPUTS, TEXTAREA & SELECTS (White text + labels)
-  ============================================================ */
+  /* --- Fix for Inputs & Textarea --- */
   .dark .dashboard-content .mt-input-label,
   .dark .dashboard-content .mt-select-label,
   .dark .dashboard-content .mt-textarea-label {
-    color: theme('colors.white') !important;
+     color: theme('colors.gray.400') !important;
+  }
+  .dark .dashboard-content .mt-input-label::before,
+  .dark .dashboard-content .mt-select-label::before,
+  .dark .dashboard-content .mt-textarea-label::before,
+  .dark .dashboard-content .mt-input-label::after,
+  .dark .dashboard-content .mt-select-label::after,
+  .dark .dashboard-content .mt-textarea-label::after {
+    border-color: theme('colors.gray.500') !important;
   }
 
+  /* Fix input/select/textarea borders and text */
   .dark .dashboard-content .mt-input,
-  .dark .dashboard-content .mt-textarea > textarea,
-  .dark .dashboard-content .mt-select > button {
+  .dark .dashboard-content .mt-select > button,
+  .dark .dashboard-content .mt-textarea > textarea {
     border-color: theme('colors.gray.600') !important;
-    color: theme('colors.white') !important;
+    color: theme('colors.gray.200') !important;
   }
 
-  .dark .dashboard-content .mt-input::placeholder,
-  .dark .dashboard-content .mt-textarea > textarea::placeholder {
-    color: theme('colors.gray.400') !important;
-  }
-
-  /* ============================================================
-     🔹 SEARCH INPUT FIX
-  ============================================================ */
+  /* Fix search input in Practice History */
   .dark .dashboard-content .mt-input-label-white {
     color: theme('colors.gray.400');
   }
@@ -118,9 +119,7 @@
     color: theme('colors.gray.200') !important;
   }
 
-  /* ============================================================
-     🔹 PROSE (Markdown / Text Blocks)
-  ============================================================ */
+  /* Fix prose (markdown) backgrounds */
   .dark .dashboard-content .prose {
     color: theme('colors.gray.200');
   }
@@ -128,9 +127,7 @@
     background-color: theme('colors.gray.700');
   }
 
-  /* ============================================================
-     🔹 NOTIFICATION + PIE CHART FIXES
-  ============================================================ */
+  /* Fix notification card text & background */
   .dark .dashboard-content .mt-card-body [class*="text-blue-gray"] {
     color: theme('colors.gray.300');
   }
@@ -141,51 +138,40 @@
     background-color: theme('colors.gray.700');
     border-color: theme('colors.gray.600');
   }
+
+  /* Fix Pie Chart legend text */
   .dark .dashboard-content .apexcharts-legend-text {
     color: theme('colors.gray.200') !important;
   }
 
-  /* ============================================================
-     🔹 MENU / SELECT / POPOVER / MODAL FIXES
-  ============================================================ */
+  /* --- THIS IS THE FIX --- */
+  /* Fix Popover / Modal / Menu backgrounds */
   .dark .mt-popover,
-  .dark .mt-menu-list,
-  .dark .mt-select-menu {
+  .dark .mt-menu-list {
     background-color: theme('colors.gray.800') !important;
     border-color: theme('colors.gray.700') !important;
-    box-shadow:
-      0 0 0 1px theme('colors.gray.700') inset,
-      0 10px 15px -3px rgb(0 0 0 / 0.5),
-      0 4px 6px -4px rgb(0 0 0 / 0.5) !important;
   }
-
-  .dark .mt-select-option,
   .dark .mt-menu-item {
-    color: theme('colors.gray.100') !important;
+    color: theme('colors.gray.200') !important;
   }
-
-  .dark .mt-select-option:hover,
   .dark .mt-menu-item:hover {
     background-color: theme('colors.gray.700') !important;
   }
-
   .dark .mt-dialog {
     background-color: theme('colors.gray.800') !important;
   }
   .dark .mt-dialog-header {
-    color: theme('colors.white') !important;
+    color: theme('colors.gray.200') !important;
   }
   .dark .mt-dialog-body {
     border-color: theme('colors.gray.700') !important;
-    color: theme('colors.gray.200') !important;
+    color: theme('colors.gray.300') !important;
   }
   .dark .mt-dialog-footer {
     border-color: theme('colors.gray.700') !important;
   }
 
-  /* ============================================================
-     🔹 TEXT INSIDE MENUS
-  ============================================================ */
+  /* Fix text inside menus (like notifications) */
   .dark .mt-menu-list [class*="text-blue-gray-500"] {
     color: theme('colors.gray.400') !important;
   }
@@ -198,120 +184,5 @@
   .dark .mt-menu-list .mt-menu-item a {
     color: theme('colors.blue.400') !important;
   }
-
-  /* ============================================================
-     🔹 UNIFY SELECT POPOVER WRAPPER (remove white frames)
-  ============================================================ */
-  .mt-popover-content {
-    background-color: theme('colors.gray.800') !important;
-    border: 1px solid theme('colors.gray.700') !important;
-    border-radius: 0.75rem !important;
-    padding: 0 !important;
-    box-shadow:
-      0 10px 15px -3px rgb(0 0 0 / 0.5),
-      0 4px 6px -4px rgb(0 0 0 / 0.5) !important;
-    --tw-ring-color: transparent !important;
-  }
-
-  .mt-popover-content .mt-select-menu {
-    background: transparent !important;
-    border: 0 !important;
-    padding: 0.5rem !important;
-    box-shadow: none !important;
-  }
-
-  .mt-select-option {
-    border-radius: 0.5rem !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-  /* --- Fix Question / Markdown text colors in dark mode --- */
-  .dark .dashboard-content .prose,
-  .dark .prose {
-    color: theme('colors.gray.300') !important; /* main text */
-  }
-
-  .dark .prose strong,
-  .dark .prose b {
-    color: theme('colors.gray.100') !important;
-  }
-
-  .dark .prose code {
-    color: theme('colors.gray.200') !important;
-    background-color: theme('colors.gray.800') !important;
-    border-radius: 0.25rem;
-    padding: 0.1rem 0.25rem;
-  }
-
-  .dark .prose a {
-    color: theme('colors.blue.400') !important;
-  }
-
-  .dark .prose h1,
-  .dark .prose h2,
-  .dark .prose h3,
-  .dark .prose h4 {
-    color: theme('colors.gray.100') !important;
-  }
-  /* === Fix list numbers and bullets in dark mode === */
-  .dark .dashboard-content .prose ol > li::marker,
-  .dark .dashboard-content .prose ul > li::marker {
-    color: theme('colors.gray.200') !important; /* makes numbers/bullets light gray */
-  }
-
-  /* Optional: ensure nested list markers are consistent */
-  .dark .dashboard-content .prose ol ol > li::marker,
-  .dark .dashboard-content .prose ul ul > li::marker {
-    color: theme('colors.gray.300') !important;
-  }
-  /* === Fix Markdown list markers globally in dark mode (including modals) === */
-  .dark .prose ol > li::marker,
-  .dark .prose ul > li::marker {
-    color: theme('colors.gray.200') !important; /* make list numbers/bullets light gray */
-  }
-
-  .dark .prose ol ol > li::marker,
-  .dark .prose ul ul > li::marker {
-    color: theme('colors.gray.300') !important; /* nested lists slightly dimmer */
-  }
-
-  /* Ensure paragraph text inside markdown is also light enough */
-  .dark .prose p,
-  .dark .prose li,
-  .dark .prose strong,
-  .dark .prose span {
-    color: theme('colors.gray.200') !important;
-  }
-
-  /* === ApexCharts text colors in dark mode === */
-  .dark .dashboard-content .apexcharts-xaxis text,
-  .dark .dashboard-content .apexcharts-yaxis text,
-  .dark .dashboard-content .apexcharts-datalabels text,
-  .dark .dashboard-content .apexcharts-title-text,
-  .dark .dashboard-content .apexcharts-subtitle-text,
-  .dark .dashboard-content .apexcharts-data-labels,
-  .dark .dashboard-content .apexcharts-pie-label,
-  .dark .dashboard-content .apexcharts-datalabel-label,
-  .dark .dashboard-content .apexcharts-datalabel-value {
-    fill: theme('colors.gray.200') !important;
-    color: theme('colors.gray.200') !important;
-  }
-
-  /* Tooltip readability in dark mode */
-  .dark .dashboard-content .apexcharts-tooltip {
-    background: theme('colors.gray.800') !important;
-    border-color: theme('colors.gray.700') !important;
-    color: theme('colors.gray.100') !important;
-  }
-  .dark .dashboard-content .apexcharts-tooltip-title {
-    background: theme('colors.gray.900') !important;
-    border-color: theme('colors.gray.700') !important;
-    color: theme('colors.gray.200') !important;
-  }
-
-  .dark .dashboard-navbar div {
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-
+  /* --- END OF FIX --- */
 }
