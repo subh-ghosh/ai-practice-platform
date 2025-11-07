@@ -20,58 +20,74 @@ import {
 import { ProfileInfoCard } from "@/widgets/cards";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/api";
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/context/ThemeProvider.jsx"; // <-- use the unified provider
 
 export function Profile() {
   const { user, updateUser, logout } = useAuth();
   const { theme } = useTheme();
 
   const [activeTab, setActiveTab] = useState("profile");
-  const [firstName, setFirstName] = useState(user.firstName);
-  const [lastName, setLastName] = useState(user.lastName || "");
-  const [gender, setGender] = useState(user.gender || "male");
+
+  // form fields (populate when user arrives/changes)
+  const [firstName, setFirstName] = useState(user?.firstName || "");
+  const [lastName, setLastName] = useState(user?.lastName || "");
+  const [gender, setGender] = useState(user?.gender || "male");
+
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  // separate loading states so actions don't block each other
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  // messages
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const maleAvatar =
-    "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-user-circle-icon.png";
-  const femaleAvatar =
-    "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png";
-  const avatarSrc = user.gender === "female" ? femaleAvatar : maleAvatar;
+  // sync fields when user context updates
+  useEffect(() => {
+    setFirstName(user?.firstName || "");
+    setLastName(user?.lastName || "");
+    setGender(user?.gender || "male");
+  }, [user]);
 
+  // clear messages when switching tabs
   useEffect(() => {
     setError(null);
     setSuccess(null);
   }, [activeTab]);
 
+  const maleAvatar =
+    "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-user-circle-icon.png";
+  const femaleAvatar =
+    "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png";
+  const avatarSrc = (gender || user?.gender) === "female" ? femaleAvatar : maleAvatar;
+
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setSavingProfile(true);
     setError(null);
     setSuccess(null);
     try {
-      const response = await api.put("/api/students/profile", {
+      const res = await api.put("/api/students/profile", {
         firstName,
         lastName,
         gender,
       });
-      updateUser(response.data);
+      updateUser(res.data);
       setSuccess("Profile updated successfully!");
     } catch (err) {
       const msg = err?.response?.data;
-      setError(
-        typeof msg === "string" ? msg : "Failed to update profile. Please try again."
-      );
+      setError(typeof msg === "string" ? msg : "Failed to update profile. Please try again.");
+    } finally {
+      setSavingProfile(false);
     }
-    setLoading(false);
   };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setChangingPassword(true);
     setError(null);
     setSuccess(null);
     try {
@@ -83,39 +99,38 @@ export function Profile() {
       setOldPassword("");
       setNewPassword("");
     } catch (err) {
-      setError(
-        err.response?.data || "Failed to change password. Check your old password."
-      );
+      setError(err?.response?.data || "Failed to change password. Check your old password.");
+    } finally {
+      setChangingPassword(false);
     }
-    setLoading(false);
   };
 
   const handleDeleteAccount = async () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
-    ) {
-      setLoading(true);
-      setError(null);
-      setSuccess(null);
-      try {
-        await api.delete("/api/students/account");
-        logout();
-      } catch {
-        setError("Failed to delete account. Please try again.");
-        setLoading(false);
-      }
+    const ok = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone."
+    );
+    if (!ok) return;
+
+    setDeletingAccount(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      await api.delete("/api/students/account");
+      logout();
+    } catch {
+      setError("Failed to delete account. Please try again.");
+      setDeletingAccount(false);
     }
   };
 
   return (
-    <>
-      <div className="relative mt-8 h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover bg-center">
+    <div className="mt-8 has-fixed-navbar page space-y-6">
+      {/* Top banner */}
+      <div className="relative h-72 w-full overflow-hidden rounded-xl bg-[url('/img/background-image.png')] bg-cover bg-center">
         <div className="absolute inset-0 h-full w-full bg-gray-900/75" />
       </div>
 
-      <Card className="mx-3 -mt-16 mb-6 lg:mx-4 border border-blue-gray-100 dark:bg-gray-800 dark:border-gray-700">
+      <Card className="border border-blue-gray-100 dark:bg-gray-800 dark:border-gray-700 -mt-16">
         <CardBody className="p-4">
           <div className="mb-10 flex items-center justify-between flex-wrap gap-6">
             {/* Avatar + name */}
@@ -129,7 +144,7 @@ export function Profile() {
               />
               <div>
                 <Typography variant="h5" color="blue-gray" className="mb-1">
-                  {user.firstName} {user.lastName || ""}
+                  {(user?.firstName || firstName) + " " + (user?.lastName || lastName || "")}
                 </Typography>
                 <Typography variant="small" className="font-normal text-blue-gray-600">
                   Student
@@ -137,8 +152,8 @@ export function Profile() {
               </div>
             </div>
 
-            {/* Segmented control (replaces Tabs) */}
-            <div className="w-96">
+            {/* Segmented control */}
+            <div className="w-96 max-w-full">
               <div
                 role="tablist"
                 aria-label="Profile sections"
@@ -211,10 +226,11 @@ export function Profile() {
                     title="Profile Information"
                     description="Hi! I'm a student using the AI Practice Platform to improve my skills."
                     details={{
-                      "full name": `${user.firstName} ${user.lastName || ""}`,
-                      email: user.email,
-                      gender: user.gender
-                        ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1)
+                      "full name": `${user?.firstName || firstName} ${user?.lastName || lastName || ""}`,
+                      email: user?.email || "—",
+                      gender: (user?.gender || gender || "")
+                        ? (user?.gender || gender).charAt(0).toUpperCase() +
+                          (user?.gender || gender).slice(1)
                         : "Not set",
                       location: "India",
                     }}
@@ -236,12 +252,7 @@ export function Profile() {
               <div className="grid grid-cols-1 gap-12">
                 <div className="w-full max-w-lg">
                   <Card className="border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <CardHeader
-                      color="transparent"
-                      floated={false}
-                      shadow={false}
-                      className="m-0 p-6"
-                    >
+                    <CardHeader color="transparent" floated={false} shadow={false} className="m-0 p-6">
                       <Typography variant="h6" color="blue-gray">
                         Edit Profile
                       </Typography>
@@ -252,8 +263,8 @@ export function Profile() {
 
                     <form onSubmit={handleProfileUpdate}>
                       <CardBody className="p-6 flex flex-col gap-6">
-                        {error && <Alert color="red">{error}</Alert>}
-                        {success && <Alert color="green">{success}</Alert>}
+                        {error && activeTab === "edit" && <Alert color="red">{error}</Alert>}
+                        {success && activeTab === "edit" && <Alert color="green">{success}</Alert>}
 
                         <Input
                           label="First Name"
@@ -270,7 +281,7 @@ export function Profile() {
                         />
                         <Input
                           label="Email"
-                          value={user.email}
+                          value={user?.email || ""}
                           disabled
                           color={theme === "dark" ? "white" : "gray"}
                         />
@@ -303,9 +314,9 @@ export function Profile() {
                           type="submit"
                           variant="gradient"
                           className="w-full md:w-1/2"
-                          disabled={loading}
+                          disabled={savingProfile}
                         >
-                          {loading ? <Spinner className="h-4 w-4" /> : "Save Profile Changes"}
+                          {savingProfile ? <Spinner className="h-4 w-4" /> : "Save Profile Changes"}
                         </Button>
                       </CardBody>
                     </form>
@@ -319,12 +330,7 @@ export function Profile() {
               <div className="grid grid-cols-1 gap-6">
                 <div className="w-full max-w-lg">
                   <Card className="border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-                    <CardHeader
-                      color="transparent"
-                      floated={false}
-                      shadow={false}
-                      className="m-0 p-6"
-                    >
+                    <CardHeader color="transparent" floated={false} shadow={false} className="m-0 p-6">
                       <Typography variant="h6" color="blue-gray">
                         Change Password
                       </Typography>
@@ -340,7 +346,7 @@ export function Profile() {
                           value={oldPassword}
                           onChange={(e) => setOldPassword(e.target.value)}
                           required
-                          disabled={loading}
+                          disabled={changingPassword}
                           color={theme === "dark" ? "white" : "gray"}
                         />
                         <Input
@@ -349,24 +355,19 @@ export function Profile() {
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           required
-                          disabled={loading}
+                          disabled={changingPassword}
                           color={theme === "dark" ? "white" : "gray"}
                         />
 
-                        <Button type="submit" variant="gradient" className="w-full md:w-1/2" disabled={loading}>
-                          {loading ? <Spinner className="h-4 w-4" /> : "Change Password"}
+                        <Button type="submit" variant="gradient" className="w-full md:w-1/2" disabled={changingPassword}>
+                          {changingPassword ? <Spinner className="h-4 w-4" /> : "Change Password"}
                         </Button>
                       </form>
                     </CardBody>
                   </Card>
 
                   <Card className="border border-blue-gray-100 shadow-sm mt-6 dark:bg-gray-800 dark:border-gray-700">
-                    <CardHeader
-                      color="transparent"
-                      floated={false}
-                      shadow={false}
-                      className="m-0 p-6"
-                    >
+                    <CardHeader color="transparent" floated={false} shadow={false} className="m-0 p-6">
                       <Typography variant="h6" color="red">
                         Delete Account
                       </Typography>
@@ -375,8 +376,13 @@ export function Profile() {
                       <Typography variant="small" color="blue-gray" className="mb-4">
                         Once you delete your account, there is no going back. Please be certain.
                       </Typography>
-                      <Button variant="outlined" color="red" onClick={handleDeleteAccount} disabled={loading}>
-                        {loading ? <Spinner className="h-4 w-4" /> : "Delete My Account"}
+                      <Button
+                        variant="outlined"
+                        color="red"
+                        onClick={handleDeleteAccount}
+                        disabled={deletingAccount}
+                      >
+                        {deletingAccount ? <Spinner className="h-4 w-4" /> : "Delete My Account"}
                       </Button>
                     </CardBody>
                   </Card>
@@ -386,7 +392,7 @@ export function Profile() {
           </div>
         </CardBody>
       </Card>
-    </>
+    </div>
   );
 }
 

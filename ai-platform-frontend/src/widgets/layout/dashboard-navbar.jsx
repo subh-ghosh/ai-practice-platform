@@ -24,6 +24,8 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useTheme } from "@/context/ThemeContext";
 import { useCallback } from "react";
 
+import ToggleDarkMode from "@/components/ToggleDarkMode.jsx";
+
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
   const { fixedNavbar, openSidenav } = controller;

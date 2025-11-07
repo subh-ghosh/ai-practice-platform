@@ -1,14 +1,11 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Dashboard, Auth } from "@/layouts";
-import { ProtectedRoute } from "@/widgets/layout/ProtectedRoute"; // Import our bouncer
+import { ProtectedRoute } from "@/widgets/layout/ProtectedRoute";
 
-function App() {
+export default function App() {
   return (
     <Routes>
-      {/* Here's the magic:
-        We wrap the entire Dashboard element in our ProtectedRoute.
-        This secures all nested dashboard routes (like /home, /profile) at once.
-      */}
+      {/* Protect the whole dashboard area */}
       <Route
         path="/dashboard/*"
         element={
@@ -22,5 +19,3 @@ function App() {
     </Routes>
   );
 }
-
-export default App;

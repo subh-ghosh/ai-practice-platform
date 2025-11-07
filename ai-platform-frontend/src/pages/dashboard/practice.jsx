@@ -23,9 +23,11 @@ import { useAuth } from "@/context/AuthContext";
 import api from "@/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useTheme } from "@/context/ThemeContext";
+import { useTheme } from "@/context/ThemeProvider.jsx"; // <-- use the unified provider
 
-// --- HELPER FUNCTIONS ---
+/* =========================
+   Helpers
+========================= */
 
 function DynamicFeedbackTitle({ status }) {
   let title = "Feedback: Incorrect";
@@ -58,68 +60,35 @@ function formatDateTime(isoString) {
       hour: "2-digit",
       minute: "2-digit",
     });
-  } catch (error) {
-    console.error("Error formatting date:", error);
+  } catch {
     return "Invalid Date";
   }
 }
 
 const getStatusChip = (status) => {
-  if (!status) {
-    return (
-      <Chip
-        variant="gradient"
-        color="blue-gray"
-        value="N/A"
-        className="py-0.5 px-2 text-[11px] font-medium w-fit"
-      />
-    );
-  }
+  const base = { variant: "gradient", className: "py-0.5 px-2 text-[11px] font-medium w-fit" };
+  if (!status) return <Chip {...base} color="blue-gray" value="N/A" />;
   switch (status.toUpperCase()) {
     case "CORRECT":
-      return (
-        <Chip
-          variant="gradient"
-          color="green"
-          value="Correct"
-          className="py-0.5 px-2 text-[11px] font-medium w-fit"
-        />
-      );
+      return <Chip {...base} color="green" value="Correct" />;
     case "CLOSE":
-      return (
-        <Chip
-          variant="gradient"
-          color="orange"
-          value="Close"
-          className="py-0.5 px-2 text-[11px] font-medium w-fit"
-        />
-      );
+      return <Chip {...base} color="orange" value="Close" />;
     case "REVEALED":
-      return (
-        <Chip
-          variant="gradient"
-          color="blue"
-          value="Revealed"
-          className="py-0.5 px-2 text-[11px] font-medium w-fit"
-        />
-      );
+      return <Chip {...base} color="blue" value="Revealed" />;
     case "INCORRECT":
     default:
-      return (
-        <Chip
-          variant="gradient"
-          color="red"
-          value="Incorrect"
-          className="py-0.5 px-2 text-[11px] font-medium w-fit"
-        />
-      );
+      return <Chip {...base} color="red" value="Incorrect" />;
   }
 };
 
-// --- MAIN COMPONENT ---
+/* =========================
+   Component
+========================= */
+
 export function Practice() {
   const { user } = useAuth();
   const { theme } = useTheme();
+
   const [error, setError] = useState(null);
 
   const [allHistory, setAllHistory] = useState([]);
@@ -147,66 +116,67 @@ export function Practice() {
   const handleOpenModal = (historyItem) => setSelectedHistory(historyItem);
   const handleCloseModal = () => setSelectedHistory(null);
 
-  // Fetch practice history
+  // Fetch practice history (with robust sorting)
   const fetchHistory = async () => {
     setLoadingHistory(true);
     setError(null);
-    if (!user) return;
     try {
-      const response = await api.get(`/api/practice/history`);
-      const sortedHistory = (response.data.history || []).sort(
-        (a, b) => new Date(b.submittedAt) - new Date(a.generatedAt)
-      );
-      setAllHistory(sortedHistory);
+      const res = await api.get(`/api/practice/history`);
+      const raw = Array.isArray(res?.data?.history) ? res.data.history : [];
+      const sorted = [...raw].sort((a, b) => {
+        const aDate = new Date(a.submittedAt || a.generatedAt || 0);
+        const bDate = new Date(b.submittedAt || b.generatedAt || 0);
+        return bDate - aDate;
+      });
+      setAllHistory(sorted);
       setItemsToShow(10);
     } catch (err) {
       console.error("Error fetching history:", err);
       setError("Could not load practice history.");
+    } finally {
+      setLoadingHistory(false);
     }
-    setLoadingHistory(false);
   };
 
   useEffect(() => {
-    if (user) {
-      fetchHistory();
-    }
-  }, [user]);
+    if (user) fetchHistory();
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Filtered history
   const filteredHistory = useMemo(() => {
-    if (!searchTerm) {
-      return allHistory;
-    }
-    const lowerSearch = searchTerm.toLowerCase();
-    return allHistory.filter(
-      (item) =>
-        item.questionText.toLowerCase().includes(lowerSearch) ||
-        item.subject.toLowerCase().includes(lowerSearch) ||
-        item.topic.toLowerCase().includes(lowerSearch) ||
-        item.difficulty.toLowerCase().includes(lowerSearch) ||
-        (item.answerText && item.answerText.toLowerCase().includes(lowerSearch))
-    );
+    if (!searchTerm) return allHistory;
+    const q = searchTerm.toLowerCase();
+    return allHistory.filter((item) => {
+      const fields = [
+        item.questionText,
+        item.subject,
+        item.topic,
+        item.difficulty,
+        item.answerText,
+      ]
+        .filter(Boolean)
+        .map((x) => String(x).toLowerCase());
+      return fields.some((f) => f.includes(q));
+    });
   }, [allHistory, searchTerm]);
 
   // Visible history
-  const visibleHistory = useMemo(() => {
-    return filteredHistory.slice(0, itemsToShow);
-  }, [filteredHistory, itemsToShow]);
+  const visibleHistory = useMemo(
+    () => filteredHistory.slice(0, itemsToShow),
+    [filteredHistory, itemsToShow]
+  );
 
-  // Handle "Load More" click
-  const handleLoadMore = () => {
-    setItemsToShow((prev) => prev + 10);
-  };
+  const handleLoadMore = () => setItemsToShow((prev) => prev + 10);
 
-  // Handle resizing of textarea (with a cap)
+  // Textarea auto-resize (with cap)
   const handleAnswerChange = (e) => {
-    const { value } = e.target;
+    const value = e.target.value;
     setCurrentAnswer(value);
-    const newRowCount = (value.match(/\n/g) || []).length + 1;
-    setTextareaRows(Math.min(Math.max(5, newRowCount), 15));
+    const rows = (value.match(/\n/g) || []).length + 1;
+    setTextareaRows(Math.min(Math.max(5, rows), 15));
   };
 
-  // Handle generating a new question
+  // Generate new question
   const handleGenerateQuestion = async () => {
     setGenerating(true);
     setCurrentQuestion(null);
@@ -216,20 +186,21 @@ export function Practice() {
     setError(null);
     setTextareaRows(5);
     try {
-      const response = await api.post("/api/ai/generate-question", {
+      const res = await api.post("/api/ai/generate-question", {
         subject,
         topic,
         difficulty,
       });
-      setCurrentQuestion(response.data);
+      setCurrentQuestion(res.data);
     } catch (err) {
       console.error("Error generating question:", err);
       setError("Failed to generate a new question. Please try again.");
+    } finally {
+      setGenerating(false);
     }
-    setGenerating(false);
   };
 
-  // Handle submitting an answer
+  // Submit answer
   const handleSubmitAnswer = async (e) => {
     e.preventDefault();
     if (!currentQuestion || !currentAnswer) return;
@@ -238,69 +209,73 @@ export function Practice() {
     setHint(null);
     setError(null);
     try {
-      const response = await api.post("/api/practice/submit", {
+      const res = await api.post("/api/practice/submit", {
         questionId: currentQuestion.id,
         answerText: currentAnswer,
       });
-      setFeedback(response.data);
+      setFeedback(res.data);
       fetchHistory();
     } catch (err) {
       console.error("Error submitting answer:", err);
       setError("Failed to submit your answer. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
-  // Handle "Get Hint"
+  // Get hint
   const handleGetHint = async () => {
     if (!currentQuestion) return;
     setLoadingHint(true);
     setHint(null);
     setError(null);
     try {
-      const response = await api.post("/api/ai/get-hint", {
+      const res = await api.post("/api/ai/get-hint", {
         questionId: currentQuestion.id,
       });
-      setHint(response.data);
+      setHint(res.data);
     } catch (err) {
       console.error("Error getting hint:", err);
       setError("Failed to get a hint. Please try again.");
+    } finally {
+      setLoadingHint(false);
     }
-    setLoadingHint(false);
   };
 
-  // This function runs when "Confirm" is clicked in the popover
+  // Confirm “Get Answer”
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!currentQuestion) return;
-
     setLoadingAnswer(true);
     setFeedback(null);
     setHint(null);
     setError(null);
-
     try {
-      const response = await api.post("/api/practice/get-answer", {
+      const res = await api.post("/api/practice/get-answer", {
         questionId: currentQuestion.id,
       });
-      setFeedback(response.data);
+      setFeedback(res.data);
       fetchHistory();
     } catch (err) {
       console.error("Error getting answer:", err);
       setError("Failed to get the answer. Please try again.");
+    } finally {
+      setLoadingAnswer(false);
     }
-    setLoadingAnswer(false);
   };
 
   return (
-    <div className="mt-12">
-      {/* AI Question Generator Card */}
-      <Card className="mb-12 dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
-          <Typography variant="h6" color="white">
-            AI Question Generator
-          </Typography>
-        </CardHeader>
+    <div className="mt-14 has-fixed-navbar page space-y-6">
+          {/* Moved lower to match other pages */}
+
+          {/* --- AI Question Generator --- */}
+          <Card className="mb-12 dark:bg-gray-800 dark:border-gray-700">
+            <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+              <Typography variant="h6" color="white">
+                AI Question Generator
+              </Typography>
+            </CardHeader>
+
         <CardBody className="p-6">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <Input
@@ -321,7 +296,6 @@ export function Practice() {
               labelProps={{ className: "dark:!text-white" }}
             />
 
-            {/* ===== Select with dark-friendly dropdown ===== */}
             <Select
               label="Difficulty"
               value={difficulty}
@@ -329,24 +303,31 @@ export function Practice() {
               color="gray"
               className="dark:!text-white"
               labelProps={{ className: "dark:!text-white" }}
-              menuProps={{ className: "rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200" }}
+              menuProps={{
+                className:
+                  "rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200",
+              }}
             >
-              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="School">School</Option>
-              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="High School">High School</Option>
-              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Graduation">Graduation</Option>
-              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Post Graduation">Post Graduation</Option>
-              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Research">Research</Option>
+              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="School">
+                School
+              </Option>
+              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="High School">
+                High School
+              </Option>
+              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Graduation">
+                Graduation
+              </Option>
+              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Post Graduation">
+                Post Graduation
+              </Option>
+              <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Research">
+                Research
+              </Option>
             </Select>
-
-
           </div>
 
           <div className="mt-6 flex justify-start">
-            <Button
-              onClick={handleGenerateQuestion}
-              disabled={generating}
-              className="w-full md:w-1/3"
-            >
+            <Button onClick={handleGenerateQuestion} disabled={generating} className="w-full md:w-1/3">
               {generating ? <Spinner className="h-4 w-4" /> : "Generate New Question"}
             </Button>
           </div>
@@ -362,7 +343,7 @@ export function Practice() {
               <Typography variant="h6" color="blue-gray" className="mb-2">
                 Your Question:
               </Typography>
-              <div className="p-4 border rounded-lg bg-blue-gray-50 mb-4 whitespace-pre-wrap prose prose-sm max-w-none">
+              <div className="p-4 border rounded-lg bg-blue-gray-50 mb-4 whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {currentQuestion.questionText}
                 </ReactMarkdown>
@@ -383,6 +364,7 @@ export function Practice() {
                 <Button type="submit" disabled={submitting || loadingHint || loadingAnswer}>
                   {submitting ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
                 </Button>
+
                 <Button
                   type="button"
                   variant="outlined"
@@ -393,8 +375,6 @@ export function Practice() {
                   {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
                 </Button>
 
-
-
                 <Popover open={openPopover} handler={setOpenPopover} placement="top">
                   <PopoverHandler>
                     <Button
@@ -402,12 +382,10 @@ export function Practice() {
                       color="red"
                       variant="outlined"
                       disabled={submitting || loadingHint || loadingAnswer}
-                      loading={loadingAnswer}
                     >
-                      Get Answer
+                      {loadingAnswer ? <Spinner className="h-4 w-4" /> : "Get Answer"}
                     </Button>
                   </PopoverHandler>
-                  {/* Dark-friendly popover panel */}
                   <PopoverContent className="w-64 z-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
                     <Typography variant="h6" color="blue-gray" className="mb-2 dark:text-gray-100">
                       Confirm
@@ -429,16 +407,11 @@ export function Practice() {
             </form>
           )}
 
-          {/* Standalone Hint Display */}
+          {/* Standalone Hint */}
           {hint && (
-            <div className="mt-4 p-4 border border-blue-500 rounded-lg bg-blue-50">
+            <div className="mt-4 p-4 border border-blue-500 rounded-lg bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
               <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="w-5 h-5"
-                >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                   <path
                     fillRule="evenodd"
                     d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z"
@@ -453,11 +426,11 @@ export function Practice() {
             </div>
           )}
 
-          {/* Feedback Section */}
+          {/* Feedback */}
           {feedback && (
             <div className="mt-6 p-4 border rounded-lg">
               <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-              <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none">
+              <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {feedback.evaluationStatus === "REVEALED"
                     ? feedback.answerText
@@ -466,14 +439,9 @@ export function Practice() {
               </div>
 
               {feedback.hint && feedback.evaluationStatus !== "REVEALED" && (
-                <div className="mt-4 p-4 border border-blue-500 rounded-lg bg-blue-50">
+                <div className="mt-4 p-4 border border-blue-500 rounded-lg bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
                   <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="w-5 h-5"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                       <path
                         fillRule="evenodd"
                         d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z"
@@ -494,9 +462,13 @@ export function Practice() {
         </CardBody>
       </Card>
 
-      {/* Practice History Card */}
+      {/* Practice History */}
       <Card className="dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader variant="gradient" color="gray" className="mb-8 p-6">
+        <CardHeader
+          variant="gradient"
+          color="gray"
+          className="mb-8 p-6"
+        >
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <Typography variant="h6" color="white">
               Practice History
@@ -504,13 +476,22 @@ export function Practice() {
             <div className="w-full md:w-72">
               <Input
                 label="Search History"
-                color={theme === "dark" ? "white" : "gray"}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                color="white"
+                className="!text-white !bg-gray-800 placeholder:!text-gray-400
+                           !border !border-gray-700 focus:!border-gray-500
+                           focus:!ring-0 rounded-lg pl-2"   // <-- added slight left padding
+                labelProps={{
+                  className:
+                    "!text-gray-300 before:content-none after:content-none pl-2", // <-- label spaced
+                }}
+                containerProps={{ className: "min-w-[240px]" }}
               />
             </div>
           </div>
         </CardHeader>
+
 
         <CardBody className="px-0 pt-0 pb-2">
           {loadingHistory ? (
@@ -528,28 +509,15 @@ export function Practice() {
               <table className="w-full min-w-[640px] table-auto">
                 <thead>
                   <tr>
-                    {[
-                      "SL",
-                      "Question",
-                      "Subject",
-                      "Topic",
-                      "Difficulty",
-                      "Status",
-                      "Your Answer",
-                      "Submitted At",
-                    ].map((el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-5 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-bold uppercase text-blue-gray-400"
-                        >
-                          {el}
-                        </Typography>
-                      </th>
-                    ))}
+                    {["SL", "Question", "Subject", "Topic", "Difficulty", "Status", "Your Answer", "Submitted At"].map(
+                      (el) => (
+                        <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
+                          <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
+                            {el}
+                          </Typography>
+                        </th>
+                      )
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -563,15 +531,14 @@ export function Practice() {
                       evaluationStatus,
                       answerText,
                       submittedAt,
-                      generatedAt,
                     } = item;
                     const className = "py-3 px-5 border-b border-blue-gray-50";
-                    const uniqueKey = `${questionId}-${submittedAt}`;
+                    const uniqueKey = `${questionId}-${submittedAt || index}`;
                     return (
                       <tr
                         key={uniqueKey}
                         onClick={() => handleOpenModal(item)}
-                        className="cursor-pointer hover:bg-blue-gray-50"
+                        className="cursor-pointer hover:bg-blue-gray-50 dark:hover:bg-gray-700/70"
                       >
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
@@ -580,28 +547,22 @@ export function Practice() {
                         </td>
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
-                            {questionText.substring(0, 40)}...
+                            {String(questionText || "").substring(0, 40)}...
                           </Typography>
                         </td>
                         <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {subject}
-                          </Typography>
+                          <Typography className="text-xs font-normal text-blue-gray-500">{subject}</Typography>
                         </td>
                         <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {topic}
-                          </Typography>
+                          <Typography className="text-xs font-normal text-blue-gray-500">{topic}</Typography>
                         </td>
                         <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {difficulty}
-                          </Typography>
+                          <Typography className="text-xs font-normal text-blue-gray-500">{difficulty}</Typography>
                         </td>
                         <td className={className}>{getStatusChip(evaluationStatus)}</td>
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
-                            {answerText ? `${answerText.substring(0, 40)}...` : "Not Answered"}
+                            {answerText ? `${String(answerText).substring(0, 40)}...` : "Not Answered"}
                           </Typography>
                         </td>
                         <td className={className}>
@@ -614,6 +575,7 @@ export function Practice() {
                   })}
                 </tbody>
               </table>
+
               {filteredHistory.length > visibleHistory.length && (
                 <div className="mt-4 flex justify-center p-4">
                   <Button variant="text" onClick={handleLoadMore}>
@@ -626,52 +588,33 @@ export function Practice() {
         </CardBody>
       </Card>
 
-      {/* History Detail Modal (Dialog) */}
-      <Dialog
-        open={selectedHistory !== null}
-        handler={handleCloseModal}
-        size="lg"
-        className="dark:bg-gray-800"
-      >
+      {/* History Detail Modal */}
+      <Dialog open={selectedHistory !== null} handler={handleCloseModal} size="lg" className="dark:bg-gray-800">
         <DialogHeader className="dark:text-gray-200">Practice Result</DialogHeader>
 
-        <DialogBody
-          divider
-          className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto dark:border-gray-700"
-        >
+        <DialogBody divider className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto dark:border-gray-700">
           {selectedHistory && (
             <>
               <div>
                 <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
                   <Typography variant="small" className="dark:text-gray-300">
-                    <span className="font-semibold text-blue-gray-600 dark:text-gray-400">
-                      Subject:
-                    </span>{" "}
+                    <span className="font-semibold text-blue-gray-600 dark:text-gray-400">Subject:</span>{" "}
                     {selectedHistory.subject}
                   </Typography>
                   <Typography variant="small" className="dark:text-gray-300">
-                    <span className="font-semibold text-blue-gray-600 dark:text-gray-400">
-                      Topic:
-                    </span>{" "}
+                    <span className="font-semibold text-blue-gray-600 dark:text-gray-400">Topic:</span>{" "}
                     {selectedHistory.topic}
                   </Typography>
                   <Typography variant="small" className="dark:text-gray-300">
-                    <span className="font-semibold text-blue-gray-600 dark:text-gray-400">
-                      Difficulty:
-                    </span>{" "}
+                    <span className="font-semibold text-blue-gray-600 dark:text-gray-400">Difficulty:</span>{" "}
                     {selectedHistory.difficulty}
                   </Typography>
                 </div>
 
                 <Typography variant="small" color="blue-gray" className="dark:text-gray-300">
-                  <span className="font-semibold">Question Generated:</span>{" "}
-                  {formatDateTime(selectedHistory.generatedAt)}
+                  <span className="font-semibold">Question Generated:</span> {formatDateTime(selectedHistory.generatedAt)}
                 </Typography>
-                <Typography
-                  variant="small"
-                  color="blue-gray"
-                  className="font-semibold dark:text-gray-300"
-                >
+                <Typography variant="small" color="blue-gray" className="font-semibold dark:text-gray-300">
                   Answer Submitted: {formatDateTime(selectedHistory.submittedAt)}
                 </Typography>
 
@@ -684,6 +627,7 @@ export function Practice() {
                   </ReactMarkdown>
                 </div>
               </div>
+
               <div>
                 <Typography variant="h6" color="blue-gray" className="dark:text-gray-200">
                   Your Answer
@@ -694,6 +638,7 @@ export function Practice() {
                   </ReactMarkdown>
                 </div>
               </div>
+
               <div>
                 <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
                 <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
@@ -708,12 +653,7 @@ export function Practice() {
               {selectedHistory.hint && selectedHistory.evaluationStatus !== "REVEALED" && (
                 <div className="mt-2 p-4 border border-blue-500 rounded-lg bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
                   <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      className="w-5 h-5"
-                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                       <path
                         fillRule="evenodd"
                         d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z"
@@ -732,13 +672,9 @@ export function Practice() {
             </>
           )}
         </DialogBody>
+
         <DialogFooter className="dark:border-t dark:border-gray-700">
-          <Button
-            variant="text"
-            color="blue-gray"
-            onClick={handleCloseModal}
-            className="dark:text-gray-200"
-          >
+          <Button variant="text" color="blue-gray" onClick={handleCloseModal} className="dark:text-gray-200">
             <span>Close</span>
           </Button>
         </DialogFooter>
