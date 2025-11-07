@@ -14,7 +14,6 @@ import {
   Home,
   Practice,
   Profile,
-  Tables,
   Notifications,
 } from "@/pages/dashboard";
 
