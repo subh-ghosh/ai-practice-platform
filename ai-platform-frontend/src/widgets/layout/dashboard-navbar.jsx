@@ -2,44 +2,46 @@ import { useLocation, Link } from "react-router-dom";
 import {
   Navbar,
   Typography,
-  Button,
   IconButton,
   Menu,
   MenuHandler,
   MenuList,
   MenuItem,
   Badge,
+  Button,
 } from "@material-tailwind/react";
-import { useNotifications } from "@/context/NotificationContext.jsx";
 import {
   UserCircleIcon,
   BellIcon,
   ClockIcon,
   Bars3Icon,
 } from "@heroicons/react/24/solid";
-import {
-  useMaterialTailwindController,
-  setOpenSidenav,
-} from "@/context";
+
+import { useMaterialTailwindController, setOpenSidenav } from "@/context";
 import { useAuth } from "@/context/AuthContext";
-import { useCallback } from "react";
+import { useNotifications } from "@/context/NotificationContext.jsx";
 import { ThemeToggle } from "./ThemeToggle";
 import { useTheme } from "@/context/ThemeContext";
+import { useCallback } from "react";
 
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
-const { fixedNavbar, openSidenav } = controller;
+  const { fixedNavbar, openSidenav } = controller;
+
   const { pathname } = useLocation();
-const [layout, page] = pathname.split("/").filter((el) => el !== "");
+  const [layout, page] = pathname.split("/").filter((el) => el !== "");
+
   const { user, logout } = useAuth();
   const { theme } = useTheme();
-const {
+
+  const {
     notifications = [],
     unreadCount = 0,
     loading,
     markRead,
   } = useNotifications();
-const handleMarkRead = useCallback(
+
+  const handleMarkRead = useCallback(
     async (id) => {
       try {
         await Promise.resolve(markRead?.(id));
@@ -49,13 +51,15 @@ const handleMarkRead = useCallback(
     },
     [markRead]
   );
-const safeUnread = Number.isFinite(Number(unreadCount))
+
+  const safeUnread = Number.isFinite(Number(unreadCount))
     ? Number(unreadCount)
     : 0;
-return (
+
+  return (
     <Navbar
       color={fixedNavbar ? "white" : "transparent"}
-      className={`rounded-xl transition-all ${
+      className={`dashboard-navbar rounded-xl transition-all ${
         fixedNavbar
           ? "sticky top-4 z-40 py-3 shadow-md shadow-blue-gray-500/5"
           : "px-0 py-1"
@@ -64,40 +68,52 @@ return (
       blurred={fixedNavbar}
     >
       <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
-
- <div className="capitalize">
+        {/* Page title */}
+        <div className="capitalize">
           <Typography variant="h6" color="blue-gray">
             {page}
           </Typography>
         </div>
 
-        <div className="flex items-center">
+        {/* Right controls */}
+        <div className="flex items-center gap-3">
+          {/* Sidenav toggle (mobile) – flat */}
           <IconButton
             variant="text"
             color="blue-gray"
-
-className="grid xl:hidden"
+            ripple={false}
+            className="grid xl:hidden bg-transparent hover:bg-transparent focus:bg-transparent"
             onClick={() => setOpenSidenav(dispatch, !openSidenav)}
           >
-            <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500" />
+            <Bars3Icon className="h-6 w-6 text-blue-gray-500 dark:text-gray-200" />
           </IconButton>
 
-          {/* USER MENU */}
+          {/* USER MENU (flat trigger) */}
           <Menu>
             <MenuHandler>
-
-  <Button
-                variant="text"
-                color="blue-gray"
-                className="hidden items-center gap-1 px-4 xl:flex normal-case"
+              <div
+                className="hidden xl:flex items-center gap-2 px-0 py-0 cursor-pointer select-none
+                           text-blue-gray-600 dark:text-gray-200 hover:opacity-80"
+                role="button"
+                tabIndex={0}
+                aria-label="Open user menu"
               >
-                <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
-
-     Hi, {user?.firstName ?? "User"}
-              </Button>
+                <UserCircleIcon className="h-5 w-5" />
+                Hi, {user?.firstName ?? "User"}
+              </div>
             </MenuHandler>
-            <MenuList className={theme === 'dark' ? "dark:bg-gray-800 dark:border-gray-700" : ""}>
-              <MenuItem onClick={logout} className={theme === 'dark' ? "dark:hover:bg-gray-700" : ""}>
+
+            <MenuList
+              className={
+                theme === "dark"
+                  ? "dark:bg-gray-800 dark:border-gray-700"
+                  : undefined
+              }
+            >
+              <MenuItem
+                onClick={logout}
+                className={theme === "dark" ? "dark:hover:bg-gray-700" : ""}
+              >
                 <Typography color="red" className="font-medium">
                   Log Out
                 </Typography>
@@ -105,71 +121,103 @@ className="grid xl:hidden"
             </MenuList>
           </Menu>
 
-          <IconButton variant="text" color="blue-gray" className="grid xl:hidden">
-            <UserCircleIcon className="h-5 w-5 text-blue-gray-500" />
+          {/* Mobile user icon – flat */}
+          <IconButton
+            variant="text"
+            color="blue-gray"
+            ripple={false}
+            className="grid xl:hidden bg-transparent hover:bg-transparent focus:bg-transparent"
+          >
+            <UserCircleIcon className="h-5 w-5 text-blue-gray-500 dark:text-gray-200" />
           </IconButton>
 
-
-{/* --- NOTIFICATION MENU (DYNAMIC) --- */}
+          {/* NOTIFICATIONS (flat trigger + badge) */}
           <Menu>
             <MenuHandler>
-              <IconButton variant="text" color="blue-gray">
+              <IconButton
+                variant="text"
+                color="blue-gray"
+                ripple={false}
+                className="bg-transparent hover:bg-transparent focus:bg-transparent"
+                aria-label="Open notifications"
+              >
                 <Badge
-                  content={safeUnread ||
-0}
-                  withBorder
+                  content={safeUnread || 0}
                   color="red"
+                  withBorder={false}          /* no white ring/bubble */
                   invisible={!safeUnread}
-                  className="z-10 top-1"
+                  className="z-10 -top-1 -right-1"
                 >
-
-       <BellIcon className="h-5 w-5 text-blue-gray-500" />
+                  <BellIcon className="h-5 w-5 text-blue-gray-500 dark:text-gray-200" />
                 </Badge>
               </IconButton>
             </MenuHandler>
 
-            <MenuList className={`w-full max-w-xs border-0 ${theme === 'dark' ? "dark:bg-gray-800 dark:border-gray-700" : ""}`}>
+            <MenuList
+              className={`w-full max-w-xs border-0 ${
+                theme === "dark"
+                  ? "dark:bg-gray-800 dark:border-gray-700"
+                  : ""
+              }`}
+            >
               {loading && (
-                <MenuItem className={`flex items-center gap-3 ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}>
-                  <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="font-normal">
+                <MenuItem
+                  className={`flex items-center gap-3 ${
+                    theme === "dark" ? "dark:hover:bg-gray-700" : ""
+                  }`}
+                >
+                  <Typography
+                    variant="small"
+                    color={theme === "dark" ? "white" : "blue-gray"}
+                    className="font-normal"
+                  >
                     Loading notifications...
                   </Typography>
                 </MenuItem>
               )}
 
-
-       {!loading && !safeUnread && (
-                <MenuItem className={`flex items-center gap-3 ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}>
-                  <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="font-normal">
+              {!loading && !safeUnread && (
+                <MenuItem
+                  className={`flex items-center gap-3 ${
+                    theme === "dark" ? "dark:hover:bg-gray-700" : ""
+                  }`}
+                >
+                  <Typography
+                    variant="small"
+                    color={theme === "dark" ? "white" : "blue-gray"}
+                    className="font-normal"
+                  >
                     No new notifications
                   </Typography>
-
-       </MenuItem>
+                </MenuItem>
               )}
 
               {!loading &&
                 safeUnread > 0 &&
                 notifications.slice(0, 5).map((n) => (
                   <MenuItem
-
-            key={n.id}
-                    className={`flex items-start gap-3 whitespace-normal ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}
+                    key={n.id}
+                    className={`flex items-start gap-3 whitespace-normal ${
+                      theme === "dark" ? "dark:hover:bg-gray-700" : ""
+                    }`}
                     onClick={() => handleMarkRead(n.id)}
                   >
-                    <div className="relative p-1 after:absolute after:-bottom-6
-after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] after:h-4/6">
-                      <ClockIcon className="!w-5 !h-5 text-blue-gray-500" />
+                    <div className="relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] after:h-4/6">
+                      <ClockIcon className="!w-5 !h-5 text-blue-gray-500 dark:text-gray-300" />
                     </div>
                     <div>
-                      {/* --- THIS IS THE FIX --- */}
                       <Typography
-                         variant="small"
-                        color={theme === 'dark' ? 'white' : 'blue-gray'}
+                        variant="small"
+                        color={theme === "dark" ? "white" : "blue-gray"}
                         className="mb-1 font-semibold uppercase text-xs"
                       >
                         {n.type}
                       </Typography>
-                      <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="font-normal">
+                      <Typography
+                        variant="small"
+                        color={theme === "dark" ? "white" : "blue-gray"}
+                        className="font-normal"
+                      >
                         {n.message}
                       </Typography>
                       <Typography
@@ -177,41 +225,38 @@ after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:co
                         variant="small"
                         className="text-xs font-medium text-blue-gray-400 dark:text-gray-500"
                       >
-                      {/* --- END OF FIX --- */}
                         {new Date(n.createdAt).toLocaleString(undefined, {
                           year: "numeric",
-
-    month: "short",
+                          month: "short",
                           day: "2-digit",
                           hour: "2-digit",
                           minute: "2-digit",
-
-            second: "2-digit",
+                          second: "2-digit",
                           hour12: false,
                         })}
                       </Typography>
-
-      </div>
+                    </div>
                   </MenuItem>
                 ))}
 
               <hr className="my-2 border-blue-gray-50 dark:border-gray-700" />
 
               <Link to="/dashboard/notifications">
-                <MenuItem className={`flex items-center justify-center gap-3 ${theme === 'dark' ? "dark:hover:bg-gray-700" : ""}`}>
-
-          <Typography variant="small" color="blue" className="font-medium">
+                <MenuItem
+                  className={`flex items-center justify-center gap-3 ${
+                    theme === "dark" ? "dark:hover:bg-gray-700" : ""
+                  }`}
+                >
+                  <Typography variant="small" color="blue" className="font-medium">
                     View all notifications
                   </Typography>
                 </MenuItem>
               </Link>
             </MenuList>
+          </Menu>
 
-     </Menu>
-          {/* --- END OF NOTIFICATION MENU --- */}
-
+          {/* THEME TOGGLE – already flat */}
           <ThemeToggle />
-
         </div>
       </div>
     </Navbar>
@@ -219,5 +264,4 @@ after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:co
 }
 
 DashboardNavbar.displayName = "/src/widgets/layout/dashboard-navbar.jsx";
-
 export default DashboardNavbar;
