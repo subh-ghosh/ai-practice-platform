@@ -11,22 +11,26 @@ import { NotificationProvider } from "@/context/NotificationContext.jsx";
 import { ThemeProvider as AppThemeProvider } from "@/context/ThemeProvider.jsx";
 import ErrorBoundary from "@/components/dev/ErrorBoundary.jsx";
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <MTTheme>
-        <MaterialTailwindControllerProvider>
-          <AppThemeProvider>
-            <AuthProvider>
-              <NotificationProvider>
-                <ErrorBoundary>
-                  <App />
-                </ErrorBoundary>
-              </NotificationProvider>
-            </AuthProvider>
-          </AppThemeProvider>
-        </MaterialTailwindControllerProvider>
-      </MTTheme>
+      <GoogleOAuthProvider clientId="628028362073-4tnuu4287kalrmhmagbhontaqnlu7elk.apps.googleusercontent.com">
+        <MTTheme>
+          <MaterialTailwindControllerProvider>
+            <AppThemeProvider>
+              <AuthProvider>
+                <NotificationProvider>
+                  <ErrorBoundary>
+                    <App />
+                  </ErrorBoundary>
+                </NotificationProvider>
+              </AuthProvider>
+            </AppThemeProvider>
+          </MaterialTailwindControllerProvider>
+        </MTTheme>
+      </GoogleOAuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

@@ -7,6 +7,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+// --- Add required imports ---
+import org.springframework.beans.factory.annotation.Autowired;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+// --- End imports ---
+
 @RestController
 @RequestMapping("/api/students")
 public class StudentAuthController {
@@ -15,17 +22,21 @@ public class StudentAuthController {
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final GoogleAuthService googleAuthService; // 👈 --- ADD THIS
 
+    @Autowired // 👈 --- ADD THIS
     public StudentAuthController(
             NotificationService notificationService,
             StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil
+            JwtUtil jwtUtil,
+            GoogleAuthService googleAuthService // 👈 --- ADD THIS
     ) {
         this.notificationService = notificationService;
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.googleAuthService = googleAuthService; // 👈 --- ADD THIS
     }
 
     @PostMapping("/register")
@@ -85,5 +96,51 @@ public class StudentAuthController {
         notificationService.notify(student.getId(), "LOGIN", "You logged in successfully.");
 
         return ResponseEntity.ok(dto);
+    }
+
+    // 👇 --- ADD THIS NEW ENDPOINT ---
+    @PostMapping("/oauth/google")
+    public ResponseEntity<?> handleGoogleLogin(@RequestBody GoogleTokenRequest request) {
+        try {
+            GoogleIdToken.Payload payload = googleAuthService.verifyToken(request.idToken());
+            if (payload == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Google Token");
+            }
+
+            String email = payload.getEmail();
+            String firstName = (String) payload.get("given_name");
+            String lastName = (String) payload.get("family_name");
+
+            // Check if user already exists
+            var studentOpt = studentRepository.findByEmail(email);
+
+            if (studentOpt.isPresent()) {
+                // --- CASE 1: USER EXISTS ---
+                // User exists, log them in and issue a JWT
+                Student student = studentOpt.get();
+                String token = jwtUtil.generateToken(student);
+                StudentDto dto = new StudentDto(
+                        student.getId(),
+                        student.getEmail(),
+                        student.getFirstName(),
+                        student.getLastName(),
+                        student.getGender(),
+                        token
+                );
+
+                // Send a login notification
+                notificationService.notify(student.getId(), "LOGIN", "You logged in successfully with Google.");
+
+                return ResponseEntity.ok(new GoogleAuthResponse("LOGIN_SUCCESS", dto, token, null, null, null));
+
+            } else {
+                // --- CASE 2: NEW USER ---
+                // User is new, signal frontend to start registration
+                return ResponseEntity.ok(new GoogleAuthResponse("NEEDS_REGISTRATION", null, null, email, firstName, lastName));
+            }
+
+        } catch (GeneralSecurityException | IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Token verification failed");
+        }
     }
 }
