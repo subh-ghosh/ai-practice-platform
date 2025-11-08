@@ -7,6 +7,7 @@ import {
   RectangleStackIcon,
   ChartPieIcon,
   PencilIcon,
+  CreditCardIcon, // 👈 --- ADD THIS IMPORT
 } from "@heroicons/react/24/solid";
 
 // Import all dashboard pages from the main barrel file
@@ -15,6 +16,7 @@ import {
   Practice,
   Profile,
   Notifications,
+  Pricing, // 👈 --- ADD THIS IMPORT
 } from "@/pages/dashboard";
 
 import { SignIn, SignUp } from "@/pages/auth";
@@ -52,7 +54,7 @@ export const routes = [
         path: "/profile",
         element: <Profile />,
       },
-      
+
       {
         icon: <InformationCircleIcon {...icon} />,
         name: "Notifications ",
@@ -61,6 +63,20 @@ export const routes = [
       },
     ],
   },
+  // --- 👇 ADD THIS ENTIRE NEW SECTION --- 👇
+  {
+    layout: "dashboard",
+    title: "Upgrade",
+    pages: [
+      {
+        icon: <CreditCardIcon {...icon} />,
+        name: "Pricing",
+        path: "/pricing",
+        element: <Pricing />,
+      },
+    ],
+  },
+  // --- 👆 END OF NEW SECTION --- 👆
   {
     title: "auth pages",
     layout: "auth",

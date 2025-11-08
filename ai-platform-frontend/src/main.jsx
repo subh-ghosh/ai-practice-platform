@@ -1,35 +1,36 @@
-import "./styles/tailwind.css";
+import './styles/tailwind.css';
 
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider as MTTheme } from "@material-tailwind/react";
+import { ThemeProvider } from "@material-tailwind/react";
 import { MaterialTailwindControllerProvider } from "@/context";
 import { AuthProvider } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext.jsx";
-import { ThemeProvider as AppThemeProvider } from "@/context/ThemeProvider.jsx";
-import ErrorBoundary from "@/components/dev/ErrorBoundary.jsx";
-
+import { ThemeProvider as AppThemeProvider } from "@/context/ThemeContext.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { PaywallProvider } from "@/context/PaywallContext.jsx"; // 👈 --- ADD THIS IMPORT
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
       <GoogleOAuthProvider clientId="628028362073-4tnuu4287kalrmhmagbhontaqnlu7elk.apps.googleusercontent.com">
-        <MTTheme>
+        <ThemeProvider>
           <MaterialTailwindControllerProvider>
             <AppThemeProvider>
               <AuthProvider>
                 <NotificationProvider>
-                  <ErrorBoundary>
+                  {/* 👇 --- WRAP HERE --- 👇 */}
+                  <PaywallProvider>
                     <App />
-                  </ErrorBoundary>
+                  </PaywallProvider>
+                  {/* 👆 --- END WRAP --- 👆 */}
                 </NotificationProvider>
               </AuthProvider>
             </AppThemeProvider>
           </MaterialTailwindControllerProvider>
-        </MTTheme>
+        </ThemeProvider>
       </GoogleOAuthProvider>
     </BrowserRouter>
   </React.StrictMode>

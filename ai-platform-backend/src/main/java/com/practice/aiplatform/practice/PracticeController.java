@@ -3,6 +3,7 @@ package com.practice.aiplatform.practice;
 import com.practice.aiplatform.ai.GeminiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import com.practice.aiplatform.user.UsageService; // 👈 --- ADD THIS IMPORT
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,11 +30,22 @@ public class PracticeController {
     private StudentRepository studentRepository;
     @Autowired
     private GeminiService geminiService;
+    @Autowired
+    private UsageService usageService; // 👈 --- ADD THIS
 
     @PostMapping("/submit")
     public Mono<ResponseEntity<Answer>> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
 
-        Student student = studentRepository.findByEmail(principal.getName())
+        String email = principal.getName(); // 👈 --- GET EMAIL
+
+        // --- 👇 ADD THIS PAYWALL CHECK ---
+        if (!usageService.canPerformAction(email)) {
+            // User has reached their free limit, return 402 Payment Required
+            return Mono.just(ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build());
+        }
+        // --- 👆 END OF PAYWALL CHECK ---
+
+        Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         Question question = questionRepository.findById(request.questionId())

@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }) => {
     setUser(updatedUser);
   };
 
-  // --- ADD THIS NEW FUNCTION ---
   const loginWithGoogle = async (idToken) => {
     try {
       const response = await api.post("/api/students/oauth/google", { idToken });
@@ -65,9 +64,38 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // --- UPDATE THE RETURNED VALUE ---
+  // --- 👇 ADD THIS NEW FUNCTION ---
+  const decrementFreeActions = () => {
+    setUser((currentUser) => {
+      // Only run if the user is logged in and on the free plan
+      if (currentUser && currentUser.subscriptionStatus === "FREE") {
+        const newCount = (currentUser.freeActionsUsed || 0) + 1;
+
+        // Create the updated user object
+        const updatedUser = {
+          ...currentUser,
+          freeActionsUsed: newCount,
+        };
+
+        // Save to localStorage and update state
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        return updatedUser;
+      }
+      // If not free or not logged in, return the same state
+      return currentUser;
+    });
+  };
+  // --- 👆 END OF NEW FUNCTION ---
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, loginWithGoogle }}>
+    <AuthContext.Provider value={{
+      user,
+      login,
+      logout,
+      updateUser,
+      loginWithGoogle,
+      decrementFreeActions // 👈 --- EXPOSE THE NEW FUNCTION
+    }}>
       {children}
     </AuthContext.Provider>
   );

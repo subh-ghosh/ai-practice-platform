@@ -89,7 +89,9 @@ public class StudentAuthController {
                 student.getFirstName(),
                 student.getLastName(),
                 student.getGender(),
-                token
+                token,
+                student.getSubscriptionStatus(), // 👈 --- ADD THIS
+                student.getFreeActionsUsed()      // 👈 --- ADD THIS
         );
 
         // notify login
@@ -125,7 +127,9 @@ public class StudentAuthController {
                         student.getFirstName(),
                         student.getLastName(),
                         student.getGender(),
-                        token
+                        token,
+                        student.getSubscriptionStatus(), // 👈 --- ADD THIS
+                        student.getFreeActionsUsed()      // 👈 --- ADD THIS
                 );
 
                 // Send a login notification

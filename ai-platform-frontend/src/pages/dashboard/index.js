@@ -2,3 +2,4 @@ export * from "./home";
 export * from "./practice";
 export * from "./profile";
 export * from "./notifications";
+export * from "./pricing";
