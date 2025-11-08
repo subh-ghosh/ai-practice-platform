@@ -363,13 +363,15 @@ export function Home() {
           key="breakdown-chart"
           chart={breakdownChart}
           color="transparent"
-          title="Answer Breakdown"
+          className="flex flex-col justify-between h-full"
+          title={
+            <div className="mt-12"> {/* ✅ Added margin to match others */}
+              Answer Breakdown
+            </div>
+          }
           description="Summary of all practice attempts."
           footer={
-            <Typography
-               variant="small"
-              className="flex items-center font-normal text-blue-gray-600"
-            >
+            <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
               <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
               &nbsp;Updated just now
             </Typography>

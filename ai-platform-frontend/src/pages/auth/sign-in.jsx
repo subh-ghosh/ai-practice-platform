@@ -1,5 +1,4 @@
 import {
-  Card,
   Input,
   Button,
   Typography,
@@ -45,6 +44,7 @@ export function SignIn() {
     setSubmitting(true);
     const result = await login(email, password);
     setSubmitting(false);
+
     if (result?.success) {
       navigate(from, { replace: true });
     } else {
@@ -71,11 +71,11 @@ export function SignIn() {
         navigate(from, { replace: true });
       } else if (result.status === "NEEDS_REGISTRATION") {
         navigate("/auth/sign-up", {
-          state: { googleData: result.registrationData }
+          state: { googleData: result.registrationData },
         });
       }
     } else {
-      if (typeof result.message === 'object' && result.message !== null) {
+      if (typeof result.message === "object" && result.message !== null) {
         console.error("Backend error:", result.message);
         setError("An internal server error occurred. Please try again later.");
       } else {
@@ -91,94 +91,63 @@ export function SignIn() {
   };
 
   return (
-    // --- 👇 THIS IS THE CHANGE --- 👇
-    // Removed all margin/height/centering classes.
-    // The parent layout (auth.jsx) will handle the centering.
-    <section className="flex gap-6 py-12 px-8">
-    {/* --- 👆 END OF CHANGE --- 👆 */}
-
-      {/* left – form */}
-      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center">
-        <div className="text-center">
-          <Typography variant="h2" className="font-bold mb-2">
+    <section className="min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-8">
+      {/* Left Form */}
+      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh]">
+        <div className="text-center mb-6">
+          <Typography variant="h2" className="font-bold mb-2 text-3xl md:text-4xl">
             Sign In
           </Typography>
           <Typography
             variant="paragraph"
-            color={theme === 'dark' ? 'white' : 'blue-gray'}
+            color={theme === "dark" ? "white" : "blue-gray"}
             className="text-lg font-normal"
           >
-            Enter your email and password to Sign In.
+            Enter your email and password to sign in.
           </Typography>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2"
+          className="w-full max-w-[420px] flex flex-col gap-4"
         >
-          {success && (
-            <Alert color="green" className="mb-4">
-              {success}
-            </Alert>
-          )}
+          {success && <Alert color="green">{success}</Alert>}
+          {error && <Alert color="red">{error}</Alert>}
 
-          {error && (
-            <Alert color="red" className="mb-4">
-              {error}
-            </Alert>
-          )}
+          <div className="flex flex-col gap-3">
+            <Input
+              size="lg"
+              type="email"
+              label="Your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              color={theme === "dark" ? "white" : "gray"}
+              autoComplete="email"
+            />
 
-          <div className="mb-1 flex flex-col gap-6">
-            <div>
-              <Typography
-                variant="small"
-                color={theme === 'dark' ? 'white' : 'blue-gray'}
-                className="-mb-3 font-medium"
-              >
-                Your email
-              </Typography>
-              <Input
-                size="lg"
-                placeholder="name@mail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                labelProps={{ className: "before:content-none after:content-none" }}
-                color={theme === 'dark' ? 'white' : 'gray'}
-              />
-            </div>
-
-            <div>
-              <Typography
-                variant="small"
-                color={theme === 'dark' ? 'white' : 'blue-gray'}
-                className="-mb-3 font-medium"
-              >
-                Password
-              </Typography>
-              <Input
-                size="lg"
-                type="password"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                labelProps={{ className: "before:content-none after:content-none" }}
-                color={theme === 'dark' ? 'white' : 'gray'}
-              />
-            </div>
+            <Input
+              size="lg"
+              type="password"
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              color={theme === "dark" ? "white" : "gray"}
+              autoComplete="current-password"
+            />
           </div>
 
           <Button
             type="submit"
-            className="mt-6"
+            className="mt-3"
             fullWidth
             disabled={submitting || googleSubmitting}
-            variant={theme === 'dark' ? 'outlined' : 'gradient'}
-            color={theme === 'dark' ? 'white' : 'blue'}
+            variant={theme === "dark" ? "outlined" : "gradient"}
+            color={theme === "dark" ? "white" : "blue"}
           >
             {submitting ? "Signing in..." : "Sign In"}
           </Button>
 
-          <div className="relative flex py-5 items-center">
+          <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t border-gray-400"></div>
             <span className="flex-shrink mx-4 text-gray-400">OR</span>
             <div className="flex-grow border-t border-gray-400"></div>
@@ -191,17 +160,18 @@ export function SignIn() {
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
-                theme={theme === 'dark' ? 'filled_black' : 'outline'}
+                theme={theme === "dark" ? "filled_black" : "outline"}
                 shape="pill"
                 width="280px"
+                text="signin_with"
               />
             )}
           </div>
 
           <Typography
             variant="paragraph"
-            color={theme === 'dark' ? 'white' : 'blue-gray'}
-            className="text-center font-medium mt-4"
+            color={theme === "dark" ? "white" : "blue-gray"}
+            className="text-center font-medium mt-2"
           >
             Not registered?
             <Link to="/auth/sign-up" className="text-gray-900 dark:text-blue-400 ml-1">
@@ -211,12 +181,12 @@ export function SignIn() {
         </form>
       </div>
 
-      {/* right – image */}
-      <div className="hidden lg:block w-2/5">
+      {/* Right Image */}
+      <div className="hidden lg:flex w-2/5 justify-center">
         <img
           src="/img/pattern.png"
           alt="Pattern"
-          className="h-full w-full object-cover rounded-3xl"
+          className="w-full h-[80vh] object-cover rounded-3xl shadow-lg"
         />
       </div>
     </section>
