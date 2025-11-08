@@ -6,5 +6,9 @@ public record StudentDto(
         String firstName,
         String lastName,
         String gender,
-        String token
+        String token,
+
+        // --- These are the two new fields ---
+        String subscriptionStatus,
+        int freeActionsUsed
 ) {}

@@ -18,12 +18,15 @@ import {
   Popover,
   PopoverHandler,
   PopoverContent,
+  Alert,
 } from "@material-tailwind/react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/api";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useTheme } from "@/context/ThemeProvider.jsx"; // <-- use the unified provider
+import { useTheme } from "@/context/ThemeContext.jsx";
+import { usePaywall } from "@/context/PaywallContext.jsx";
+import { InformationCircleIcon } from "@heroicons/react/24/solid";
 
 /* =========================
    Helpers
@@ -86,8 +89,9 @@ const getStatusChip = (status) => {
 ========================= */
 
 export function Practice() {
-  const { user } = useAuth();
+  const { user, decrementFreeActions } = useAuth();
   const { theme } = useTheme();
+  const { showPaywall } = usePaywall();
 
   const [error, setError] = useState(null);
 
@@ -113,10 +117,13 @@ export function Practice() {
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [openPopover, setOpenPopover] = useState(false);
 
+  const FREE_ACTION_LIMIT = 3;
+  const actionsRemaining = Math.max(0, FREE_ACTION_LIMIT - (user?.freeActionsUsed || 0));
+
   const handleOpenModal = (historyItem) => setSelectedHistory(historyItem);
   const handleCloseModal = () => setSelectedHistory(null);
 
-  // Fetch practice history (with robust sorting)
+  // Fetch practice history
   const fetchHistory = async () => {
     setLoadingHistory(true);
     setError(null);
@@ -142,7 +149,6 @@ export function Practice() {
     if (user) fetchHistory();
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Filtered history
   const filteredHistory = useMemo(() => {
     if (!searchTerm) return allHistory;
     const q = searchTerm.toLowerCase();
@@ -160,7 +166,6 @@ export function Practice() {
     });
   }, [allHistory, searchTerm]);
 
-  // Visible history
   const visibleHistory = useMemo(
     () => filteredHistory.slice(0, itemsToShow),
     [filteredHistory, itemsToShow]
@@ -168,7 +173,6 @@ export function Practice() {
 
   const handleLoadMore = () => setItemsToShow((prev) => prev + 10);
 
-  // Textarea auto-resize (with cap)
   const handleAnswerChange = (e) => {
     const value = e.target.value;
     setCurrentAnswer(value);
@@ -192,9 +196,16 @@ export function Practice() {
         difficulty,
       });
       setCurrentQuestion(res.data);
+      if (user?.subscriptionStatus === 'FREE') {
+        decrementFreeActions();
+      }
     } catch (err) {
       console.error("Error generating question:", err);
-      setError("Failed to generate a new question. Please try again.");
+      if (err.response?.status === 402) {
+        showPaywall();
+      } else {
+        setError("Failed to generate a new question. Please try again.");
+      }
     } finally {
       setGenerating(false);
     }
@@ -215,9 +226,16 @@ export function Practice() {
       });
       setFeedback(res.data);
       fetchHistory();
+      if (user?.subscriptionStatus === 'FREE') {
+        decrementFreeActions();
+      }
     } catch (err) {
       console.error("Error submitting answer:", err);
-      setError("Failed to submit your answer. Please try again.");
+      if (err.response?.status === 402) {
+        showPaywall();
+      } else {
+        setError("Failed to submit your answer. Please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -265,7 +283,7 @@ export function Practice() {
   };
 
   return (
-    <div className="mt-14 has-fixed-navbar page space-y-6">
+    <div className="mt-12 has-fixed-navbar page space-y-6">
           {/* Moved lower to match other pages */}
 
           {/* --- AI Question Generator --- */}
@@ -326,8 +344,25 @@ export function Practice() {
             </Select>
           </div>
 
+          {user?.subscriptionStatus === 'FREE' && (
+            <Alert
+              color="blue"
+              icon={<InformationCircleIcon className="w-6 h-6" />}
+              className="mt-6"
+            >
+              <Typography variant="h6" color="white" className="mb-1">Free Plan Details</Typography>
+              <Typography color="white" className="font-normal">
+                You have <strong>{actionsRemaining}</strong> free actions remaining.
+              </Typography>
+            </Alert>
+          )}
+
           <div className="mt-6 flex justify-start">
-            <Button onClick={handleGenerateQuestion} disabled={generating} className="w-full md:w-1/3">
+            <Button
+              onClick={handleGenerateQuestion}
+              disabled={generating || (user?.subscriptionStatus === 'FREE' && actionsRemaining <= 0)}
+              className="w-full md:w-1/3"
+            >
               {generating ? <Spinner className="h-4 w-4" /> : "Generate New Question"}
             </Button>
           </div>
@@ -481,10 +516,10 @@ export function Practice() {
                 color="white"
                 className="!text-white !bg-gray-800 placeholder:!text-gray-400
                            !border !border-gray-700 focus:!border-gray-500
-                           focus:!ring-0 rounded-lg pl-2"   // <-- added slight left padding
+                           focus:!ring-0 rounded-lg pl-2"
                 labelProps={{
                   className:
-                    "!text-gray-300 before:content-none after:content-none pl-2", // <-- label spaced
+                    "!text-gray-300 before:content-none after:content-none pl-2",
                 }}
                 containerProps={{ className: "min-w-[240px]" }}
               />
@@ -493,6 +528,7 @@ export function Practice() {
         </CardHeader>
 
 
+        {/* --- 👇 THIS IS THE FIX. YOU WERE MISSING THE CLOSING TAG --- */}
         <CardBody className="px-0 pt-0 pb-2">
           {loadingHistory ? (
             <div className="flex justify-center p-8">
@@ -586,6 +622,7 @@ export function Practice() {
             </>
           )}
         </CardBody>
+        {/* --- 👆 IT WAS MISSING HERE --- */}
       </Card>
 
       {/* History Detail Modal */}

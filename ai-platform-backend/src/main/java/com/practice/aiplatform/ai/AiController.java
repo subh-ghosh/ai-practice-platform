@@ -4,7 +4,10 @@ import com.practice.aiplatform.practice.Question;
 import com.practice.aiplatform.practice.QuestionRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import com.practice.aiplatform.user.UsageService; // 👈 --- ADD THIS IMPORT
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus; // 👈 --- ADD THIS IMPORT
+import org.springframework.http.ResponseEntity; // 👈 --- ADD THIS IMPORT
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -20,20 +23,29 @@ public class AiController {
     private final GeminiService geminiService;
     private final QuestionRepository questionRepository;
     private final StudentRepository studentRepository;
+    private final UsageService usageService; // 👈 --- ADD THIS
 
     @Autowired
     public AiController(GeminiService geminiService,
                         QuestionRepository questionRepository,
-                        StudentRepository studentRepository) {
+                        StudentRepository studentRepository,
+                        UsageService usageService) { // 👈 --- ADD THIS
         this.geminiService = geminiService;
         this.questionRepository = questionRepository;
         this.studentRepository = studentRepository;
+        this.usageService = usageService; // 👈 --- ADD THIS
     }
 
     @PostMapping("/generate-question")
-    public Mono<Question> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
-        // ... (this method remains unchanged)
+    public Mono<ResponseEntity<Question>> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) { // 👈 --- Change return type
         String email = principal.getName();
+
+        // --- 👇 ADD THIS PAYWALL CHECK ---
+        if (!usageService.canPerformAction(email)) {
+            // User has reached their free limit, return 402 Payment Required
+            return Mono.just(ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build());
+        }
+        // --- 👆 END OF PAYWALL CHECK ---
 
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found with email: " + email));
@@ -47,7 +59,7 @@ public class AiController {
                     newQuestion.setTopic(request.topic());
                     newQuestion.setDifficulty(request.difficulty());
                     Question savedQuestion = questionRepository.save(newQuestion);
-                    return Mono.just(savedQuestion);
+                    return Mono.just(ResponseEntity.ok(savedQuestion)); // 👈 --- Wrap in ResponseEntity
                 });
     }
 

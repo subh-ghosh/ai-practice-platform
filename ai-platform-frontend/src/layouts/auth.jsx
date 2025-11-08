@@ -1,57 +1,27 @@
 import { Routes, Route } from "react-router-dom";
-import {
-  ChartPieIcon,
-  UserIcon,
-  UserPlusIcon,
-  ArrowRightOnRectangleIcon,
-} from "@heroicons/react/24/solid";
 import routes from "@/routes";
-import { ThemeToggle } from "@/widgets/layout/ThemeToggle"; // 👈 --- ADD THIS
+import { PublicNavbar } from "@/widgets/layout";
 
 export function Auth() {
-  const navbarRoutes = [
-    {
-      name: "dashboard",
-      path: "/dashboard/home",
-      icon: ChartPieIcon,
-    },
-    {
-      name: "profile",
-      path: "/dashboard/home",
-      icon: UserIcon,
-    },
-    {
-      name: "sign up",
-      path: "/auth/sign-up",
-      icon: UserPlusIcon,
-    },
-
-{
-      name: "sign in",
-      path: "/auth/sign-in",
-      icon: ArrowRightOnRectangleIcon,
-    },
-  ];
-
   return (
-    // 👇 --- MODIFIED: Added dark:bg-gray-900
+    // --- 👇 THIS IS THE CHANGE --- 👇
+    // Removed all flexbox classes
     <div className="relative min-h-screen w-full dark:bg-gray-900">
+      <PublicNavbar />
 
-      {/* 👇 --- ADD THIS DIV FOR THE TOGGLE --- */}
-      <div className="fixed top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
-
-      <Routes>
-        {routes.map(
-          ({ layout, pages }) =>
-            layout === "auth" &&
-            pages.map(({ path, element }) => (
-              <Route exact path={path} element={element} />
-            ))
-
-      )}
-      </Routes>
+      {/* This main section is now just a simple wrapper */}
+      <main>
+        <Routes>
+          {routes.map(
+            ({ layout, pages }) =>
+              layout === "auth" &&
+              pages.map(({ path, element }) => (
+                <Route exact path={path} element={element} />
+              ))
+          )}
+        </Routes>
+      </main>
+      {/* --- 👆 END OF CHANGE --- 👆 */}
     </div>
   );
 }

@@ -38,7 +38,7 @@ public class StudentController {
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         String token = extractBearer(auth);
-        return ResponseEntity.ok(toDto(student, token));
+        return ResponseEntity.ok(toDto(student, token)); // This now calls the updated toDto
     }
 
     @PutMapping("/profile")
@@ -61,7 +61,7 @@ public class StudentController {
         notificationService.notify(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
 
         String token = extractBearer(auth);
-        return ResponseEntity.ok(toDto(student, token));
+        return ResponseEntity.ok(toDto(student, token)); // This also calls the updated toDto
     }
 
     @PutMapping("/password")
@@ -102,6 +102,7 @@ public class StudentController {
         return ResponseEntity.noContent().build();
     }
 
+    // --- 👇 THIS METHOD IS UPDATED ---
     private static StudentDto toDto(Student s, String token) {
         return new StudentDto(
                 s.getId(),
@@ -109,9 +110,12 @@ public class StudentController {
                 s.getFirstName(),
                 s.getLastName(),
                 s.getGender(),
-                token
+                token,
+                s.getSubscriptionStatus(),
+                s.getFreeActionsUsed()
         );
     }
+    // --- 👆 END OF UPDATE ---
 
     private static String extractBearer(String header) {
         if (header != null && header.startsWith("Bearer ")) return header.substring(7);

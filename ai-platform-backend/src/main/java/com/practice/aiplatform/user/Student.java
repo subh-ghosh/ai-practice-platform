@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate; // 👈 --- ADD THIS IMPORT
 import java.util.Set;
 
 @Getter
@@ -23,15 +24,30 @@ public class Student {
     private String email;
 
     @Column(nullable = false)
-    private String password; // hashed (or legacy plaintext before migration)
+    private String password; // hashed
 
     @Column(nullable = false)
     private String firstName;
-
     private String lastName;
 
     @Column
-    private String gender; // "male" | "female" | null
+    private String gender;
+
+    // --- 👇 NEW FIELDS FOR PAYMENT & USAGE ---
+
+    @Column(nullable = false)
+    private int freeActionsUsed = 0; // Default to 0 for new users
+
+    @Column(nullable = false)
+    private String subscriptionStatus = "FREE"; // Default to "FREE"
+
+    @Column
+    private String paymentCustomerId; // For Stripe/Razorpay customer ID
+
+    @Column
+    private LocalDate subscriptionEndsAt; // To know when a subscription expires
+
+    // --- 👆 END OF NEW FIELDS ---
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Question> questions;
@@ -41,5 +57,7 @@ public class Student {
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
+        String subscriptionStatus;
+        int freeActionsUsed;
     }
 }
