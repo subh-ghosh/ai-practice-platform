@@ -62,15 +62,12 @@ export function SignUp() {
         email,
         password,
       });
-      // --- THIS IS THE CHANGE ---
-      // Navigate to sign-in and pass a success message
       navigate("/auth/sign-in", {
         state: {
           success: true,
           message: "Registration successful. Sign in to continue."
         }
       });
-      // --- END OF CHANGE ---
     } catch (err) {
       if (err.response && err.response.status === 409) {
         setError("An account with this email already exists.");
@@ -121,8 +118,12 @@ export function SignUp() {
   };
 
   return (
-    <section className="m-8 flex">
-      <div className="w-2/5 h-full hidden lg:block">
+    // Removed py-12 to let the parent layout center it
+    <section className="flex items-center justify-center gap-6 px-8">
+      {/* --- 👇 THIS IS THE CHANGE --- 👇 */}
+      {/* Removed h-full */}
+      <div className="w-2/5 hidden lg:block">
+      {/* --- 👆 END OF CHANGE --- 👆 */}
         <img
           src="/img/pattern.png"
           className="h-full w-full object-cover rounded-3xl"
@@ -139,7 +140,8 @@ export function SignUp() {
           </Typography>
         </div>
 
-        <form className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2" onSubmit={handleSubmit}>
+        {/* --- 👇 THIS IS THE CHANGE (mt-8 to mt-6) --- 👇 */}
+        <form className="mt-6 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2" onSubmit={handleSubmit}>
 
           {error && (
             <Alert color="red" className="mb-4">{error}</Alert>
@@ -151,8 +153,9 @@ export function SignUp() {
             </Alert>
           )}
 
-          <div className="mb-1 flex flex-col gap-6">
-            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
+          {/* --- 👇 THIS IS THE CHANGE (gap-6 to gap-4 and -mb-3 to -mb-2) --- 👇 */}
+          <div className="mb-1 flex flex-col gap-4">
+            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-2 font-medium">
               First Name
             </Typography>
             <Input
@@ -165,7 +168,7 @@ export function SignUp() {
               disabled={isGoogleRegister}
             />
 
-            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
+            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-2 font-medium">
               Last Name
             </Typography>
             <Input
@@ -178,7 +181,7 @@ export function SignUp() {
               disabled={isGoogleRegister}
             />
 
-            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
+            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-2 font-medium">
               Your email
             </Typography>
             <Input
@@ -191,7 +194,7 @@ export function SignUp() {
               disabled={isGoogleRegister}
             />
 
-            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-3 font-medium">
+            <Typography variant="small" color={theme === 'dark' ? 'white' : 'blue-gray'} className="-mb-2 font-medium">
               Password
             </Typography>
             <Input
@@ -218,7 +221,8 @@ export function SignUp() {
 
           {!isGoogleRegister && (
             <>
-              <div className="relative flex py-5 items-center">
+              {/* --- 👇 THIS IS THE CHANGE (py-5 to py-3) --- 👇 */}
+              <div className="relative flex py-3 items-center">
                 <div className="flex-grow border-t border-gray-400"></div>
                 <span className="flex-shrink mx-4 text-gray-400">OR</span>
                 <div className="flex-grow border-t border-gray-400"></div>
@@ -239,7 +243,8 @@ export function SignUp() {
                 )}
               </div>
 
-              <Typography variant="paragraph" color={theme === 'dark' ? 'white' : 'blue-gray'} className="text-center font-medium mt-4">
+              {/* --- 👇 THIS IS THE CHANGE (mt-4 to mt-3) --- 👇 */}
+              <Typography variant="paragraph" color={theme === 'dark' ? 'white' : 'blue-gray'} className="text-center font-medium mt-3">
                 Already have an account?
                 <Link to="/auth/sign-in" className="text-gray-900 dark:text-blue-400 ml-1">Sign in</Link>
               </Typography>

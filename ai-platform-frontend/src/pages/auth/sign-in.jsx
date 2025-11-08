@@ -7,7 +7,7 @@ import {
   Spinner,
 } from "@material-tailwind/react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react"; // 👈 --- ADD useEffect
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { GoogleLogin } from "@react-oauth/google";
@@ -17,7 +17,7 @@ export function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(""); // 👈 --- ADD THIS
+  const [success, setSuccess] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
@@ -26,11 +26,9 @@ export function SignIn() {
   const location = useLocation();
   const from = location.state?.from?.pathname || "/dashboard/home";
 
-  // 👇 --- ADD THIS useEffect TO READ THE SUCCESS MESSAGE ---
   useEffect(() => {
     if (location.state?.success) {
       setSuccess(location.state.message);
-      // Clear the state from history so it doesn't reappear on back/forward
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -38,7 +36,7 @@ export function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setSuccess(""); // 👈 --- Clear success message on new submit
+    setSuccess("");
     if (!email.trim() || !password.trim()) {
       setError("Please enter both email and password.");
       return;
@@ -57,7 +55,7 @@ export function SignIn() {
   const handleGoogleSuccess = async (credentialResponse) => {
     setGoogleSubmitting(true);
     setError("");
-    setSuccess(""); // 👈 --- Clear success message on new submit
+    setSuccess("");
     const idToken = credentialResponse.credential;
 
     if (!idToken) {
@@ -93,7 +91,12 @@ export function SignIn() {
   };
 
   return (
-    <section className="m-8 flex min-h-[80vh] items-center gap-6">
+    // --- 👇 THIS IS THE CHANGE --- 👇
+    // Removed all margin/height/centering classes.
+    // The parent layout (auth.jsx) will handle the centering.
+    <section className="flex gap-6 py-12 px-8">
+    {/* --- 👆 END OF CHANGE --- 👆 */}
+
       {/* left – form */}
       <div className="w-full lg:w-3/5 flex flex-col items-center justify-center">
         <div className="text-center">
@@ -113,7 +116,6 @@ export function SignIn() {
           onSubmit={handleSubmit}
           className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2"
         >
-          {/* 👇 --- ADD THIS SUCCESS ALERT --- */}
           {success && (
             <Alert color="green" className="mb-4">
               {success}
@@ -176,7 +178,6 @@ export function SignIn() {
             {submitting ? "Signing in..." : "Sign In"}
           </Button>
 
-          {/* ... (rest of the file) ... */}
           <div className="relative flex py-5 items-center">
             <div className="flex-grow border-t border-gray-400"></div>
             <span className="flex-shrink mx-4 text-gray-400">OR</span>
