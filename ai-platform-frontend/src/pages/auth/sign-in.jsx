@@ -91,17 +91,26 @@ export function SignIn() {
   };
 
   return (
-    <section className="min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-8">
+    <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden">
+      {/* === Background Gradient & Glow === */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-100 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900" />
+      <div className="pointer-events-none absolute top-[-10%] right-[-5%] h-96 w-96 bg-blue-500/25 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute bottom-[-15%] left-[-10%] h-96 w-96 bg-purple-500/20 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute top-1/3 left-[30%] h-64 w-64 bg-indigo-500/20 blur-[100px] rounded-full" />
+
       {/* Left Form */}
-      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh]">
+      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
         <div className="text-center mb-6">
-          <Typography variant="h2" className="font-bold mb-2 text-3xl md:text-4xl">
+          <Typography
+            variant="h2"
+            className="font-bold mb-2 text-3xl md:text-4xl text-gray-900 dark:text-gray-100"
+          >
             Sign In
           </Typography>
           <Typography
             variant="paragraph"
             color={theme === "dark" ? "white" : "blue-gray"}
-            className="text-lg font-normal"
+            className="text-lg font-normal opacity-90"
           >
             Enter your email and password to sign in.
           </Typography>
@@ -109,7 +118,7 @@ export function SignIn() {
 
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-[420px] flex flex-col gap-4"
+          className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-white/70 dark:bg-gray-900/40 border border-white/40 dark:border-gray-700 rounded-2xl p-6 shadow-lg"
         >
           {success && <Alert color="green">{success}</Alert>}
           {error && <Alert color="red">{error}</Alert>}
@@ -174,7 +183,10 @@ export function SignIn() {
             className="text-center font-medium mt-2"
           >
             Not registered?
-            <Link to="/auth/sign-up" className="text-gray-900 dark:text-blue-400 ml-1">
+            <Link
+              to="/auth/sign-up"
+              className="text-gray-900 dark:text-blue-400 ml-1"
+            >
               Create account
             </Link>
           </Typography>
@@ -183,11 +195,14 @@ export function SignIn() {
 
       {/* Right Image */}
       <div className="hidden lg:flex w-2/5 justify-center">
-        <img
-          src="/img/pattern.png"
-          alt="Pattern"
-          className="w-full h-[80vh] object-cover rounded-3xl shadow-lg"
-        />
+        <div className="relative w-full h-[80vh] rounded-3xl overflow-hidden shadow-2xl">
+          <img
+            src="/img/pattern.png"
+            alt="Pattern"
+            className="w-full h-full object-cover opacity-90"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
+        </div>
       </div>
     </section>
   );

@@ -19,10 +19,10 @@ export function SignUp() {
   const googleData = location.state?.googleData;
 
   const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(null);
+  const [lastName, setLastName]   = useState("");
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
+  const [error, setError]         = useState(null);
   const [isGoogleRegister, setIsGoogleRegister] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,7 +53,6 @@ export function SignUp() {
     }
 
     setSubmitting(true);
-
     try {
       await api.post("/api/students/register", {
         firstName,
@@ -117,26 +116,38 @@ export function SignUp() {
   };
 
   return (
-    <section className="min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-8">
+    <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden">
+      {/* === Background Gradient & Glow === */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-100 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900" />
+      <div className="pointer-events-none absolute top-[-10%] right-[-5%] h-96 w-96 bg-blue-500/25 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute bottom-[-15%] left-[-10%] h-96 w-96 bg-purple-500/20 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute top-1/3 left-[30%] h-64 w-64 bg-indigo-500/20 blur-[100px] rounded-full" />
+
       {/* Left Image */}
       <div className="hidden lg:flex w-2/5 justify-center">
-        <img
-          src="/img/pattern.png"
-          className="w-full h-[80vh] object-cover rounded-3xl shadow-lg"
-          alt="Pattern"
-        />
+        <div className="relative w-full h-[80vh] rounded-3xl overflow-hidden shadow-2xl">
+          <img
+            src="/img/pattern.png"
+            className="w-full h-full object-cover opacity-90"
+            alt="Pattern"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
+        </div>
       </div>
 
       {/* Right Form */}
-      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh]">
+      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
         <div className="text-center mb-6">
-          <Typography variant="h2" className="font-bold mb-2 text-3xl md:text-4xl">
+          <Typography
+            variant="h2"
+            className="font-bold mb-2 text-3xl md:text-4xl text-gray-900 dark:text-gray-100"
+          >
             {isGoogleRegister ? "Complete Your Registration" : "Join Us Today"}
           </Typography>
           <Typography
             variant="paragraph"
             color={theme === "dark" ? "white" : "blue-gray"}
-            className="text-lg font-normal"
+            className="text-lg font-normal opacity-90"
           >
             {isGoogleRegister
               ? "Please set a password for your account."
@@ -145,7 +156,7 @@ export function SignUp() {
         </div>
 
         <form
-          className="w-full max-w-[420px] flex flex-col gap-4"
+          className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-white/70 dark:bg-gray-900/40 border border-white/40 dark:border-gray-700 rounded-2xl p-6 shadow-lg"
           onSubmit={handleSubmit}
         >
           {error && <Alert color="red">{error}</Alert>}
@@ -183,6 +194,7 @@ export function SignUp() {
               onChange={(e) => setEmail(e.target.value)}
               color={theme === "dark" ? "white" : "gray"}
               disabled={isGoogleRegister}
+              autoComplete="email"
             />
 
             <Input
@@ -192,6 +204,7 @@ export function SignUp() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               color={theme === "dark" ? "white" : "gray"}
+              autoComplete="new-password"
             />
           </div>
 
