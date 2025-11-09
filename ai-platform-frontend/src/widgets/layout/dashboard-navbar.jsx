@@ -24,14 +24,12 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useTheme } from "@/context/ThemeContext";
 import { useCallback } from "react";
 
-import ToggleDarkMode from "@/components/ToggleDarkMode.jsx";
-
 export function DashboardNavbar() {
   const [controller, dispatch] = useMaterialTailwindController();
   const { fixedNavbar, openSidenav } = controller;
 
   const { pathname } = useLocation();
-  const [layout, page] = pathname.split("/").filter((el) => el !== "");
+  const [, page = ""] = pathname.split("/").filter(Boolean);
 
   const { user, logout } = useAuth();
   const { theme } = useTheme();
@@ -61,18 +59,18 @@ export function DashboardNavbar() {
   return (
     <Navbar
       color={fixedNavbar ? "white" : "transparent"}
-      className={`dashboard-navbar rounded-xl transition-all ${
-        fixedNavbar
-          ? "sticky top-4 z-40 py-3 shadow-md shadow-blue-gray-500/5"
-          : "px-0 py-1"
-      }`}
+      className={`dashboard-navbar rounded-xl transition-all
+        ${fixedNavbar
+          ? "sticky top-4 z-40 py-3 shadow-md shadow-blue-gray-500/5 bg-white/70 dark:bg-gray-900/40 backdrop-blur-md"
+          : "px-0 py-1 bg-transparent"
+        }`}
       fullWidth
       blurred={fixedNavbar}
     >
       <div className="flex flex-col-reverse justify-between gap-6 md:flex-row md:items-center">
         {/* Page title */}
         <div className="capitalize">
-          <Typography variant="h6" color="blue-gray">
+          <Typography variant="h6" color="blue-gray" className="dark:text-gray-100">
             {page}
           </Typography>
         </div>
@@ -86,6 +84,7 @@ export function DashboardNavbar() {
             ripple={false}
             className="grid xl:hidden bg-transparent hover:bg-transparent focus:bg-transparent"
             onClick={() => setOpenSidenav(dispatch, !openSidenav)}
+            aria-label="Toggle sidebar"
           >
             <Bars3Icon className="h-6 w-6 text-blue-gray-500 dark:text-gray-200" />
           </IconButton>
@@ -94,8 +93,7 @@ export function DashboardNavbar() {
           <Menu>
             <MenuHandler>
               <div
-                className="hidden xl:flex items-center gap-2 px-0 py-0 cursor-pointer select-none
-                           text-blue-gray-600 dark:text-gray-200 hover:opacity-80"
+                className="hidden xl:flex items-center gap-2 px-0 py-0 cursor-pointer select-none text-blue-gray-600 dark:text-gray-200 hover:opacity-80"
                 role="button"
                 tabIndex={0}
                 aria-label="Open user menu"
@@ -106,15 +104,12 @@ export function DashboardNavbar() {
             </MenuHandler>
 
             <MenuList
-              className={
-                theme === "dark"
-                  ? "dark:bg-gray-800 dark:border-gray-700"
-                  : undefined
-              }
+              className={`min-w-[10rem] border-0 shadow-lg ring-1 ring-black/5 dark:ring-white/5
+                ${theme === "dark" ? "dark:bg-gray-800" : "bg-white"}`}
             >
               <MenuItem
                 onClick={logout}
-                className={theme === "dark" ? "dark:hover:bg-gray-700" : ""}
+                className={`${theme === "dark" ? "dark:hover:bg-gray-700" : ""}`}
               >
                 <Typography color="red" className="font-medium">
                   Log Out
@@ -129,6 +124,7 @@ export function DashboardNavbar() {
             color="blue-gray"
             ripple={false}
             className="grid xl:hidden bg-transparent hover:bg-transparent focus:bg-transparent"
+            aria-label="User"
           >
             <UserCircleIcon className="h-5 w-5 text-blue-gray-500 dark:text-gray-200" />
           </IconButton>
@@ -140,15 +136,15 @@ export function DashboardNavbar() {
                 variant="text"
                 color="blue-gray"
                 ripple={false}
-                className="bg-transparent hover:bg-transparent focus:bg-transparent"
+                className="bg-transparent hover:bg-transparent focus:bg-transparent relative"
                 aria-label="Open notifications"
               >
                 <Badge
                   content={safeUnread || 0}
                   color="red"
-                  withBorder={false}          /* no white ring/bubble */
+                  withBorder={false}
                   invisible={!safeUnread}
-                  className="z-10 -top-1 -right-1"
+                  className="z-10 top-1 -right-1"
                 >
                   <BellIcon className="h-5 w-5 text-blue-gray-500 dark:text-gray-200" />
                 </Badge>
@@ -156,18 +152,12 @@ export function DashboardNavbar() {
             </MenuHandler>
 
             <MenuList
-              className={`w-full max-w-xs border-0 ${
-                theme === "dark"
-                  ? "dark:bg-gray-800 dark:border-gray-700"
-                  : ""
-              }`}
+              className={`w-full max-w-xs max-h-[70vh] overflow-y-auto border-0 shadow-xl ring-1 ring-black/5 dark:ring-white/5
+                ${theme === "dark" ? "dark:bg-gray-800" : "bg-white"}`}
             >
+              {/* loading state */}
               {loading && (
-                <MenuItem
-                  className={`flex items-center gap-3 ${
-                    theme === "dark" ? "dark:hover:bg-gray-700" : ""
-                  }`}
-                >
+                <MenuItem className={`${theme === "dark" ? "dark:hover:bg-gray-700" : ""}`}>
                   <Typography
                     variant="small"
                     color={theme === "dark" ? "white" : "blue-gray"}
@@ -178,12 +168,9 @@ export function DashboardNavbar() {
                 </MenuItem>
               )}
 
+              {/* empty state */}
               {!loading && !safeUnread && (
-                <MenuItem
-                  className={`flex items-center gap-3 ${
-                    theme === "dark" ? "dark:hover:bg-gray-700" : ""
-                  }`}
-                >
+                <MenuItem className={`${theme === "dark" ? "dark:hover:bg-gray-700" : ""}`}>
                   <Typography
                     variant="small"
                     color={theme === "dark" ? "white" : "blue-gray"}
@@ -194,61 +181,62 @@ export function DashboardNavbar() {
                 </MenuItem>
               )}
 
+              {/* unread items (top 5) */}
               {!loading &&
                 safeUnread > 0 &&
-                notifications.slice(0, 5).map((n) => (
-                  <MenuItem
-                    key={n.id}
-                    className={`flex items-start gap-3 whitespace-normal ${
-                      theme === "dark" ? "dark:hover:bg-gray-700" : ""
-                    }`}
-                    onClick={() => handleMarkRead(n.id)}
-                  >
-                    <div className="relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] after:h-4/6">
-                      <ClockIcon className="!w-5 !h-5 text-blue-gray-500 dark:text-gray-300" />
-                    </div>
-                    <div>
-                      <Typography
-                        variant="small"
-                        color={theme === "dark" ? "white" : "blue-gray"}
-                        className="mb-1 font-semibold uppercase text-xs"
-                      >
-                        {n.type}
-                      </Typography>
-                      <Typography
-                        variant="small"
-                        color={theme === "dark" ? "white" : "blue-gray"}
-                        className="font-normal"
-                      >
-                        {n.message}
-                      </Typography>
-                      <Typography
-                        as="span"
-                        variant="small"
-                        className="text-xs font-medium text-blue-gray-400 dark:text-gray-500"
-                      >
-                        {new Date(n.createdAt).toLocaleString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                          hour12: false,
-                        })}
-                      </Typography>
-                    </div>
-                  </MenuItem>
-                ))}
+                notifications
+                  .filter((n) => !n.read)
+                  .slice(0, 5)
+                  .map((n) => (
+                    <MenuItem
+                      key={n.id}
+                      className={`flex items-start gap-3 whitespace-normal ${
+                        theme === "dark" ? "dark:hover:bg-gray-700" : ""
+                      }`}
+                      onClick={() => handleMarkRead(n.id)}
+                    >
+                      <div className="relative p-1">
+                        <ClockIcon className="!w-5 !h-5 text-blue-gray-500 dark:text-gray-300" />
+                      </div>
+                      <div className="min-w-0">
+                        <Typography
+                          variant="small"
+                          color={theme === "dark" ? "white" : "blue-gray"}
+                          className="mb-1 font-semibold uppercase text-xs"
+                        >
+                          {n.type}
+                        </Typography>
+                        <Typography
+                          variant="small"
+                          color={theme === "dark" ? "white" : "blue-gray"}
+                          className="font-normal break-words"
+                        >
+                          {n.message}
+                        </Typography>
+                        <Typography
+                          as="span"
+                          variant="small"
+                          className="text-xs font-medium text-blue-gray-400 dark:text-gray-500"
+                        >
+                          {new Date(n.createdAt).toLocaleString(undefined, {
+                            year: "numeric",
+                            month: "short",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            second: "2-digit",
+                            hour12: false,
+                          })}
+                        </Typography>
+                      </div>
+                    </MenuItem>
+                  ))}
 
-              <hr className="my-2 border-blue-gray-50 dark:border-gray-700" />
+              {/* soft divider (no harsh border seam) */}
+              <div className="my-2 h-px bg-black/5 dark:bg-white/10" />
 
               <Link to="/dashboard/notifications">
-                <MenuItem
-                  className={`flex items-center justify-center gap-3 ${
-                    theme === "dark" ? "dark:hover:bg-gray-700" : ""
-                  }`}
-                >
+                <MenuItem className={`${theme === "dark" ? "dark:hover:bg-gray-700" : ""}`}>
                   <Typography variant="small" color="blue" className="font-medium">
                     View all notifications
                   </Typography>
@@ -257,7 +245,7 @@ export function DashboardNavbar() {
             </MenuList>
           </Menu>
 
-          {/* THEME TOGGLE – already flat */}
+          {/* THEME TOGGLE – flat */}
           <ThemeToggle />
         </div>
       </div>

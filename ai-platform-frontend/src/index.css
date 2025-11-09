@@ -59,3 +59,11 @@
 .has-fixed-navbar {
   padding-top: 4.5rem; /* adjust if your navbar height differs */
 }
+.hide-scrollbar {
+  -ms-overflow-style: none;     /* IE/Edge */
+  scrollbar-width: none;        /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  height: 0;                    /* Chrome/Safari */
+}
+
