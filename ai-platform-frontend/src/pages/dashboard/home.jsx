@@ -5,22 +5,10 @@ import {
   Card,
   CardHeader,
   CardBody,
-  IconButton,
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem,
-  Avatar,
-  Tooltip,
-  Progress,
   Spinner,
-  Chip, // This import is correct now
+  Chip,
   Button,
 } from "@material-tailwind/react";
-import {
-  EllipsisVerticalIcon,
-  ArrowUpIcon,
-} from "@heroicons/react/24/outline";
 import { StatisticsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
 import { chartsConfig } from "@/configs";
@@ -38,83 +26,57 @@ import {
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
-// --- HELPER FUNCTIONS ---
+/* ---------- helpers ---------- */
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
   try {
     const date = new Date(isoString);
     return date.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
-  } catch (error) {
+  } catch {
     return "Invalid Date";
   }
 }
 
 function formatDuration(seconds) {
   if (!seconds) return "0s";
-  if (seconds < 60) {
-    return `${seconds.toFixed(1)}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = (seconds % 60).toFixed(0);
-  return `${minutes}m ${remainingSeconds}s`;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const m = Math.floor(seconds / 60);
+  const s = (seconds % 60).toFixed(0);
+  return `${m}m ${s}s`;
 }
 
-// Base config for our line charts
 const lineChartOptions = {
   ...chartsConfig,
-  chart: {
-    ...chartsConfig.chart,
-    type: "line",
-  },
-  stroke: {
-    lineCap: "round",
-    curve: 'smooth',
-  },
-  markers: {
-    size: 5,
-  },
+  chart: { ...chartsConfig.chart, type: "line" },
+  stroke: { lineCap: "round", curve: "smooth" },
+  markers: { size: 5 },
   xaxis: {
     ...chartsConfig.xaxis,
     type: "category",
     labels: {
       ...chartsConfig.xaxis.labels,
-      style: {
-        ...chartsConfig.xaxis.labels.style,
-        colors: "#37474f", // Note: CSS overrides this in dark mode
-      },
+      style: { ...chartsConfig.xaxis.labels.style, colors: "#37474f" },
     },
   },
   yaxis: {
     ...chartsConfig.yaxis,
     labels: {
       ...chartsConfig.yaxis.labels,
-      style: {
-        ...chartsConfig.yaxis.labels.style,
-        colors: "#37474f", // Note: CSS overrides this in dark mode
-      },
+      style: { ...chartsConfig.yaxis.labels.style, colors: "#37474f" },
     },
   },
-  grid: {
-    ...chartsConfig.grid,
-    borderColor: "#e0e0e0",
-  },
-  tooltip: {
-    ...chartsConfig.tooltip,
-    theme: "dark",
-    x: {
-      format: "dd MMM yyyy",
-    },
-  },
+  grid: { ...chartsConfig.grid, borderColor: "#e0e0e0" },
+  tooltip: { ...chartsConfig.tooltip, theme: "dark", x: { format: "dd MMM yyyy" } },
 };
-// Helper for the new overview feed
+
 const getOverviewIcon = (status) => {
-  switch (status?.toUpperCase()) {
+  switch ((status || "").toUpperCase()) {
     case "CORRECT":
       return { Icon: CheckCircleIcon, color: "text-green-500" };
     case "INCORRECT":
@@ -126,7 +88,8 @@ const getOverviewIcon = (status) => {
       return { Icon: ClockIcon, color: "text-gray-500" };
   }
 };
-// --- MAIN COMPONENT ---
+
+/* ---------- main ---------- */
 
 export function Home() {
   const { user } = useAuth();
@@ -145,10 +108,8 @@ export function Home() {
 
         const [summaryRes, timeSeriesRes] = await Promise.all([
           api.get("/api/stats/summary"),
-          api.get("/api/stats/timeseries")
+          api.get("/api/stats/timeseries"),
         ]);
-
-
 
         if (summaryRes.data && timeSeriesRes.data) {
           setStats(summaryRes.data);
@@ -156,7 +117,6 @@ export function Home() {
         } else {
           throw new Error("Received empty or invalid data from API");
         }
-
       } catch (err) {
         console.error("Error fetching stats:", err);
         setError("Could not load statistics.");
@@ -191,7 +151,7 @@ export function Home() {
     );
   }
 
-  // --- DYNAMIC DATA CONFIGURATIONS ---
+  /* ---------- data wiring ---------- */
 
   const statisticsCardsData = [
     {
@@ -216,62 +176,52 @@ export function Home() {
       footer: { value: "", label: "in total" },
     },
     {
-       title: "Overall Accuracy",
+      title: "Overall Accuracy",
       icon: ChartBarIcon,
       color: "blue",
       value: `${stats.accuracyPercentage.toFixed(1)}%`,
       footer: { value: "", label: "of graded attempts" },
     },
   ];
-  const chartLabels = timeSeriesData.map(d => new Date(d.date).toLocaleString('en-US', { day: 'numeric', month: 'short' }));
+
+  const chartLabels = timeSeriesData.map((d) =>
+    new Date(d.date).toLocaleString("en-US", { day: "numeric", month: "short" })
+  );
+
   const accuracyChart = {
     type: "line",
     height: 220,
-    series: [
-      {
-        name: "Accuracy",
-        data: timeSeriesData.map(d => d.accuracy.toFixed(1)),
-      },
-    ],
+    series: [{ name: "Accuracy", data: timeSeriesData.map((d) => d.accuracy.toFixed(1)) }],
     options: {
       ...lineChartOptions,
-      colors: ["#28a745"],
-      xaxis: {
-        ...lineChartOptions.xaxis,
-        categories: chartLabels,
-      },
+      colors: ["#22c55e"],
+      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
       yaxis: {
         ...lineChartOptions.yaxis,
         min: 0,
         max: 100,
-        labels: { ...lineChartOptions.yaxis.labels, formatter: (value) => `${value}%` },
+        labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => `${v}%` },
       },
-      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (value) => `${value}%` } },
+      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => `${v}%` } },
     },
   };
+
   const speedChart = {
     type: "line",
     height: 220,
-    series: [
-      {
-        name: "Avg. Speed",
-        data: timeSeriesData.map(d => d.averageSpeedSeconds.toFixed(1)),
-      },
-    ],
+    series: [{ name: "Avg. Speed", data: timeSeriesData.map((d) => d.averageSpeedSeconds.toFixed(1)) }],
     options: {
       ...lineChartOptions,
-      colors: ["#fbbf24"],
-      xaxis: {
-        ...lineChartOptions.xaxis,
-        categories: chartLabels,
-      },
+      colors: ["#f59e0b"],
+      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
       yaxis: {
         ...lineChartOptions.yaxis,
-        labels: { ...lineChartOptions.yaxis.labels, formatter: (value) => formatDuration(value) }
+        labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => formatDuration(v) },
       },
-      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (value) => formatDuration(value) } },
+      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => formatDuration(v) } },
     },
   };
+
   const breakdownChart = {
     type: "pie",
     height: 220,
@@ -281,161 +231,150 @@ export function Home() {
       chart: { ...chartsConfig.chart, type: "pie" },
       title: { show: "" },
       dataLabels: { enabled: false },
-      colors: ["#28a745", "#dc3545", "#6b7280"], // Green, Red, Gray
-      legend: { show: true, position: 'bottom', labels: { colors: "#37474f" } },
+      colors: ["#22c55e", "#ef4444", "#6b7280"],
+      legend: { show: true, position: "bottom", labels: { colors: "#37474f" } },
       labels: ["Correct", "Incorrect", "Revealed"],
     },
   };
 
+  /* ---------- UI ---------- */
+
   return (
-    <div className="mt-3">
-      {/* --- 👇 THIS IS THE CHANGE YOU REQUESTED --- 👇 */}
-      <div className="mb-12 flex items-baseline gap-3">
-        <Typography variant="h4" color="blue-gray" className="font-normal">
-          Welcome,
-        </Typography>
-        <Typography variant="h1" color="blue-gray" className="font-bold">
-           {user.firstName}
-        </Typography>
-        <Chip
-          variant="ghost"
-          color={user.subscriptionStatus === 'PREMIUM' ? 'green' : 'blue-gray'}
-          value={user.subscriptionStatus === 'PREMIUM' ? 'Premium User' : 'Free User'}
-          className="self-center" // Aligns the chip vertically
-        />
-      </div>
-      {/* --- 👆 END OF CHANGE --- 👆 */}
+    <section className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)]">
+      {/* Background gradient & glows (match public pages theme) */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
+      <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
+      <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
 
-      {/* --- ROW 1: STATS CARDS --- */}
-      <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
-        {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
-          <StatisticsCard
-            key={title}
-            {...rest}
-            title={title}
-            icon={React.createElement(icon, {
-              className: "w-6 h-6 text-white",
-            })}
-            footer={
-              <Typography className="font-normal text-blue-gray-600">
-                {footer.label}
+      {/* ✅ Use the same offset wrapper as other pages so it aligns with a reduced navbar */}
+      <div className="mt-6 has-fixed-navbar page w-full flex flex-col">
+        {/* Welcome header - slightly tighter margins to match others */}
+        <div className="mb-8">
+          <div className="rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-6 py-5 shadow-sm">
+            <div className="flex flex-wrap items-baseline gap-3">
+              <Typography variant="h4" color="blue-gray" className="font-normal">
+                Welcome,
               </Typography>
-            }
-          />
-        ))}
-      </div>
-
-      {/* --- ROW 2: CHARTS --- */}
-       <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-        <StatisticsChart
-          key="accuracy-chart"
-          chart={accuracyChart}
-          color="transparent"
-          title="Daily Accuracy"
-          description="Percentage of correct answers over time."
-          footer={
-            <Typography
-              variant="small"
-              className="flex items-center font-normal text-blue-gray-600"
-            >
-              <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-              &nbsp;Updated just now
-            </Typography>
-          }
-        />
-        <StatisticsChart
-          key="speed-chart"
-          chart={speedChart}
-          color="transparent"
-          title="Average Answer Speed"
-          description="Average time to a correct submission."
-          footer={
-            <Typography
-               variant="small"
-              className="flex items-center font-normal text-blue-gray-600"
-            >
-              <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-              &nbsp;Updated just now
-            </Typography>
-          }
-        />
-        <StatisticsChart
-          key="breakdown-chart"
-          chart={breakdownChart}
-          color="transparent"
-          title="Answer Breakdown"
-          description="Summary of all practice attempts."
-          footer={
-            <Typography
-               variant="small"
-              className="flex items-center font-normal text-blue-gray-600"
-            >
-              <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-              &nbsp;Updated just now
-            </Typography>
-          }
-        />
-      </div>
-
-      {/* --- ROW 3: TABLE & FEED --- */}
-      <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="overflow-hidden xl:col-span-2 border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            color="transparent"
-            className="m-0 flex items-center justify-between p-6"
-          >
-            <div>
-              <Typography variant="h6" color="blue-gray" className="mb-1">
-                Recent Activity
+              <Typography variant="h1" color="blue-gray" className="font-bold">
+                {user.firstName}
               </Typography>
-              <Typography
-                variant="small"
-                className="flex items-center gap-1 font-normal text-blue-gray-600"
-              >
-                <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
-                <strong>{stats.totalAttempts} attempts</strong> in total
-              </Typography>
+              <Chip
+                variant="ghost"
+                color={user.subscriptionStatus === "PREMIUM" ? "green" : "blue-gray"}
+                value={user.subscriptionStatus === "PREMIUM" ? "Premium User" : "Free User"}
+                className="self-center"
+              />
             </div>
-            <Link to="/dashboard/practice">
-              <Button variant="text" size="sm" className="flex items-center gap-2">
-                <PencilIcon className="h-4 w-4" />
-                Start Practice
-              </Button>
-            </Link>
-          </CardHeader>
-          <CardBody className="overflow-x-scroll px-0 pt-0 pb-2">
-            <table className="w-full min-w-[640px] table-auto">
-              <thead>
-                <tr>
-                    {["Question", "Subject", "Status", "Submitted"].map(
-                    (el) => (
-                      <th
-                        key={el}
-                        className="border-b border-blue-gray-50 py-3 px-6 text-left"
-                      >
-                        <Typography
-                          variant="small"
-                          className="text-[11px] font-medium uppercase text-blue-gray-400"
-                        >
+          </div>
+        </div>
+
+        {/* Row 1: Stat cards */}
+        <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+          {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md"
+            >
+              <StatisticsCard
+                {...rest}
+                title={title}
+                icon={React.createElement(icon, { className: "w-6 h-6 text-white" })}
+                footer={<Typography className="font-normal text-blue-gray-600">{footer.label}</Typography>}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Row 2: Charts */}
+        <div className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
+            <StatisticsChart
+              key="accuracy-chart"
+              chart={accuracyChart}
+              color="transparent"
+              title="Daily Accuracy"
+              description="Percentage of correct answers over time."
+              footer={
+                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+                  &nbsp;Updated just now
+                </Typography>
+              }
+            />
+          </div>
+
+          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
+            <StatisticsChart
+              key="speed-chart"
+              chart={speedChart}
+              color="transparent"
+              title="Average Answer Speed"
+              description="Average time to a correct submission."
+              footer={
+                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+                  &nbsp;Updated just now
+                </Typography>
+              }
+            />
+          </div>
+
+          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
+            <StatisticsChart
+              key="breakdown-chart"
+              chart={breakdownChart}
+              color="transparent"
+              className="flex flex-col justify-between h-full"
+              title={<div className="mt-12">Answer Breakdown</div>}
+              description="Summary of all practice attempts."
+              footer={
+                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+                  &nbsp;Updated just now
+                </Typography>
+              }
+            />
+          </div>
+        </div>
+
+        {/* Row 3: Table & Feed */}
+        <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <Card className="overflow-hidden xl:col-span-2 border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
+              <div>
+                <Typography variant="h6" color="blue-gray" className="mb-1">
+                  Recent Activity
+                </Typography>
+                <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
+                  <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
+                  <strong>{stats.totalAttempts} attempts</strong> in total
+                </Typography>
+              </div>
+              <Link to="/dashboard/practice">
+                <Button variant="text" size="sm" className="flex items-center gap-2">
+                  <PencilIcon className="h-4 w-4" />
+                  Start Practice
+                </Button>
+              </Link>
+            </CardHeader>
+
+            <CardBody className="overflow-x-auto hide-scrollbar px-0 pt-0 pb-0">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr>
+                    {["Question", "Subject", "Status", "Submitted"].map((el) => (
+                      <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
+                        <Typography variant="small" className="text-[11px] font-medium uppercase text-blue-gray-400">
                           {el}
                         </Typography>
                       </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {stats.recentActivity.map(
-                  (item, key) => {
-                    const className = `py-3 px-5 ${
-                      key === stats.recentActivity.length - 1
-                        ? ""
-                        : "border-b border-blue-gray-50"
-                    }`;
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.recentActivity.map((item, key) => {
+                    const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
                     const uniqueKey = `${item.questionId}-${item.submittedAt}`;
-
                     return (
                       <tr key={uniqueKey}>
                         <td className={className}>
@@ -443,97 +382,78 @@ export function Home() {
                             {item.questionText.substring(0, 40)}...
                           </Typography>
                         </td>
-                         <td className={className}>
-                           <Typography
-                            variant="small"
-                            className="text-xs font-medium text-blue-gray-600"
-                          >
-                             {item.subject}
+                        <td className={className}>
+                          <Typography variant="small" className="text-xs font-medium text-blue-gray-600">
+                            {item.subject}
                           </Typography>
-                         </td>
+                        </td>
                         <td className={className}>
                           <Chip
-                             variant="gradient"
+                            variant="gradient"
                             color={
-                              item.evaluationStatus === "CORRECT" ? "green" :
-                              item.evaluationStatus === "REVEALED" ? "blue" :
-                              item.evaluationStatus === "CLOSE" ? "orange" : "red"
+                              item.evaluationStatus === "CORRECT"
+                                ? "green"
+                                : item.evaluationStatus === "REVEALED"
+                                ? "blue"
+                                : item.evaluationStatus === "CLOSE"
+                                ? "orange"
+                                : "red"
                             }
                             value={item.evaluationStatus.toLowerCase()}
                             className="py-0.5 px-2 text-[11px] font-medium w-fit"
                           />
                         </td>
                         <td className={className}>
-                           <Typography className="text-xs font-normal text-blue-gray-500">
+                          <Typography className="text-xs font-normal text-blue-gray-500">
                             {formatDateTime(item.submittedAt)}
                           </Typography>
-                         </td>
+                        </td>
                       </tr>
                     );
-                  }
-                )}
-              </tbody>
-            </table>
-          </CardBody>
-        </Card>
+                  })}
+                </tbody>
+              </table>
+            </CardBody>
+          </Card>
 
-        <Card className="border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-          <CardHeader
-             floated={false}
-             shadow={false}
-            color="transparent"
-            className="m-0 p-6"
-          >
-            <Typography variant="h6" color="blue-gray" className="mb-2">
-              Submission Overview
-            </Typography>
-             <Typography
-               variant="small"
-              className="flex items-center gap-1 font-normal text-blue-gray-600"
-            >
-              Your latest 5 attempts.
-            </Typography>
-          </CardHeader>
-          <CardBody className="pt-0">
-            {stats.recentActivity.map(
-              (item, key) => {
+          <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6">
+              <Typography variant="h6" color="blue-gray" className="mb-2">
+                Submission Overview
+              </Typography>
+              <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
+                Your latest 5 attempts.
+              </Typography>
+            </CardHeader>
+            <CardBody className="pt-0">
+              {stats.recentActivity.map((item, key) => {
                 const { Icon, color } = getOverviewIcon(item.evaluationStatus);
                 const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
                 return (
                   <div key={uniqueKey} className="flex items-start gap-4 py-3">
                     <div
                       className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                        key === stats.recentActivity.length - 1
-                          ? "after:h-0"
-                          : "after:h-4/6"
+                        key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
                       }`}
                     >
                       <Icon className={`!w-5 !h-5 ${color}`} />
                     </div>
                     <div>
-                       <Typography
-                        variant="small"
-                        color="blue-gray"
-                        className="block font-medium"
-                       >
-                         {item.subject}: {item.topic.substring(0, 20)}...
+                      <Typography variant="small" color="blue-gray" className="block font-medium">
+                        {item.subject}: {item.topic.substring(0, 20)}...
                       </Typography>
-                      <Typography
-                         as="span"
-                         variant="small"
-                        className="text-xs font-medium text-blue-gray-500"
-                      >
+                      <Typography as="span" variant="small" className="text-xs font-medium text-blue-gray-500">
                         {formatDateTime(item.submittedAt)}
                       </Typography>
                     </div>
                   </div>
-                )
-              }
-             )}
-          </CardBody>
-        </Card>
+                );
+              })}
+            </CardBody>
+          </Card>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 

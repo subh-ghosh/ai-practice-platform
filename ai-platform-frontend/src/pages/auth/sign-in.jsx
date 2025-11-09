@@ -1,5 +1,4 @@
 import {
-  Card,
   Input,
   Button,
   Typography,
@@ -45,6 +44,7 @@ export function SignIn() {
     setSubmitting(true);
     const result = await login(email, password);
     setSubmitting(false);
+
     if (result?.success) {
       navigate(from, { replace: true });
     } else {
@@ -71,11 +71,11 @@ export function SignIn() {
         navigate(from, { replace: true });
       } else if (result.status === "NEEDS_REGISTRATION") {
         navigate("/auth/sign-up", {
-          state: { googleData: result.registrationData }
+          state: { googleData: result.registrationData },
         });
       }
     } else {
-      if (typeof result.message === 'object' && result.message !== null) {
+      if (typeof result.message === "object" && result.message !== null) {
         console.error("Backend error:", result.message);
         setError("An internal server error occurred. Please try again later.");
       } else {
@@ -91,94 +91,72 @@ export function SignIn() {
   };
 
   return (
-    // --- 👇 THIS IS THE CHANGE --- 👇
-    // Removed all margin/height/centering classes.
-    // The parent layout (auth.jsx) will handle the centering.
-    <section className="flex gap-6 py-12 px-8">
-    {/* --- 👆 END OF CHANGE --- 👆 */}
+    <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden">
+      {/* === Background Gradient & Glow === */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-100 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900" />
+      <div className="pointer-events-none absolute top-[-10%] right-[-5%] h-96 w-96 bg-blue-500/25 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute bottom-[-15%] left-[-10%] h-96 w-96 bg-purple-500/20 blur-[140px] rounded-full" />
+      <div className="pointer-events-none absolute top-1/3 left-[30%] h-64 w-64 bg-indigo-500/20 blur-[100px] rounded-full" />
 
-      {/* left – form */}
-      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center">
-        <div className="text-center">
-          <Typography variant="h2" className="font-bold mb-2">
+      {/* Left Form */}
+      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
+        <div className="text-center mb-6">
+          <Typography
+            variant="h2"
+            className="font-bold mb-2 text-3xl md:text-4xl text-gray-900 dark:text-gray-100"
+          >
             Sign In
           </Typography>
           <Typography
             variant="paragraph"
-            color={theme === 'dark' ? 'white' : 'blue-gray'}
-            className="text-lg font-normal"
+            color={theme === "dark" ? "white" : "blue-gray"}
+            className="text-lg font-normal opacity-90"
           >
-            Enter your email and password to Sign In.
+            Enter your email and password to sign in.
           </Typography>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="mt-8 mb-2 mx-auto w-80 max-w-screen-lg lg:w-1/2"
+          className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-white/70 dark:bg-gray-900/40 border border-white/40 dark:border-gray-700 rounded-2xl p-6 shadow-lg"
         >
-          {success && (
-            <Alert color="green" className="mb-4">
-              {success}
-            </Alert>
-          )}
+          {success && <Alert color="green">{success}</Alert>}
+          {error && <Alert color="red">{error}</Alert>}
 
-          {error && (
-            <Alert color="red" className="mb-4">
-              {error}
-            </Alert>
-          )}
+          <div className="flex flex-col gap-3">
+            <Input
+              size="lg"
+              type="email"
+              label="Your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              color={theme === "dark" ? "white" : "gray"}
+              autoComplete="email"
+            />
 
-          <div className="mb-1 flex flex-col gap-6">
-            <div>
-              <Typography
-                variant="small"
-                color={theme === 'dark' ? 'white' : 'blue-gray'}
-                className="-mb-3 font-medium"
-              >
-                Your email
-              </Typography>
-              <Input
-                size="lg"
-                placeholder="name@mail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                labelProps={{ className: "before:content-none after:content-none" }}
-                color={theme === 'dark' ? 'white' : 'gray'}
-              />
-            </div>
-
-            <div>
-              <Typography
-                variant="small"
-                color={theme === 'dark' ? 'white' : 'blue-gray'}
-                className="-mb-3 font-medium"
-              >
-                Password
-              </Typography>
-              <Input
-                size="lg"
-                type="password"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                labelProps={{ className: "before:content-none after:content-none" }}
-                color={theme === 'dark' ? 'white' : 'gray'}
-              />
-            </div>
+            <Input
+              size="lg"
+              type="password"
+              label="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              color={theme === "dark" ? "white" : "gray"}
+              autoComplete="current-password"
+            />
           </div>
 
           <Button
             type="submit"
-            className="mt-6"
+            className="mt-3"
             fullWidth
             disabled={submitting || googleSubmitting}
-            variant={theme === 'dark' ? 'outlined' : 'gradient'}
-            color={theme === 'dark' ? 'white' : 'blue'}
+            variant={theme === "dark" ? "outlined" : "gradient"}
+            color={theme === "dark" ? "white" : "blue"}
           >
             {submitting ? "Signing in..." : "Sign In"}
           </Button>
 
-          <div className="relative flex py-5 items-center">
+          <div className="relative flex py-2 items-center">
             <div className="flex-grow border-t border-gray-400"></div>
             <span className="flex-shrink mx-4 text-gray-400">OR</span>
             <div className="flex-grow border-t border-gray-400"></div>
@@ -191,33 +169,40 @@ export function SignIn() {
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
-                theme={theme === 'dark' ? 'filled_black' : 'outline'}
+                theme={theme === "dark" ? "filled_black" : "outline"}
                 shape="pill"
                 width="280px"
+                text="signin_with"
               />
             )}
           </div>
 
           <Typography
             variant="paragraph"
-            color={theme === 'dark' ? 'white' : 'blue-gray'}
-            className="text-center font-medium mt-4"
+            color={theme === "dark" ? "white" : "blue-gray"}
+            className="text-center font-medium mt-2"
           >
             Not registered?
-            <Link to="/auth/sign-up" className="text-gray-900 dark:text-blue-400 ml-1">
+            <Link
+              to="/auth/sign-up"
+              className="text-gray-900 dark:text-blue-400 ml-1"
+            >
               Create account
             </Link>
           </Typography>
         </form>
       </div>
 
-      {/* right – image */}
-      <div className="hidden lg:block w-2/5">
-        <img
-          src="/img/pattern.png"
-          alt="Pattern"
-          className="h-full w-full object-cover rounded-3xl"
-        />
+      {/* Right Image */}
+      <div className="hidden lg:flex w-2/5 justify-center">
+        <div className="relative w-full h-[80vh] rounded-3xl overflow-hidden shadow-2xl">
+          <img
+            src="/img/pattern.png"
+            alt="Pattern"
+            className="w-full h-full object-cover opacity-90"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
+        </div>
       </div>
     </section>
   );

@@ -1,69 +1,78 @@
+// src/widgets/cards/profile-info-card.jsx
+import React from "react";
 import PropTypes from "prop-types";
-import {
-  Card,
-  CardHeader,
-  CardBody,
-  Typography,
-} from "@material-tailwind/react";
+import { Card, CardHeader, CardBody, Typography } from "@material-tailwind/react";
+
 export function ProfileInfoCard({ title, description, details, action }) {
+  const hasDescription = Boolean(description);
+  const hasDetails = details && Object.keys(details || {}).length > 0;
+
   return (
-    // --- THIS IS THE FIX ---
-    <Card shadow={false} className="dark:bg-gray-800 dark:border-gray-700">
-    {/* --- END OF FIX --- */}
+    <Card
+      shadow={false}
+      className="
+        overflow-hidden rounded-2xl
+        ring-1 ring-black/5 dark:ring-white/5
+        bg-white/90 dark:bg-gray-800/80
+        backdrop-blur-md
+      "
+    >
       <CardHeader
         color="transparent"
         shadow={false}
         floated={false}
-        className="mx-0 mt-0 mb-4 flex items-center justify-between gap-4"
+        className="mx-0 mt-0 mb-1 flex items-center justify-between gap-4 px-6 md:px-8 py-3"
       >
-        <Typography variant="h6" color="blue-gray">
+        <Typography
+          variant="h6"
+          color="blue-gray"
+          className="dark:text-gray-100 text-base md:text-lg font-semibold"
+        >
           {title}
         </Typography>
-
-   {action}
+        {action}
       </CardHeader>
-      <CardBody className="p-0">
-        {description && (
+
+      {/* tighter padding and closer spacing */}
+      <CardBody className="px-6 md:px-8 py-5 md:py-6 space-y-4">
+        {hasDescription && (
           <Typography
             variant="small"
-            className="font-normal text-blue-gray-500"
+            className="font-normal text-blue-gray-600 dark:text-gray-300 leading-relaxed text-sm"
           >
             {description}
           </Typography>
+        )}
 
- )}
-        {description && details ? (
-          <hr className="my-8 border-blue-gray-50" />
-        ) : null}
-        {details && (
-          <ul className="flex flex-col gap-4 p-0">
-            {Object.keys(details).map((el, key) => (
-              <li key={key} className="flex items-center gap-4">
-
-         <Typography
+        {hasDetails && (
+          <ul className={`flex flex-col gap-3 ${hasDescription ? "mt-3" : "mt-1"}`}>
+            {Object.keys(details).map((label) => (
+              <li
+                key={label}
+                className="flex flex-col sm:flex-row sm:items-start sm:gap-6 text-[13px] md:text-sm"
+              >
+                {/* lighter label (no bold), slightly smaller, muted color */}
+                <Typography
                   variant="small"
                   color="blue-gray"
-                  className="font-semibold capitalize"
+                  className="min-w-[110px] shrink-0 font-medium text-blue-gray-600 dark:text-gray-300 capitalize"
                 >
-                  {el}:
+                  {label}:
+                </Typography>
 
-              </Typography>
-                {typeof details[el] === "string" ?
-(
+                {typeof details[label] === "string" ? (
                   <Typography
                     variant="small"
-                    className="font-normal text-blue-gray-500"
+                    className="font-normal text-blue-gray-700 dark:text-gray-100 text-[13px] md:text-sm"
                   >
-                    {details[el]}
-
-               </Typography>
+                    {details[label] || "—"}
+                  </Typography>
                 ) : (
-                  details[el]
+                  details[label]
                 )}
               </li>
             ))}
-
-   </ul>
+          </ul>
         )}
       </CardBody>
     </Card>
@@ -75,10 +84,12 @@ ProfileInfoCard.defaultProps = {
   description: null,
   details: {},
 };
+
 ProfileInfoCard.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.node,
   details: PropTypes.object,
+  action: PropTypes.node,
 };
 
 ProfileInfoCard.displayName = "/src/widgets/cards/profile-info-card.jsx";

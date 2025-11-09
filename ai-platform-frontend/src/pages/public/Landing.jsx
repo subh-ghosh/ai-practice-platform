@@ -1,127 +1,208 @@
 import React from "react";
-import { Button, Typography } from "@material-tailwind/react";
+import {
+  Button,
+  Typography,
+  Card,
+  CardBody,
+  Chip,
+} from "@material-tailwind/react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLongRightIcon,
-  PuzzlePieceIcon,
+  CheckCircleIcon,
+  SparklesIcon,
   AcademicCapIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  BellAlertIcon,
+  ShieldCheckIcon,
 } from "@heroicons/react/24/solid";
 
 export function Landing() {
   const navigate = useNavigate();
 
   return (
-    // Use a fragment (<>) to hold both sections
     <>
-      {/* --- HERO SECTION --- */}
-      <div className="relative flex h-[70vh] content-center items-center justify-center">
-        {/* ... (Hero section content - no changes) ... */}
-        <div className="absolute top-0 h-full w-full bg-gray-900" />
-        <div className="container relative mx-auto">
-          <div className="flex flex-wrap items-center">
-            <div className="ml-auto mr-auto w-full px-4 text-left lg:w-7/12">
-              <Typography
-                variant="h1"
-                color="white"
-                className="mb-6 font-black"
-              >
-                Your Smart Self-Practice Platform
+      {/* HERO */}
+      <section className="relative isolate overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800" />
+        <div className="pointer-events-none absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-[-10%] h-[26rem] w-[26rem] rounded-full bg-indigo-500/20 blur-3xl" />
+
+        <div className="container mx-auto px-4 pt-24 pb-40 md:pt-32 md:pb-56">
+          <div className="grid items-center gap-10 md:grid-cols-12">
+            <div className="md:col-span-7">
+              <Typography variant="h1" color="white" className="mb-5 font-black leading-tight">
+                Practice smarter. Learn faster.
               </Typography>
-              <Typography variant="lead" color="white" className="opacity-80">
-                Our platform uses generative AI to dynamically create unique
-                questions and provides immediate, context-aware feedback on your answers.
-                Practice any subject, at any difficulty, anytime.
+              <Typography variant="lead" color="white" className="opacity-80 max-w-2xl">
+                Get fresh questions, write your answer, and see clear tips right away.
+                No noise — just steady progress built for students.
               </Typography>
               <div className="mt-10 flex gap-4">
                 <Button
                   variant="gradient"
                   color="white"
                   size="lg"
-                  className="flex items-center justify-center gap-2"
+                  className="flex items-center gap-2 !text-gray-900"
                   onClick={() => navigate("/auth/sign-in")}
                 >
-                  Get Started
+                  Start practicing
                   <ArrowLongRightIcon className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="text"
+                  size="lg"
+                  className="text-white/90 hover:text-white underline decoration-white/30 hover:decoration-white"
+                  onClick={() => navigate("/auth/sign-up")}
+                >
+                  Create account
                 </Button>
               </div>
             </div>
-            <div className="ml-auto mr-auto hidden w-full px-4 lg:flex lg:w-4/12 items-center justify-center">
-               <img
-                  src="/img/logo-ct.png"
-                  alt="AI Practice Platform Logo"
-                  className="w-full max-w-[200px] opacity-80"
-               />
+
+            <div className="md:col-span-5 hidden md:block">
+              <Card className="backdrop-blur bg-white/5 border border-white/10 shadow-2xl rounded-3xl p-6">
+                <div className="flex items-center justify-center gap-3">
+                  <SparklesIcon className="h-8 w-8 text-white/90" />
+                  <Typography color="white" className="font-semibold">
+                    Practice with instant feedback
+                  </Typography>
+                </div>
+                <CardBody className="text-center">
+                  <Typography color="white" className="opacity-80">
+                    Simple, friendly, and made for focused study.
+                  </Typography>
+                </CardBody>
+              </Card>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* --- CORE FEATURES SECTION --- */}
-      <section className="bg-white py-6 px-4 dark:bg-gray-800">
-        <div className="container mx-auto">
-          <div className="mb-16 text-center">
-            {/* --- 👇 THIS IS THE CHANGE --- 👇 */}
-            <Typography variant="h2" color="blue-gray" className="mb-4 dark:text-gray-100">
-              Core Features
+      {/* HOW IT WORKS */}
+      <section className="bg-white dark:bg-gray-900 relative -mt-20">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center mb-12">
+            <Typography variant="h2" className="mb-3 text-gray-900 dark:text-gray-100">
+              How it works
             </Typography>
-            <Typography variant="lead" color="blue-gray" className="mx-auto w-full max-w-3xl dark:text-gray-300">
-              Our platform is built from the ground up to provide a seamless,
-              intelligent learning experience.
+            <Typography className="text-blue-gray-700 dark:text-gray-300">
+              A simple loop: try a question → write your answer → get tips → improve.
             </Typography>
-            {/* --- 👆 END OF CHANGE --- 👆 */}
           </div>
-          <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
 
-            {/* Feature 1 */}
-            <div className="text-center">
-              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-blue-500 text-white shadow-lg">
-                <PuzzlePieceIcon className="h-8 w-8" />
-              </div>
-              <Typography variant="h5" color="blue-gray" className="mb-2 dark:text-gray-100">
-                Dynamic Questions
-              </Typography>
-              {/* --- 👇 THIS IS THE CHANGE --- 👇 */}
-              <Typography color="blue-gray" className="font-normal dark:text-gray-300">
-                Questions are generated on-demand by the Gemini API based on your
-                chosen subject and difficulty level.
-              </Typography>
-              {/* --- 👆 END OF CHANGE --- 👆 */}
-            </div>
-
-            {/* Feature 2 */}
-            <div className="text-center">
-              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-blue-500 text-white shadow-lg">
-                <AcademicCapIcon className="h-8 w-8" />
-              </div>
-              <Typography variant="h5" color="blue-gray" className="mb-2 dark:text-gray-100">
-                AI-Powered Evaluation
-              </Typography>
-              {/* --- 👇 THIS IS THE CHANGE --- 👇 */}
-              <Typography color="blue-gray" className="font-normal dark:text-gray-300">
-                Submitted answers are sent to the AI for a detailed,
-                context-aware evaluation, not just "Correct/Incorrect".
-              </Typography>
-              {/* --- 👆 END OF CHANGE --- 👆 */}
-            </div>
-
-            {/* Feature 3 */}
-            <div className="text-center">
-              <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-blue-500 text-white shadow-lg">
-                <ChartBarIcon className="h-8 w-8" />
-              </div>
-              <Typography variant="h5" color="blue-gray" className="mb-2 dark:text-gray-100">
-                Progress Tracking
-              </Typography>
-              {/* --- 👇 THIS IS THE CHANGE --- 👇 */}
-              <Typography color="blue-gray" className="font-normal dark:text-gray-300">
-                View a complete history of all questions asked, your answers,
-                and all the AI-generated feedback you've received.
-              </Typography>
-              {/* --- 👆 END OF CHANGE --- 👆 */}
-            </div>
-
+          <div className="grid gap-6 md:grid-cols-4">
+            {[
+              {
+                title: "Pick a subject",
+                text:
+                  "Choose what you want to practice and the level that feels right.",
+                icon: AcademicCapIcon,
+              },
+              {
+                title: "Get a fresh question",
+                text:
+                  "You’ll see a clear, single question with no distractions.",
+                icon: SparklesIcon,
+              },
+              {
+                title: "Submit your answer",
+                text:
+                  "You’ll be told if it’s right, close, or needs work — with a short tip.",
+                icon: CheckCircleIcon,
+              },
+              {
+                title: "See your progress",
+                text:
+                  "Watch your scores and trends so you know what to focus on.",
+                icon: ChartBarIcon,
+              },
+            ].map(({ title, text, icon: Icon }) => (
+              <Card
+                key={title}
+                className="rounded-2xl border border-blue-gray-50/70 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60 backdrop-blur-md"
+              >
+                <CardBody className="p-6">
+                  <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-blue-500 text-white">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <Typography variant="h5" className="mb-2 text-gray-900 dark:text-gray-100">
+                    {title}
+                  </Typography>
+                  <Typography className="text-blue-gray-700 dark:text-gray-300">{text}</Typography>
+                </CardBody>
+              </Card>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* SUBJECTS & LEVELS */}
+      <section className="bg-white dark:bg-gray-900">
+        <div className="container mx-auto px-4 pb-4">
+          <Card className="rounded-3xl border border-blue-gray-50/70 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60">
+            <CardBody className="p-8">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <Typography variant="h4" className="text-gray-900 dark:text-gray-100">
+                    Subjects & levels
+                  </Typography>
+                  <Typography className="text-blue-gray-700 dark:text-gray-300">
+                    Start easy, move up when you’re ready.
+                  </Typography>
+                </div>
+                <div className="flex gap-2">
+                  <Chip value="Beginner" color="green" className="rounded-full" />
+                  <Chip value="Medium" color="amber" className="rounded-full" />
+                  <Chip value="Tough" color="blue" className="rounded-full" />
+                </div>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                {[
+                  "Programming Basics",
+                  "Problem Solving",
+                  "Logic & Puzzles",
+                  "Math Practice",
+                  "Study Skills",
+                  "Quick Quizzes",
+                ].map((s) => (
+                  <div
+                    key={s}
+                    className="rounded-xl border border-blue-gray-100 dark:border-gray-800 p-4 text-blue-gray-800 dark:text-gray-200"
+                  >
+                    {s}
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-white dark:bg-gray-900">
+        <div className="container mx-auto px-4 pb-20">
+          <Card className="rounded-3xl border border-blue-gray-50/70 dark:border-gray-800 bg-white/80 dark:bg-gray-900/60">
+            <CardBody className="p-8 flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <Typography variant="h4" className="text-gray-900 dark:text-gray-100">
+                  Ready to practice smarter?
+                </Typography>
+                <Typography className="text-blue-gray-700 dark:text-gray-300">
+                  Create an account and try your first question now.
+                </Typography>
+              </div>
+              <Button
+                onClick={() => navigate("/auth/sign-up")}
+                variant="gradient"
+                color="blue"
+                className="rounded-xl"
+              >
+                Sign up free
+              </Button>
+            </CardBody>
+          </Card>
         </div>
       </section>
     </>
