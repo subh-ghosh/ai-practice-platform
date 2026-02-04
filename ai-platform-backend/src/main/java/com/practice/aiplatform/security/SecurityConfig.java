@@ -1,73 +1,68 @@
 package com.practice.aiplatform.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import static org.springframework.security.config.Customizer.withDefaults;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // We keep all the JWT and UserDetails code,
-    // but we will just permit all requests for now.
-
-    @Autowired
-    private StudentDetailsService studentDetailsService;
-
-    @Autowired
-    private JwtRequestFilter jwtRequestFilter;
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
-        AuthenticationManagerBuilder authBuilder =
-                http.getSharedObject(AuthenticationManagerBuilder.class);
-        authBuilder.userDetailsService(studentDetailsService)
-                .passwordEncoder(passwordEncoder());
-        return authBuilder.build();
-    }
+    // Read the URL from application.properties (which gets it from Render Env Vars)
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(withDefaults()) // Keep CORS enabled
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        // 1. Allow these specific endpoints without a login
-                        .requestMatchers(
-                                "/api/students/login", 
-                                "/api/students/register", 
-                                "/api/students/oauth/**",
-                                "/error" // Allow Spring to show error messages
-                        ).permitAll()
-                        
-                        // 2. Everything else requires a valid JWT Token
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                // We still add the filter, even though it's not strictly needed,
-                // so we don't have to change other files.
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+            // 1. Enable CORS (Crucial Fix)
+            .cors(Customizer.withDefaults())
+            
+            // 2. Disable CSRF (Standard for JWT APIs)
+            .csrf(csrf -> csrf.disable())
+            
+            // 3. Define Public vs Private Routes
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/error").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Explicitly allow pre-flight checks
+                .anyRequest().authenticated()
+            )
+            
+            // 4. Add your JWT Filter (assuming you have this class)
+            // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) 
+            // ^ UNCOMMENT the line above if you have your JwtAuthenticationFilter ready!
+            ;
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        
+        // Allow your specific Frontend URL
+        configuration.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173")); 
+        
+        // Allow all standard methods
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        
+        // Allow all headers (Authorization, Content-Type, etc.)
+        configuration.setAllowedHeaders(List.of("*"));
+        
+        // Allow credentials (Cookies/Auth Headers)
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
