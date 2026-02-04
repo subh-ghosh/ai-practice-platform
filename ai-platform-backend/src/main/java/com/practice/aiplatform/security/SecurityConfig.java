@@ -50,11 +50,16 @@ public class SecurityConfig {
                 .cors(withDefaults()) // Keep CORS enabled
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                                // --- THIS IS THE "FIX IT ANYHOW" CHANGE ---
-                                // We are permitting EVERY request.
-                                // This is insecure for production, but it will get your app working.
-                                .anyRequest().permitAll()
-                        // ------------------------------------------
+                        // 1. Allow these specific endpoints without a login
+                        .requestMatchers(
+                                "/api/students/login", 
+                                "/api/students/register", 
+                                "/api/students/oauth/**",
+                                "/error" // Allow Spring to show error messages
+                        ).permitAll()
+                        
+                        // 2. Everything else requires a valid JWT Token
+                        .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)

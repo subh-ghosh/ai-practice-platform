@@ -9,7 +9,7 @@ public class UsageService {
     private final StudentRepository studentRepository;
 
     // Define your free limit here
-    private static final int FREE_ACTION_LIMIT = 5;
+    private static final int FREE_ACTION_LIMIT = 20;
 
     public UsageService(StudentRepository studentRepository) {
         this.studentRepository = studentRepository;

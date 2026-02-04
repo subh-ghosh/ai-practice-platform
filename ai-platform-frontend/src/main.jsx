@@ -15,7 +15,7 @@ import { PaywallProvider } from "@/context/PaywallContext.jsx"; // 👈 --- ADD 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <GoogleOAuthProvider clientId="628028362073-4tnuu4287kalrmhmagbhontaqnlu7elk.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId="245465683815-auku1hggm3glvv2urqkblfnm85d8udel.apps.googleusercontent.com">
         <ThemeProvider>
           <MaterialTailwindControllerProvider>
             <AppThemeProvider>

@@ -9,6 +9,8 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+
 @Service
 public class GeminiService {
 
@@ -119,25 +121,33 @@ public class GeminiService {
 
 
     private Mono<GeminiResponse> callGeminiApi(String prompt) {
-        // ... (this method remains unchanged)
-        Map<String, Object> requestBody = Map.of(
-                "contents", List.of(
-                        Map.of("parts", List.of(
-                                Map.of("text", prompt)
-                        ))
-                )
-        );
+    Map<String, Object> requestBody = Map.of(
+        "contents", List.of(
+            Map.of("parts", List.of(
+                Map.of("text", prompt)
+            ))
+        )
+    );
 
-        return this.webClient.post()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/v1beta/models/gemini-2.0-flash:generateContent")
-                        .queryParam("key", this.apiKey)
-                        .build())
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(GeminiResponse.class)
-                .log();
-    }
+    return this.webClient.post()
+        .uri(uriBuilder -> uriBuilder
+            .path("/v1beta/models/gemini-2.5-flash:generateContent") 
+            .queryParam("key", this.apiKey)
+            .build())
+        .bodyValue(requestBody)
+        .retrieve()
+        .onStatus(
+            status -> status.is4xxClientError() || status.is5xxServerError(),
+            clientResponse -> clientResponse.bodyToMono(String.class)
+                .flatMap(errorBody -> {
+                    // This prints the REAL error from Google to your terminal
+                    System.err.println("GOOGLE API ERROR: " + errorBody);
+                    return Mono.error(new RuntimeException("Gemini API Error: " + errorBody));
+                })
+        )
+        .bodyToMono(GeminiResponse.class)
+        .doOnError(e -> System.err.println("CRITICAL ERROR: " + e.getMessage()));
+}
 
 
     private String extractTextFromResponse(GeminiResponse response) {
