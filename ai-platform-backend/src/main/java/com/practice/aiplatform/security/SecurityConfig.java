@@ -3,9 +3,13 @@ package com.practice.aiplatform.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -17,48 +21,57 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Read the URL from application.properties (which gets it from Render Env Vars)
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
+    // --- 1. THE MISSING BEAN (Restored) ---
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    // --- 2. AUTH MANAGER (Needed for Login) ---
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    // --- 3. SECURITY FILTER CHAIN ---
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // 1. Enable CORS (Crucial Fix)
-            .cors(Customizer.withDefaults())
-            
-            // 2. Disable CSRF (Standard for JWT APIs)
-            .csrf(csrf -> csrf.disable())
-            
-            // 3. Define Public vs Private Routes
+            .cors(Customizer.withDefaults()) // Enable CORS
+            .csrf(csrf -> csrf.disable())    // Disable CSRF for APIs
             .authorizeHttpRequests(auth -> auth
+                // Allow Auth & OAuth endpoints
                 .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/error").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // Explicitly allow pre-flight checks
+                // Allow Pre-flight OPTIONS requests (Crucial for Vercel)
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                // Lock everything else
                 .anyRequest().authenticated()
-            )
+            );
             
-            // 4. Add your JWT Filter (assuming you have this class)
-            // .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) 
-            // ^ UNCOMMENT the line above if you have your JwtAuthenticationFilter ready!
-            ;
+            // NOTE: If you have a JwtRequestFilter, uncomment the line below:
+            // .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // --- 4. CORS CONFIGURATION ---
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow your specific Frontend URL
-        configuration.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173")); 
+        // Allow Vercel + Localhost
+        configuration.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173"));
         
-        // Allow all standard methods
+        // Allow all methods (GET, POST, OPTIONS, etc.)
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
-        // Allow all headers (Authorization, Content-Type, etc.)
+        // Allow all headers
         configuration.setAllowedHeaders(List.of("*"));
         
-        // Allow credentials (Cookies/Auth Headers)
+        // Allow credentials (Cookies/Auth headers)
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
