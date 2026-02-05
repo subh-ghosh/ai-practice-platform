@@ -1,20 +1,17 @@
 package com.practice.aiplatform.security;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter; // Import this!
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
@@ -22,59 +19,58 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${app.frontend.url}")
-    private String frontendUrl;
-
-    // --- 1. INJECT THE JWT FILTER ---
     private final JwtRequestFilter jwtRequestFilter;
 
     public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
         this.jwtRequestFilter = jwtRequestFilter;
     }
 
-    // --- 2. PASSWORD ENCODER ---
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    // --- 3. AUTH MANAGER ---
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    // --- 4. SECURITY FILTER CHAIN ---
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(Customizer.withDefaults()) 
-            .csrf(csrf -> csrf.disable())    
+            // 1. Enable CORS (Allow Frontend to talk to Backend)
+            .cors(cors -> cors.configurationSource(request -> {
+                CorsConfiguration config = new CorsConfiguration();
+                config.setAllowedOrigins(List.of("https://ai-practice-platform.vercel.app", "http://localhost:5173"));
+                config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                config.setAllowedHeaders(List.of("*"));
+                config.setAllowCredentials(true);
+                return config;
+            }))
+            // 2. Disable CSRF (Not needed for JWT)
+            .csrf(csrf -> csrf.disable())
+            // 3. Define Access Rules
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/error").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                // Public Endpoints (No Login Required)
+                .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/api/payments/webhook").permitAll()
+                
+                // Protected Endpoints (Login Required)
+                // We allow ANY authenticated user (Student or Admin) to access these:
+                .requestMatchers("/api/ai/**").authenticated()           // 👈 Fixes Question Generation
+                .requestMatchers("/api/practice/**").authenticated()     // 👈 Fixes Answer Submission
+                .requestMatchers("/api/stats/**").authenticated()        // 👈 Fixes Dashboard Stats
+                .requestMatchers("/api/notifications/**").authenticated()// 👈 Fixes Notifications
+                .requestMatchers("/api/payments/**").authenticated()     // 👈 Fixes Payments
+                .requestMatchers("/api/students/profile", "/api/students/password", "/api/students/account").authenticated()
+                
+                // All other requests require login
                 .anyRequest().authenticated()
             )
-            // --- 5. ADD THE FILTER (Crucial Step) ---
+            // 4. No Sessions (State management is handled by Token)
+            .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // 5. Add our JWT Filter before the standard login filter
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // --- 6. CORS CONFIGURATION ---
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Allow Vercel + Localhost + Render (for health checks)
-        configuration.setAllowedOrigins(List.of(frontendUrl, "http://localhost:5173", "https://ai-platform-backend-vauw.onrender.com"));
-        
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }
