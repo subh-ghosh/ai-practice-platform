@@ -42,26 +42,32 @@ export function AuthProvider({ children }) {
   }, []);
 
   // 2. Login Function (The Fix is Here)
+ // 2. Login Function (Debug Version)
   const login = async (email, password) => {
     try {
       const response = await axios.post(`${API_URL}/login`, { email, password });
       
-      // ✅ CRITICAL FIX: Save Token and User to LocalStorage
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+      // 🔍 DEBUG LOG: Print exactly what the server sent
+      console.log("SERVER RESPONSE:", response.data); 
+
+      // Try to find the token (Handle different possible names)
+      const token = response.data.token || response.data.accessToken || response.data.jwt;
+      
+      if (token) {
+        localStorage.setItem("token", token);
         
-        // We also save user details so we don't lose name on refresh
-        // (Assuming backend sends 'student' or 'user' object)
-        const userData = response.data.student || response.data.user;
+        // Find the user object
+        const userData = response.data.student || response.data.user || response.data.data;
         localStorage.setItem("user", JSON.stringify(userData));
         
         setUser(userData);
         return { success: true };
       } else {
-        return { success: false, message: "No token received from server" };
+        console.error("Token missing in response:", response.data);
+        return { success: false, message: "Login successful, but no token found." };
       }
     } catch (error) {
-      console.error("Login Error:", error.response);
+      console.error("Login Error:", error);
       return { 
         success: false, 
         message: error.response?.data?.message || "Invalid credentials" 
