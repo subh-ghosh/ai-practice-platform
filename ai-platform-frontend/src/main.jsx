@@ -11,28 +11,38 @@ import { NotificationProvider } from "@/context/NotificationContext.jsx";
 import { ThemeProvider as AppThemeProvider } from "@/context/ThemeContext.jsx";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { PaywallProvider } from "@/context/PaywallContext.jsx";
-import axios from "axios"; // 👈 1. IMPORT AXIOS
+import axios from "axios";
 
-// === 2. ADD THIS SECURITY INTERCEPTOR (Crucial!) ===
-// This automatically attaches your Token to every request (Stats, Notifications, etc.)
+
+// ✅ FIXED SECURITY INTERCEPTOR
 axios.interceptors.request.use(
   (config) => {
+
+    // ❌ DO NOT attach token to auth endpoints
+    if (
+      config.url?.includes("/login") ||
+      config.url?.includes("/register") ||
+      config.url?.includes("/oauth")
+    ) {
+      return config;
+    }
+
     const token = localStorage.getItem("token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
-// ===================================================
 
+
+// APP RENDER
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      {/* Replace 'clientId' with your actual Google Client ID if needed */}
       <GoogleOAuthProvider clientId="245465683815-auku1hggm3glvv2urqkblfnm85d8udel.apps.googleusercontent.com">
         <ThemeProvider>
           <MaterialTailwindControllerProvider>
