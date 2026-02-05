@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import api from "@/api";
+import axios from "axios"; // 👈 CHANGED: Use direct axios instead of api instance
 import {
   Typography,
   Card,
@@ -98,6 +98,7 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // 👇 THE CRITICAL FIX IS HERE 👇
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -106,9 +107,22 @@ export function Home() {
         setStats(null);
         setTimeSeriesData(null);
 
+        // 1. Get Token Manually
+        const token = localStorage.getItem("token");
+        
+        // 2. Configure Headers
+        const config = {
+          headers: {
+            "Authorization": `Bearer ${token}` 
+          }
+        };
+
+        // 3. Use Full URL (Hardcoded for safety)
+        const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+
         const [summaryRes, timeSeriesRes] = await Promise.all([
-          api.get("/api/stats/summary"),
-          api.get("/api/stats/timeseries"),
+          axios.get(`${BASE_URL}/api/stats/summary`, config),
+          axios.get(`${BASE_URL}/api/stats/timeseries`, config),
         ]);
 
         if (summaryRes.data && timeSeriesRes.data) {
@@ -241,14 +255,13 @@ export function Home() {
 
   return (
     <section className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)]">
-      {/* Background gradient & glows (match public pages theme) */}
+      {/* Background gradient & glows */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
 
-      {/* ✅ Use the same offset wrapper as other pages so it aligns with a reduced navbar */}
       <div className="mt-6 has-fixed-navbar page w-full flex flex-col">
-        {/* Welcome header - slightly tighter margins to match others */}
+        {/* Welcome header */}
         <div className="mb-8">
           <div className="rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-6 py-5 shadow-sm">
             <div className="flex flex-wrap items-baseline gap-3">
