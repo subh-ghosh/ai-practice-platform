@@ -131,8 +131,7 @@ public class GeminiService {
 
     return this.webClient.post()
         .uri(uriBuilder -> uriBuilder
-            .path("/v1beta/models/gemini-1.5-flash:generateContent")
-
+            .path("/v1beta/models/gemini-2.0-flash-001:generateContent")
             // Note: The endpoint may differ based on your specific Gemini model and API version. Check Google's documentation for the correct path.
             .queryParam("key", this.apiKey)
             .build())
