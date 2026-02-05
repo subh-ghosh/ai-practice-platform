@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import axios from "axios"; // 👈 USE AXIOS
-import { useAuth } from "./AuthContext";
+import axios from "axios";
+import { useAuth } from "./AuthContext"; // 👈 This import works here because they are neighbors
 
 const NotificationContext = createContext();
 
@@ -20,7 +20,6 @@ export function NotificationProvider({ children }) {
 
   // 1. Fetch Notifications (Manual Token)
   const fetchUnread = useCallback(async (isSilent = false) => {
-    // Only fetch if user is logged in
     const token = localStorage.getItem("token");
     if (!token) return;
 
@@ -28,7 +27,6 @@ export function NotificationProvider({ children }) {
     
     try {
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-      
       const res = await axios.get(`${BASE_URL}/api/notifications/unread`, config);
       
       setNotifications(res.data);
@@ -36,7 +34,6 @@ export function NotificationProvider({ children }) {
       setError(null);
     } catch (err) {
       console.error("Context: Failed to fetch notifications", err);
-      // Suppress 404s (just means no notifications)
       if (err.response && err.response.status !== 404) {
           setError("Could not load notifications");
       }
@@ -53,11 +50,8 @@ export function NotificationProvider({ children }) {
 
       await axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config);
       
-      // Update local state immediately for speed
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       setUnreadCount((prev) => Math.max(0, prev - 1));
-      
-      // Sync with server silently
       fetchUnread(true);
     } catch (err) {
       console.error("Context: Failed to mark read", err);
@@ -67,7 +61,6 @@ export function NotificationProvider({ children }) {
   // 3. Reload helper
   const reload = useCallback(() => fetchUnread(false), [fetchUnread]);
 
-  // Initial Fetch when User changes
   useEffect(() => {
     if (user) {
       fetchUnread();
@@ -77,23 +70,13 @@ export function NotificationProvider({ children }) {
     }
   }, [user, fetchUnread]);
 
-  // Optional: Auto-refresh every 60 seconds
   useEffect(() => {
     if (!user) return;
-    const interval = setInterval(() => {
-        fetchUnread(true);
-    }, 60000); 
+    const interval = setInterval(() => fetchUnread(true), 60000); 
     return () => clearInterval(interval);
   }, [user, fetchUnread]);
 
-  const value = {
-    notifications,
-    unreadCount,
-    loading,
-    error,
-    markRead,
-    reload,
-  };
+  const value = { notifications, unreadCount, loading, error, markRead, reload };
 
   return (
     <NotificationContext.Provider value={value}>
