@@ -20,7 +20,7 @@ import java.io.IOException;
 public class JwtRequestFilter extends OncePerRequestFilter {
 
     @Autowired
-    private UserDetailsService userDetailsService; // This will be our StudentDetailsService
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -34,38 +34,40 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String username = null;
         String jwt = null;
 
-        // 1. Check if the header exists and is a "Bearer" token
+        // 1. Check Header
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7); // "Bearer ".length()
+            jwt = authorizationHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
+                System.out.println("✅ JWT Filter: Token found for user: " + username);
             } catch (ExpiredJwtException e) {
-                System.err.println("JWT token has expired");
+                System.err.println("❌ JWT Filter: Token expired");
             } catch (Exception e) {
-                System.err.println("Error parsing JWT: " + e.getMessage());
+                System.err.println("❌ JWT Filter: Error parsing token: " + e.getMessage());
             }
         }
 
-        // 2. If we have a username and the user is not *already* authenticated
+        // 2. Authenticate
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            // 3. Load the user from the database
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            // 4. Validate the token
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-
-                // 5. If valid, create a Spring Security token and set it in the context
+            // 3. Validate Token
+            // Note: We pass the full 'userDetails' object to validateToken
+            if (jwtUtil.validateToken(jwt, userDetails)) {
+                
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
+                
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                // This is the line that "logs in" the user for this request
+                
+                // 4. Set Context
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("🔓 JWT Filter: Authentication set for " + username);
+            } else {
+                System.out.println("⛔ JWT Filter: Token validation failed for " + username);
             }
         }
 
-        // 6. Pass the request on to the next filter
         chain.doFilter(request, response);
     }
 }
