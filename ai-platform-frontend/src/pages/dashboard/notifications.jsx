@@ -52,7 +52,10 @@ export function Notifications() {
       setNotifications(response.data);
     } catch (err) {
       console.error("Error loading notifications:", err);
-      setError("Failed to load notifications.");
+      // Only set error if it's NOT a 404 (which implies no notifications found)
+      if (err.response && err.response.status !== 404) {
+          setError("Failed to load notifications.");
+      }
     } finally {
       setLoading(false);
     }
