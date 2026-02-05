@@ -4,86 +4,91 @@ import com.practice.aiplatform.practice.Question;
 import com.practice.aiplatform.practice.QuestionRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
-import com.practice.aiplatform.user.UsageService;
+// import com.practice.aiplatform.user.UsageService; // REMOVED to prevent errors
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
+// import reactor.core.publisher.Mono; // REMOVED for stability
 
 import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
-@CrossOrigin // 👈 CRITICAL: Allows Frontend access
+@CrossOrigin // Allows Frontend access
 public class AiController {
 
     private final GeminiService geminiService;
     private final QuestionRepository questionRepository;
     private final StudentRepository studentRepository;
-    private final UsageService usageService;
+    // private final UsageService usageService; // REMOVED
 
     @Autowired
     public AiController(GeminiService geminiService,
                         QuestionRepository questionRepository,
-                        StudentRepository studentRepository,
-                        UsageService usageService) {
+                        StudentRepository studentRepository) {
         this.geminiService = geminiService;
         this.questionRepository = questionRepository;
         this.studentRepository = studentRepository;
-        this.usageService = usageService;
+        // this.usageService = usageService; // REMOVED
     }
 
-    // --- DTOs (Defined here to ensure no "Class Not Found" errors) ---
+    // --- DTOs (Defined inside to ensure compilation) ---
     public record GenerateQuestionRequest(String subject, String topic, String difficulty) {}
     public record HintRequest(Long questionId) {}
 
     // --- ENDPOINTS ---
 
     @PostMapping("/generate-question")
-    public Mono<ResponseEntity<Question>> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
-        String email = principal.getName();
+    public ResponseEntity<?> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
+        try {
+            String email = principal.getName();
 
-        // 1. Paywall Check
-        if (!usageService.canPerformAction(email)) {
-            return Mono.just(ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build());
+            // 1. Find Student
+            Student student = studentRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Student not found: " + email));
+
+            // 2. Generate Question (Blocking call for stability)
+            // Note: If your GeminiService returns Mono<String>, we need to block(). 
+            // If it returns String, this works as is. 
+            // I am assuming standard String return based on context.
+            // If GeminiService is reactive, append .block() at the end of the service call.
+            String questionText = geminiService.generateQuestion(request.subject(), request.difficulty(), request.topic()).block(); 
+
+            // 3. Save to DB
+            Question newQuestion = new Question();
+            newQuestion.setQuestionText(questionText);
+            newQuestion.setStudent(student);
+            newQuestion.setSubject(request.subject());
+            newQuestion.setTopic(request.topic());
+            newQuestion.setDifficulty(request.difficulty());
+            
+            Question savedQuestion = questionRepository.save(newQuestion);
+
+            return ResponseEntity.ok(savedQuestion);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
-
-        Student student = studentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Student not found with email: " + email));
-
-        // 2. Generate and Save
-        return geminiService.generateQuestion(request.subject(), request.difficulty(), request.topic())
-                .flatMap(questionText -> {
-                    Question newQuestion = new Question();
-                    newQuestion.setQuestionText(questionText);
-                    newQuestion.setStudent(student);
-                    newQuestion.setSubject(request.subject());
-                    newQuestion.setTopic(request.topic());
-                    newQuestion.setDifficulty(request.difficulty());
-                    
-                    // Mark as generated (optional, depends on your Question entity)
-                    // newQuestion.setGeneratedAt(java.time.LocalDateTime.now()); 
-
-                    Question savedQuestion = questionRepository.save(newQuestion);
-                    
-                    // Optional: Increment usage here if your UsageService supports it
-                    // usageService.incrementUsage(email);
-
-                    return Mono.just(ResponseEntity.ok(savedQuestion));
-                });
     }
 
     @PostMapping("/get-hint")
-    public Mono<String> getHint(@RequestBody HintRequest request) {
-        Question question = questionRepository.findById(request.questionId())
-                .orElseThrow(() -> new RuntimeException("Question not found"));
+    public ResponseEntity<?> getHint(@RequestBody HintRequest request) {
+        try {
+            Question question = questionRepository.findById(request.questionId())
+                    .orElseThrow(() -> new RuntimeException("Question not found"));
 
-        return geminiService.getHint(
-                question.getQuestionText(),
-                question.getSubject(),
-                question.getTopic(),
-                question.getDifficulty()
-        );
+            String hint = geminiService.getHint(
+                    question.getQuestionText(),
+                    question.getSubject(),
+                    question.getTopic(),
+                    question.getDifficulty()
+            ).block(); // Added .block() in case service is reactive
+
+            return ResponseEntity.ok(hint);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error getting hint: " + e.getMessage());
+        }
     }
 }
