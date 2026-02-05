@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios"; // 👈 ADD AXIOS
 import {
   Card,
   CardBody,
@@ -19,7 +20,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { ProfileInfoCard } from "@/widgets/cards";
 import { useAuth } from "@/context/AuthContext";
-import api from "@/api";
+// import api from "@/api"; // 👈 REMOVE BROKEN API
 import { useTheme } from "@/context/ThemeProvider.jsx";
 
 /* ============================ Config ============================ */
@@ -28,6 +29,9 @@ const panelCard =
   "h-full rounded-2xl border border-blue-100/60 bg-white/90 backdrop-blur-md shadow-sm dark:bg-gray-800/80 dark:border-gray-700";
 const scrollBody =
   "p-5 md:p-6 flex flex-col gap-5 md:gap-6 h-full overflow-y-auto pr-3 md:pr-4";
+
+// Hardcode URL for safety
+const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
 /* ============================ Reusable blocks ============================ */
 function EditForm({
@@ -305,13 +309,22 @@ export function Profile() {
     "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png";
   const avatarSrc = (gender || user?.gender) === "female" ? femaleAvatar : maleAvatar;
 
+  // 1. UPDATE PROFILE (Manual Token)
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setSavingProfile(true);
     setEditError(null);
     setEditSuccess(null);
     try {
-      const res = await api.put("/api/students/profile", { firstName, lastName, gender });
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
+
+      const res = await axios.put(`${BASE_URL}/api/students/profile`, { 
+        firstName, 
+        lastName, 
+        gender 
+      }, config);
+
       updateUser(res.data);
       setEditSuccess("Profile updated successfully!");
     } catch (err) {
@@ -322,16 +335,24 @@ export function Profile() {
     }
   };
 
+  // 2. CHANGE PASSWORD (Manual Token)
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setChangingPassword(true);
     setSecError(null);
     setSecSuccess(null);
     try {
-      await api.put("/api/students/password", { oldPassword, newPassword });
-      setSecSuccess("Password changed successfully!");
-      setOldPassword("");
-      setNewPassword("");
+        const token = localStorage.getItem("token");
+        const config = { headers: { "Authorization": `Bearer ${token}` } };
+        
+        await axios.put(`${BASE_URL}/api/students/password`, { 
+            oldPassword, 
+            newPassword 
+        }, config);
+        
+        setSecSuccess("Password changed successfully!");
+        setOldPassword("");
+        setNewPassword("");
     } catch (err) {
       setSecError(err?.response?.data || "Failed to change password.");
     } finally {
@@ -339,12 +360,16 @@ export function Profile() {
     }
   };
 
+  // 3. DELETE ACCOUNT (Manual Token)
   const handleDeleteAccount = async () => {
     const ok = window.confirm("Are you sure? This cannot be undone.");
     if (!ok) return;
     setDeletingAccount(true);
     try {
-      await api.delete("/api/students/account");
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
+
+      await axios.delete(`${BASE_URL}/api/students/account`, config);
       logout();
     } catch {
       setSecError("Failed to delete account.");

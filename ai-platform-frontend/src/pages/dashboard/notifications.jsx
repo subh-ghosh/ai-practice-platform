@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios"; // 👈 Add Axios
 import {
   Typography,
   Card,
@@ -7,7 +8,6 @@ import {
   Button,
   Spinner,
 } from "@material-tailwind/react";
-import { useNotifications } from "@/context/NotificationContext.jsx";
 
 function formatDateTime(iso) {
   try {
@@ -24,14 +24,69 @@ function formatDateTime(iso) {
 }
 
 export function Notifications() {
-  const { notifications = [], loading, error, markRead, reload } = useNotifications();
+  // Use local state instead of the broken Context
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Hardcode URL to ensure connection
+  const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+
+  // 👇 1. FETCH NOTIFICATIONS (Manual Token Fix)
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const token = localStorage.getItem("token");
+      
+      const config = {
+        headers: {
+          "Authorization": `Bearer ${token}` // 👈 Force the Token
+        }
+      };
+
+      // Fetch unread notifications
+      const response = await axios.get(`${BASE_URL}/api/notifications/unread`, config);
+      
+      setNotifications(response.data);
+    } catch (err) {
+      console.error("Error loading notifications:", err);
+      setError("Failed to load notifications.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load on mount
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  // 👇 2. MARK AS READ FUNCTION
+  const markRead = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const config = {
+        headers: { "Authorization": `Bearer ${token}` }
+      };
+
+      // Assuming endpoint is PUT /api/notifications/{id}/read
+      await axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config);
+
+      // Refresh list after marking
+      await fetchNotifications();
+    } catch (err) {
+      console.error("Error marking read:", err);
+    }
+  };
 
   return (
     <section
       className="
         relative isolate overflow-x-hidden
         -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8
-        min-h-[calc(100vh-4rem)] pb-10  /* ⬅️ fills screen but a bit shorter */
+        min-h-[calc(100vh-4rem)] pb-10
         flex
       "
     >
@@ -59,7 +114,7 @@ export function Notifications() {
               <Typography variant="h6" color="blue-gray" className="dark:text-gray-100">
                 Notifications
               </Typography>
-              <Button size="sm" variant="text" onClick={reload} disabled={loading}>
+              <Button size="sm" variant="text" onClick={fetchNotifications} disabled={loading}>
                 {loading ? <Spinner className="h-4 w-4" /> : "Refresh"}
               </Button>
             </div>
@@ -76,8 +131,8 @@ export function Notifications() {
 
             {loading && !notifications.length && (
               <div className="grid gap-3">
-                <div className="skeleton h-14 w-full" />
-                <div className="skeleton h-14 w-full" />
+                <div className="skeleton h-14 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="skeleton h-14 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
               </div>
             )}
 
@@ -133,15 +188,9 @@ export function Notifications() {
                   </div>
 
                   <div className="shrink-0">
-                    {isUnread ? (
-                      <Button size="sm" onClick={() => markRead(n.id)}>
+                    <Button size="sm" onClick={() => markRead(n.id)}>
                         Mark read
-                      </Button>
-                    ) : (
-                      <Button size="sm" variant="text" onClick={() => markRead(n.id)}>
-                        Mark read again
-                      </Button>
-                    )}
+                    </Button>
                   </div>
                 </div>
               );

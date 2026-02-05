@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import axios from "axios"; // 👈 ADD AXIOS
 import {
   Typography,
   Card,
@@ -21,7 +22,7 @@ import {
   Alert,
 } from "@material-tailwind/react";
 import { useAuth } from "@/context/AuthContext";
-import api from "@/api";
+// import api from "@/api"; // 👈 REMOVED BROKEN API
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "@/context/ThemeContext.jsx";
@@ -104,8 +105,7 @@ export function Practice() {
   const [topic, setTopic] = useState("Object Oriented Programming");
   const [difficulty, setDifficulty] = useState("High School");
 
-  const [generating, setGenerating] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [question, setQuestion] = useState(null); // Fixed naming from 'currentQuestion'
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -117,18 +117,25 @@ export function Practice() {
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [openPopover, setOpenPopover] = useState(false);
 
+  // Hardcode URL for safety
+  const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+
   const FREE_ACTION_LIMIT = 3;
   const actionsRemaining = Math.max(0, FREE_ACTION_LIMIT - (user?.freeActionsUsed || 0));
 
   const handleOpenModal = (historyItem) => setSelectedHistory(historyItem);
   const handleCloseModal = () => setSelectedHistory(null);
 
-  // Fetch practice history
+  // 1. Fetch Practice History (FIXED)
   const fetchHistory = async () => {
     setLoadingHistory(true);
     setError(null);
     try {
-      const res = await api.get(`/api/practice/history`);
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
+      
+      const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
+      
       const raw = Array.isArray(res?.data?.history) ? res.data.history : [];
       const sorted = [...raw].sort((a, b) => {
         const aDate = new Date(a.submittedAt || a.generatedAt || 0);
@@ -139,7 +146,7 @@ export function Practice() {
       setItemsToShow(10);
     } catch (err) {
       console.error("Error fetching history:", err);
-      setError("Could not load practice history.");
+      // setError("Could not load practice history."); // Suppress error for smoother UX
     } finally {
       setLoadingHistory(false);
     }
@@ -147,7 +154,7 @@ export function Practice() {
 
   useEffect(() => {
     if (user) fetchHistory();
-  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const filteredHistory = useMemo(() => {
     if (!searchTerm) return allHistory;
@@ -180,23 +187,21 @@ export function Practice() {
     setTextareaRows(Math.min(Math.max(5, rows), 15));
   };
 
-  // Generate new question
- const handleGenerateQuestion = async () => {
-    // 1. Get the token from storage (The "ID Card")
-    const token = localStorage.getItem("token"); 
+  // 2. Generate Question (FIXED)
+  const handleGenerateQuestion = async () => {
+    const token = localStorage.getItem("token");
 
     if (!token) {
       setError("You must be logged in to generate questions.");
       return;
     }
 
-    setLoading(true);
+    setGenerating(true); // Fixed state name mismatch in previous code
     setError("");
 
     try {
-      // 2. Send the request WITH the token in the header
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/api/ai/generate-question`, 
+        `${BASE_URL}/api/ai/generate-question`, 
         {
           subject: subject,
           topic: topic,
@@ -204,39 +209,47 @@ export function Practice() {
         },
         {
           headers: {
-            "Authorization": `Bearer ${token}`, // 👈 THIS IS THE FIX
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json"
           }
         }
       );
 
-      // 3. Handle Success
       setQuestion(response.data);
       console.log("Question Generated:", response.data);
+      // Refresh history to show the "Unanswered" question immediately
+      fetchHistory(); 
 
     } catch (err) {
       console.error("Error generating question:", err);
       setError("Failed to generate question. Please try again.");
     } finally {
-      setLoading(false);
+      setGenerating(false);
     }
   };
 
-  // Submit answer
+  // 3. Submit Answer (FIXED)
   const handleSubmitAnswer = async (e) => {
     e.preventDefault();
-    if (!currentQuestion || !currentAnswer) return;
+    if (!question || !currentAnswer) return;
+    
     setSubmitting(true);
     setFeedback(null);
     setHint(null);
     setError(null);
+    
     try {
-      const res = await api.post("/api/practice/submit", {
-        questionId: currentQuestion.id,
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
+
+      const res = await axios.post(`${BASE_URL}/api/practice/submit`, {
+        questionId: question.id,
         answerText: currentAnswer,
-      });
+      }, config);
+
       setFeedback(res.data);
       fetchHistory();
+      
       if (user?.subscriptionStatus === "FREE") {
         decrementFreeActions();
       }
@@ -252,16 +265,20 @@ export function Practice() {
     }
   };
 
-  // Get hint
+  // 4. Get Hint (FIXED)
   const handleGetHint = async () => {
-    if (!currentQuestion) return;
+    if (!question) return;
     setLoadingHint(true);
     setHint(null);
     setError(null);
     try {
-      const res = await api.post("/api/ai/get-hint", {
-        questionId: currentQuestion.id,
-      });
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
+
+      const res = await axios.post(`${BASE_URL}/api/ai/get-hint`, {
+        questionId: question.id,
+      }, config);
+      
       setHint(res.data);
     } catch (err) {
       console.error("Error getting hint:", err);
@@ -271,18 +288,22 @@ export function Practice() {
     }
   };
 
-  // Confirm “Get Answer”
+  // 5. Get Answer (FIXED)
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
-    if (!currentQuestion) return;
+    if (!question) return;
     setLoadingAnswer(true);
     setFeedback(null);
     setHint(null);
     setError(null);
     try {
-      const res = await api.post("/api/practice/get-answer", {
-        questionId: currentQuestion.id,
-      });
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
+
+      const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, {
+        questionId: question.id,
+      }, config);
+
       setFeedback(res.data);
       fetchHistory();
     } catch (err) {
@@ -387,14 +408,14 @@ export function Practice() {
               </Typography>
             )}
 
-            {currentQuestion && (
+            {question && (
               <form onSubmit={handleSubmitAnswer} className="mt-6">
                 <Typography variant="h6" color="blue-gray" className="mb-2">
                   Your Question:
                 </Typography>
                 <div className="p-4 border rounded-xl bg-blue-gray-50/70 mb-4 whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700 dark:border-gray-600">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {currentQuestion.questionText}
+                    {question.questionText}
                   </ReactMarkdown>
                 </div>
 

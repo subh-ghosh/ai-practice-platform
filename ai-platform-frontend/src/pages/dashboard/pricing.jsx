@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios"; // 👈 Use direct Axios
 import {
   Card,
   CardBody,
@@ -8,11 +9,21 @@ import {
   Alert,
 } from "@material-tailwind/react";
 import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/solid";
-import api from "@/api";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
 const PREMIUM_MONTHLY_PLAN_ID = "premium_monthly";
+
+// Helper to load Razorpay Script dynamically
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export function Pricing() {
   const { user, updateUser } = useAuth();
@@ -21,38 +32,71 @@ export function Pricing() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
+  // Hardcoded URL to prevent env issues
+  const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+
   const displayRazorpay = async () => {
     setLoading(true);
     setError(null);
     setSuccess(null);
 
-    if (!window.Razorpay) {
-      setError("Razorpay SDK failed to load. Please check your internet connection.");
+    // 1. Ensure Script is Loaded
+    const res = await loadRazorpayScript();
+    if (!res) {
+      setError("Razorpay SDK failed to load. Check your internet connection.");
       setLoading(false);
       return;
     }
 
-    try {
-      const { data: orderResponse } = await api.post("/api/payments/create-order", {
-        productId: PREMIUM_MONTHLY_PLAN_ID,
-      });
+    // 2. Get Token Manually
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to upgrade.");
+      setLoading(false);
+      return;
+    }
 
+    const config = {
+      headers: { "Authorization": `Bearer ${token}` }
+    };
+
+    try {
+      // 3. Create Order (Manual Axios)
+      const orderRes = await axios.post(
+        `${BASE_URL}/api/payments/create-order`, 
+        { productId: PREMIUM_MONTHLY_PLAN_ID },
+        config
+      );
+
+      const orderData = orderRes.data;
+
+      // 4. Open Razorpay
       const options = {
-        key: orderResponse.keyId,
-        amount: orderResponse.amount,
-        currency: orderResponse.currency,
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
         name: "AI Practice Platform",
         description: "Premium Monthly Plan",
-        order_id: orderResponse.orderId,
+        order_id: orderData.orderId,
         handler: async function (response) {
           setLoading(true);
           try {
-            const { data: updatedUserDto } = await api.post("/api/payments/verify-payment", {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
-            updateUser(updatedUserDto);
+            // 5. Verify Payment (Manual Axios)
+            const verifyRes = await axios.post(
+              `${BASE_URL}/api/payments/verify-payment`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+              config
+            );
+
+            // Update user in context immediately
+            if (updateUser) {
+                 updateUser(verifyRes.data); 
+            }
+            
             setSuccess("Payment successful! Your account has been upgraded.");
             setTimeout(() => navigate("/dashboard/home"), 2000);
           } catch (verifyErr) {
@@ -62,19 +106,20 @@ export function Pricing() {
           }
         },
         prefill: {
-          name: orderResponse.studentName,
-          email: orderResponse.studentEmail,
+          name: orderData.studentName,
+          email: orderData.studentEmail,
         },
-        theme: { color: "#3B82F6" }, // blue-500
+        theme: { color: "#3B82F6" },
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.open();
       rzp.on("payment.failed", function (response) {
         console.error("Razorpay payment failed:", response.error);
-        setError(`Payment failed: ${response.error.description || response.error.reason}`);
+        setError(`Payment failed: ${response.error.description || "Unknown error"}`);
         setLoading(false);
       });
+      rzp.open();
+
     } catch (err) {
       console.error("Error creating order:", err);
       setError("Could not initiate payment. Please try again.");
@@ -87,7 +132,7 @@ export function Pricing() {
       className="
         relative isolate overflow-x-hidden
         -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8
-        min-h-[calc(100vh-4rem)] pb-12  /* fills at least one screen */
+        min-h-[calc(100vh-4rem)] pb-12
         flex
       "
     >
