@@ -42,15 +42,15 @@ public class SecurityConfig {
             // 3. Define Access Rules
             .authorizeHttpRequests(auth -> auth
                 // Public Endpoints (No Login Required)
-                .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/api/payments/webhook").permitAll()
+                .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/api/payments/webhook", "/api/students/verify-email/**").permitAll()
                 
                 // Protected Endpoints (Login Required)
                 // We allow ANY authenticated user (Student or Admin) to access these:
-                .requestMatchers("/api/ai/**").authenticated()           // 👈 Fixes Question Generation
-                .requestMatchers("/api/practice/**").authenticated()     // 👈 Fixes Answer Submission
-                .requestMatchers("/api/stats/**").authenticated()        // 👈 Fixes Dashboard Stats
-                .requestMatchers("/api/notifications/**").authenticated()// 👈 Fixes Notifications
-                .requestMatchers("/api/payments/**").authenticated()     // 👈 Fixes Payments
+                .requestMatchers("/api/ai/**").authenticated()           // 👈 ALLOWS AI GENERATION
+                .requestMatchers("/api/practice/**").authenticated()     // 👈 ALLOWS SUBMITTING ANSWERS
+                .requestMatchers("/api/stats/**").authenticated()        // 👈 ALLOWS DASHBOARD STATS
+                .requestMatchers("/api/notifications/**").authenticated()// 👈 ALLOWS NOTIFICATIONS
+                .requestMatchers("/api/payments/**").authenticated()     // 👈 ALLOWS PAYMENTS
                 .requestMatchers("/api/students/profile", "/api/students/password", "/api/students/account").authenticated()
                 
                 // All other requests require login
