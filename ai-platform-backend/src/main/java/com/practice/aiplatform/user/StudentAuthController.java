@@ -3,7 +3,7 @@ package com.practice.aiplatform.user;
 
 import com.practice.aiplatform.notifications.NotificationService;
 import com.practice.aiplatform.security.JwtUtil;
-// import com.practice.aiplatform.user.GoogleAuthService; // Uncomment if you have this class
+import com.practice.aiplatform.user.GoogleAuthService; 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,19 +24,19 @@ public class StudentAuthController {
     private final JwtUtil jwtUtil;
     private final NotificationService notificationService;
     
-    // If you haven't created GoogleAuthService yet, comment this line out
-    // private final GoogleAuthService googleAuthService; 
+    private final GoogleAuthService googleAuthService; 
 
     @Autowired
     public StudentAuthController(StudentRepository studentRepository, 
                                  PasswordEncoder passwordEncoder,
                                  JwtUtil jwtUtil,
-                                 NotificationService notificationService) {
+                                 NotificationService notificationService,
+                                 GoogleAuthService googleAuthService) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.notificationService = notificationService;
-        // this.googleAuthService = googleAuthService;
+        this.googleAuthService = googleAuthService;
     }
 
     // --- 1. REGISTER ---
@@ -100,43 +100,54 @@ public class StudentAuthController {
     }
 
     // --- 3. GOOGLE LOGIN (Simplified) ---
-    /* UNCOMMENT THIS BLOCK ONLY IF YOU HAVE GoogleAuthService READY
        
     @PostMapping("/oauth/google")
     public ResponseEntity<?> handleGoogleLogin(@RequestBody Map<String, String> request) {
-        String idToken = request.get("token");
+
         try {
-            // Verify Token with Google
+            String idToken = request.get("token");
+
             var payload = googleAuthService.verifyToken(idToken);
-            if (payload == null) return ResponseEntity.status(401).body("Invalid Token");
+
+            if (payload == null) {
+                return ResponseEntity.status(401).body("Invalid Google token");
+            }
 
             String email = payload.getEmail();
-            Optional<Student> existingUser = studentRepository.findByEmail(email);
 
-            if (existingUser.isPresent()) {
-                // LOGIN
-                Student student = existingUser.get();
-                String jwt = jwtUtil.generateToken(student);
-                
-                return ResponseEntity.ok(Map.of(
+            Optional<Student> existing = studentRepository.findByEmail(email);
+
+            Student student;
+
+            if (existing.isPresent()) {
+                student = existing.get();
+            } else {
+                student = new Student();
+                student.setEmail(email);
+                student.setFirstName((String) payload.get("given_name"));
+                student.setLastName((String) payload.get("family_name"));
+                student.setPassword(""); // no password for Google users
+                student.setSubscriptionStatus("FREE");
+                student.setFreeActionsUsed(0);
+
+                studentRepository.save(student);
+            }
+
+            String jwt = jwtUtil.generateToken(student);
+
+            return ResponseEntity.ok(Map.of(
                     "status", "LOGIN_SUCCESS",
                     "token", jwt,
                     "student", student
-                ));
-            } else {
-                // REGISTER NEEDED
-                return ResponseEntity.ok(Map.of(
-                    "status", "NEEDS_REGISTRATION",
-                    "email", email,
-                    "firstName", payload.get("given_name"),
-                    "lastName", payload.get("family_name")
-                ));
-            }
+            ));
+
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Google Auth Failed");
         }
     }
-    */
+
+    
 
     // --- INNER CLASSES (DTOs) ---
     // Using static inner classes ensures you don't need extra files

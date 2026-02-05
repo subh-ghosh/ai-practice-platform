@@ -43,6 +43,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public Endpoints (No Login Required)
                 .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/api/payments/webhook", "/api/students/verify-email/**").permitAll()
+                .requestMatchers("/api/students/oauth/google").permitAll()
                 
                 // Protected Endpoints (Login Required)
                 // We allow ANY authenticated user (Student or Admin) to access these:
