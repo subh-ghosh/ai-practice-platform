@@ -31,6 +31,7 @@ public class AiController {
     // Define Records inside to avoid missing file errors
     public record GenerateQuestionRequest(String subject, String topic, String difficulty) {}
     public record HintRequest(Long questionId) {}
+    public record AnswerRequest(Long questionId) {}
 
     @PostMapping("/generate-question")
     public ResponseEntity<?> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
@@ -63,8 +64,15 @@ public class AiController {
     }
 
     @PostMapping("/get-hint")
-    public ResponseEntity<?> getHint(@RequestBody HintRequest request) {
+    public ResponseEntity<?> getHint(
+            @RequestBody HintRequest request,
+            Principal principal) {
+
         try {
+            String email = principal.getName();
+            studentRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Student not found"));
+
             Question question = questionRepository.findById(request.questionId())
                     .orElseThrow(() -> new RuntimeException("Question not found"));
 
@@ -76,8 +84,41 @@ public class AiController {
             ).block();
 
             return ResponseEntity.ok(hint);
+
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            return ResponseEntity.internalServerError()
+                    .body("Error: " + e.getMessage());
         }
     }
+
+    @PostMapping("/get-answer")
+    public ResponseEntity<?> getAnswer(
+            @RequestBody AnswerRequest request,
+            Principal principal) {
+
+        try {
+            String email = principal.getName();
+
+            studentRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Student not found"));
+
+            Question question = questionRepository.findById(request.questionId())
+                    .orElseThrow(() -> new RuntimeException("Question not found"));
+
+            String correctAnswer = geminiService.getCorrectAnswer(
+                    question.getQuestionText(),
+                    question.getSubject(),
+                    question.getTopic(),
+                    question.getDifficulty()
+            ).block();
+
+            return ResponseEntity.ok(correctAnswer);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body("Error: " + e.getMessage());
+        }
+    }
+
 }
