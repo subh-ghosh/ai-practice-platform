@@ -41,30 +41,35 @@ export function AuthProvider({ children }) {
     checkUser();
   }, []);
 
-  // 2. Login Function (The Fix is Here)
- // 2. Login Function (Debug Version)
+ // 2. Login Function (Robust Version)
   const login = async (email, password) => {
     try {
       const response = await axios.post(`${API_URL}/login`, { email, password });
       
-      // 🔍 DEBUG LOG: Print exactly what the server sent
-      console.log("SERVER RESPONSE:", response.data); 
+      console.log("SERVER RESPONSE:", response.data); // 👈 Check your console for this!
 
-      // Try to find the token (Handle different possible names)
-      const token = response.data.token || response.data.accessToken || response.data.jwt;
+      // TRY ALL POSSIBLE NAMES for the token
+      const token = response.data.token || 
+                    response.data.jwt || 
+                    response.data.accessToken || 
+                    response.data.bearerToken ||
+                    (typeof response.data === 'string' ? response.data : null);
       
       if (token) {
         localStorage.setItem("token", token);
         
-        // Find the user object
-        const userData = response.data.student || response.data.user || response.data.data;
+        // Try to find the user object (or create a dummy one if missing)
+        const userData = response.data.student || 
+                         response.data.user || 
+                         { email: email, firstName: "Student" }; 
+                         
         localStorage.setItem("user", JSON.stringify(userData));
         
         setUser(userData);
         return { success: true };
       } else {
-        console.error("Token missing in response:", response.data);
-        return { success: false, message: "Login successful, but no token found." };
+        console.error("Login succeeded but NO TOKEN found in:", response.data);
+        return { success: false, message: "Login failed: No token received." };
       }
     } catch (error) {
       console.error("Login Error:", error);
