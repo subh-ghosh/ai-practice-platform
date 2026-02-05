@@ -34,40 +34,33 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String username = null;
         String jwt = null;
 
-        // 1. Check Header
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
-                System.out.println("✅ JWT Filter: Token found for user: " + username);
-            } catch (ExpiredJwtException e) {
-                System.err.println("❌ JWT Filter: Token expired");
+                System.out.println("✅ JWT Filter: Found username: " + username);
             } catch (Exception e) {
-                System.err.println("❌ JWT Filter: Error parsing token: " + e.getMessage());
+                System.out.println("❌ JWT Filter: Token error: " + e.getMessage());
             }
         }
 
-        // 2. Authenticate
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            // 3. Validate Token
-            // Note: We pass the full 'userDetails' object to validateToken
-            if (jwtUtil.validateToken(jwt, userDetails)) {
+            // FIX: Pass userDetails.getUsername() instead of the object
+            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) { 
                 
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 
-                // 4. Set Context
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("🔓 JWT Filter: Authentication set for " + username);
+                System.out.println("🔓 JWT Filter: Auth successful for " + username);
             } else {
-                System.out.println("⛔ JWT Filter: Token validation failed for " + username);
+                System.out.println("⛔ JWT Filter: Validation failed");
             }
         }
-
         chain.doFilter(request, response);
     }
 }
