@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios"; // 👈 ADD AXIOS
+import axios from "axios"; 
 import {
   Typography,
   Card,
@@ -22,7 +22,6 @@ import {
   Alert,
 } from "@material-tailwind/react";
 import { useAuth } from "@/context/AuthContext";
-// import api from "@/api"; // 👈 REMOVED BROKEN API
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "@/context/ThemeContext.jsx";
@@ -105,7 +104,10 @@ export function Practice() {
   const [topic, setTopic] = useState("Object Oriented Programming");
   const [difficulty, setDifficulty] = useState("High School");
 
-  const [question, setQuestion] = useState(null); // Fixed naming from 'currentQuestion'
+  // 👇 THIS WAS MISSING
+  const [generating, setGenerating] = useState(false); 
+
+  const [question, setQuestion] = useState(null);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
@@ -117,7 +119,6 @@ export function Practice() {
   const [selectedHistory, setSelectedHistory] = useState(null);
   const [openPopover, setOpenPopover] = useState(false);
 
-  // Hardcode URL for safety
   const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
   const FREE_ACTION_LIMIT = 3;
@@ -126,7 +127,7 @@ export function Practice() {
   const handleOpenModal = (historyItem) => setSelectedHistory(historyItem);
   const handleCloseModal = () => setSelectedHistory(null);
 
-  // 1. Fetch Practice History (FIXED)
+  // 1. Fetch Practice History
   const fetchHistory = async () => {
     setLoadingHistory(true);
     setError(null);
@@ -146,7 +147,6 @@ export function Practice() {
       setItemsToShow(10);
     } catch (err) {
       console.error("Error fetching history:", err);
-      // setError("Could not load practice history."); // Suppress error for smoother UX
     } finally {
       setLoadingHistory(false);
     }
@@ -187,7 +187,7 @@ export function Practice() {
     setTextareaRows(Math.min(Math.max(5, rows), 15));
   };
 
-  // 2. Generate Question (FIXED)
+  // 2. Generate Question
   const handleGenerateQuestion = async () => {
     const token = localStorage.getItem("token");
 
@@ -196,7 +196,7 @@ export function Practice() {
       return;
     }
 
-    setGenerating(true); // Fixed state name mismatch in previous code
+    setGenerating(true);
     setError("");
 
     try {
@@ -216,8 +216,7 @@ export function Practice() {
       );
 
       setQuestion(response.data);
-      console.log("Question Generated:", response.data);
-      // Refresh history to show the "Unanswered" question immediately
+      // Refresh history
       fetchHistory(); 
 
     } catch (err) {
@@ -228,7 +227,7 @@ export function Practice() {
     }
   };
 
-  // 3. Submit Answer (FIXED)
+  // 3. Submit Answer
   const handleSubmitAnswer = async (e) => {
     e.preventDefault();
     if (!question || !currentAnswer) return;
@@ -265,7 +264,7 @@ export function Practice() {
     }
   };
 
-  // 4. Get Hint (FIXED)
+  // 4. Get Hint
   const handleGetHint = async () => {
     if (!question) return;
     setLoadingHint(true);
@@ -288,7 +287,7 @@ export function Practice() {
     }
   };
 
-  // 5. Get Answer (FIXED)
+  // 5. Get Answer
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!question) return;
@@ -316,12 +315,10 @@ export function Practice() {
 
   return (
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)]">
-      {/* Background gradient & soft glows (same theme as Home/Landing) */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
 
-      {/* ✅ align with reduced / fixed navbar just like other pages */}
       <div className="mt-6 page has-fixed-navbar space-y-6">
         {/* --- AI Question Generator --- */}
         <Card className="mb-12 rounded-3xl border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
@@ -477,17 +474,11 @@ export function Practice() {
               </form>
             )}
 
-            {/* Standalone Hint */}
+            {/* Hint */}
             {hint && (
               <div className="mt-4 p-4 border border-blue-500 rounded-xl bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
                 <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
+                  <InformationCircleIcon className="h-5 w-5" />
                   Hint
                 </Typography>
                 <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
@@ -511,13 +502,7 @@ export function Practice() {
                 {feedback.hint && feedback.evaluationStatus !== "REVEALED" && (
                   <div className="mt-4 p-4 border border-blue-500 rounded-xl bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
                     <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                        <path
-                          fillRule="evenodd"
-                          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                       <InformationCircleIcon className="h-5 w-5" />
                       Hint
                     </Typography>
                     <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
@@ -727,13 +712,7 @@ export function Practice() {
                 {selectedHistory.hint && selectedHistory.evaluationStatus !== "REVEALED" && (
                   <div className="mt-2 p-4 border border-blue-500 rounded-lg bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
                     <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                        <path
-                          fillRule="evenodd"
-                          d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0M8.94 6.94a.75.75 0 1 1-1.06-1.06l.85-.85a.75.75 0 0 1 1.06 0l.85.85a.75.75 0 1 1-1.06 1.06L10 5.81V9.25a.75.75 0 0 1-1.5 0V5.81l-.56.56Zm1.06 6.56a.75.75 0 1 0-1.06 1.06l.85.85a.75.75 0 0 0 1.06 0l.85-.85a.75.75 0 1 0-1.06-1.06l-.56.56Z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                       <InformationCircleIcon className="h-5 w-5" />
                       Hint
                     </Typography>
                     <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
