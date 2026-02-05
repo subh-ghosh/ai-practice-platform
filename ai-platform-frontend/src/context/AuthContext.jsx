@@ -1,104 +1,117 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import api from "@/api";
+import { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem("user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Use the Cloud URL
+  const API_URL = import.meta.env.VITE_API_BASE_URL + "/api/students";
+
+  // 1. Check for token on startup (Auto-Login)
+  useEffect(() => {
+    const checkUser = async () => {
+      const token = localStorage.getItem("token");
+      if (token) {
+        try {
+          // Optional: You could ping the backend here to verify token
+          // For now, we decode it or just assume it's valid to keep user logged in
+          // const response = await axios.get(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
+          // setUser(response.data);
+          
+          // Simple restoration:
+          const savedUser = localStorage.getItem("user");
+          if (savedUser) {
+             setUser(JSON.parse(savedUser));
+          }
+        } catch (error) {
+          console.error("Token invalid", error);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+        }
+      }
+      setLoading(false);
+    };
+    checkUser();
+  }, []);
+
+  // 2. Login Function (The Fix is Here)
   const login = async (email, password) => {
     try {
-      const response = await api.post("/api/students/login", { email, password });
-      const loggedInUser = response.data;
-      localStorage.setItem("user", JSON.stringify(loggedInUser));
-      setUser(loggedInUser);
-      return { success: true };
+      const response = await axios.post(`${API_URL}/login`, { email, password });
+      
+      // ✅ CRITICAL FIX: Save Token and User to LocalStorage
+      if (response.data.token) {
+        localStorage.setItem("token", response.data.token);
+        
+        // We also save user details so we don't lose name on refresh
+        // (Assuming backend sends 'student' or 'user' object)
+        const userData = response.data.student || response.data.user;
+        localStorage.setItem("user", JSON.stringify(userData));
+        
+        setUser(userData);
+        return { success: true };
+      } else {
+        return { success: false, message: "No token received from server" };
+      }
     } catch (error) {
-      console.error("Login failed:", error);
-      return { success: false, message: "Invalid credentials." };
+      console.error("Login Error:", error.response);
+      return { 
+        success: false, 
+        message: error.response?.data?.message || "Invalid credentials" 
+      };
     }
   };
 
+  // 3. Google Login Function
+  const loginWithGoogle = async (idToken) => {
+    try {
+      const response = await axios.post(`${API_URL}/oauth/google`, { token: idToken });
+      
+      // Handle Success (Already Registered)
+      if (response.data.status === "LOGIN_SUCCESS") {
+         localStorage.setItem("token", response.data.token);
+         
+         const userData = response.data.student;
+         localStorage.setItem("user", JSON.stringify(userData));
+         setUser(userData);
+         
+         return { success: true, status: "LOGIN_SUCCESS" };
+      } 
+      
+      // Handle Needs Registration
+      return response.data;
+
+    } catch (error) {
+      console.error("Google Auth Error:", error);
+      return { success: false, message: error.response?.data?.message || "Google login failed" };
+    }
+  };
+
+  // 4. Logout Function
   const logout = () => {
+    localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
   };
 
-  const updateUser = (updatedUser) => {
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    setUser(updatedUser);
+  const value = {
+    user,
+    loading,
+    login,
+    loginWithGoogle,
+    logout,
   };
-
-  const loginWithGoogle = async (idToken) => {
-    try {
-      const response = await api.post("/api/students/oauth/google", { idToken });
-      const data = response.data;
-
-      if (data.status === "LOGIN_SUCCESS") {
-        // --- CASE 1: LOGIN SUCCESS ---
-        const loggedInUser = data.student;
-        localStorage.setItem("user", JSON.stringify(loggedInUser));
-        setUser(loggedInUser);
-        return { success: true, status: "LOGIN_SUCCESS" };
-
-      } else if (data.status === "NEEDS_REGISTRATION") {
-        // --- CASE 2: NEW USER ---
-        return {
-          success: true,
-          status: "NEEDS_REGISTRATION",
-          registrationData: {
-            email: data.email,
-            firstName: data.firstName,
-            lastName: data.lastName
-          }
-        };
-      } else {
-        return { success: false, message: "Unknown server response." };
-      }
-    } catch (error) {
-      console.error("Google Login failed:", error);
-      return { success: false, message: error.response?.data || "Google login failed." };
-    }
-  };
-
-  // --- 👇 ADD THIS NEW FUNCTION ---
-  const decrementFreeActions = () => {
-    setUser((currentUser) => {
-      // Only run if the user is logged in and on the free plan
-      if (currentUser && currentUser.subscriptionStatus === "FREE") {
-        const newCount = (currentUser.freeActionsUsed || 0) + 1;
-
-        // Create the updated user object
-        const updatedUser = {
-          ...currentUser,
-          freeActionsUsed: newCount,
-        };
-
-        // Save to localStorage and update state
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        return updatedUser;
-      }
-      // If not free or not logged in, return the same state
-      return currentUser;
-    });
-  };
-  // --- 👆 END OF NEW FUNCTION ---
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      updateUser,
-      loginWithGoogle,
-      decrementFreeActions // 👈 --- EXPOSE THE NEW FUNCTION
-    }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => useContext(AuthContext);
+}
