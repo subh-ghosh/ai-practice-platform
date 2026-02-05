@@ -181,33 +181,44 @@ export function Practice() {
   };
 
   // Generate new question
-  const handleGenerateQuestion = async () => {
-    setGenerating(true);
-    setCurrentQuestion(null);
-    setCurrentAnswer("");
-    setFeedback(null);
-    setHint(null);
-    setError(null);
-    setTextareaRows(5);
+ const handleGenerateQuestion = async () => {
+    // 1. Get the token from storage (The "ID Card")
+    const token = localStorage.getItem("token"); 
+
+    if (!token) {
+      setError("You must be logged in to generate questions.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
     try {
-      const res = await api.post("/api/ai/generate-question", {
-        subject,
-        topic,
-        difficulty,
-      });
-      setCurrentQuestion(res.data);
-      if (user?.subscriptionStatus === "FREE") {
-        decrementFreeActions();
-      }
+      // 2. Send the request WITH the token in the header
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE_URL}/api/ai/generate-question`, 
+        {
+          subject: subject,
+          topic: topic,
+          difficulty: difficulty
+        },
+        {
+          headers: {
+            "Authorization": `Bearer ${token}`, // 👈 THIS IS THE FIX
+            "Content-Type": "application/json"
+          }
+        }
+      );
+
+      // 3. Handle Success
+      setQuestion(response.data);
+      console.log("Question Generated:", response.data);
+
     } catch (err) {
       console.error("Error generating question:", err);
-      if (err.response?.status === 402) {
-        showPaywall();
-      } else {
-        setError("Failed to generate a new question. Please try again.");
-      }
+      setError("Failed to generate question. Please try again.");
     } finally {
-      setGenerating(false);
+      setLoading(false);
     }
   };
 
