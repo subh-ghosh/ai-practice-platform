@@ -217,7 +217,7 @@ export function Practice() {
 
       setQuestion(response.data);
       // Refresh history
-      fetchHistory(); 
+      await fetchHistory(); 
 
     } catch (err) {
       console.error("Error generating question:", err);
@@ -247,7 +247,7 @@ export function Practice() {
       }, config);
 
       setFeedback(res.data);
-      fetchHistory();
+      await fetchHistory();
       
       if (user?.subscriptionStatus === "FREE") {
         decrementFreeActions();
@@ -290,28 +290,57 @@ export function Practice() {
   // 5. Get Answer
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
-    if (!question) return;
+
+    if (!question?.id) {
+      setError("Invalid question. Generate again.");
+      return;
+    }
+
     setLoadingAnswer(true);
     setFeedback(null);
     setHint(null);
     setError(null);
+
     try {
       const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
 
-      const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, {
-        questionId: question.id,
-      }, config);
+      const res = await axios.post(
+        `${BASE_URL}/api/practice/get-answer`,
+        { questionId: question.id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      setFeedback(res.data);
-      fetchHistory();
+      console.log("GET ANSWER RESPONSE:", res.data);
+
+      // 👇 SAFE PARSE
+      const data = res.data?.result || res.data;
+
+      setFeedback({
+        evaluationStatus: "REVEALED",
+        answerText: data.answerText || data.correctAnswer || "",
+        feedback: data.answerText || data.correctAnswer || "",
+      });
+
+      // 👇 REFRESH HISTORY AFTER SAVE
+      setTimeout(fetchHistory, 300);
+
     } catch (err) {
-      console.error("Error getting answer:", err);
-      setError("Failed to get the answer. Please try again.");
+      console.error("Get Answer Error:", err?.response?.data || err);
+
+      setError(
+        err?.response?.data?.message ||
+        "Failed to get the answer. Please try again."
+      );
     } finally {
       setLoadingAnswer(false);
     }
   };
+
 
   return (
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)]">
