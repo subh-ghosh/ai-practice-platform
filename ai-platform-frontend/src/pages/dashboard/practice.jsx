@@ -104,7 +104,6 @@ export function Practice() {
   const [topic, setTopic] = useState("Object Oriented Programming");
   const [difficulty, setDifficulty] = useState("High School");
 
-  // 👇 THIS WAS MISSING
   const [generating, setGenerating] = useState(false); 
 
   const [question, setQuestion] = useState(null);
@@ -287,7 +286,7 @@ export function Practice() {
     }
   };
 
-  // 5. Get Answer
+  // 5. Get Answer (FIXED WITH TIMEOUT)
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!question) return;
@@ -295,9 +294,13 @@ export function Practice() {
     setFeedback(null);
     setHint(null);
     setError(null);
+    
     try {
       const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
+      const config = { 
+        headers: { "Authorization": `Bearer ${token}` },
+        timeout: 60000 // 👈 FIX: Increased timeout to 60s for AI generation
+      };
 
       const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, {
         questionId: question.id,
@@ -307,7 +310,15 @@ export function Practice() {
       await fetchHistory();
     } catch (err) {
       console.error("Error getting answer:", err);
-      setError("Failed to get the answer. Please try again.");
+      
+      // Handle timeout specifically
+      if (err.code === 'ECONNABORTED') {
+        setError("The AI is taking a while to generate the full answer. Check your history in a moment!");
+        // Optimistically refresh history in case it finished right after timeout
+        setTimeout(fetchHistory, 5000); 
+      } else {
+        setError("Failed to get the answer. Please try again.");
+      }
     } finally {
       setLoadingAnswer(false);
     }
