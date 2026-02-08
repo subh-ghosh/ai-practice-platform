@@ -255,7 +255,7 @@ export function Practice() {
     }
   };
 
-  // 4. Submit Answer (NOW WITH SMART POLLING)
+  // 4. Submit Answer (IMMEDIATE BLUE FEEDBACK)
   const handleSubmitAnswer = async (e) => {
     e.preventDefault();
     if (!question || !currentAnswer) return;
@@ -264,7 +264,8 @@ export function Practice() {
     setFeedback(null);
     setHint(null);
     setError(null);
-    setIsPolling(false);
+    // 👇 Show blue message immediately
+    setIsPolling(true);
 
     try {
       const token = localStorage.getItem("token");
@@ -280,6 +281,7 @@ export function Practice() {
 
       setFeedback(res.data);
       await fetchHistory();
+      setIsPolling(false); // Done, hide blue message
 
       if (user?.subscriptionStatus === "FREE") {
         decrementFreeActions();
@@ -288,11 +290,11 @@ export function Practice() {
       console.error("Error submitting answer:", err);
       if (err.response?.status === 402) {
         showPaywall();
+        setIsPolling(false);
       } else {
         // --- POLLING FALLBACK FOR SUBMIT ---
-        // Clear error, show blue spinner
-        setError(null);
-        setIsPolling(true);
+        // We are already showing blue message (isPolling=true), so just keep it
+        // and start polling for the result in background.
 
         const foundItem = await pollForAnswer(question.id);
         
@@ -339,7 +341,7 @@ export function Practice() {
     }
   };
 
-  // 6. Get Answer (WITH SMART POLLING)
+  // 6. Get Answer (IMMEDIATE BLUE FEEDBACK)
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!question) return;
@@ -348,7 +350,8 @@ export function Practice() {
     setFeedback(null);
     setHint(null);
     setError(null);
-    setIsPolling(false); 
+    // 👇 Show blue message immediately
+    setIsPolling(true); 
 
     try {
       const token = localStorage.getItem("token");
@@ -363,13 +366,12 @@ export function Practice() {
 
       setFeedback(res.data);
       await fetchHistory();
+      setIsPolling(false); // Done
 
     } catch (err) {
       console.error("Initial request failed or timed out:", err);
 
-      setError(null); 
-      setIsPolling(true); 
-
+      // Keep isPolling=true and check history
       const foundItem = await pollForAnswer(question.id);
 
       setIsPolling(false);
@@ -483,12 +485,12 @@ export function Practice() {
               </Typography>
             )}
 
-            {/* Polling Message (Blue/Spinner) - "We" wording */}
+            {/* Polling Message (Blue/Spinner) - Updated Text & Immediate Show */}
             {isPolling && (
               <div className="mt-4 flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800">
                 <Spinner className="h-4 w-4 text-blue-500" />
                 <Typography className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  We are finalizing the answer. Checking database...
+                  We are finalizing the answer. This might take a moment...
                 </Typography>
               </div>
             )}
@@ -826,4 +828,3 @@ export function Practice() {
 }
 
 export default Practice;
-//force deploy
