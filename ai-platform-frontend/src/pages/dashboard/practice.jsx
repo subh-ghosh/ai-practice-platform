@@ -94,7 +94,8 @@ export function Practice() {
   const { showPaywall } = usePaywall();
 
   const [error, setError] = useState(null);
-  // 👇 NEW STATE for the "Blue" polling message
+  
+  // 👇 STATE FOR BLUE POLLING MESSAGE
   const [isPolling, setIsPolling] = useState(false);
 
   const [allHistory, setAllHistory] = useState([]);
@@ -288,7 +289,7 @@ export function Practice() {
   };
 
   /* ============================================================
-     5. SMART POLLING + GET ANSWER LOGIC (FIXED UI)
+     5. SMART POLLING + GET ANSWER LOGIC (BLUE UI)
   ============================================================ */
 
   const pollForAnswer = async (qId) => {
@@ -341,13 +342,14 @@ export function Practice() {
     } catch (err) {
       console.error("Initial request failed or timed out:", err);
 
-      // 2. Switch UI to Polling Mode (Blue Info, not Red Error)
+      // 1. CLEAR THE ERROR so no red text appears
       setError(null); 
+      // 2. TURN ON POLLING UI (Blue)
       setIsPolling(true); 
 
       const foundItem = await pollForAnswer(question.id);
 
-      // Stop polling UI
+      // 3. Turn off polling UI
       setIsPolling(false);
 
       if (foundItem) {
@@ -359,7 +361,7 @@ export function Practice() {
         });
         await fetchHistory();
       } else {
-        // Now we show Red Error because we really failed
+        // Only NOW do we show the red error if it actually failed after polling
         setError("The server timed out. Please check your history table below in a few moments.");
       }
     } finally {
@@ -803,3 +805,4 @@ export function Practice() {
 }
 
 export default Practice;
+// Force update deployment
