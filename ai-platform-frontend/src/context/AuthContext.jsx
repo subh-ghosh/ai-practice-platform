@@ -11,8 +11,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Use the Cloud URL
-  const API_URL = import.meta.env.VITE_API_BASE_URL + "/api/students";
+  // Hardcode the URL to ensure stability across pages
+  const API_URL = "https://ai-platform-backend-vauw.onrender.com/api/students";
 
   // 1. Check for token on startup (Auto-Login)
   useEffect(() => {
@@ -20,12 +20,7 @@ export function AuthProvider({ children }) {
       const token = localStorage.getItem("token");
       if (token) {
         try {
-          // Optional: You could ping the backend here to verify token
-          // For now, we decode it or just assume it's valid to keep user logged in
-          // const response = await axios.get(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
-          // setUser(response.data);
-          
-          // Simple restoration:
+          // Restore user from local storage if available
           const savedUser = localStorage.getItem("user");
           if (savedUser) {
              setUser(JSON.parse(savedUser));
@@ -41,34 +36,27 @@ export function AuthProvider({ children }) {
     checkUser();
   }, []);
 
- // 2. Login Function (Robust Version)
+ // 2. Login Function
   const login = async (email, password) => {
     try {
       const response = await axios.post(`${API_URL}/login`, { email, password });
       
-      console.log("SERVER RESPONSE:", response.data); // 👈 Check your console for this!
-
-      // TRY ALL POSSIBLE NAMES for the token
       const token = response.data.token || 
                     response.data.jwt || 
                     response.data.accessToken || 
-                    response.data.bearerToken ||
                     (typeof response.data === 'string' ? response.data : null);
       
       if (token) {
         localStorage.setItem("token", token);
         
-        // Try to find the user object (or create a dummy one if missing)
         const userData = response.data.student || 
                          response.data.user || 
                          { email: email, firstName: "Student" }; 
                          
         localStorage.setItem("user", JSON.stringify(userData));
-        
         setUser(userData);
         return { success: true };
       } else {
-        console.error("Login succeeded but NO TOKEN found in:", response.data);
         return { success: false, message: "Login failed: No token received." };
       }
     } catch (error) {
@@ -85,7 +73,6 @@ export function AuthProvider({ children }) {
     try {
       const response = await axios.post(`${API_URL}/oauth/google`, { token: idToken });
       
-      // Handle Success (Already Registered)
       if (response.data.status === "LOGIN_SUCCESS") {
          localStorage.setItem("token", response.data.token);
          
@@ -96,7 +83,6 @@ export function AuthProvider({ children }) {
          return { success: true, status: "LOGIN_SUCCESS" };
       } 
       
-      // Handle Needs Registration
       return response.data;
 
     } catch (error) {
@@ -112,12 +98,44 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  // --- 👇 NEW FUNCTION: Update User State Manually 👇 ---
+  // This updates the local UI immediately after a successful API save
+  const updateUser = (updatedData) => {
+    setUser((prevUser) => {
+        // Merge the old user data with the new updates
+        const newUser = { ...prevUser, ...updatedData };
+        
+        // Save to localStorage so it persists on refresh
+        localStorage.setItem("user", JSON.stringify(newUser));
+        
+        // If the backend sent a new token (rare but possible), update that too
+        if (updatedData.token) {
+            localStorage.setItem("token", updatedData.token);
+        }
+        
+        return newUser;
+    });
+  };
+  
+  // --- 👇 decrementFreeActions for Free Tier 👇 ---
+  // This updates the limit counter locally so the user sees the change instantly
+  const decrementFreeActions = () => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const newUser = { ...prev, freeActionsUsed: (prev.freeActionsUsed || 0) + 1 };
+      localStorage.setItem("user", JSON.stringify(newUser));
+      return newUser;
+    });
+  };
+
   const value = {
     user,
     loading,
     login,
     loginWithGoogle,
     logout,
+    updateUser, // 👈 Exported for Profile page
+    decrementFreeActions // 👈 Exported for Practice page
   };
 
   return (
