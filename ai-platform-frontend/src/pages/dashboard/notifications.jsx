@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // 👈 Add Axios
+import axios from "axios";
 import {
   Typography,
   Card,
@@ -7,12 +7,28 @@ import {
   CardBody,
   Button,
   Spinner,
+  Tabs,
+  TabsHeader,
+  Tab,
+  IconButton,
+  Tooltip,
 } from "@material-tailwind/react";
+import {
+  CheckCircleIcon,
+  BellIcon,
+  InformationCircleIcon,
+  UserCircleIcon,
+  ShieldCheckIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/solid";
 
+/* ===========================
+   Helpers
+=========================== */
 function formatDateTime(iso) {
   try {
     return new Date(iso).toLocaleString(undefined, {
-      year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -23,178 +39,269 @@ function formatDateTime(iso) {
   }
 }
 
+// Select icon based on notification type
+function getIconForType(type) {
+  const t = (type || "").toUpperCase();
+  if (t.includes("LOGIN") || t.includes("SECURITY")) return <ShieldCheckIcon className="h-5 w-5 text-blue-500" />;
+  if (t.includes("PROFILE")) return <PencilSquareIcon className="h-5 w-5 text-orange-500" />;
+  if (t.includes("REGISTER")) return <UserCircleIcon className="h-5 w-5 text-green-500" />;
+  return <InformationCircleIcon className="h-5 w-5 text-blue-gray-500" />;
+}
+
+/* ===========================
+   Component
+=========================== */
 export function Notifications() {
-  // Use local state instead of the broken Context
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filter, setFilter] = useState("unread"); // 'unread' or 'all'
+  const [markingAll, setMarkingAll] = useState(false);
 
-  // Hardcode URL to ensure connection
   const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
-  // 👇 1. FETCH NOTIFICATIONS (Manual Token Fix)
+  // 1. Fetch Notifications based on filter
   const fetchNotifications = async () => {
     try {
       setLoading(true);
       setError(null);
 
       const token = localStorage.getItem("token");
-      
-      const config = {
-        headers: {
-          "Authorization": `Bearer ${token}` // 👈 Force the Token
-        }
-      };
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
 
-      // Fetch unread notifications
-      const response = await axios.get(`${BASE_URL}/api/notifications/unread`, config);
-      
+      // Switch endpoint based on tab
+      const endpoint = filter === "unread" 
+        ? `${BASE_URL}/api/notifications/unread` 
+        : `${BASE_URL}/api/notifications`;
+
+      const response = await axios.get(endpoint, config);
       setNotifications(response.data);
     } catch (err) {
       console.error("Error loading notifications:", err);
-      // Only set error if it's NOT a 404 (which implies no notifications found)
+      // Ignore 404s (empty list)
       if (err.response && err.response.status !== 404) {
-          setError("Failed to load notifications.");
+        setError("Failed to load notifications.");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  // Load on mount
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [filter]); // Re-fetch when tab changes
 
-  // 👇 2. MARK AS READ FUNCTION
+  // 2. Mark Single Read
   const markRead = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      const config = {
-        headers: { "Authorization": `Bearer ${token}` }
-      };
-
-      // Assuming endpoint is PUT /api/notifications/{id}/read
-      await axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config);
-
-      // Refresh list after marking
-      await fetchNotifications();
+      await axios.put(
+        `${BASE_URL}/api/notifications/${id}/read`,
+        {},
+        { headers: { "Authorization": `Bearer ${token}` } }
+      );
+      // Remove from list if in 'unread' mode, or update status if in 'all' mode
+      if (filter === "unread") {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      } else {
+        setNotifications((prev) =>
+          prev.map((n) => (n.id === id ? { ...n, readFlag: true } : n))
+        );
+      }
     } catch (err) {
       console.error("Error marking read:", err);
     }
   };
 
-  return (
-    <section
-      className="
-        relative isolate overflow-x-hidden
-        -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8
-        min-h-[calc(100vh-4rem)] pb-10
-        flex
-      "
-    >
-      {/* Background gradient */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
-      <div className="pointer-events-none absolute -top-8 right-[10%] h-52 w-52 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-24 -left-8 h-60 w-60 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
+  // 3. Mark ALL Read
+  const markAllAsRead = async () => {
+    if (notifications.length === 0) return;
+    setMarkingAll(true);
+    try {
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
 
+      // Backend doesn't have a batch endpoint, so we loop (Parallel requests)
+      // Filter only unread ones to save calls
+      const unreadIds = notifications
+        .filter((n) => !n.readFlag)
+        .map((n) => n.id);
+
+      await Promise.all(
+        unreadIds.map((id) =>
+          axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
+        )
+      );
+
+      // Refresh
+      await fetchNotifications();
+    } catch (err) {
+      console.error("Error marking all read:", err);
+    } finally {
+      setMarkingAll(false);
+    }
+  };
+
+  return (
+    <section className="relative isolate overflow-x-hidden -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 min-h-[calc(100vh-4rem)] pb-10 flex">
+      {/* Background */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
+      
       <div className="mt-6 has-fixed-navbar page w-full flex flex-col items-center">
-        <Card
-          className="
-            w-full max-w-5xl border border-blue-100/60
-            bg-white/90 backdrop-blur-md shadow-sm
-            dark:bg-gray-800/80 dark:border-gray-700
-            flex-1
-          "
-        >
+        <Card className="w-full max-w-4xl border border-blue-100/60 bg-white/90 backdrop-blur-md shadow-sm dark:bg-gray-800/80 dark:border-gray-700 flex-1">
           <CardHeader
             color="transparent"
             floated={false}
             shadow={false}
-            className="m-0 p-3 md:p-4 rounded-none"
+            className="m-0 p-4 rounded-t-xl border-b border-blue-gray-50 dark:border-gray-700"
           >
-            <div className="flex items-center justify-between gap-3">
-              <Typography variant="h6" color="blue-gray" className="dark:text-gray-100">
-                Notifications
-              </Typography>
-              <Button size="sm" variant="text" onClick={fetchNotifications} disabled={loading}>
-                {loading ? <Spinner className="h-4 w-4" /> : "Refresh"}
-              </Button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <BellIcon className="h-6 w-6 text-blue-500" />
+                <Typography variant="h5" color="blue-gray" className="dark:text-gray-100">
+                  Notifications
+                </Typography>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Tabs */}
+                <div className="w-48">
+                  <Tabs value={filter}>
+                    <TabsHeader className="bg-blue-gray-50/50 dark:bg-gray-700/50 p-1">
+                      <Tab
+                        value="unread"
+                        onClick={() => setFilter("unread")}
+                        className={`text-xs font-medium py-1.5 ${filter === 'unread' ? 'text-blue-600 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}
+                      >
+                        Unread
+                      </Tab>
+                      <Tab
+                        value="all"
+                        onClick={() => setFilter("all")}
+                        className={`text-xs font-medium py-1.5 ${filter === 'all' ? 'text-blue-600 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`}
+                      >
+                        All History
+                      </Tab>
+                    </TabsHeader>
+                  </Tabs>
+                </div>
+
+                {/* Mark All Read Button */}
+                {filter === "unread" && notifications.length > 0 && (
+                  <Tooltip content="Mark all as read">
+                    <IconButton
+                      variant="text"
+                      color="blue"
+                      disabled={markingAll}
+                      onClick={markAllAsRead}
+                    >
+                      {markingAll ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : (
+                        <CheckCircleIcon className="h-5 w-5" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </div>
             </div>
-            <div className="mt-3 h-px bg-black/5 dark:bg-white/10" />
           </CardHeader>
 
-          <CardBody className="flex flex-col gap-3 p-3 md:p-4">
-            {/* States */}
+          <CardBody className="flex flex-col gap-0 p-0 min-h-[300px]">
+            {/* Error State */}
             {error && (
-              <Typography color="red" className="text-sm">
-                {String(error)}
-              </Typography>
-            )}
-
-            {loading && !notifications.length && (
-              <div className="grid gap-3">
-                <div className="skeleton h-14 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="skeleton h-14 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="p-6 text-center">
+                <Typography color="red" className="text-sm">
+                  {String(error)}
+                </Typography>
+                <Button size="sm" variant="text" onClick={fetchNotifications} className="mt-2">
+                  Try Again
+                </Button>
               </div>
             )}
 
-            {!loading && (!notifications || notifications.length === 0) && !error && (
-              <Typography className="text-blue-gray-600 dark:text-gray-300 text-sm">
-                No new notifications.
-              </Typography>
+            {/* Loading State */}
+            {loading && !notifications.length && (
+              <div className="flex flex-col gap-4 p-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-4 animate-pulse">
+                    <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded" />
+                      <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && notifications.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-full py-16 text-center opacity-60">
+                <BellIcon className="h-16 w-16 text-blue-gray-200 dark:text-gray-600 mb-4" />
+                <Typography variant="h6" className="text-blue-gray-400 dark:text-gray-500">
+                  {filter === "unread" ? "You're all caught up!" : "No notifications yet."}
+                </Typography>
+                {filter === "unread" && (
+                  <Button variant="text" size="sm" color="blue" onClick={() => setFilter("all")} className="mt-2">
+                    View History
+                  </Button>
+                )}
+              </div>
             )}
 
             {/* List */}
-            {notifications.map((n) => {
-              const isUnread = !n.read;
+            {!loading && notifications.map((n, index) => {
+              const isUnread = !n.readFlag; // Ensure matches backend field (readFlag)
               return (
                 <div
                   key={n.id}
-                  className={`flex items-start justify-between gap-4 rounded-lg border p-3
-                              border-blue-100/60 dark:border-gray-700
-                              ${
-                                isUnread
-                                  ? "bg-blue-50/60 dark:bg-gray-700/50"
-                                  : "bg-white/0"
-                              }`}
+                  className={`
+                    group flex items-start gap-4 p-4 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50
+                    ${index !== notifications.length - 1 ? "border-b border-blue-gray-50 dark:border-gray-700" : ""}
+                    ${isUnread ? "bg-blue-50/40 dark:bg-blue-900/10" : ""}
+                  `}
                 >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                  {/* Icon */}
+                  <div className="mt-1 p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-blue-gray-50 dark:border-gray-700">
+                    {getIconForType(n.type)}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
                       <Typography
                         variant="small"
-                        className="font-medium dark:text-gray-100 text-sm"
+                        className={`font-semibold mb-0.5 ${isUnread ? "text-blue-900 dark:text-blue-100" : "text-gray-700 dark:text-gray-300"}`}
                       >
-                        {n.type || "Info"}
+                        {n.type || "System Notification"}
                       </Typography>
-                      {isUnread && (
-                        <span
-                          className="inline-block h-2 w-2 rounded-full bg-blue-500"
-                          aria-hidden
-                        />
-                      )}
+                      <Typography variant="small" className="text-xs text-gray-400 whitespace-nowrap ml-2">
+                        {formatDateTime(n.createdAt)}
+                      </Typography>
                     </div>
-
-                    <Typography
-                      variant="paragraph"
-                      className="dark:text-gray-200 text-sm break-words"
-                    >
+                    
+                    <Typography className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                       {n.message}
                     </Typography>
-
-                    <Typography
-                      variant="small"
-                      className="text-blue-gray-500 dark:text-gray-400 text-xs"
-                    >
-                      {formatDateTime(n.createdAt)}
-                    </Typography>
                   </div>
 
-                  <div className="shrink-0">
-                    <Button size="sm" onClick={() => markRead(n.id)}>
-                        Mark read
-                    </Button>
-                  </div>
+                  {/* Action */}
+                  {isUnread && (
+                    <div className="self-center">
+                      <Tooltip content="Mark as read">
+                        <IconButton
+                          variant="text"
+                          color="blue-gray"
+                          size="sm"
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => markRead(n.id)}
+                        >
+                          <CheckCircleIcon className="h-5 w-5 text-blue-gray-300 hover:text-blue-500" />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
+                  )}
                 </div>
               );
             })}
