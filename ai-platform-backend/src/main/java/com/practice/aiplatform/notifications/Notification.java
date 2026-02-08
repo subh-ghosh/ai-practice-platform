@@ -22,7 +22,7 @@ public class Notification {
     private Instant createdAt;
 
     @Column(name = "read_flag", nullable = false)
-    private boolean readFlag = false; // Default explicit
+    private boolean readFlag = false; 
 
     public Notification() {}
 
@@ -55,7 +55,11 @@ public class Notification {
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    // Jackson (JSON) uses "is" for booleans to create the field "readFlag"
+    // --- 👇 FIX: Add BOTH getters to ensure JSON works perfectly ---
     public boolean isReadFlag() { return readFlag; }
+    
+    // Jackson sometimes misses "is" for non-standard boolean names, so we add "get"
+    public boolean getReadFlag() { return readFlag; }
+
     public void setReadFlag(boolean readFlag) { this.readFlag = readFlag; }
 }
