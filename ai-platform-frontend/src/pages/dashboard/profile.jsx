@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // 👈 ADD AXIOS
+import axios from "axios";
 import {
   Card,
   CardBody,
@@ -20,7 +20,6 @@ import {
 } from "@heroicons/react/24/solid";
 import { ProfileInfoCard } from "@/widgets/cards";
 import { useAuth } from "@/context/AuthContext";
-// import api from "@/api"; // 👈 REMOVE BROKEN API
 import { useTheme } from "@/context/ThemeProvider.jsx";
 
 /* ============================ Config ============================ */
@@ -63,8 +62,8 @@ function EditForm({
           </Typography>
         </CardHeader>
         <CardBody className={scrollBody}>
-          {error && <Alert color="red">{error}</Alert>}
-          {success && <Alert color="green">{success}</Alert>}
+          {error && <Alert color="red" className="text-sm font-medium">{error}</Alert>}
+          {success && <Alert color="green" className="text-sm font-medium">{success}</Alert>}
 
           <Input
             label="First Name"
@@ -177,8 +176,8 @@ function SecurityPanel({
 
         <form onSubmit={onChangePassword} className="h-full">
           <CardBody className="p-4 md:p-5 flex flex-col gap-4 h-full">
-            {!!error && <Alert color="red" className="py-2">{error}</Alert>}
-            {!!success && <Alert color="green" className="py-2">{success}</Alert>}
+            {!!error && <Alert color="red" className="py-2 text-sm">{error}</Alert>}
+            {!!success && <Alert color="green" className="py-2 text-sm">{success}</Alert>}
 
             <Input
               type="password"
@@ -309,38 +308,68 @@ export function Profile() {
     "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png";
   const avatarSrc = (gender || user?.gender) === "female" ? femaleAvatar : maleAvatar;
 
-  // 1. UPDATE PROFILE (Manual Token)
+  // 1. UPDATE PROFILE (FIXED ERROR HANDLING)
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setSavingProfile(true);
     setEditError(null);
     setEditSuccess(null);
+    
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
 
+      // 1. Send Request
       const res = await axios.put(`${BASE_URL}/api/students/profile`, { 
         firstName, 
         lastName, 
         gender 
       }, config);
 
-      updateUser(res.data);
+      // 2. Safe Update Context
+      try {
+        if(updateUser && res.data) {
+            updateUser(res.data);
+        }
+      } catch (ctxErr) {
+        console.warn("Auth context update minor issue:", ctxErr);
+        // We do NOT stop here, because the backend save was successful.
+      }
+
+      // 3. Show Success
       setEditSuccess("Profile updated successfully!");
+
     } catch (err) {
-      const msg = err?.response?.data;
-      setEditError(typeof msg === "string" ? msg : "Failed to update profile.");
+      console.error("Profile update error:", err);
+      
+      // Better Error Parsing
+      let msg = "Failed to update profile.";
+      
+      if (err.response && err.response.data) {
+        // If server sent a JSON object (common in Spring Boot)
+        const data = err.response.data;
+        if (typeof data === "string") msg = data;
+        else if (data.message) msg = data.message;
+        else if (data.error) msg = data.error;
+      } else if (err.request) {
+        msg = "Network error. Please try again.";
+      } else if (err.message) {
+        msg = err.message;
+      }
+
+      setEditError(msg);
     } finally {
       setSavingProfile(false);
     }
   };
 
-  // 2. CHANGE PASSWORD (Manual Token)
+  // 2. CHANGE PASSWORD (FIXED ERROR HANDLING)
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setChangingPassword(true);
     setSecError(null);
     setSecSuccess(null);
+    
     try {
         const token = localStorage.getItem("token");
         const config = { headers: { "Authorization": `Bearer ${token}` } };
@@ -354,7 +383,13 @@ export function Profile() {
         setOldPassword("");
         setNewPassword("");
     } catch (err) {
-      setSecError(err?.response?.data || "Failed to change password.");
+        let msg = "Failed to change password.";
+        if (err.response && err.response.data) {
+            const data = err.response.data;
+            if (typeof data === "string") msg = data;
+            else if (data.message) msg = data.message;
+        }
+        setSecError(msg);
     } finally {
       setChangingPassword(false);
     }
@@ -386,7 +421,6 @@ export function Profile() {
         {/* Banner */}
         <div className="relative h-64 md:h-72 lg:h-80 w-full max-w-6xl overflow-hidden rounded-3xl">
           <div className="absolute inset-0 bg-[url('/img/background-image.png')] bg-cover bg-center" />
-          {/* soft top-to-bottom overlay for readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
         </div>
 
