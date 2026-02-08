@@ -20,7 +20,6 @@ import {
   UserCircleIcon,
   ShieldCheckIcon,
   PencilSquareIcon,
-  TrashIcon,
 } from "@heroicons/react/24/solid";
 
 /* ===========================
@@ -113,7 +112,7 @@ export function Notifications() {
     }
   };
 
-  // 3. Mark ALL Read
+  // 3. Mark ALL Read (Frontend Logic)
   const markAllAsRead = async () => {
     if (notifications.length === 0) return;
     setMarkingAll(true);
@@ -121,12 +120,12 @@ export function Notifications() {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
 
-      // Backend doesn't have a batch endpoint, so we loop (Parallel requests)
       // Filter only unread ones to save calls
       const unreadIds = notifications
         .filter((n) => !n.readFlag)
         .map((n) => n.id);
 
+      // Send requests in parallel to simulate "Batch Update"
       await Promise.all(
         unreadIds.map((id) =>
           axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
@@ -144,7 +143,6 @@ export function Notifications() {
 
   return (
     <section className="relative isolate overflow-x-hidden -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 min-h-[calc(100vh-4rem)] pb-10 flex">
-      {/* Background */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       
       <div className="mt-6 has-fixed-navbar page w-full flex flex-col items-center">
@@ -208,7 +206,6 @@ export function Notifications() {
           </CardHeader>
 
           <CardBody className="flex flex-col gap-0 p-0 min-h-[300px]">
-            {/* Error State */}
             {error && (
               <div className="p-6 text-center">
                 <Typography color="red" className="text-sm">
@@ -220,7 +217,6 @@ export function Notifications() {
               </div>
             )}
 
-            {/* Loading State */}
             {loading && !notifications.length && (
               <div className="flex flex-col gap-4 p-6">
                 {[1, 2, 3].map((i) => (
@@ -235,7 +231,6 @@ export function Notifications() {
               </div>
             )}
 
-            {/* Empty State */}
             {!loading && !error && notifications.length === 0 && (
               <div className="flex flex-col items-center justify-center h-full py-16 text-center opacity-60">
                 <BellIcon className="h-16 w-16 text-blue-gray-200 dark:text-gray-600 mb-4" />
@@ -250,9 +245,8 @@ export function Notifications() {
               </div>
             )}
 
-            {/* List */}
             {!loading && notifications.map((n, index) => {
-              const isUnread = !n.readFlag; // Ensure matches backend field (readFlag)
+              const isUnread = !n.readFlag; 
               return (
                 <div
                   key={n.id}
@@ -262,12 +256,10 @@ export function Notifications() {
                     ${isUnread ? "bg-blue-50/40 dark:bg-blue-900/10" : ""}
                   `}
                 >
-                  {/* Icon */}
                   <div className="mt-1 p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-blue-gray-50 dark:border-gray-700">
                     {getIconForType(n.type)}
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                       <Typography
@@ -286,7 +278,6 @@ export function Notifications() {
                     </Typography>
                   </div>
 
-                  {/* Action */}
                   {isUnread && (
                     <div className="self-center">
                       <Tooltip content="Mark as read">
