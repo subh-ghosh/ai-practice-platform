@@ -6,6 +6,7 @@ import java.util.List;
 
 @Service
 public class NotificationService {
+    
     private final NotificationRepository repo;
 
     public NotificationService(NotificationRepository repo) {
@@ -28,5 +29,11 @@ public class NotificationService {
     @Transactional
     public void markRead(Long id) {
         repo.findById(id).ifPresent(n -> { n.setReadFlag(true); repo.save(n); });
+    }
+
+    // --- 👇 NEW METHOD ---
+    @Transactional
+    public void markAllRead(Long studentId) {
+        repo.markAllAsRead(studentId);
     }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
+    
     private final NotificationService service;
     private final StudentRepository studentRepository;
 
@@ -42,6 +43,16 @@ public class NotificationController {
     @PatchMapping("/{id}/read")
     public ResponseEntity<Void> markRead(@PathVariable Long id) {
         service.markRead(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- 👇 NEW ENDPOINT ---
+    @PatchMapping("/read-all")
+    public ResponseEntity<Void> markAllRead(Principal principal) {
+        Long sid = currentStudentId(principal);
+        if (sid == null) return ResponseEntity.status(401).build();
+        
+        service.markAllRead(sid);
         return ResponseEntity.noContent().build();
     }
 }
