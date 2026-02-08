@@ -90,13 +90,12 @@ export function Notifications() {
     fetchNotifications();
   }, [filter]); // Re-fetch when tab changes
 
-  // 2. Mark Single Read
-  // 2. Mark Single Read
+  // 2. Mark Single Read (FIXED: Uses PATCH)
   const markRead = async (id) => {
     try {
       const token = localStorage.getItem("token");
       
-      // 👇 IMPORTANT: Use .patch() to match the Backend's @PatchMapping
+      // 👇 FIXED: Changed from .put() to .patch()
       await axios.patch(
         `${BASE_URL}/api/notifications/${id}/read`,
         {},
@@ -116,7 +115,7 @@ export function Notifications() {
     }
   };
 
-  // 3. Mark ALL Read (Frontend Logic)
+  // 3. Mark ALL Read (FIXED: Uses PATCH inside the loop)
   const markAllAsRead = async () => {
     if (notifications.length === 0) return;
     setMarkingAll(true);
@@ -130,9 +129,10 @@ export function Notifications() {
         .map((n) => n.id);
 
       // Send requests in parallel to simulate "Batch Update"
+      // 👇 FIXED: Changed from .put() to .patch()
       await Promise.all(
         unreadIds.map((id) =>
-          axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
+          axios.patch(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
         )
       );
 
