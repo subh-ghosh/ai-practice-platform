@@ -59,7 +59,7 @@ export function Notifications() {
 
   const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
-  // 1. Fetch Notifications based on filter
+  // 1. Fetch Notifications
   const fetchNotifications = async () => {
     try {
       setLoading(true);
@@ -68,7 +68,6 @@ export function Notifications() {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
 
-      // Switch endpoint based on tab
       const endpoint = filter === "unread" 
         ? `${BASE_URL}/api/notifications/unread` 
         : `${BASE_URL}/api/notifications`;
@@ -77,7 +76,6 @@ export function Notifications() {
       setNotifications(response.data);
     } catch (err) {
       console.error("Error loading notifications:", err);
-      // Ignore 404s (empty list)
       if (err.response && err.response.status !== 404) {
         setError("Failed to load notifications.");
       }
@@ -88,21 +86,26 @@ export function Notifications() {
 
   useEffect(() => {
     fetchNotifications();
-  }, [filter]); // Re-fetch when tab changes
+  }, [filter]);
 
-  // 2. Mark Single Read (FIXED: Uses PATCH)
+  // 2. Mark Single Read (Updated with Debugging)
   const markRead = async (id) => {
+    if (!id) {
+      alert("Error: Notification ID is missing.");
+      return;
+    }
+
     try {
       const token = localStorage.getItem("token");
       
-      // 👇 FIXED: Changed from .put() to .patch()
-      await axios.patch(
+      // 👇 Trying PUT first (Most common)
+      await axios.put(
         `${BASE_URL}/api/notifications/${id}/read`,
         {},
         { headers: { "Authorization": `Bearer ${token}` } }
       );
 
-      // Remove from list if in 'unread' mode, or update status if in 'all' mode
+      // Success: Update UI
       if (filter === "unread") {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
       } else {
@@ -111,11 +114,20 @@ export function Notifications() {
         );
       }
     } catch (err) {
-      console.error("Error marking read:", err);
+      console.error("Mark read failed:", err);
+      // 👇 Show alert so you know WHY it failed
+      const status = err.response?.status;
+      if (status === 405) {
+        alert("Method Not Allowed (405). The backend might want PATCH instead of PUT.");
+      } else if (status === 404) {
+        alert("Notification not found (404).");
+      } else {
+        alert(`Failed to mark read: ${err.message}`);
+      }
     }
   };
 
-  // 3. Mark ALL Read (FIXED: Uses PATCH inside the loop)
+  // 3. Mark ALL Read (Updated with Debugging)
   const markAllAsRead = async () => {
     if (notifications.length === 0) return;
     setMarkingAll(true);
@@ -123,23 +135,21 @@ export function Notifications() {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
 
-      // Filter only unread ones to save calls
       const unreadIds = notifications
         .filter((n) => !n.readFlag)
         .map((n) => n.id);
 
-      // Send requests in parallel to simulate "Batch Update"
-      // 👇 FIXED: Changed from .put() to .patch()
+      // Using PUT in loop
       await Promise.all(
         unreadIds.map((id) =>
-          axios.patch(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
+          axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
         )
       );
 
-      // Refresh
       await fetchNotifications();
     } catch (err) {
       console.error("Error marking all read:", err);
+      alert("Failed to mark all as read. Check console for details.");
     } finally {
       setMarkingAll(false);
     }
@@ -166,7 +176,6 @@ export function Notifications() {
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Tabs */}
                 <div className="w-48">
                   <Tabs value={filter}>
                     <TabsHeader className="bg-blue-gray-50/50 dark:bg-gray-700/50 p-1">
@@ -188,7 +197,6 @@ export function Notifications() {
                   </Tabs>
                 </div>
 
-                {/* Mark All Read Button */}
                 {filter === "unread" && notifications.length > 0 && (
                   <Tooltip content="Mark all as read">
                     <IconButton
@@ -290,7 +298,11 @@ export function Notifications() {
                           color="blue-gray"
                           size="sm"
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => markRead(n.id)}
+                          // 👇 DEBUG CLICK HANDLER
+                          onClick={() => {
+                              console.log("Button Clicked ID:", n.id);
+                              markRead(n.id);
+                          }}
                         >
                           <CheckCircleIcon className="h-5 w-5 text-blue-gray-300 hover:text-blue-500" />
                         </IconButton>
