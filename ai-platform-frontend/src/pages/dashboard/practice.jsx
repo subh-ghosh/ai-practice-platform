@@ -94,6 +94,8 @@ export function Practice() {
   const { showPaywall } = usePaywall();
 
   const [error, setError] = useState(null);
+  // 👇 NEW STATE for the "Blue" polling message
+  const [isPolling, setIsPolling] = useState(false);
 
   const [allHistory, setAllHistory] = useState([]);
   const [itemsToShow, setItemsToShow] = useState(10);
@@ -215,7 +217,6 @@ export function Practice() {
       );
 
       setQuestion(response.data);
-      // Refresh history
       await fetchHistory();
 
     } catch (err) {
@@ -287,27 +288,22 @@ export function Practice() {
   };
 
   /* ============================================================
-     5. SMART POLLING + GET ANSWER LOGIC (FIXED FOR TIMEOUTS)
+     5. SMART POLLING + GET ANSWER LOGIC (FIXED UI)
   ============================================================ */
 
-  // Helper: Poll the history every 3s to see if the answer appeared
   const pollForAnswer = async (qId) => {
     const token = localStorage.getItem("token");
     const config = { headers: { "Authorization": `Bearer ${token}` } };
 
-    // Try 10 times (10 x 3 seconds = 30 seconds of extra waiting)
+    // Poll for 30s
     for (let i = 0; i < 10; i++) {
       try {
-        // Wait 3 seconds before checking
         await new Promise(resolve => setTimeout(resolve, 3000));
-
         console.log(`Polling history... Attempt ${i + 1}`);
+        
         const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
-
-        // Look for the specific question in history
         const found = res.data.history.find(item => item.questionId === qId);
 
-        // If we found it and it has an answer/status, we are done!
         if (found && (found.evaluationStatus === "REVEALED" || found.answerText)) {
           return found;
         }
@@ -326,6 +322,7 @@ export function Practice() {
     setFeedback(null);
     setHint(null);
     setError(null);
+    setIsPolling(false); // Reset polling state
 
     try {
       const token = localStorage.getItem("token");
@@ -334,40 +331,36 @@ export function Practice() {
         timeout: 90000 // 90s axios timeout
       };
 
-      // 1. Attempt standard request
       const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, {
         questionId: question.id,
       }, config);
 
-      // If successful immediately:
       setFeedback(res.data);
       await fetchHistory();
 
     } catch (err) {
       console.error("Initial request failed or timed out:", err);
 
-      // 2. If it failed (timeout/504), assume Backend is working in background.
-      // Start polling the history.
-      setError("AI is taking a moment to finalize. Checking for the answer...");
+      // 2. Switch UI to Polling Mode (Blue Info, not Red Error)
+      setError(null); 
+      setIsPolling(true); 
 
       const foundItem = await pollForAnswer(question.id);
 
-      if (foundItem) {
-        // We found it in history!
-        setError(null); // Clear error
+      // Stop polling UI
+      setIsPolling(false);
 
-        // Construct a feedback object from the history item to show it immediately
+      if (foundItem) {
         setFeedback({
             evaluationStatus: foundItem.evaluationStatus,
             answerText: foundItem.answerText,
             feedback: foundItem.feedback,
             hint: foundItem.hint
         });
-
-        await fetchHistory(); // Refresh the table
+        await fetchHistory();
       } else {
-        // Only show error if polling failed too
-        setError("The request timed out and we couldn't retrieve the answer yet. Please refresh the page in a minute.");
+        // Now we show Red Error because we really failed
+        setError("The server timed out. Please check your history table below in a few moments.");
       }
     } finally {
       setLoadingAnswer(false);
@@ -460,10 +453,21 @@ export function Practice() {
               </Button>
             </div>
 
+            {/* Error Message (Red) */}
             {error && (
-              <Typography color="red" className="mt-4 text-sm">
+              <Typography color="red" className="mt-4 text-sm font-medium">
                 {error}
               </Typography>
+            )}
+
+            {/* Polling Message (Blue/Spinner) - REPLACES RED ERROR */}
+            {isPolling && (
+              <div className="mt-4 flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800">
+                <Spinner className="h-4 w-4 text-blue-500" />
+                <Typography className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  AI is finalizing the answer. Checking database...
+                </Typography>
+              </div>
             )}
 
             {question && (
@@ -489,7 +493,7 @@ export function Practice() {
                 />
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <Button type="submit" disabled={submitting || loadingHint || loadingAnswer}>
+                  <Button type="submit" disabled={submitting || loadingHint || loadingAnswer || isPolling}>
                     {submitting ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
                   </Button>
 
@@ -497,7 +501,7 @@ export function Practice() {
                     type="button"
                     variant="outlined"
                     onClick={handleGetHint}
-                    disabled={submitting || loadingHint || loadingAnswer}
+                    disabled={submitting || loadingHint || loadingAnswer || isPolling}
                     className="border border-gray-800 text-gray-900 hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-white/10"
                   >
                     {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
@@ -509,9 +513,9 @@ export function Practice() {
                         type="button"
                         color="red"
                         variant="outlined"
-                        disabled={submitting || loadingHint || loadingAnswer}
+                        disabled={submitting || loadingHint || loadingAnswer || isPolling}
                       >
-                        {loadingAnswer ? <Spinner className="h-4 w-4" /> : "Get Answer"}
+                        {loadingAnswer || isPolling ? <Spinner className="h-4 w-4" /> : "Get Answer"}
                       </Button>
                     </PopoverHandler>
                     <PopoverContent className="w-64 z-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
