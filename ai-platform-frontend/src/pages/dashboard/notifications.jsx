@@ -91,14 +91,18 @@ export function Notifications() {
   }, [filter]); // Re-fetch when tab changes
 
   // 2. Mark Single Read
+  // 2. Mark Single Read
   const markRead = async (id) => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(
+      
+      // 👇 IMPORTANT: Use .patch() to match the Backend's @PatchMapping
+      await axios.patch(
         `${BASE_URL}/api/notifications/${id}/read`,
         {},
         { headers: { "Authorization": `Bearer ${token}` } }
       );
+
       // Remove from list if in 'unread' mode, or update status if in 'all' mode
       if (filter === "unread") {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
