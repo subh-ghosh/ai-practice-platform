@@ -286,7 +286,7 @@ export function Practice() {
     }
   };
 
-  // 5. Get Answer (FIXED WITH TIMEOUT)
+  // 5. Get Answer
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!question) return;
@@ -299,7 +299,7 @@ export function Practice() {
       const token = localStorage.getItem("token");
       const config = { 
         headers: { "Authorization": `Bearer ${token}` },
-        timeout: 60000 // 👈 FIX: Increased timeout to 60s for AI generation
+        timeout: 90000 // Set to 90s just to be safe locally
       };
 
       const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, {
@@ -311,11 +311,21 @@ export function Practice() {
     } catch (err) {
       console.error("Error getting answer:", err);
       
-      // Handle timeout specifically
-      if (err.code === 'ECONNABORTED') {
-        setError("The AI is taking a while to generate the full answer. Check your history in a moment!");
-        // Optimistically refresh history in case it finished right after timeout
-        setTimeout(fetchHistory, 5000); 
+      // Check for Local Timeout (ECONNABORTED) OR Server Timeout (504/502)
+      const isTimeout = err.code === 'ECONNABORTED' || 
+                        err.response?.status === 504 || 
+                        err.response?.status === 502;
+
+      if (isTimeout) {
+        // The server took too long to reply, but it's likely still working.
+        setError("AI is finalizing the answer. Refreshing history...");
+        
+        // Wait 5 seconds, then force a history refresh to grab the "ghost" answer
+        setTimeout(async () => {
+            await fetchHistory();
+            // If we found the answer in history, clear the error
+            setError(null); 
+        }, 5000);
       } else {
         setError("Failed to get the answer. Please try again.");
       }
