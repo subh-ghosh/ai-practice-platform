@@ -95,7 +95,7 @@ export function Practice() {
 
   const [error, setError] = useState(null);
   
-  // 👇 STATE FOR BLUE POLLING MESSAGE
+  // State for Blue Polling Message
   const [isPolling, setIsPolling] = useState(false);
 
   const [allHistory, setAllHistory] = useState([]);
@@ -189,7 +189,34 @@ export function Practice() {
     setTextareaRows(Math.min(Math.max(5, rows), 15));
   };
 
-  // 2. Generate Question
+  /* ============================================================
+     2. POLLING HELPER
+  ============================================================ */
+  const pollForAnswer = async (qId) => {
+    const token = localStorage.getItem("token");
+    const config = { headers: { "Authorization": `Bearer ${token}` } };
+
+    // Poll for 30s
+    for (let i = 0; i < 10; i++) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        console.log(`Polling history... Attempt ${i + 1}`);
+        
+        const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
+        const found = res.data.history.find(item => item.questionId === qId);
+
+        // If we found it and it has an evaluation status (meaning processing is done)
+        if (found && found.evaluationStatus) {
+          return found;
+        }
+      } catch (err) {
+        console.warn("Polling check failed, retrying...", err);
+      }
+    }
+    return null;
+  };
+
+  // 3. Generate Question
   const handleGenerateQuestion = async () => {
     const token = localStorage.getItem("token");
 
@@ -228,7 +255,7 @@ export function Practice() {
     }
   };
 
-  // 3. Submit Answer
+  // 4. Submit Answer (NOW WITH SMART POLLING)
   const handleSubmitAnswer = async (e) => {
     e.preventDefault();
     if (!question || !currentAnswer) return;
@@ -237,10 +264,14 @@ export function Practice() {
     setFeedback(null);
     setHint(null);
     setError(null);
+    setIsPolling(false);
 
     try {
       const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
+      const config = { 
+        headers: { "Authorization": `Bearer ${token}` },
+        timeout: 90000 // 90s timeout
+      };
 
       const res = await axios.post(`${BASE_URL}/api/practice/submit`, {
         questionId: question.id,
@@ -258,14 +289,34 @@ export function Practice() {
       if (err.response?.status === 402) {
         showPaywall();
       } else {
-        setError("Failed to submit your answer. Please try again.");
+        // --- POLLING FALLBACK FOR SUBMIT ---
+        // Clear error, show blue spinner
+        setError(null);
+        setIsPolling(true);
+
+        const foundItem = await pollForAnswer(question.id);
+        
+        setIsPolling(false); // Stop spinner
+
+        if (foundItem) {
+            setFeedback({
+                evaluationStatus: foundItem.evaluationStatus,
+                answerText: foundItem.answerText,
+                feedback: foundItem.feedback,
+                hint: foundItem.hint
+            });
+            await fetchHistory();
+            if (user?.subscriptionStatus === "FREE") decrementFreeActions();
+        } else {
+            setError("We couldn't verify your answer due to a connection timeout. Please check your history shortly.");
+        }
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  // 4. Get Hint
+  // 5. Get Hint
   const handleGetHint = async () => {
     if (!question) return;
     setLoadingHint(true);
@@ -288,33 +339,7 @@ export function Practice() {
     }
   };
 
-  /* ============================================================
-     5. SMART POLLING + GET ANSWER LOGIC (BLUE UI)
-  ============================================================ */
-
-  const pollForAnswer = async (qId) => {
-    const token = localStorage.getItem("token");
-    const config = { headers: { "Authorization": `Bearer ${token}` } };
-
-    // Poll for 30s
-    for (let i = 0; i < 10; i++) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        console.log(`Polling history... Attempt ${i + 1}`);
-        
-        const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
-        const found = res.data.history.find(item => item.questionId === qId);
-
-        if (found && (found.evaluationStatus === "REVEALED" || found.answerText)) {
-          return found;
-        }
-      } catch (err) {
-        console.warn("Polling check failed, retrying...", err);
-      }
-    }
-    return null;
-  };
-
+  // 6. Get Answer (WITH SMART POLLING)
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!question) return;
@@ -323,7 +348,7 @@ export function Practice() {
     setFeedback(null);
     setHint(null);
     setError(null);
-    setIsPolling(false); // Reset polling state
+    setIsPolling(false); 
 
     try {
       const token = localStorage.getItem("token");
@@ -342,14 +367,11 @@ export function Practice() {
     } catch (err) {
       console.error("Initial request failed or timed out:", err);
 
-      // 1. CLEAR THE ERROR so no red text appears
       setError(null); 
-      // 2. TURN ON POLLING UI (Blue)
       setIsPolling(true); 
 
       const foundItem = await pollForAnswer(question.id);
 
-      // 3. Turn off polling UI
       setIsPolling(false);
 
       if (foundItem) {
@@ -361,7 +383,6 @@ export function Practice() {
         });
         await fetchHistory();
       } else {
-        // Only NOW do we show the red error if it actually failed after polling
         setError("The server timed out. Please check your history table below in a few moments.");
       }
     } finally {
@@ -376,11 +397,11 @@ export function Practice() {
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
 
       <div className="mt-6 page has-fixed-navbar space-y-6">
-        {/* --- AI Question Generator --- */}
+        {/* --- Question Generator --- */}
         <Card className="mb-12 rounded-3xl border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
           <CardHeader variant="gradient" color="gray" className="mb-6 p-6 rounded-t-3xl">
             <Typography variant="h6" color="white">
-              AI Question Generator
+              Question Generator
             </Typography>
           </CardHeader>
 
@@ -462,12 +483,12 @@ export function Practice() {
               </Typography>
             )}
 
-            {/* Polling Message (Blue/Spinner) - REPLACES RED ERROR */}
+            {/* Polling Message (Blue/Spinner) - "We" wording */}
             {isPolling && (
               <div className="mt-4 flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800">
                 <Spinner className="h-4 w-4 text-blue-500" />
                 <Typography className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  AI is finalizing the answer. Checking database...
+                  We are finalizing the answer. Checking database...
                 </Typography>
               </div>
             )}
@@ -496,7 +517,7 @@ export function Practice() {
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button type="submit" disabled={submitting || loadingHint || loadingAnswer || isPolling}>
-                    {submitting ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
+                    {submitting || isPolling ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
                   </Button>
 
                   <Button
@@ -805,4 +826,4 @@ export function Practice() {
 }
 
 export default Practice;
-// Force update deployment
+//force deploy
