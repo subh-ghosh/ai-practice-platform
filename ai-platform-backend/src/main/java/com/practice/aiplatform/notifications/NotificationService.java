@@ -28,10 +28,12 @@ public class NotificationService {
 
     @Transactional
     public void markRead(Long id) {
-        repo.findById(id).ifPresent(n -> { n.setReadFlag(true); repo.save(n); });
+        repo.findById(id).ifPresent(n -> { 
+            n.setReadFlag(true); 
+            repo.save(n); 
+        });
     }
 
-    // --- 👇 NEW METHOD ---
     @Transactional
     public void markAllRead(Long studentId) {
         repo.markAllAsRead(studentId);

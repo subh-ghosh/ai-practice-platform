@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
+@CrossOrigin(origins = "*") // 👈 FORCE ALLOW FRONTEND CONNECTION
 public class NotificationController {
     
     private final NotificationService service;
@@ -46,7 +47,6 @@ public class NotificationController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- 👇 NEW ENDPOINT ---
     @PatchMapping("/read-all")
     public ResponseEntity<Void> markAllRead(Principal principal) {
         Long sid = currentStudentId(principal);

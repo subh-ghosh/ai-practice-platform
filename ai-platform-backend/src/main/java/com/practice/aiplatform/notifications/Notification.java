@@ -22,7 +22,7 @@ public class Notification {
     private Instant createdAt;
 
     @Column(name = "read_flag", nullable = false)
-    private boolean readFlag; // default false
+    private boolean readFlag = false; // Default explicit
 
     public Notification() {}
 
@@ -30,26 +30,32 @@ public class Notification {
         this.studentId = studentId;
         this.type = type;
         this.message = message;
+        this.createdAt = Instant.now();
+        this.readFlag = false;
     }
 
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = Instant.now();
-        // readFlag defaults false for primitive boolean
     }
 
-    // getters/setters
+    // Getters and Setters
     public Long getId() { return id; }
-    public Long getStudentId() { return studentId; }
-    public String getType() { return type; }
-    public String getMessage() { return message; }
-    public Instant getCreatedAt() { return createdAt; }
-    public boolean isReadFlag() { return readFlag; }
-
     public void setId(Long id) { this.id = id; }
+
+    public Long getStudentId() { return studentId; }
     public void setStudentId(Long studentId) { this.studentId = studentId; }
+
+    public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public String getMessage() { return message; }
     public void setMessage(String message) { this.message = message; }
+
+    public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    // Jackson (JSON) uses "is" for booleans to create the field "readFlag"
+    public boolean isReadFlag() { return readFlag; }
     public void setReadFlag(boolean readFlag) { this.readFlag = readFlag; }
 }

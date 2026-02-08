@@ -12,6 +12,7 @@ import {
   Tab,
   IconButton,
   Tooltip,
+  Alert,
 } from "@material-tailwind/react";
 import {
   CheckCircleIcon,
@@ -20,6 +21,7 @@ import {
   UserCircleIcon,
   ShieldCheckIcon,
   PencilSquareIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 
 function formatDateTime(iso) {
@@ -50,15 +52,16 @@ export function Notifications() {
   const [filter, setFilter] = useState("unread");
   const [markingAll, setMarkingAll] = useState(false);
 
+  // Use the Cloud URL
   const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
-  // 1. Fetch
   const fetchNotifications = async () => {
     try {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
+      
       const endpoint = filter === "unread" 
         ? `${BASE_URL}/api/notifications/unread` 
         : `${BASE_URL}/api/notifications`;
@@ -66,9 +69,9 @@ export function Notifications() {
       const response = await axios.get(endpoint, config);
       setNotifications(response.data);
     } catch (err) {
-      console.error("Error loading notifications:", err);
-      if (err.response && err.response.status !== 404) {
-        setError("Failed to load notifications.");
+      console.error("Fetch error:", err);
+      if (err.response?.status !== 404) {
+        // Silently ignore 404s (just means empty list)
       }
     } finally {
       setLoading(false);
@@ -79,19 +82,18 @@ export function Notifications() {
     fetchNotifications();
   }, [filter]);
 
-  // 2. Mark Single Read (PATCH)
   const markRead = async (id) => {
     try {
       const token = localStorage.getItem("token");
       
-      // 👇 USE PATCH (Matches Backend)
+      // Try PATCH (Standard)
       await axios.patch(
         `${BASE_URL}/api/notifications/${id}/read`,
         {},
         { headers: { "Authorization": `Bearer ${token}` } }
       );
 
-      // Optimistic Update (Instant UI change)
+      // UI Update
       if (filter === "unread") {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
       } else {
@@ -100,15 +102,14 @@ export function Notifications() {
         );
       }
     } catch (err) {
-      console.error("Mark read failed:", err);
-      // Alert only if it's a real error, not a network blip
+      console.error("Mark read error:", err);
+      // Show specific 403 error
       if (err.response?.status === 403) {
-        alert("Server Permission Error (403): Please ensure the backend update has finished deploying.");
+        setError("Permission Denied (403): The backend is blocking this update.");
       }
     }
   };
 
-  // 3. Mark ALL Read (PATCH Loop)
   const markAllAsRead = async () => {
     if (notifications.length === 0) return;
     setMarkingAll(true);
@@ -117,16 +118,17 @@ export function Notifications() {
       const config = { headers: { "Authorization": `Bearer ${token}` } };
       const unreadIds = notifications.filter((n) => !n.readFlag).map((n) => n.id);
 
-      // 👇 USE PATCH (Matches Backend)
       await Promise.all(
         unreadIds.map((id) =>
           axios.patch(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
         )
       );
-
       await fetchNotifications();
     } catch (err) {
-      console.error("Error marking all read:", err);
+       console.error("Mark all error:", err);
+       if (err.response?.status === 403) {
+          setError("Permission Denied (403): The backend is blocking these updates.");
+       }
     } finally {
       setMarkingAll(false);
     }
@@ -174,35 +176,68 @@ export function Notifications() {
           </CardHeader>
 
           <CardBody className="flex flex-col gap-0 p-0 min-h-[300px]">
-            {error && <Typography color="red" className="p-6 text-center text-sm">{String(error)}</Typography>}
-            {loading && !notifications.length && <div className="p-6 text-center">Loading...</div>}
+             {/* Error Banner */}
+             {error && (
+                <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />} className="rounded-none">
+                   {error}
+                </Alert>
+             )}
+
+            {/* Empty State */}
             {!loading && !error && notifications.length === 0 && (
                <div className="flex flex-col items-center justify-center h-full py-16 opacity-60">
-                 <BellIcon className="h-16 w-16 text-blue-gray-200 mb-4" />
-                 <Typography variant="h6" color="blue-gray">No notifications.</Typography>
+                 <BellIcon className="h-16 w-16 text-blue-gray-200 dark:text-gray-600 mb-4" />
+                 <Typography variant="h6" className="text-blue-gray-400 dark:text-gray-500">
+                    No notifications found.
+                 </Typography>
                </div>
             )}
 
+            {/* List */}
             {!loading && notifications.map((n, index) => {
               const isUnread = !n.readFlag; 
+              
               return (
-                <div key={n.id} className={`group flex items-start gap-4 p-4 hover:bg-gray-50 ${isUnread ? "bg-blue-50/40" : ""} ${index !== notifications.length - 1 ? "border-b border-blue-gray-50" : ""}`}>
-                  <div className="mt-1 p-2 bg-white rounded-full shadow-sm border border-blue-gray-50">{getIconForType(n.type)}</div>
+                <div 
+                  key={n.id} 
+                  className={`
+                    group flex items-start gap-4 p-4 transition-colors 
+                    ${index !== notifications.length - 1 ? "border-b border-blue-gray-50 dark:border-gray-700" : ""}
+                    ${isUnread 
+                        ? "bg-white dark:bg-gray-800/80"  // UNREAD: Clean White/Dark
+                        : "bg-gray-50/50 dark:bg-gray-900/50 opacity-75" // READ: Greyed out
+                     }
+                  `}
+                >
+                  <div className={`mt-1 p-2 rounded-full shadow-sm border ${isUnread ? "bg-blue-50 border-blue-100" : "bg-gray-100 border-gray-200 dark:bg-gray-800 dark:border-gray-700"}`}>
+                    {getIconForType(n.type)}
+                  </div>
+                  
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                      <Typography variant="small" className={`font-semibold ${isUnread ? "text-blue-900" : "text-gray-700"}`}>{n.type || "System"}</Typography>
-                      <Typography variant="small" className="text-xs text-gray-400 ml-2">{formatDateTime(n.createdAt)}</Typography>
+                      <Typography variant="small" className={`font-semibold ${isUnread ? "text-blue-900 dark:text-blue-100" : "text-gray-600 dark:text-gray-500"}`}>
+                        {n.type || "System"}
+                      </Typography>
+                      <Typography variant="small" className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                        {formatDateTime(n.createdAt)}
+                      </Typography>
                     </div>
-                    <Typography className="text-sm text-gray-600">{n.message}</Typography>
+                    <Typography className={`text-sm ${isUnread ? "text-gray-800 dark:text-gray-200 font-medium" : "text-gray-500 dark:text-gray-600"}`}>
+                      {n.message}
+                    </Typography>
                   </div>
-                  {isUnread && (
+
+                  {/* BUTTON ONLY IF UNREAD */}
+                  {isUnread ? (
                     <div className="self-center">
                       <Tooltip content="Mark as read">
-                        <IconButton variant="text" color="blue-gray" size="sm" onClick={() => markRead(n.id)}>
-                          <CheckCircleIcon className="h-5 w-5 hover:text-blue-500" />
+                        <IconButton variant="text" color="blue" size="sm" onClick={() => markRead(n.id)}>
+                          <CheckCircleIcon className="h-5 w-5" />
                         </IconButton>
                       </Tooltip>
                     </div>
+                  ) : (
+                    <div className="self-center w-8 h-8" /> // Spacer
                   )}
                 </div>
               );
