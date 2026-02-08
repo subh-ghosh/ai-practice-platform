@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import axios from "axios"; 
+import axios from "axios";
 import {
   Typography,
   Card,
@@ -104,7 +104,7 @@ export function Practice() {
   const [topic, setTopic] = useState("Object Oriented Programming");
   const [difficulty, setDifficulty] = useState("High School");
 
-  const [generating, setGenerating] = useState(false); 
+  const [generating, setGenerating] = useState(false);
 
   const [question, setQuestion] = useState(null);
   const [currentAnswer, setCurrentAnswer] = useState("");
@@ -133,9 +133,9 @@ export function Practice() {
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-      
+
       const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
-      
+
       const raw = Array.isArray(res?.data?.history) ? res.data.history : [];
       const sorted = [...raw].sort((a, b) => {
         const aDate = new Date(a.submittedAt || a.generatedAt || 0);
@@ -200,7 +200,7 @@ export function Practice() {
 
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/ai/generate-question`, 
+        `${BASE_URL}/api/ai/generate-question`,
         {
           subject: subject,
           topic: topic,
@@ -216,7 +216,7 @@ export function Practice() {
 
       setQuestion(response.data);
       // Refresh history
-      await fetchHistory(); 
+      await fetchHistory();
 
     } catch (err) {
       console.error("Error generating question:", err);
@@ -230,12 +230,12 @@ export function Practice() {
   const handleSubmitAnswer = async (e) => {
     e.preventDefault();
     if (!question || !currentAnswer) return;
-    
+
     setSubmitting(true);
     setFeedback(null);
     setHint(null);
     setError(null);
-    
+
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
@@ -247,7 +247,7 @@ export function Practice() {
 
       setFeedback(res.data);
       await fetchHistory();
-      
+
       if (user?.subscriptionStatus === "FREE") {
         decrementFreeActions();
       }
@@ -276,7 +276,7 @@ export function Practice() {
       const res = await axios.post(`${BASE_URL}/api/ai/get-hint`, {
         questionId: question.id,
       }, config);
-      
+
       setHint(res.data);
     } catch (err) {
       console.error("Error getting hint:", err);
@@ -286,48 +286,88 @@ export function Practice() {
     }
   };
 
-  // 5. Get Answer
+  /* ============================================================
+     5. SMART POLLING + GET ANSWER LOGIC (FIXED FOR TIMEOUTS)
+  ============================================================ */
+
+  // Helper: Poll the history every 3s to see if the answer appeared
+  const pollForAnswer = async (qId) => {
+    const token = localStorage.getItem("token");
+    const config = { headers: { "Authorization": `Bearer ${token}` } };
+
+    // Try 10 times (10 x 3 seconds = 30 seconds of extra waiting)
+    for (let i = 0; i < 10; i++) {
+      try {
+        // Wait 3 seconds before checking
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        console.log(`Polling history... Attempt ${i + 1}`);
+        const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
+
+        // Look for the specific question in history
+        const found = res.data.history.find(item => item.questionId === qId);
+
+        // If we found it and it has an answer/status, we are done!
+        if (found && (found.evaluationStatus === "REVEALED" || found.answerText)) {
+          return found;
+        }
+      } catch (err) {
+        console.warn("Polling check failed, retrying...", err);
+      }
+    }
+    return null;
+  };
+
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!question) return;
+
     setLoadingAnswer(true);
     setFeedback(null);
     setHint(null);
     setError(null);
-    
+
     try {
       const token = localStorage.getItem("token");
-      const config = { 
+      const config = {
         headers: { "Authorization": `Bearer ${token}` },
-        timeout: 90000 // Set to 90s just to be safe locally
+        timeout: 90000 // 90s axios timeout
       };
 
+      // 1. Attempt standard request
       const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, {
         questionId: question.id,
       }, config);
 
+      // If successful immediately:
       setFeedback(res.data);
       await fetchHistory();
-    } catch (err) {
-      console.error("Error getting answer:", err);
-      
-      // Check for Local Timeout (ECONNABORTED) OR Server Timeout (504/502)
-      const isTimeout = err.code === 'ECONNABORTED' || 
-                        err.response?.status === 504 || 
-                        err.response?.status === 502;
 
-      if (isTimeout) {
-        // The server took too long to reply, but it's likely still working.
-        setError("AI is finalizing the answer. Refreshing history...");
-        
-        // Wait 5 seconds, then force a history refresh to grab the "ghost" answer
-        setTimeout(async () => {
-            await fetchHistory();
-            // If we found the answer in history, clear the error
-            setError(null); 
-        }, 5000);
+    } catch (err) {
+      console.error("Initial request failed or timed out:", err);
+
+      // 2. If it failed (timeout/504), assume Backend is working in background.
+      // Start polling the history.
+      setError("AI is taking a moment to finalize. Checking for the answer...");
+
+      const foundItem = await pollForAnswer(question.id);
+
+      if (foundItem) {
+        // We found it in history!
+        setError(null); // Clear error
+
+        // Construct a feedback object from the history item to show it immediately
+        setFeedback({
+            evaluationStatus: foundItem.evaluationStatus,
+            answerText: foundItem.answerText,
+            feedback: foundItem.feedback,
+            hint: foundItem.hint
+        });
+
+        await fetchHistory(); // Refresh the table
       } else {
-        setError("Failed to get the answer. Please try again.");
+        // Only show error if polling failed too
+        setError("The request timed out and we couldn't retrieve the answer yet. Please refresh the page in a minute.");
       }
     } finally {
       setLoadingAnswer(false);
