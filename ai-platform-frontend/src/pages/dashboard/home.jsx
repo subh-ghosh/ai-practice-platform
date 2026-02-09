@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardBody,
   Spinner,
+  Chip,
   Button,
 } from "@material-tailwind/react";
 import { StatisticsCard } from "@/widgets/cards";
@@ -13,13 +14,16 @@ import { StatisticsChart } from "@/widgets/charts";
 import { chartsConfig } from "@/configs";
 import {
   CheckCircleIcon,
+  ClockIcon,
   XCircleIcon,
   EyeIcon,
+  ChartBarIcon,
   ArrowPathIcon,
   CheckIcon,
   XMarkIcon,
   PencilIcon,
   TrophyIcon,
+  ArrowTrendingUpIcon
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -31,7 +35,7 @@ function formatDateTime(isoString) {
   if (!isoString) return "N/A";
   try {
     const date = new Date(isoString);
-    return date.toLocaleString('en-US', {
+    return date.toLocaleString(undefined, {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -52,28 +56,26 @@ function formatDuration(seconds) {
 
 const lineChartOptions = {
   ...chartsConfig,
-  chart: { ...chartsConfig.chart, type: "line", toolbar: { show: false } },
-  stroke: { lineCap: "round", curve: "smooth", width: 2 },
-  markers: { size: 4 },
+  chart: { ...chartsConfig.chart, type: "line" },
+  stroke: { lineCap: "round", curve: "smooth" },
+  markers: { size: 5 },
   xaxis: {
     ...chartsConfig.xaxis,
     type: "category",
     labels: {
       ...chartsConfig.xaxis.labels,
-      style: { ...chartsConfig.xaxis.labels.style, colors: "#64748b", fontSize: "11px", fontFamily: "inherit" },
+      style: { ...chartsConfig.xaxis.labels.style, colors: "#37474f", fontSize: "10px" },
     },
-    axisBorder: { show: false },
-    axisTicks: { show: false },
   },
   yaxis: {
     ...chartsConfig.yaxis,
     labels: {
       ...chartsConfig.yaxis.labels,
-      style: { ...chartsConfig.yaxis.labels.style, colors: "#64748b", fontSize: "11px", fontFamily: "inherit" },
+      style: { ...chartsConfig.yaxis.labels.style, colors: "#37474f", fontSize: "10px" },
     },
   },
-  grid: { ...chartsConfig.grid, borderColor: "#f1f5f9", strokeDashArray: 2 },
-  tooltip: { ...chartsConfig.tooltip, theme: "light" },
+  grid: { ...chartsConfig.grid, borderColor: "#e0e0e0" },
+  tooltip: { ...chartsConfig.tooltip, theme: "dark" },
 };
 
 // --- Animation Variants ---
@@ -82,7 +84,10 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
   }
 };
 
@@ -139,22 +144,22 @@ export function Home() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[calc(100vh-200px)]">
-        <Spinner className="h-8 w-8 text-blue-500" />
+      <div className="flex justify-center items-center h-[calc(100vh-100px)]">
+        <Spinner className="h-10 w-10 text-blue-500" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Typography color="red" className="text-center mt-12 font-medium text-sm">
+      <Typography color="red" className="text-center mt-12 font-medium">
         {error}
       </Typography>
     );
   }
 
   if (!stats || !timeSeriesData) {
-    return <Typography color="gray" className="text-center mt-12 text-sm">No data available.</Typography>;
+    return <Typography color="gray" className="text-center mt-12">No data available.</Typography>;
   }
 
   /* ---------- data wiring ---------- */
@@ -196,7 +201,7 @@ export function Home() {
 
   const accuracyChart = {
     type: "line",
-    height: 240,
+    height: 220,
     series: [{ name: "Accuracy", data: timeSeriesData.map((d) => d.accuracy.toFixed(1)) }],
     options: {
       ...lineChartOptions,
@@ -209,7 +214,7 @@ export function Home() {
 
   const speedChart = {
     type: "line",
-    height: 240,
+    height: 220,
     series: [{ name: "Avg. Speed", data: timeSeriesData.map((d) => d.averageSpeedSeconds.toFixed(1)) }],
     options: {
       ...lineChartOptions,
@@ -221,48 +226,42 @@ export function Home() {
   };
 
   return (
-    <div className="relative mt-6 mb-8 w-full min-h-[calc(100vh-175px)]">
+    <div className="relative isolate px-4 pb-8 min-h-[calc(100vh-2rem)] overflow-hidden">
       
-      {/* Background blobs to match Notification page style */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      {/* Animated Background Gradient */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
         <motion.div 
           animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
           className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]" 
         />
-        <motion.div 
-          animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
-          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]" 
-        />
       </div>
 
       <motion.div 
-        className="relative z-10 flex flex-col gap-6"
+        className="mt-6 w-full flex flex-col gap-6 relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Header - Aligned with Notification Page Layout */}
-        <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
+        {/* Header */}
+        <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold tracking-tight">
-              Dashboard
+            <Typography variant="h4" color="blue-gray" className="font-bold">
+              Hello, {user.firstName}
             </Typography>
-            <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal mt-1">
-              Welcome back, {user.firstName}. Here is your daily overview.
+            <Typography variant="small" className="text-gray-500 font-normal">
+              Here is what's happening with your progress today.
             </Typography>
           </div>
           <Link to="/dashboard/practice">
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button size="sm" className="flex items-center gap-2 bg-blue-600 shadow-blue-500/20 hover:shadow-blue-500/40">
-                <PencilIcon className="h-4 w-4" /> Start Practice
-              </Button>
-            </motion.div>
+             <Button size="sm" className="flex items-center gap-2 bg-blue-600">
+               <PencilIcon className="h-4 w-4" /> Start Practice
+             </Button>
           </Link>
         </motion.div>
 
-        {/* 1. Stat Cards - Same rounded-xl and shadows as Notification container */}
+        {/* 1. Stat Cards (Compact) */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
             <motion.div key={title} whileHover={{ y: -3 }}>
@@ -271,7 +270,7 @@ export function Home() {
                 title={title}
                 icon={React.createElement(icon, { className: "w-5 h-5 text-white" })}
                 footer={<Typography className="font-normal text-blue-gray-600 text-xs">{footer.label}</Typography>}
-                className="border border-blue-gray-50 dark:border-gray-800 shadow-sm rounded-xl p-4 bg-white dark:bg-gray-900" 
+                className="border border-blue-gray-50 shadow-sm rounded-xl p-3" 
               />
             </motion.div>
           ))}
@@ -279,15 +278,15 @@ export function Home() {
 
         {/* 2. Charts */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-blue-gray-50 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-6">
+          <div className="rounded-xl border border-blue-gray-50 bg-white dark:bg-gray-900 shadow-sm p-1">
              <StatisticsChart
               chart={accuracyChart}
               title="Daily Accuracy"
-              description="Performance trend over time."
+              description="Your performance trend."
               footer={null}
             />
           </div>
-          <div className="rounded-xl border border-blue-gray-50 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-6">
+          <div className="rounded-xl border border-blue-gray-50 bg-white dark:bg-gray-900 shadow-sm p-1">
              <StatisticsChart
               chart={speedChart}
               title="Speed Trend"
@@ -297,100 +296,88 @@ export function Home() {
           </div>
         </motion.div>
 
-        {/* 3. Recent Activity & Overview - Uniform Spacing */}
+        {/* 3. Recent Activity (The "Notification Style" List) */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           
-          {/* Main Activity Feed - Matches Notification Container Style */}
-          <Card className="xl:col-span-2 overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
-            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 pb-2">
-               <Typography variant="h6" color="blue-gray" className="dark:text-white">Recent Activity</Typography>
-               <Typography variant="small" className="text-gray-500 font-normal mt-1">Latest practice sessions</Typography>
-            </CardHeader>
-            <CardBody className="p-6 pt-2 flex flex-col gap-2">
+          {/* Main Activity Feed */}
+          <div className="xl:col-span-2 flex flex-col gap-4">
+            <Typography variant="h6" color="blue-gray">Recent Activity</Typography>
+            
+            <div className="flex flex-col gap-2">
               {stats.recentActivity.map((item) => {
                 const isCorrect = item.evaluationStatus === "CORRECT";
                 const isWrong = item.evaluationStatus === "INCORRECT" || item.evaluationStatus === "CLOSE";
                 
-                // EXACT same styling logic as Notification Items
                 return (
                   <motion.div
                     key={`${item.questionId}-${item.submittedAt}`}
-                    whileHover={{ x: 4, transition: { duration: 0.2 } }}
-                    className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-colors duration-200 
-                      ${isCorrect ? "bg-white dark:bg-gray-800 border-green-100 dark:border-green-900/30 shadow-sm" 
-                      : isWrong ? "bg-white dark:bg-gray-800 border-red-100 dark:border-red-900/30 shadow-sm"
-                      : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
+                    whileHover={{ x: 4 }}
+                    className="group relative flex items-start gap-3 p-3 rounded-lg border border-blue-gray-50 bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm transition-all"
                   >
                     {/* Icon Box */}
-                    <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${
-                      isCorrect ? "bg-green-50 text-green-500 dark:bg-green-900/20" 
-                      : isWrong ? "bg-red-50 text-red-500 dark:bg-red-900/20" 
-                      : "bg-blue-50 text-blue-500 dark:bg-blue-900/20"
-                    }`}>
+                    <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${isCorrect ? "bg-green-50 text-green-500" : isWrong ? "bg-red-50 text-red-500" : "bg-blue-50 text-blue-500"}`}>
                       {isCorrect ? <CheckCircleIcon className="h-4 w-4" /> : isWrong ? <XCircleIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline mb-0.5">
-                        <span className={`text-xs font-bold ${isCorrect ? "text-gray-900 dark:text-gray-100" : "text-gray-600"}`}>
-                           {item.subject}
-                        </span>
-                        <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                      <div className="flex justify-between items-start">
+                        <Typography variant="small" color="blue-gray" className="font-semibold text-xs truncate pr-2">
+                           {item.questionText}
+                        </Typography>
+                        <Typography variant="small" className="text-[10px] text-gray-400 whitespace-nowrap">
                            {formatDateTime(item.submittedAt)}
-                        </span>
+                        </Typography>
                       </div>
-                      <p className={`text-xs leading-relaxed line-clamp-2 ${isCorrect ? "text-gray-700 dark:text-gray-300 font-medium" : "text-gray-500"}`}>
-                         {item.questionText}
-                      </p>
+                      <Typography variant="small" className="text-gray-500 text-[11px] mt-0.5 font-normal">
+                         {item.subject} • {item.topic}
+                      </Typography>
                     </div>
                   </motion.div>
                 );
               })}
               
               {stats.recentActivity.length === 0 && (
-                <div className="text-center py-8 text-gray-400 text-xs">No activity recorded yet.</div>
+                <div className="text-center py-10 text-gray-400 text-sm">No activity recorded yet.</div>
               )}
-            </CardBody>
-          </Card>
+            </div>
+          </div>
 
-          {/* Submission Overview (Right Side) */}
-          <Card className="rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 h-fit">
-             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 pb-2">
-                <Typography variant="h6" color="blue-gray" className="dark:text-white">Overview</Typography>
-             </CardHeader>
-             <CardBody className="p-6 pt-4">
-                <Typography variant="small" className="mb-6 text-gray-500 font-normal text-xs">
+          {/* Submission Overview (Mini List) */}
+          <div className="flex flex-col gap-4">
+             <Typography variant="h6" color="blue-gray">Overview</Typography>
+             <div className="rounded-xl border border-blue-gray-50 bg-white dark:bg-gray-900 shadow-sm p-4 h-fit">
+                <Typography variant="small" className="mb-4 text-gray-500 font-normal">
                   Distribution of your last {stats.recentActivity.length} attempts.
                 </Typography>
                 
                 <div className="flex items-center gap-4 mb-2">
-                    <div className="p-2.5 rounded-full bg-green-50 text-green-500 dark:bg-green-900/20">
-                        <CheckIcon className="h-4 w-4" />
+                    <div className="p-3 rounded-full bg-green-50 text-green-500">
+                        <CheckIcon className="h-5 w-5" />
                     </div>
                     <div>
-                        <Typography variant="h6" color="blue-gray" className="text-sm dark:text-gray-200">{stats.correctCount}</Typography>
-                        <Typography variant="small" className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Correct</Typography>
+                        <Typography variant="h6" color="blue-gray">{stats.correctCount}</Typography>
+                        <Typography variant="small" className="text-gray-500 text-xs">Correct</Typography>
                     </div>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-6">
+                <div className="w-full bg-gray-100 rounded-full h-1.5 mb-6">
                     <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${(stats.correctCount / (stats.totalAttempts || 1)) * 100}%` }}></div>
                 </div>
 
                 <div className="flex items-center gap-4 mb-2">
-                    <div className="p-2.5 rounded-full bg-red-50 text-red-500 dark:bg-red-900/20">
-                        <XMarkIcon className="h-4 w-4" />
+                    <div className="p-3 rounded-full bg-red-50 text-red-500">
+                        <XMarkIcon className="h-5 w-5" />
                     </div>
                     <div>
-                        <Typography variant="h6" color="blue-gray" className="text-sm dark:text-gray-200">{stats.incorrectCount}</Typography>
-                        <Typography variant="small" className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Incorrect</Typography>
+                        <Typography variant="h6" color="blue-gray">{stats.incorrectCount}</Typography>
+                        <Typography variant="small" className="text-gray-500 text-xs">Incorrect</Typography>
                     </div>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-2">
+                <div className="w-full bg-gray-100 rounded-full h-1.5 mb-2">
                     <div className="bg-red-500 h-1.5 rounded-full" style={{ width: `${(stats.incorrectCount / (stats.totalAttempts || 1)) * 100}%` }}></div>
                 </div>
-             </CardBody>
-          </Card>
+             </div>
+          </div>
 
         </motion.div>
       </motion.div>
