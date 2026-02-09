@@ -56,9 +56,9 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // ADDED: mt-6 to create space (border) between navbar and card
-    // CHANGED: dark:border-gray-700 to make the edge more visible in dark mode
-    <div className="relative mt-6 w-full h-full min-h-[600px] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
+    // FIXED: h-[calc(100vh-130px)] forces the card to fit exactly in the viewport
+    // (100vh - approx header height & margins), preventing page scroll.
+    <div className="relative mt-6 w-full h-[calc(100vh-130px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -67,10 +67,10 @@ export function Notifications() {
       </div>
 
       {/* Main Content Wrapper */}
-      <div className="relative z-10 p-6 flex flex-col gap-6 h-full">
+      <div className="relative z-10 p-6 flex flex-col gap-5 h-full">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
           <div>
             <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold tracking-tight">
               Notifications
@@ -94,34 +94,40 @@ export function Notifications() {
           )}
         </div>
 
-        {/* Content Area */}
-        <div className="flex flex-col gap-4 flex-1">
-            {/* Tabs */}
-            <div className="w-full md:w-72">
-                <Tabs value={filter}>
+        {/* Content Area - Flex Column to manage remaining space */}
+        <div className="flex flex-col gap-4 flex-1 min-h-0">
+            
+            {/* Tabs - Fixed: w-full and flex settings ensure equal width */}
+            <div className="w-full md:w-80 shrink-0">
+                <Tabs value={filter} className="w-full">
                 <TabsHeader 
                     className="bg-gray-100/50 dark:bg-gray-800/70 p-1 border border-gray-200 dark:border-gray-700"
                     indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
                 >
-                    <Tab value="all" onClick={() => setFilter("all")} className="text-xs font-semibold py-1.5 transition-colors">All</Tab>
-                    <Tab value="unread" onClick={() => setFilter("unread")} className="text-xs font-semibold py-1.5 transition-colors">Unread</Tab>
+                    {/* Added w-1/2 to force equal splitting of the tab width */}
+                    <Tab value="all" onClick={() => setFilter("all")} className="w-1/2 text-xs font-semibold py-2 transition-colors">
+                      All
+                    </Tab>
+                    <Tab value="unread" onClick={() => setFilter("unread")} className="w-1/2 text-xs font-semibold py-2 transition-colors">
+                      Unread
+                    </Tab>
                 </TabsHeader>
                 </Tabs>
             </div>
 
-            {/* List */}
-            <div className="flex-1 overflow-y-auto pr-2">
+            {/* List - Fixed: overflow-y-auto handles internal scrolling */}
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 <AnimatePresence mode="popLayout" initial={false}>
                 {filteredList.length === 0 ? (
                     <motion.div 
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                        className="flex flex-col items-center justify-center py-16 opacity-60"
+                        className="flex flex-col items-center justify-center h-full opacity-60"
                     >
                         <BellIcon className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
                         <Typography variant="small" className="text-gray-500">No notifications found.</Typography>
                     </motion.div>
                 ) : (
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-col gap-2 pb-4">
                     {filteredList.map((n) => {
                         const isUnread = !n.readFlag;
                         return (
