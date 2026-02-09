@@ -100,7 +100,7 @@ export function Pricing() {
       // 3. Create Order
       const orderRes = await axios.post(
         `${BASE_URL}/api/payments/create-order`, 
-        { productId: PREMIUM_MONTHLY_PLAN_ID }, // Currently defaulting to monthly ID
+        { productId: PREMIUM_MONTHLY_PLAN_ID },
         config
       );
 
@@ -114,10 +114,11 @@ export function Pricing() {
         name: "AI Practice Platform",
         description: "Premium Plan Upgrade",
         order_id: orderData.orderId,
+        
+        // --- Success Handler ---
         handler: async function (response) {
-          setLoading(true); // Keep loading while verifying
+          // Keep loading true while we verify backend
           try {
-            // 5. Verify Payment
             const verifyRes = await axios.post(
               `${BASE_URL}/api/payments/verify-payment`,
               {
@@ -133,13 +134,23 @@ export function Pricing() {
             }
             
             setSuccess("Payment successful! Your account has been upgraded.");
+            setLoading(false); // Stop loading on success
             setTimeout(() => navigate("/dashboard/home"), 2000);
           } catch (verifyErr) {
             console.error("Payment verification failed:", verifyErr);
             setError("Payment verification failed. Please contact support.");
-            setLoading(false);
+            setLoading(false); // Stop loading on error
           }
         },
+
+        // --- User Close Handler (The Fix) ---
+        modal: {
+          ondismiss: function() {
+            console.log("Payment modal closed by user");
+            setLoading(false); // <--- THIS STOPS THE INFINITE LOADING
+          }
+        },
+
         prefill: {
           name: orderData.studentName,
           email: orderData.studentEmail,
@@ -148,11 +159,14 @@ export function Pricing() {
       };
 
       const rzp = new window.Razorpay(options);
+      
+      // --- Failure Handler ---
       rzp.on("payment.failed", function (response) {
         console.error("Razorpay payment failed:", response.error);
         setError(`Payment failed: ${response.error.description || "Unknown error"}`);
-        setLoading(false);
+        setLoading(false); // Stop loading on failure
       });
+      
       rzp.open();
 
     } catch (err) {
@@ -182,7 +196,7 @@ export function Pricing() {
     {
       id: "premium",
       name: "Pro Scholar",
-      price: { monthly: 199, yearly: 1999 }, // Yearly is visual only in this demo
+      price: { monthly: 199, yearly: 1999 },
       description: "Advanced AI tools for serious prep.",
       features: [
         { text: "Unlimited Generations", included: true },
