@@ -56,8 +56,9 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // 1. Outermost Container
-    <div className="relative w-full h-full min-h-[600px] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // ADDED: mt-6 to create space (border) between navbar and card
+    // CHANGED: dark:border-gray-700 to make the edge more visible in dark mode
+    <div className="relative mt-6 w-full h-full min-h-[600px] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -183,7 +184,7 @@ export function Notifications() {
             </div>
         </div>
       </div>
-    </div> // <--- This was the missing tag!
+    </div>
   );
 }
 
