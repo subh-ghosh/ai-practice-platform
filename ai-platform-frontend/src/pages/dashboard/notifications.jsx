@@ -1,40 +1,34 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import {
   Typography,
   Card,
   CardHeader,
   CardBody,
-  Button,
-  Spinner,
   Tabs,
   TabsHeader,
   Tab,
   IconButton,
   Tooltip,
-  Alert,
+  Button,
 } from "@material-tailwind/react";
 import {
   CheckCircleIcon,
   BellIcon,
-  InformationCircleIcon,
   UserCircleIcon,
   ShieldCheckIcon,
   PencilSquareIcon,
-  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  EnvelopeOpenIcon
 } from "@heroicons/react/24/solid";
+import { useNotifications } from "@/context/NotificationContext"; // Use Context!
 
+// Helper for nice dates
 function formatDateTime(iso) {
   try {
-    return new Date(iso).toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Date(iso).toLocaleString('en-US', {
+      month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
     });
-  } catch {
-    return "—";
-  }
+  } catch { return "—"; }
 }
 
 function getIconForType(type) {
@@ -42,211 +36,143 @@ function getIconForType(type) {
   if (t.includes("LOGIN") || t.includes("SECURITY")) return <ShieldCheckIcon className="h-5 w-5 text-blue-500" />;
   if (t.includes("PROFILE")) return <PencilSquareIcon className="h-5 w-5 text-orange-500" />;
   if (t.includes("REGISTER")) return <UserCircleIcon className="h-5 w-5 text-green-500" />;
-  return <InformationCircleIcon className="h-5 w-5 text-blue-gray-500" />;
+  return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
 }
 
 export function Notifications() {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [filter, setFilter] = useState("unread");
-  const [markingAll, setMarkingAll] = useState(false);
+  const { notifications, markRead, markAllAsRead } = useNotifications();
+  const [filter, setFilter] = useState("all"); // 'all' or 'unread'
 
-  // Use the Cloud URL
-  const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+  // Filter logic on the client side since we have all data in context
+  const filteredList = notifications.filter(n => {
+    if (filter === "unread") return !n.readFlag;
+    return true; // "all"
+  });
 
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
-      
-      const endpoint = filter === "unread" 
-        ? `${BASE_URL}/api/notifications/unread` 
-        : `${BASE_URL}/api/notifications`;
-
-      const response = await axios.get(endpoint, config);
-      setNotifications(response.data);
-    } catch (err) {
-      console.error("Fetch error:", err);
-      if (err.response?.status !== 404) {
-        // Silently ignore 404s (just means empty list)
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchNotifications();
-  }, [filter]);
-
-  const markRead = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-      
-      // Try PATCH (Standard)
-      await axios.patch(
-        `${BASE_URL}/api/notifications/${id}/read`,
-        {},
-        { headers: { "Authorization": `Bearer ${token}` } }
-      );
-
-      // UI Update
-      if (filter === "unread") {
-        setNotifications((prev) => prev.filter((n) => n.id !== id));
-      } else {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, readFlag: true } : n))
-        );
-      }
-    } catch (err) {
-      console.error("Mark read error:", err);
-      // Show specific 403 error
-      if (err.response?.status === 403) {
-        setError("Permission Denied (403): The backend is blocking this update.");
-      }
-    }
-  };
-
-  const markAllAsRead = async () => {
-    // If nothing to read, stop
-    const unreadCount = notifications.filter(n => !n.readFlag).length;
-    if (unreadCount === 0) return;
-
-    setMarkingAll(true);
-    try {
-      const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
-
-      // 🟢 FIX: Use the single bulk endpoint defined in your backend
-      await axios.patch(`${BASE_URL}/api/notifications/read-all`, {}, config);
-
-      // Refresh data to show updates
-      await fetchNotifications();
-    } catch (err) {
-       console.error("Mark all error:", err);
-       if (err.response?.status === 403) {
-          setError("Permission Denied (403): The backend is blocking these updates.");
-       }
-    } finally {
-      setMarkingAll(false);
-    }
-  };
+  const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    <section className="relative isolate overflow-x-hidden -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 min-h-[calc(100vh-4rem)] pb-10 flex">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
+    <div className="mt-8 mb-8 flex flex-col gap-8 w-full max-w-4xl mx-auto px-4">
       
-      <div className="mt-6 has-fixed-navbar page w-full flex flex-col items-center">
-        <Card className="w-full max-w-4xl border border-blue-100/60 bg-white/90 backdrop-blur-md shadow-sm dark:bg-gray-800/80 dark:border-gray-700 flex-1">
-          <CardHeader
-            color="transparent"
-            floated={false}
-            shadow={false}
-            className="m-0 p-4 rounded-t-xl border-b border-blue-gray-50 dark:border-gray-700"
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <Typography variant="h4" color="blue-gray" className="dark:text-white font-bold">
+            Activity & Notifications
+          </Typography>
+          <Typography variant="small" className="text-gray-600 dark:text-gray-400 font-normal mt-1">
+            Stay updated with your account activity and platform news.
+          </Typography>
+        </div>
+        
+        {hasUnread && (
+          <Button 
+            variant="outlined" 
+            size="sm" 
+            color="blue"
+            className="flex items-center gap-2 dark:border-blue-400 dark:text-blue-300"
+            onClick={markAllAsRead}
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <BellIcon className="h-6 w-6 text-blue-500" />
-                <Typography variant="h5" color="blue-gray" className="dark:text-gray-100">
-                  Notifications
-                </Typography>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="w-48">
-                  <Tabs value={filter}>
-                    <TabsHeader className="bg-blue-gray-50/50 dark:bg-gray-700/50 p-1">
-                      <Tab value="unread" onClick={() => setFilter("unread")} className="text-xs font-medium py-1.5">Unread</Tab>
-                      <Tab value="all" onClick={() => setFilter("all")} className="text-xs font-medium py-1.5">All History</Tab>
-                    </TabsHeader>
-                  </Tabs>
-                </div>
-
-                {filter === "unread" && notifications.length > 0 && (
-                  <Tooltip content="Mark all as read">
-                    <IconButton variant="text" color="blue" disabled={markingAll} onClick={markAllAsRead}>
-                      {markingAll ? <Spinner className="h-4 w-4" /> : <CheckCircleIcon className="h-5 w-5" />}
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardBody className="flex flex-col gap-0 p-0 min-h-[300px]">
-             {/* Error Banner */}
-             {error && (
-                <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />} className="rounded-none">
-                   {error}
-                </Alert>
-             )}
-
-            {/* Empty State */}
-            {!loading && !error && notifications.length === 0 && (
-               <div className="flex flex-col items-center justify-center h-full py-16 opacity-60">
-                 <BellIcon className="h-16 w-16 text-blue-gray-200 dark:text-gray-600 mb-4" />
-                 <Typography variant="h6" className="text-blue-gray-400 dark:text-gray-500">
-                    No notifications found.
-                 </Typography>
-               </div>
-            )}
-
-            {/* List */}
-            {!loading && notifications.map((n, index) => {
-              const isUnread = !n.readFlag; 
-              
-              return (
-                <div 
-                  key={n.id} 
-                  className={`
-                    group flex items-start gap-4 p-4 transition-colors 
-                    ${index !== notifications.length - 1 ? "border-b border-blue-gray-50 dark:border-gray-700" : ""}
-                    ${isUnread 
-                        ? "bg-white dark:bg-gray-800/80"  // UNREAD: Clean White/Dark
-                        : "bg-gray-50/50 dark:bg-gray-900/50 opacity-75" // READ: Greyed out
-                     }
-                  `}
-                >
-                  <div className={`mt-1 p-2 rounded-full shadow-sm border ${isUnread ? "bg-blue-50 border-blue-100" : "bg-gray-100 border-gray-200 dark:bg-gray-800 dark:border-gray-700"}`}>
-                    {getIconForType(n.type)}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <Typography variant="small" className={`font-semibold ${isUnread ? "text-blue-900 dark:text-blue-100" : "text-gray-600 dark:text-gray-500"}`}>
-                        {n.type || "System"}
-                      </Typography>
-                      <Typography variant="small" className="text-xs text-gray-400 ml-2 whitespace-nowrap">
-                        {formatDateTime(n.createdAt)}
-                      </Typography>
-                    </div>
-                    <Typography className={`text-sm ${isUnread ? "text-gray-800 dark:text-gray-200 font-medium" : "text-gray-500 dark:text-gray-600"}`}>
-                      {n.message}
-                    </Typography>
-                  </div>
-
-                  {/* BUTTON ONLY IF UNREAD */}
-                  {isUnread ? (
-                    <div className="self-center">
-                      <Tooltip content="Mark as read">
-                        <IconButton variant="text" color="blue" size="sm" onClick={() => markRead(n.id)}>
-                          <CheckCircleIcon className="h-5 w-5" />
-                        </IconButton>
-                      </Tooltip>
-                    </div>
-                  ) : (
-                    <div className="self-center w-8 h-8" /> // Spacer
-                  )}
-                </div>
-              );
-            })}
-          </CardBody>
-        </Card>
+            <EnvelopeOpenIcon className="h-4 w-4" />
+            Mark all read
+          </Button>
+        )}
       </div>
-    </section>
+
+      <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+        <CardHeader
+          floated={false}
+          shadow={false}
+          color="transparent"
+          className="m-0 p-4 rounded-t-xl border-b border-blue-gray-50 dark:border-gray-800"
+        >
+          <div className="w-full md:w-96">
+            <Tabs value={filter}>
+              <TabsHeader className="bg-gray-100 dark:bg-gray-800 p-1">
+                <Tab value="all" onClick={() => setFilter("all")} className="text-sm font-medium py-2">
+                  All History
+                </Tab>
+                <Tab value="unread" onClick={() => setFilter("unread")} className="text-sm font-medium py-2">
+                  Unread Only
+                </Tab>
+              </TabsHeader>
+            </Tabs>
+          </div>
+        </CardHeader>
+
+        <CardBody className="p-0 min-h-[400px]">
+          {filteredList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full py-20 opacity-60">
+              <div className="p-6 bg-gray-50 dark:bg-gray-800 rounded-full mb-4">
+                <BellIcon className="h-10 w-10 text-gray-400" />
+              </div>
+              <Typography variant="h6" className="text-gray-500 dark:text-gray-400">
+                All caught up!
+              </Typography>
+              <Typography className="text-gray-400 text-sm">
+                No notifications to display.
+              </Typography>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {filteredList.map((n) => {
+                const isUnread = !n.readFlag;
+                return (
+                  <div 
+                    key={n.id} 
+                    className={`
+                      group flex items-start gap-4 p-5 transition-all duration-200
+                      ${isUnread 
+                        ? "bg-blue-50/30 dark:bg-blue-900/10 hover:bg-blue-50/60 dark:hover:bg-blue-900/20" 
+                        : "bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50"}
+                    `}
+                  >
+                    {/* Icon Bubble */}
+                    <div className={`mt-1 p-2.5 rounded-xl border shadow-sm shrink-0
+                      ${isUnread 
+                        ? "bg-white border-blue-100 dark:bg-gray-800 dark:border-gray-700" 
+                        : "bg-gray-50 border-gray-100 dark:bg-gray-800 dark:border-gray-700 opacity-70"}
+                    `}>
+                      {getIconForType(n.type)}
+                    </div>
+                    
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-start">
+                        <Typography variant="small" className={`font-bold mb-0.5 ${isUnread ? "text-blue-gray-900 dark:text-white" : "text-gray-600 dark:text-gray-400"}`}>
+                          {n.type || "System Notification"}
+                        </Typography>
+                        <Typography className="text-[11px] font-medium text-gray-400 whitespace-nowrap ml-3 mt-0.5">
+                          {formatDateTime(n.createdAt)}
+                        </Typography>
+                      </div>
+                      
+                      <Typography className={`text-sm leading-relaxed ${isUnread ? "text-gray-800 dark:text-gray-200 font-medium" : "text-gray-500 dark:text-gray-500"}`}>
+                        {n.message}
+                      </Typography>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="self-center pl-2">
+                      {isUnread ? (
+                        <Tooltip content="Mark as read">
+                          <IconButton variant="text" color="blue" size="sm" onClick={() => markRead(n.id)} className="rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/30">
+                            <CheckCircleIcon className="h-6 w-6" />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        // Optional: Delete button placeholder if you implement delete later
+                        <div className="w-8 h-8" /> 
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardBody>
+      </Card>
+    </div>
   );
 }
 

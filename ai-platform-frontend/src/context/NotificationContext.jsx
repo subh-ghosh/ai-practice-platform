@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { useAuth } from "./AuthContext"; // 👈 This import works here because they are neighbors
+import { useAuth } from "./AuthContext";
 
 const NotificationContext = createContext();
 
@@ -18,8 +18,9 @@ export function NotificationProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // 1. Fetch Notifications (Manual Token)
-  const fetchUnread = useCallback(async (isSilent = false) => {
+  // 1. Fetch Notifications (Single Source of Truth)
+  // We fetch ALL notifications so the "History" tab works without extra calls
+  const fetchNotifications = useCallback(async (isSilent = false) => {
     const token = localStorage.getItem("token");
     if (!token) return;
 
@@ -27,56 +28,83 @@ export function NotificationProvider({ children }) {
     
     try {
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-      const res = await axios.get(`${BASE_URL}/api/notifications/unread`, config);
+      
+      // CHANGED: Fetch ALL notifications, not just unread
+      const res = await axios.get(`${BASE_URL}/api/notifications`, config);
       
       setNotifications(res.data);
-      setUnreadCount(res.data.filter((n) => !n.read).length);
+      
+      // Calculate unread count locally
+      const unread = res.data.filter(n => !n.readFlag).length;
+      setUnreadCount(unread);
       setError(null);
     } catch (err) {
       console.error("Context: Failed to fetch notifications", err);
       if (err.response && err.response.status !== 404) {
-          setError("Could not load notifications");
+         setError("Could not load notifications");
       }
     } finally {
       if (!isSilent) setLoading(false);
     }
   }, []);
 
-  // 2. Mark Read (Manual Token)
+  // 2. Mark Read (Optimistic Update)
   const markRead = useCallback(async (id) => {
+    // INSTANTLY update UI state before server responds (No Lag)
+    setNotifications(prev => 
+      prev.map(n => n.id === id ? { ...n, readFlag: true } : n)
+    );
+    setUnreadCount(prev => Math.max(0, prev - 1));
+
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-
       await axios.patch(`${BASE_URL}/api/notifications/${id}/read`, {}, config);
-      
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      setUnreadCount((prev) => Math.max(0, prev - 1));
-      fetchUnread(true);
     } catch (err) {
       console.error("Context: Failed to mark read", err);
+      // If it fails, re-fetch to ensure sync
+      fetchNotifications(true);
     }
-  }, [fetchUnread]);
+  }, [fetchNotifications]);
 
-  // 3. Reload helper
-  const reload = useCallback(() => fetchUnread(false), [fetchUnread]);
+  // 3. Mark ALL Read (Optimistic Update)
+  const markAllAsRead = useCallback(async () => {
+    // Optimistic: Mark all as read locally immediately
+    setNotifications(prev => prev.map(n => ({ ...n, readFlag: true })));
+    setUnreadCount(0);
 
+    try {
+      const token = localStorage.getItem("token");
+      const config = { headers: { "Authorization": `Bearer ${token}` } };
+      await axios.patch(`${BASE_URL}/api/notifications/read-all`, {}, config);
+    } catch (err) {
+      console.error("Context: Failed to mark all read", err);
+      fetchNotifications(true);
+    }
+  }, [fetchNotifications]);
+
+  // Initial Fetch & Polling
   useEffect(() => {
     if (user) {
-      fetchUnread();
+      fetchNotifications();
+      // Poll every 30 seconds to keep sync
+      const interval = setInterval(() => fetchNotifications(true), 30000); 
+      return () => clearInterval(interval);
     } else {
       setNotifications([]);
       setUnreadCount(0);
     }
-  }, [user, fetchUnread]);
+  }, [user, fetchNotifications]);
 
-  useEffect(() => {
-    if (!user) return;
-    const interval = setInterval(() => fetchUnread(true), 60000); 
-    return () => clearInterval(interval);
-  }, [user, fetchUnread]);
-
-  const value = { notifications, unreadCount, loading, error, markRead, reload };
+  const value = { 
+    notifications, 
+    unreadCount, 
+    loading, 
+    error, 
+    markRead, 
+    markAllAsRead,
+    refresh: () => fetchNotifications(false) 
+  };
 
   return (
     <NotificationContext.Provider value={value}>
