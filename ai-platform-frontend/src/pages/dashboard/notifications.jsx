@@ -56,10 +56,6 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // FIXED: 
-    // Changed to h-[calc(100vh-175px)]
-    // This adds roughly 20px more height than the last version.
-    // It's the maximum safe height before the footer starts getting pushed off-screen.
     <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
@@ -117,15 +113,7 @@ export function Notifications() {
             </div>
 
             {/* List with DARK/HIDDEN SCROLLBAR */}
-            <div className="flex-1 overflow-y-auto pr-2 
-              [&::-webkit-scrollbar]:w-1.5 
-              [&::-webkit-scrollbar-track]:bg-transparent 
-              [&::-webkit-scrollbar-thumb]:bg-gray-300 
-              dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 
-              [&::-webkit-scrollbar-thumb]:rounded-full
-              hover:[&::-webkit-scrollbar-thumb]:bg-gray-400
-              dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-700"
-            >
+            <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-700">
                 <AnimatePresence mode="popLayout" initial={false}>
                 {filteredList.length === 0 ? (
                     <motion.div 
@@ -136,7 +124,6 @@ export function Notifications() {
                         <Typography variant="small" className="text-gray-500">No notifications found.</Typography>
                     </motion.div>
                 ) : (
-                    {/* Increased pb-4 to pb-6 to ensure the last item isn't cut off visually when scrolling */}
                     <div className="flex flex-col gap-2 pb-6">
                     {filteredList.map((n) => {
                         const isUnread = !n.readFlag;
@@ -148,17 +135,9 @@ export function Notifications() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.2 }} 
-                            className={`
-                            group relative flex items-start gap-3 p-3 rounded-lg border transition-all duration-200
-                            ${isUnread 
-                                ? "bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-900/30 shadow-sm" 
-                                : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}
-                            `}
+                            className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-all duration-200 ${isUnread ? "bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-900/30 shadow-sm" : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
                         >
-                            <div className={`
-                            mt-0.5 p-2 rounded-lg shrink-0
-                            ${isUnread ? "bg-blue-50 dark:bg-blue-900/20" : "bg-gray-50 dark:bg-gray-800/50"}
-                            `}>
+                            <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${isUnread ? "bg-blue-50 dark:bg-blue-900/20" : "bg-gray-50 dark:bg-gray-800/50"}`}>
                                 {getIconForType(n.type)}
                             </div>
                             
