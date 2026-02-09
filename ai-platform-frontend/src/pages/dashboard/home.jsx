@@ -6,7 +6,6 @@ import {
   CardHeader,
   CardBody,
   Spinner,
-  Chip,
   Button,
 } from "@material-tailwind/react";
 import { StatisticsCard } from "@/widgets/cards";
@@ -14,18 +13,17 @@ import { StatisticsChart } from "@/widgets/charts";
 import { chartsConfig } from "@/configs";
 import {
   CheckCircleIcon,
-  ClockIcon,
   XCircleIcon,
   EyeIcon,
-  ChartBarIcon,
   ArrowPathIcon,
   CheckIcon,
   XMarkIcon,
   PencilIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { motion } from "framer-motion"; // Import Animation Library
+import { motion } from "framer-motion";
 
 /* ---------- helpers ---------- */
 
@@ -33,7 +31,7 @@ function formatDateTime(isoString) {
   if (!isoString) return "N/A";
   try {
     const date = new Date(isoString);
-    return date.toLocaleString(undefined, {
+    return date.toLocaleString('en-US', {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -54,40 +52,28 @@ function formatDuration(seconds) {
 
 const lineChartOptions = {
   ...chartsConfig,
-  chart: { ...chartsConfig.chart, type: "line" },
-  stroke: { lineCap: "round", curve: "smooth" },
-  markers: { size: 5 },
+  chart: { ...chartsConfig.chart, type: "line", toolbar: { show: false } },
+  stroke: { lineCap: "round", curve: "smooth", width: 2 },
+  markers: { size: 4 },
   xaxis: {
     ...chartsConfig.xaxis,
     type: "category",
     labels: {
       ...chartsConfig.xaxis.labels,
-      style: { ...chartsConfig.xaxis.labels.style, colors: "#37474f" },
+      style: { ...chartsConfig.xaxis.labels.style, colors: "#64748b", fontSize: "11px", fontFamily: "inherit" },
     },
+    axisBorder: { show: false },
+    axisTicks: { show: false },
   },
   yaxis: {
     ...chartsConfig.yaxis,
     labels: {
       ...chartsConfig.yaxis.labels,
-      style: { ...chartsConfig.yaxis.labels.style, colors: "#37474f" },
+      style: { ...chartsConfig.yaxis.labels.style, colors: "#64748b", fontSize: "11px", fontFamily: "inherit" },
     },
   },
-  grid: { ...chartsConfig.grid, borderColor: "#e0e0e0" },
-  tooltip: { ...chartsConfig.tooltip, theme: "dark", x: { format: "dd MMM yyyy" } },
-};
-
-const getOverviewIcon = (status) => {
-  switch ((status || "").toUpperCase()) {
-    case "CORRECT":
-      return { Icon: CheckCircleIcon, color: "text-green-500" };
-    case "INCORRECT":
-    case "CLOSE":
-      return { Icon: XCircleIcon, color: "text-red-500" };
-    case "REVEALED":
-      return { Icon: EyeIcon, color: "text-blue-500" };
-    default:
-      return { Icon: ClockIcon, color: "text-gray-500" };
-  }
+  grid: { ...chartsConfig.grid, borderColor: "#f1f5f9", strokeDashArray: 2 },
+  tooltip: { ...chartsConfig.tooltip, theme: "light" },
 };
 
 // --- Animation Variants ---
@@ -96,10 +82,7 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1
-    }
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
   }
 };
 
@@ -130,13 +113,7 @@ export function Home() {
         setTimeSeriesData(null);
 
         const token = localStorage.getItem("token");
-        
-        const config = {
-          headers: {
-            "Authorization": `Bearer ${token}` 
-          }
-        };
-
+        const config = { headers: { "Authorization": `Bearer ${token}` } };
         const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
         const [summaryRes, timeSeriesRes] = await Promise.all([
@@ -162,26 +139,22 @@ export function Home() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[calc(100vh-100px)]">
-        <Spinner className="h-12 w-12 text-blue-500" />
+      <div className="flex justify-center items-center h-[calc(100vh-200px)]">
+        <Spinner className="h-8 w-8 text-blue-500" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Typography color="red" className="text-center mt-12 font-medium">
+      <Typography color="red" className="text-center mt-12 font-medium text-sm">
         {error}
       </Typography>
     );
   }
 
   if (!stats || !timeSeriesData) {
-    return (
-      <Typography color="gray" className="text-center mt-12">
-        No statistics data available yet.
-      </Typography>
-    );
+    return <Typography color="gray" className="text-center mt-12 text-sm">No data available.</Typography>;
   }
 
   /* ---------- data wiring ---------- */
@@ -192,28 +165,28 @@ export function Home() {
       icon: ArrowPathIcon,
       color: "gray",
       value: stats.totalAttempts,
-      footer: { value: "", label: "in total" },
+      footer: { value: "", label: "lifetime" },
     },
     {
-      title: "Correct Answers",
+      title: "Accuracy",
+      icon: TrophyIcon,
+      color: "blue",
+      value: `${stats.accuracyPercentage.toFixed(1)}%`,
+      footer: { value: "", label: "average" },
+    },
+    {
+      title: "Correct",
       icon: CheckIcon,
       color: "green",
       value: stats.correctCount,
-      footer: { value: "", label: "in total" },
+      footer: { value: "", label: "answers" },
     },
     {
-      title: "Incorrect Answers",
+      title: "Mistakes",
       icon: XMarkIcon,
       color: "red",
       value: stats.incorrectCount,
-      footer: { value: "", label: "in total" },
-    },
-    {
-      title: "Overall Accuracy",
-      icon: ChartBarIcon,
-      color: "blue",
-      value: `${stats.accuracyPercentage.toFixed(1)}%`,
-      footer: { value: "", label: "of graded attempts" },
+      footer: { value: "", label: "to review" },
     },
   ];
 
@@ -223,61 +196,35 @@ export function Home() {
 
   const accuracyChart = {
     type: "line",
-    height: 220,
+    height: 240,
     series: [{ name: "Accuracy", data: timeSeriesData.map((d) => d.accuracy.toFixed(1)) }],
     options: {
       ...lineChartOptions,
       colors: ["#22c55e"],
       xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
-      yaxis: {
-        ...lineChartOptions.yaxis,
-        min: 0,
-        max: 100,
-        labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => `${v}%` },
-      },
+      yaxis: { ...lineChartOptions.yaxis, min: 0, max: 100, labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => `${v}%` } },
       tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => `${v}%` } },
     },
   };
 
   const speedChart = {
     type: "line",
-    height: 220,
+    height: 240,
     series: [{ name: "Avg. Speed", data: timeSeriesData.map((d) => d.averageSpeedSeconds.toFixed(1)) }],
     options: {
       ...lineChartOptions,
       colors: ["#f59e0b"],
       xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
-      yaxis: {
-        ...lineChartOptions.yaxis,
-        labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => formatDuration(v) },
-      },
+      yaxis: { ...lineChartOptions.yaxis, labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => formatDuration(v) } },
       tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => formatDuration(v) } },
     },
   };
 
-  const breakdownChart = {
-    type: "pie",
-    height: 220,
-    series: [stats.correctCount, stats.incorrectCount, stats.revealedCount],
-    options: {
-      ...chartsConfig,
-      chart: { ...chartsConfig.chart, type: "pie" },
-      title: { show: "" },
-      dataLabels: { enabled: false },
-      colors: ["#22c55e", "#ef4444", "#6b7280"],
-      legend: { show: true, position: "bottom", labels: { colors: "#37474f" } },
-      labels: ["Correct", "Incorrect", "Revealed"],
-    },
-  };
-
-  /* ---------- UI ---------- */
-
   return (
-    <div className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="relative mt-6 mb-8 w-full min-h-[calc(100vh-175px)]">
       
-      {/* Animated Background Gradient (Same as Notifications) */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
+      {/* Background blobs to match Notification page style */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div 
           animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
@@ -291,218 +238,160 @@ export function Home() {
       </div>
 
       <motion.div 
-        className="mt-6 has-fixed-navbar page w-full flex flex-col relative z-10"
+        className="relative z-10 flex flex-col gap-6"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Welcome header */}
-        <motion.div variants={itemVariants} className="mb-8">
-          <div className="rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-6 py-5 shadow-sm">
-            <div className="flex flex-wrap items-baseline gap-3">
-              <Typography variant="h4" color="blue-gray" className="font-normal">
-                Welcome,
-              </Typography>
-              <Typography variant="h1" color="blue-gray" className="font-bold">
-                {user.firstName}
-              </Typography>
-              <Chip
-                variant="ghost"
-                color={user.subscriptionStatus === "PREMIUM" ? "green" : "blue-gray"}
-                value={user.subscriptionStatus === "PREMIUM" ? "Premium User" : "Free User"}
-                className="self-center"
-              />
-            </div>
+        {/* Header - Aligned with Notification Page Layout */}
+        <motion.div variants={itemVariants} className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
+          <div>
+            <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold tracking-tight">
+              Dashboard
+            </Typography>
+            <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal mt-1">
+              Welcome back, {user.firstName}. Here is your daily overview.
+            </Typography>
           </div>
+          <Link to="/dashboard/practice">
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button size="sm" className="flex items-center gap-2 bg-blue-600 shadow-blue-500/20 hover:shadow-blue-500/40">
+                <PencilIcon className="h-4 w-4" /> Start Practice
+              </Button>
+            </motion.div>
+          </Link>
         </motion.div>
 
-        {/* Row 1: Stat cards - Staggered */}
-        <motion.div 
-          variants={itemVariants} 
-          className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
-        >
+        {/* 1. Stat Cards - Same rounded-xl and shadows as Notification container */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
-            <motion.div
-              key={title}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
-            >
+            <motion.div key={title} whileHover={{ y: -3 }}>
               <StatisticsCard
                 {...rest}
                 title={title}
-                icon={React.createElement(icon, { className: "w-6 h-6 text-white" })}
-                footer={<Typography className="font-normal text-blue-gray-600">{footer.label}</Typography>}
+                icon={React.createElement(icon, { className: "w-5 h-5 text-white" })}
+                footer={<Typography className="font-normal text-blue-gray-600 text-xs">{footer.label}</Typography>}
+                className="border border-blue-gray-50 dark:border-gray-800 shadow-sm rounded-xl p-4 bg-white dark:bg-gray-900" 
               />
             </motion.div>
           ))}
         </motion.div>
 
-        {/* Row 2: Charts */}
-        <motion.div variants={itemVariants} className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300">
-            <StatisticsChart
-              key="accuracy-chart"
+        {/* 2. Charts */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-blue-gray-50 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-6">
+             <StatisticsChart
               chart={accuracyChart}
-              color="transparent"
               title="Daily Accuracy"
-              description="Percentage of correct answers over time."
-              footer={
-                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  &nbsp;Updated just now
-                </Typography>
-              }
+              description="Performance trend over time."
+              footer={null}
             />
           </div>
-
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300">
-            <StatisticsChart
-              key="speed-chart"
+          <div className="rounded-xl border border-blue-gray-50 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-6">
+             <StatisticsChart
               chart={speedChart}
-              color="transparent"
-              title="Average Answer Speed"
-              description="Average time to a correct submission."
-              footer={
-                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  &nbsp;Updated just now
-                </Typography>
-              }
-            />
-          </div>
-
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300">
-            <StatisticsChart
-              key="breakdown-chart"
-              chart={breakdownChart}
-              color="transparent"
-              className="flex flex-col justify-between h-full"
-              title={<div className="mt-12">Answer Breakdown</div>}
-              description="Summary of all practice attempts."
-              footer={
-                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  &nbsp;Updated just now
-                </Typography>
-              }
+              title="Speed Trend"
+              description="Average time per question."
+              footer={null}
             />
           </div>
         </motion.div>
 
-        {/* Row 3: Table & Feed */}
-        <motion.div variants={itemVariants} className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <Card className="overflow-hidden xl:col-span-2 border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
-            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
-              <div>
-                <Typography variant="h6" color="blue-gray" className="mb-1">
-                  Recent Activity
-                </Typography>
-                <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
-                  <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
-                  <strong>{stats.totalAttempts} attempts</strong> in total
-                </Typography>
-              </div>
-              <Link to="/dashboard/practice">
-                <Button variant="text" size="sm" className="flex items-center gap-2 hover:bg-blue-50">
-                  <PencilIcon className="h-4 w-4" />
-                  Start Practice
-                </Button>
-              </Link>
+        {/* 3. Recent Activity & Overview - Uniform Spacing */}
+        <motion.div variants={itemVariants} className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          
+          {/* Main Activity Feed - Matches Notification Container Style */}
+          <Card className="xl:col-span-2 overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 pb-2">
+               <Typography variant="h6" color="blue-gray" className="dark:text-white">Recent Activity</Typography>
+               <Typography variant="small" className="text-gray-500 font-normal mt-1">Latest practice sessions</Typography>
             </CardHeader>
-
-            <CardBody className="overflow-x-auto hide-scrollbar px-0 pt-0 pb-0">
-              <table className="w-full table-auto">
-                <thead>
-                  <tr>
-                    {["Question", "Subject", "Status", "Submitted"].map((el) => (
-                      <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
-                        <Typography variant="small" className="text-[11px] font-medium uppercase text-blue-gray-400">
-                          {el}
-                        </Typography>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.recentActivity.map((item, key) => {
-                    const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
-                    const uniqueKey = `${item.questionId}-${item.submittedAt}`;
-                    return (
-                      <tr key={uniqueKey} className="hover:bg-gray-50/50 transition-colors">
-                        <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {item.questionText.substring(0, 40)}...
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography variant="small" className="text-xs font-medium text-blue-gray-600">
-                            {item.subject}
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Chip
-                            variant="gradient"
-                            color={
-                              item.evaluationStatus === "CORRECT"
-                                ? "green"
-                                : item.evaluationStatus === "REVEALED"
-                                ? "blue"
-                                : item.evaluationStatus === "CLOSE"
-                                ? "orange"
-                                : "red"
-                            }
-                            value={item.evaluationStatus.toLowerCase()}
-                            className="py-0.5 px-2 text-[11px] font-medium w-fit"
-                          />
-                        </td>
-                        <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {formatDateTime(item.submittedAt)}
-                          </Typography>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </CardBody>
-          </Card>
-
-          <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
-            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6">
-              <Typography variant="h6" color="blue-gray" className="mb-2">
-                Submission Overview
-              </Typography>
-              <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
-                Your latest 5 attempts.
-              </Typography>
-            </CardHeader>
-            <CardBody className="pt-0">
-              {stats.recentActivity.map((item, key) => {
-                const { Icon, color } = getOverviewIcon(item.evaluationStatus);
-                const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
+            <CardBody className="p-6 pt-2 flex flex-col gap-2">
+              {stats.recentActivity.map((item) => {
+                const isCorrect = item.evaluationStatus === "CORRECT";
+                const isWrong = item.evaluationStatus === "INCORRECT" || item.evaluationStatus === "CLOSE";
+                
+                // EXACT same styling logic as Notification Items
                 return (
-                  <div key={uniqueKey} className="flex items-start gap-4 py-3">
-                    <div
-                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                        key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
-                      }`}
-                    >
-                      <Icon className={`!w-5 !h-5 ${color}`} />
+                  <motion.div
+                    key={`${item.questionId}-${item.submittedAt}`}
+                    whileHover={{ x: 4, transition: { duration: 0.2 } }}
+                    className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-colors duration-200 
+                      ${isCorrect ? "bg-white dark:bg-gray-800 border-green-100 dark:border-green-900/30 shadow-sm" 
+                      : isWrong ? "bg-white dark:bg-gray-800 border-red-100 dark:border-red-900/30 shadow-sm"
+                      : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
+                  >
+                    {/* Icon Box */}
+                    <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${
+                      isCorrect ? "bg-green-50 text-green-500 dark:bg-green-900/20" 
+                      : isWrong ? "bg-red-50 text-red-500 dark:bg-red-900/20" 
+                      : "bg-blue-50 text-blue-500 dark:bg-blue-900/20"
+                    }`}>
+                      {isCorrect ? <CheckCircleIcon className="h-4 w-4" /> : isWrong ? <XCircleIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
                     </div>
-                    <div>
-                      <Typography variant="small" color="blue-gray" className="block font-medium">
-                        {item.subject}: {item.topic.substring(0, 20)}...
-                      </Typography>
-                      <Typography as="span" variant="small" className="text-xs font-medium text-blue-gray-500">
-                        {formatDateTime(item.submittedAt)}
-                      </Typography>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex justify-between items-baseline mb-0.5">
+                        <span className={`text-xs font-bold ${isCorrect ? "text-gray-900 dark:text-gray-100" : "text-gray-600"}`}>
+                           {item.subject}
+                        </span>
+                        <span className="text-[10px] text-gray-400 whitespace-nowrap ml-2">
+                           {formatDateTime(item.submittedAt)}
+                        </span>
+                      </div>
+                      <p className={`text-xs leading-relaxed line-clamp-2 ${isCorrect ? "text-gray-700 dark:text-gray-300 font-medium" : "text-gray-500"}`}>
+                         {item.questionText}
+                      </p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
+              
+              {stats.recentActivity.length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-xs">No activity recorded yet.</div>
+              )}
             </CardBody>
           </Card>
+
+          {/* Submission Overview (Right Side) */}
+          <Card className="rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 h-fit">
+             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 pb-2">
+                <Typography variant="h6" color="blue-gray" className="dark:text-white">Overview</Typography>
+             </CardHeader>
+             <CardBody className="p-6 pt-4">
+                <Typography variant="small" className="mb-6 text-gray-500 font-normal text-xs">
+                  Distribution of your last {stats.recentActivity.length} attempts.
+                </Typography>
+                
+                <div className="flex items-center gap-4 mb-2">
+                    <div className="p-2.5 rounded-full bg-green-50 text-green-500 dark:bg-green-900/20">
+                        <CheckIcon className="h-4 w-4" />
+                    </div>
+                    <div>
+                        <Typography variant="h6" color="blue-gray" className="text-sm dark:text-gray-200">{stats.correctCount}</Typography>
+                        <Typography variant="small" className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Correct</Typography>
+                    </div>
+                </div>
+                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-6">
+                    <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${(stats.correctCount / (stats.totalAttempts || 1)) * 100}%` }}></div>
+                </div>
+
+                <div className="flex items-center gap-4 mb-2">
+                    <div className="p-2.5 rounded-full bg-red-50 text-red-500 dark:bg-red-900/20">
+                        <XMarkIcon className="h-4 w-4" />
+                    </div>
+                    <div>
+                        <Typography variant="h6" color="blue-gray" className="text-sm dark:text-gray-200">{stats.incorrectCount}</Typography>
+                        <Typography variant="small" className="text-gray-500 text-[10px] uppercase font-bold tracking-wide">Incorrect</Typography>
+                    </div>
+                </div>
+                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-2">
+                    <div className="bg-red-500 h-1.5 rounded-full" style={{ width: `${(stats.incorrectCount / (stats.totalAttempts || 1)) * 100}%` }}></div>
+                </div>
+             </CardBody>
+          </Card>
+
         </motion.div>
       </motion.div>
     </div>
