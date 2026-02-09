@@ -17,7 +17,6 @@ import {
   Tab,
 } from "@material-tailwind/react";
 import {
-  Cog6ToothIcon,
   PencilIcon,
   UserCircleIcon,
   ShieldCheckIcon,
@@ -62,7 +61,6 @@ function EditForm({
   setGender,
   onSubmit,
   saving,
-  theme,
   error,
   success,
 }) {
@@ -71,30 +69,30 @@ function EditForm({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full"
+      // COMPACT: Reduced gap
+      className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full"
     >
       {/* LEFT: Name */}
       <motion.div variants={itemVariants} className="h-full">
         <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-blue-gray-50 dark:border-gray-700/50">
-            <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2">
-              <UserCircleIcon className="h-5 w-5 text-blue-500" />
+          {/* COMPACT: Reduced Padding p-3 */}
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-blue-gray-50 dark:border-gray-700/50">
+            <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2 text-sm">
+              <UserCircleIcon className="h-4 w-4 text-blue-500" />
               Personal Details
             </Typography>
-            <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-400 mt-1">
-              Update your name and public info.
-            </Typography>
           </CardHeader>
-          <CardBody className="p-6 flex flex-col gap-6 flex-1">
+          {/* COMPACT: Reduced Padding p-4, Reduced Gap gap-3 */}
+          <CardBody className="p-4 flex flex-col gap-3 flex-1">
             <AnimatePresence>
                 {error && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>{error}</Alert>
+                        <Alert color="red" className="py-2 px-3 text-xs" icon={<ExclamationTriangleIcon className="h-4 w-4" />}>{error}</Alert>
                     </motion.div>
                 )}
                 {success && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="green" icon={<CheckCircleIcon className="h-5 w-5" />}>{success}</Alert>
+                        <Alert color="green" className="py-2 px-3 text-xs" icon={<CheckCircleIcon className="h-4 w-4" />}>{success}</Alert>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -123,18 +121,15 @@ function EditForm({
       {/* RIGHT: Contact + Gender */}
       <motion.div variants={itemVariants} className="h-full">
         <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-blue-gray-50 dark:border-gray-700/50">
-            <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2">
-               <PencilIcon className="h-5 w-5 text-purple-500" />
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-blue-gray-50 dark:border-gray-700/50">
+            <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2 text-sm">
+               <PencilIcon className="h-4 w-4 text-purple-500" />
                Preferences
-            </Typography>
-            <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-400 mt-1">
-              Manage login email and identity.
             </Typography>
           </CardHeader>
 
           <form onSubmit={onSubmit} className="flex flex-col h-full flex-1">
-            <CardBody className="p-6 flex flex-col gap-6 flex-1">
+            <CardBody className="p-4 flex flex-col gap-3 flex-1">
               <Input
                 label="Email Address"
                 value={email || ""}
@@ -147,10 +142,10 @@ function EditForm({
               />
 
               <div>
-                <Typography variant="small" color="blue-gray" className="font-semibold dark:text-gray-200 mb-3">
+                <Typography variant="small" color="blue-gray" className="font-semibold dark:text-gray-200 mb-2">
                   Gender
                 </Typography>
-                <div className="flex gap-6">
+                <div className="flex gap-4">
                   <Radio
                     name="gender"
                     label="Male"
@@ -158,7 +153,7 @@ function EditForm({
                     checked={gender === "male"}
                     onChange={(e) => setGender(e.target.value)}
                     color="blue"
-                    labelProps={{ className: "dark:text-gray-300 font-medium" }}
+                    labelProps={{ className: "dark:text-gray-300 font-medium text-sm" }}
                   />
                   <Radio
                     name="gender"
@@ -167,22 +162,23 @@ function EditForm({
                     checked={gender === "female"}
                     onChange={(e) => setGender(e.target.value)}
                     color="pink"
-                    labelProps={{ className: "dark:text-gray-300 font-medium" }}
+                    labelProps={{ className: "dark:text-gray-300 font-medium text-sm" }}
                   />
                 </div>
               </div>
             </CardBody>
             
-            <div className="p-6 pt-0 mt-auto">
+            <div className="p-4 pt-0 mt-auto">
                 <Button
                     type="submit"
                     variant="gradient"
                     color="blue"
                     fullWidth
+                    size="sm"
                     disabled={saving}
                     className="flex items-center justify-center gap-2"
                 >
-                    {saving ? <Spinner className="h-4 w-4" /> : "Save Changes"}
+                    {saving ? <Spinner className="h-3 w-3" /> : "Save Changes"}
                 </Button>
             </div>
           </form>
@@ -201,7 +197,6 @@ function SecurityPanel({
   changing,
   onDeleteAccount,
   deleting,
-  theme,
   error,
   success,
 }) {
@@ -211,32 +206,29 @@ function SecurityPanel({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full"
     >
       {/* LEFT: Password Change */}
       <motion.div variants={itemVariants} className="h-full">
         <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-blue-gray-50 dark:border-gray-700/50">
-              <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2">
-                <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-blue-gray-50 dark:border-gray-700/50">
+              <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2 text-sm">
+                <ShieldCheckIcon className="h-4 w-4 text-green-500" />
                 Password & Security
-            </Typography>
-            <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-400 mt-1">
-              Ensure your account uses a strong password.
             </Typography>
           </CardHeader>
 
           <form onSubmit={onChangePassword} className="flex flex-col h-full flex-1">
-            <CardBody className="p-6 flex flex-col gap-5 flex-1">
+            <CardBody className="p-4 flex flex-col gap-3 flex-1">
                <AnimatePresence>
                 {error && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>{error}</Alert>
+                        <Alert color="red" className="py-2 px-3 text-xs" icon={<ExclamationTriangleIcon className="h-4 w-4" />}>{error}</Alert>
                     </motion.div>
                 )}
                 {success && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="green" icon={<CheckCircleIcon className="h-5 w-5" />}>{success}</Alert>
+                        <Alert color="green" className="py-2 px-3 text-xs" icon={<CheckCircleIcon className="h-4 w-4" />}>{success}</Alert>
                     </motion.div>
                 )}
                </AnimatePresence>
@@ -264,16 +256,17 @@ function SecurityPanel({
                 labelProps={{ className: "dark:text-gray-400" }}
               />
             </CardBody>
-            <div className="p-6 pt-0 mt-auto">
+            <div className="p-4 pt-0 mt-auto">
                   <Button
                     type="submit"
                     variant="gradient"
                     color="gray"
                     fullWidth
+                    size="sm"
                     disabled={changing}
                     className="flex items-center justify-center gap-2"
                 >
-                    {changing ? <Spinner className="h-4 w-4" /> : "Update Password"}
+                    {changing ? <Spinner className="h-3 w-3" /> : "Update Password"}
                 </Button>
             </div>
           </form>
@@ -283,22 +276,19 @@ function SecurityPanel({
       {/* RIGHT: Danger Zone */}
       <motion.div variants={itemVariants} className="h-full">
         <Card className="h-full w-full border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 backdrop-blur-sm shadow-none flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-red-100 dark:border-red-900/30">
-              <Typography variant="h6" color="red" className="flex items-center gap-2">
-                <ExclamationTriangleIcon className="h-5 w-5" />
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-red-100 dark:border-red-900/30">
+              <Typography variant="h6" color="red" className="flex items-center gap-2 text-sm">
+                <ExclamationTriangleIcon className="h-4 w-4" />
                 Danger Zone
-            </Typography>
-            <Typography variant="small" className="font-normal text-red-800/70 dark:text-red-300/70 mt-1">
-              Irreversible account actions.
             </Typography>
           </CardHeader>
 
-          <CardBody className="p-6 flex flex-col justify-between flex-1 gap-4">
-            <div className="rounded-lg bg-white/60 dark:bg-black/20 p-4 border border-red-100 dark:border-red-900/20">
-               <Typography variant="small" className="font-bold text-red-900 dark:text-red-200 mb-2">
+          <CardBody className="p-4 flex flex-col justify-between flex-1 gap-2">
+            <div className="rounded-lg bg-white/60 dark:bg-black/20 p-3 border border-red-100 dark:border-red-900/20">
+               <Typography variant="small" className="font-bold text-red-900 dark:text-red-200 mb-1 text-xs">
                  Before you delete:
                </Typography>
-               <ul className="list-disc pl-4 text-xs text-red-800/80 dark:text-red-300/80 space-y-1">
+               <ul className="list-disc pl-4 text-[10px] text-red-800/80 dark:text-red-300/80 space-y-0.5">
                  <li>All your practice history will be lost.</li>
                  <li>Any active subscriptions will be cancelled.</li>
                  <li>This action cannot be undone.</li>
@@ -309,13 +299,13 @@ function SecurityPanel({
               <Button
                 variant="outlined"
                 color="red"
-                size="md"
+                size="sm"
                 fullWidth
                 onClick={onDeleteAccount}
                 disabled={deleting}
                 className="bg-white hover:bg-red-50 focus:ring-red-200 dark:bg-transparent dark:hover:bg-red-900/20"
               >
-                {deleting ? <Spinner className="h-4 w-4 mx-auto text-red-500" /> : "Delete My Account"}
+                {deleting ? <Spinner className="h-3 w-3 mx-auto text-red-500" /> : "Delete My Account"}
               </Button>
             </div>
           </CardBody>
@@ -438,10 +428,9 @@ export function Profile() {
   };
 
   return (
-    // UPDATED: h-full w-full, flex-col, removed heavy margins
     <div className="relative w-full h-full flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
-      {/* Animated Background Gradient */}
+      {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div
           animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
@@ -455,58 +444,70 @@ export function Profile() {
         />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 p-6 flex flex-col h-full">
+      {/* Main Content Area: Reduced padding from p-6 to p-3 */}
+      <div className="relative z-10 p-3 flex flex-col h-full w-full">
         
-        {/* Banner Section (Static height) */}
+        {/* Banner Section: Reduced Height h-48 -> h-28 */}
         <div className="relative w-full shrink-0">
-            <div className="relative h-48 w-full overflow-hidden rounded-xl bg-gray-900">
+            <div className="relative h-28 w-full overflow-hidden rounded-xl bg-gray-900">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-80" />
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30" />
             </div>
             
-            <div className="px-6 -mt-16 flex flex-col md:flex-row items-end md:items-center justify-between gap-4">
-                <div className="flex items-end gap-4">
+            {/* Banner Content: Tighter negative margins */}
+            <div className="px-4 -mt-10 flex items-end justify-between gap-4">
+                <div className="flex items-end gap-3">
+                    {/* Avatar: Size xl instead of xxl */}
                     <Avatar 
                         src={avatarSrc} 
                         alt="avatar" 
-                        size="xxl" 
+                        size="xl" 
                         variant="rounded"
                         className="border-4 border-white dark:border-gray-900 bg-white shadow-lg" 
                     />
-                    <div className="mb-2">
-                        <Typography variant="h4" color="white" className="font-bold drop-shadow-md">
+                    <div className="mb-1">
+                        <Typography variant="h5" color="white" className="font-bold drop-shadow-md">
                             {user?.firstName} {user?.lastName}
                         </Typography>
-                        <Typography variant="small" className="text-blue-100 font-medium">
+                        <Typography variant="small" className="text-blue-50 font-medium text-xs">
                             {user?.email}
                         </Typography>
                     </div>
                 </div>
 
-                <div className="w-full md:w-auto mb-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/20">
-                      <Tabs value={activeTab} className="w-full md:w-96">
+                <div className="mb-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg p-1 shadow-sm border border-white/20 hidden md:block">
+                      <Tabs value={activeTab} className="w-80">
                         <TabsHeader 
-                            className="bg-transparent"
+                            className="bg-transparent h-8"
                             indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
                         >
-                            <Tab value="profile" onClick={() => setActiveTab("profile")} className="py-2 text-xs font-bold">
+                            <Tab value="profile" onClick={() => setActiveTab("profile")} className="py-1 text-[10px] font-bold uppercase">
                                 Profile
                             </Tab>
-                            <Tab value="edit" onClick={() => setActiveTab("edit")} className="py-2 text-xs font-bold">
+                            <Tab value="edit" onClick={() => setActiveTab("edit")} className="py-1 text-[10px] font-bold uppercase">
                                 Edit
                             </Tab>
-                            <Tab value="security" onClick={() => setActiveTab("security")} className="py-2 text-xs font-bold">
+                            <Tab value="security" onClick={() => setActiveTab("security")} className="py-1 text-[10px] font-bold uppercase">
                                 Security
                             </Tab>
                         </TabsHeader>
                     </Tabs>
                 </div>
             </div>
+            {/* Mobile Tabs fallback */}
+            <div className="md:hidden mt-4">
+                 <Tabs value={activeTab}>
+                    <TabsHeader className="bg-blue-gray-50/50">
+                        <Tab value="profile" onClick={() => setActiveTab("profile")}>Profile</Tab>
+                        <Tab value="edit" onClick={() => setActiveTab("edit")}>Edit</Tab>
+                        <Tab value="security" onClick={() => setActiveTab("security")}>Security</Tab>
+                    </TabsHeader>
+                 </Tabs>
+            </div>
         </div>
 
-        {/* Tab Content Area (Flex-1 to fill remaining space) */}
-        <div className="mt-4 flex-1 min-h-0">
+        {/* Tab Content: Reduced top margin */}
+        <div className="mt-3 flex-1 min-h-0 w-full">
             <AnimatePresence mode="wait">
                 {activeTab === "profile" && (
                     <motion.div
@@ -515,10 +516,10 @@ export function Profile() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
-                        className="h-full overflow-y-auto"
+                        className="h-full"
                     >
                          <Card className="w-full h-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
-                            <CardBody>
+                            <CardBody className="p-4">
                                 <ProfileInfoCard
                                     title="About Me"
                                     description="Student on AI Practice Platform."
