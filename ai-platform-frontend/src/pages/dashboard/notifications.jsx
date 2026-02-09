@@ -172,7 +172,9 @@ export function Notifications() {
                         return (
                         <motion.div
                             key={n.id}
-                            // FIXED: Removed 'layout' prop here to stop the shaking on text selection
+                            // FIXED: Restored 'layout' because shaking was not our fault.
+                            // This gives you the smooth reordering animations back!
+                            layout 
                             variants={itemVariants}
                             whileHover={{ x: 4, transition: { duration: 0.2 } }}
                             className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-colors duration-200 ${isUnread ? "bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-900/30 shadow-sm" : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
