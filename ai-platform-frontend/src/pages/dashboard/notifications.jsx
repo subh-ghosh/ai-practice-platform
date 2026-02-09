@@ -40,6 +40,29 @@ function getIconForType(type) {
   return <InformationCircleIcon className="h-4 w-4 text-gray-500" />;
 }
 
+// --- Animation Variants ---
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1, // Stagger effect: items appear 0.1s apart
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { type: "spring", stiffness: 300, damping: 24 }
+  },
+  exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
+};
+
 // --- Main Component ---
 
 export function Notifications() {
@@ -58,10 +81,20 @@ export function Notifications() {
   return (
     <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
-      {/* Background Gradient */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]" />
+      {/* Animated Background Gradient */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        {/* Top Left Blob - Drifting */}
+        <motion.div 
+          animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]" 
+        />
+        {/* Bottom Right Blob - Drifting */}
+        <motion.div 
+          animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]" 
+        />
       </div>
 
       {/* Main Content Wrapper */}
@@ -79,16 +112,18 @@ export function Notifications() {
           </div>
           
           {hasUnread && (
-            <Button 
-              size="sm" 
-              variant="text"
-              color="blue"
-              className="flex items-center gap-2 normal-case hover:bg-blue-50 dark:hover:bg-blue-900/20"
-              onClick={markAllAsRead}
-            >
-              <EnvelopeOpenIcon className="h-4 w-4" />
-              Mark all read
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button 
+                size="sm" 
+                variant="text"
+                color="blue"
+                className="flex items-center gap-2 normal-case hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                onClick={markAllAsRead}
+              >
+                <EnvelopeOpenIcon className="h-4 w-4" />
+                Mark all read
+              </Button>
+            </motion.div>
           )}
         </div>
 
@@ -114,28 +149,35 @@ export function Notifications() {
 
             {/* List with DARK/HIDDEN SCROLLBAR */}
             <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-700">
-                <AnimatePresence mode="popLayout" initial={false}>
+                <AnimatePresence mode="wait">
                 {filteredList.length === 0 ? (
                     <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        key="empty"
+                        initial={{ opacity: 0, scale: 0.9 }} 
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
                         className="flex flex-col items-center justify-center h-full opacity-60"
                     >
                         <BellIcon className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
                         <Typography variant="small" className="text-gray-500">No notifications found.</Typography>
                     </motion.div>
                 ) : (
-                    <div className="flex flex-col gap-2 pb-6">
+                    <motion.div 
+                      key={filter} // Key ensures staggering restarts when tab changes
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="flex flex-col gap-2 pb-6"
+                    >
                     {filteredList.map((n) => {
                         const isUnread = !n.readFlag;
                         return (
                         <motion.div
                             key={n.id}
-                            layout
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ duration: 0.2 }} 
-                            className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-all duration-200 ${isUnread ? "bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-900/30 shadow-sm" : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
+                            layout // Handles smooth reordering when items are removed
+                            variants={itemVariants}
+                            whileHover={{ scale: 1.01, x: 4, transition: { duration: 0.2 } }}
+                            className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-colors duration-200 ${isUnread ? "bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-900/30 shadow-sm" : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
                         >
                             <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${isUnread ? "bg-blue-50 dark:bg-blue-900/20" : "bg-gray-50 dark:bg-gray-800/50"}`}>
                                 {getIconForType(n.type)}
@@ -173,7 +215,7 @@ export function Notifications() {
                         </motion.div>
                         );
                     })}
-                    </div>
+                    </motion.div>
                 )}
                 </AnimatePresence>
             </div>
