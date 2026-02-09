@@ -56,9 +56,10 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // FIXED: Changed to h-[calc(100vh-140px)]
-    // This makes the box taller (subtracting less space) while keeping the mt-6 and mb-10
-    <div className="relative mt-6 mb-10 w-full h-[calc(100vh-140px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // FIXED:
+    // 1. h-[calc(100vh-210px)]: Perfect middle ground. Shows footer, but box is still tall.
+    // 2. mb-8: Ensures there is a nice gap between the box and the footer text.
+    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-210px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
