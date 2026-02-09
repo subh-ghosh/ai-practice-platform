@@ -172,10 +172,8 @@ export function Notifications() {
                         return (
                         <motion.div
                             key={n.id}
-                            layout 
+                            // FIXED: Removed 'layout' prop here to stop the shaking on text selection
                             variants={itemVariants}
-                            // FIXED: Removed 'scale: 1.01' to prevent white line artifacts and scrollbar jitter.
-                            // Kept 'x: 4' for the smooth sliding effect.
                             whileHover={{ x: 4, transition: { duration: 0.2 } }}
                             className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-colors duration-200 ${isUnread ? "bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-900/30 shadow-sm" : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
                         >
