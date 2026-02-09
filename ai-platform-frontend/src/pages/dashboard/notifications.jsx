@@ -56,10 +56,11 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // FIXED: 
-    // 1. Adjusted height to h-[calc(100vh-240px)] to leave ample space for the footer text.
-    // 2. Added mt-10 to push the box down slightly, centering it visually.
-    <div className="relative mt-10 w-full h-[calc(100vh-240px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // FIXED:
+    // 1. h-[calc(100vh-180px)]: Taller than before, but leaves room for header/footer.
+    // 2. mt-6: Space from top navbar.
+    // 3. mb-10: Extra space at the bottom so the footer isn't touching the box.
+    <div className="relative mt-6 mb-10 w-full h-[calc(100vh-180px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -116,7 +117,6 @@ export function Notifications() {
             </div>
 
             {/* List with DARK/HIDDEN SCROLLBAR */}
-            {/* Added custom Tailwind classes to style the scrollbar to be dark and thin */}
             <div className="flex-1 overflow-y-auto pr-2 
               [&::-webkit-scrollbar]:w-1.5 
               [&::-webkit-scrollbar-track]:bg-transparent 
