@@ -71,11 +71,11 @@ function EditForm({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full"
     >
       {/* LEFT: Name */}
-      <motion.div variants={itemVariants}>
-        <Card className="h-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
+      <motion.div variants={itemVariants} className="h-full">
+        <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
           <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-blue-gray-50 dark:border-gray-700/50">
             <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2">
               <UserCircleIcon className="h-5 w-5 text-blue-500" />
@@ -85,7 +85,7 @@ function EditForm({
               Update your name and public info.
             </Typography>
           </CardHeader>
-          <CardBody className="p-6 flex flex-col gap-6">
+          <CardBody className="p-6 flex flex-col gap-6 flex-1">
             <AnimatePresence>
                 {error && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
@@ -121,8 +121,8 @@ function EditForm({
       </motion.div>
 
       {/* RIGHT: Contact + Gender */}
-      <motion.div variants={itemVariants}>
-        <Card className="h-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
+      <motion.div variants={itemVariants} className="h-full">
+        <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
           <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-blue-gray-50 dark:border-gray-700/50">
             <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2">
                <PencilIcon className="h-5 w-5 text-purple-500" />
@@ -133,7 +133,7 @@ function EditForm({
             </Typography>
           </CardHeader>
 
-          <form onSubmit={onSubmit} className="flex flex-col h-full">
+          <form onSubmit={onSubmit} className="flex flex-col h-full flex-1">
             <CardBody className="p-6 flex flex-col gap-6 flex-1">
               <Input
                 label="Email Address"
@@ -211,22 +211,22 @@ function SecurityPanel({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full"
     >
       {/* LEFT: Password Change */}
-      <motion.div variants={itemVariants}>
-        <Card className="h-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
+      <motion.div variants={itemVariants} className="h-full">
+        <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
           <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-blue-gray-50 dark:border-gray-700/50">
-             <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2">
-               <ShieldCheckIcon className="h-5 w-5 text-green-500" />
-               Password & Security
+              <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2">
+                <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+                Password & Security
             </Typography>
             <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-400 mt-1">
               Ensure your account uses a strong password.
             </Typography>
           </CardHeader>
 
-          <form onSubmit={onChangePassword} className="flex flex-col h-full">
+          <form onSubmit={onChangePassword} className="flex flex-col h-full flex-1">
             <CardBody className="p-6 flex flex-col gap-5 flex-1">
                <AnimatePresence>
                 {error && (
@@ -265,7 +265,7 @@ function SecurityPanel({
               />
             </CardBody>
             <div className="p-6 pt-0 mt-auto">
-                 <Button
+                  <Button
                     type="submit"
                     variant="gradient"
                     color="gray"
@@ -281,19 +281,19 @@ function SecurityPanel({
       </motion.div>
 
       {/* RIGHT: Danger Zone */}
-      <motion.div variants={itemVariants}>
-        <Card className="h-full border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 backdrop-blur-sm shadow-none">
+      <motion.div variants={itemVariants} className="h-full">
+        <Card className="h-full w-full border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 backdrop-blur-sm shadow-none flex flex-col">
           <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 border-b border-red-100 dark:border-red-900/30">
-             <Typography variant="h6" color="red" className="flex items-center gap-2">
-               <ExclamationTriangleIcon className="h-5 w-5" />
-               Danger Zone
+              <Typography variant="h6" color="red" className="flex items-center gap-2">
+                <ExclamationTriangleIcon className="h-5 w-5" />
+                Danger Zone
             </Typography>
             <Typography variant="small" className="font-normal text-red-800/70 dark:text-red-300/70 mt-1">
               Irreversible account actions.
             </Typography>
           </CardHeader>
 
-          <CardBody className="p-6 flex flex-col justify-between h-full gap-4">
+          <CardBody className="p-6 flex flex-col justify-between flex-1 gap-4">
             <div className="rounded-lg bg-white/60 dark:bg-black/20 p-4 border border-red-100 dark:border-red-900/20">
                <Typography variant="small" className="font-bold text-red-900 dark:text-red-200 mb-2">
                  Before you delete:
@@ -438,7 +438,8 @@ export function Profile() {
   };
 
   return (
-    <div className="relative mt-6 mb-8 w-full min-h-[calc(100vh-120px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // UPDATED: h-full w-full, flex-col, removed heavy margins
+    <div className="relative w-full h-full flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -455,10 +456,10 @@ export function Profile() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 p-6 flex flex-col gap-6">
+      <div className="relative z-10 p-6 flex flex-col h-full">
         
-        {/* Banner Section */}
-        <div className="relative w-full">
+        {/* Banner Section (Static height) */}
+        <div className="relative w-full shrink-0">
             <div className="relative h-48 w-full overflow-hidden rounded-xl bg-gray-900">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-80" />
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30" />
@@ -484,7 +485,7 @@ export function Profile() {
                 </div>
 
                 <div className="w-full md:w-auto mb-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-xl p-1 shadow-sm border border-white/20">
-                     <Tabs value={activeTab} className="w-full md:w-96">
+                      <Tabs value={activeTab} className="w-full md:w-96">
                         <TabsHeader 
                             className="bg-transparent"
                             indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
@@ -504,8 +505,8 @@ export function Profile() {
             </div>
         </div>
 
-        {/* Tab Content Area */}
-        <div className="mt-4">
+        {/* Tab Content Area (Flex-1 to fill remaining space) */}
+        <div className="mt-4 flex-1 min-h-0">
             <AnimatePresence mode="wait">
                 {activeTab === "profile" && (
                     <motion.div
@@ -514,8 +515,9 @@ export function Profile() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
+                        className="h-full overflow-y-auto"
                     >
-                         <Card className="w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
+                         <Card className="w-full h-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
                             <CardBody>
                                 <ProfileInfoCard
                                     title="About Me"
@@ -542,7 +544,7 @@ export function Profile() {
                 )}
 
                 {activeTab === "edit" && (
-                    <motion.div key="edit" className="w-full">
+                    <motion.div key="edit" className="w-full h-full">
                          <EditForm
                             firstName={firstName}
                             lastName={lastName}
@@ -561,7 +563,7 @@ export function Profile() {
                 )}
 
                 {activeTab === "security" && (
-                    <motion.div key="security" className="w-full">
+                    <motion.div key="security" className="w-full h-full">
                         <SecurityPanel
                             oldPassword={oldPassword}
                             newPassword={newPassword}
