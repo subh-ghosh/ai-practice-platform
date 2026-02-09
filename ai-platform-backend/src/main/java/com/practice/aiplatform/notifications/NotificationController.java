@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/notifications")
-@CrossOrigin(origins = "*") // 👈 FORCE ALLOW FRONTEND CONNECTION
 public class NotificationController {
     
     private final NotificationService service;
