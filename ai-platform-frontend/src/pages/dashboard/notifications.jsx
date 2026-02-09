@@ -54,10 +54,9 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // 1. ADDED: Main Section Wrapper with Height and Padding
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
       
-      {/* 2. ADDED: The Blue Gradient Background */}
+      {/* Blue Gradient Background */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
@@ -77,11 +76,12 @@ export function Notifications() {
           </div>
           
           {hasUnread && (
+            // FIXED: Changed to 'gradient' for visibility in both modes
             <Button 
-              variant="outlined" 
+              variant="gradient" 
               size="sm" 
               color="blue"
-              className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-900/20 bg-white/50 backdrop-blur-sm"
+              className="flex items-center gap-2"
               onClick={markAllAsRead}
             >
               <EnvelopeOpenIcon className="h-4 w-4" />
@@ -99,25 +99,33 @@ export function Notifications() {
             className="m-0 p-4 rounded-t-xl border-b border-blue-gray-50 dark:border-gray-700"
           >
             <div className="w-full md:w-96">
-              {/* 3. FIXED: Tabs Visibility in Dark Mode */}
+              {/* FIXED: Improved Tabs Contrast */}
               <Tabs value={filter}>
                 <TabsHeader 
-                  className="bg-blue-gray-50/50 dark:bg-gray-800 p-1"
+                  className="bg-blue-gray-50/50 dark:bg-black/40 p-1"
                   indicatorProps={{
-                    className: "bg-white dark:bg-gray-700 shadow-sm"
+                    className: "bg-white dark:bg-blue-600 shadow-sm"
                   }}
                 >
                   <Tab 
                     value="all" 
                     onClick={() => setFilter("all")} 
-                    className={`text-sm font-medium py-2 transition-colors ${filter === 'all' ? 'text-blue-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                    className={`text-sm font-medium py-2 transition-colors ${
+                      filter === 'all' 
+                        ? 'text-blue-gray-900 dark:text-white' // Active Text
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200' // Inactive Text
+                    }`}
                   >
                     All History
                   </Tab>
                   <Tab 
                     value="unread" 
                     onClick={() => setFilter("unread")} 
-                    className={`text-sm font-medium py-2 transition-colors ${filter === 'unread' ? 'text-blue-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+                    className={`text-sm font-medium py-2 transition-colors ${
+                      filter === 'unread' 
+                        ? 'text-blue-gray-900 dark:text-white' 
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
                   >
                     Unread Only
                   </Tab>
