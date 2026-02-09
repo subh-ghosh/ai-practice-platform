@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base color + typography using tokens from tailwind.config.js */
+/* Base color + typography */
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
@@ -55,9 +55,9 @@
   }
 }
 
-/* Fix for fixed navbar offset if you use one */
+/* Fix for fixed navbar offset */
 .has-fixed-navbar {
-  padding-top: 4.5rem; /* adjust if your navbar height differs */
+  padding-top: 4.5rem; 
 }
 .hide-scrollbar {
   -ms-overflow-style: none;     /* IE/Edge */
@@ -68,7 +68,50 @@
 }
 
 /* =========================================
-   GLOBAL SCROLLBAR STYLING (Dark Mode Fix)
+   CUSTOM SCROLLBAR UTILITY
+   (Applied manually to specific containers)
+   ========================================= */
+@layer utilities {
+  .custom-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .dark .custom-scroll {
+    scrollbar-color: #374151 #111827; /* Dark Slate Thumb / Dark Navy Track */
+  }
+
+  /* Webkit Specifics */
+  .custom-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .custom-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .dark .custom-scroll::-webkit-scrollbar-track {
+    background: #111827; /* Matches Dark Modal BG */
+  }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 99px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .dark .custom-scroll::-webkit-scrollbar-thumb {
+    background-color: #374151; /* Dark Gray */
+    border: 2px solid #111827; /* Creates padding effect */
+  }
+  .custom-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #94a3b8;
+  }
+  .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: #4b5563;
+  }
+}
+
+/* =========================================
+   GLOBAL SCROLLBAR DEFAULTS
+   (Fallbacks for the rest of the app)
    ========================================= */
 
 /* 1. Standard Webkit (Chrome, Edge, Safari) */
@@ -91,12 +134,12 @@
 
 /* Dark Mode Overrides (.dark class must be on html/body) */
 .dark ::-webkit-scrollbar-track {
-  background: #111827; /* Gray-900 (Matches your modal background) */
+  background: #111827; /* Gray-900 */
 }
 .dark ::-webkit-scrollbar-thumb {
   background: #374151; /* Gray-700 */
   border-radius: 4px;
-  border: 1px solid #111827; /* Creates padding effect */
+  border: 1px solid #111827; 
 }
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #4b5563; /* Gray-600 */

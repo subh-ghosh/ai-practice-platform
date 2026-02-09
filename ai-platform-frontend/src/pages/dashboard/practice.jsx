@@ -55,7 +55,6 @@ function DynamicFeedbackTitle({ status }) {
   );
 }
 
-// Utility to ensure newlines are rendered correctly in Markdown
 const formatMarkdownText = (text) => {
   if (!text) return "";
   return text.replace(/\\n/g, '\n');
@@ -508,7 +507,7 @@ export function Practice() {
             {feedback && (
               <div className="mt-8 p-6 border rounded-2xl bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm animate-in zoom-in-95 duration-300">
                 <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-                <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto">
+                <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto custom-scroll">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {feedback.evaluationStatus === "REVEALED" 
                         ? formatMarkdownText(feedback.answerText) 
@@ -539,7 +538,7 @@ export function Practice() {
             </div>
           </CardHeader>
 
-          <CardBody className="px-0 pt-0 pb-4 overflow-x-auto">
+          <CardBody className="px-0 pt-0 pb-4 overflow-x-auto custom-scroll">
             <table className="w-full min-w-[640px] table-auto text-left">
               <thead>
                 <tr>
@@ -605,7 +604,7 @@ export function Practice() {
             <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">
                 Practice Details
             </DialogHeader>
-            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6">
+            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6 custom-scroll">
                 {selectedHistory && (
                     <div className="space-y-8">
                         {/* 1. QUESTION SECTION */}
@@ -614,7 +613,7 @@ export function Practice() {
                                 Question
                             </Typography>
                             <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto">
+                                <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto custom-scroll">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {formatMarkdownText(selectedHistory.questionText)}
                                     </ReactMarkdown>
@@ -635,7 +634,7 @@ export function Practice() {
                                 {selectedHistory.evaluationStatus === "REVEALED" ? (
                                     "You chose to reveal the answer."
                                 ) : (
-                                    <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto">
+                                    <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto custom-scroll">
                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                             {formatMarkdownText(selectedHistory.answerText || "No answer submitted.")}
                                         </ReactMarkdown>
@@ -648,7 +647,7 @@ export function Practice() {
                         <div>
                             <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
                             
-                            <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm ${
+                            <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll ${
                                 selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" :
                                 selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" :
                                 selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" :
