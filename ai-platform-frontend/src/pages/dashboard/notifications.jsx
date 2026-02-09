@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Typography,
   Card,
@@ -23,7 +23,8 @@ import {
 } from "@heroicons/react/24/solid";
 import { useNotifications } from "@/context/NotificationContext";
 
-// Helper for nice dates
+// --- Helper Functions ---
+
 function formatDateTime(iso) {
   try {
     return new Date(iso).toLocaleString('en-US', {
@@ -41,30 +42,33 @@ function getIconForType(type) {
   return <InformationCircleIcon className="h-5 w-5 text-gray-500" />;
 }
 
+// --- Main Component ---
+
 export function Notifications() {
   const { notifications, markRead, markAllAsRead } = useNotifications();
   const [filter, setFilter] = useState("all"); 
 
-  // Filter logic
-  const filteredList = notifications.filter(n => {
-    if (filter === "unread") return !n.readFlag;
-    return true; 
-  });
+  // OPTIMIZATION: Memoize filtering to prevent lag with many notifications
+  const filteredList = useMemo(() => {
+    return notifications.filter(n => {
+      if (filter === "unread") return !n.readFlag;
+      return true; 
+    });
+  }, [notifications, filter]);
 
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
       
-      {/* Blue Gradient Background */}
+      {/* Background Effects */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
 
-      {/* Main Content Container */}
       <div className="mt-6 w-full max-w-4xl mx-auto flex flex-col gap-8">
         
-        {/* Header Section */}
+        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <Typography variant="h4" color="blue-gray" className="dark:text-white font-bold">
@@ -76,12 +80,11 @@ export function Notifications() {
           </div>
           
           {hasUnread && (
-            // FIXED: Changed to 'gradient' for visibility in both modes
             <Button 
               variant="gradient" 
               size="sm" 
               color="blue"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 shadow-blue-500/20"
               onClick={markAllAsRead}
             >
               <EnvelopeOpenIcon className="h-4 w-4" />
@@ -90,7 +93,7 @@ export function Notifications() {
           )}
         </div>
 
-        {/* Card Container */}
+        {/* Notifications Card */}
         <Card className="border border-blue-100/60 dark:border-gray-700 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
           <CardHeader
             floated={false}
@@ -99,7 +102,6 @@ export function Notifications() {
             className="m-0 p-4 rounded-t-xl border-b border-blue-gray-50 dark:border-gray-700"
           >
             <div className="w-full md:w-96">
-              {/* FIXED: Improved Tabs Contrast */}
               <Tabs value={filter}>
                 <TabsHeader 
                   className="bg-blue-gray-50/50 dark:bg-black/40 p-1"
@@ -112,8 +114,8 @@ export function Notifications() {
                     onClick={() => setFilter("all")} 
                     className={`text-sm font-medium py-2 transition-colors ${
                       filter === 'all' 
-                        ? 'text-blue-gray-900 dark:text-white' // Active Text
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200' // Inactive Text
+                        ? 'text-blue-gray-900 dark:text-white' 
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                     }`}
                   >
                     All History
@@ -162,7 +164,7 @@ export function Notifications() {
                       `}
                     >
                       {/* Icon Bubble */}
-                      <div className={`mt-1 p-2.5 rounded-xl border shadow-sm shrink-0
+                      <div className={`mt-1 p-2.5 rounded-xl border shadow-sm shrink-0 transition-colors
                         ${isUnread 
                           ? "bg-white border-blue-100 dark:bg-gray-800 dark:border-gray-700" 
                           : "bg-gray-50 border-gray-100 dark:bg-gray-800 dark:border-gray-700 opacity-70"}
@@ -201,6 +203,7 @@ export function Notifications() {
                             </IconButton>
                           </Tooltip>
                         ) : (
+                          // Placeholder to keep spacing consistent
                           <div className="w-8 h-8" /> 
                         )}
                       </div>
