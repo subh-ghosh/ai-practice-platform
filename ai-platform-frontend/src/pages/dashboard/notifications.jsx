@@ -57,10 +57,10 @@ export function Notifications() {
 
   return (
     // FIXED: 
-    // Changed to h-[calc(100vh-195px)]
-    // This adds a small amount of height compared to the previous version,
-    // maximizing the space while keeping the footer visible.
-    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-195px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // Changed to h-[calc(100vh-175px)]
+    // This adds roughly 20px more height than the last version.
+    // It's the maximum safe height before the footer starts getting pushed off-screen.
+    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -136,7 +136,8 @@ export function Notifications() {
                         <Typography variant="small" className="text-gray-500">No notifications found.</Typography>
                     </motion.div>
                 ) : (
-                    <div className="flex flex-col gap-2 pb-4">
+                    {/* Increased pb-4 to pb-6 to ensure the last item isn't cut off visually when scrolling */}
+                    <div className="flex flex-col gap-2 pb-6">
                     {filteredList.map((n) => {
                         const isUnread = !n.readFlag;
                         return (
