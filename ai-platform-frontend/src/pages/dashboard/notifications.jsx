@@ -56,11 +56,9 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // FIXED:
-    // 1. h-[calc(100vh-180px)]: Taller than before, but leaves room for header/footer.
-    // 2. mt-6: Space from top navbar.
-    // 3. mb-10: Extra space at the bottom so the footer isn't touching the box.
-    <div className="relative mt-6 mb-10 w-full h-[calc(100vh-180px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // FIXED: Changed to h-[calc(100vh-140px)]
+    // This makes the box taller (subtracting less space) while keeping the mt-6 and mb-10
+    <div className="relative mt-6 mb-10 w-full h-[calc(100vh-140px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
