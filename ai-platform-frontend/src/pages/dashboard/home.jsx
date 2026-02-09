@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios"; // 👈 CHANGED: Use direct axios instead of api instance
+import axios from "axios";
 import {
   Typography,
   Card,
@@ -25,6 +25,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { motion } from "framer-motion"; // Import Animation Library
 
 /* ---------- helpers ---------- */
 
@@ -89,6 +90,28 @@ const getOverviewIcon = (status) => {
   }
 };
 
+// --- Animation Variants ---
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { type: "spring", stiffness: 300, damping: 24 }
+  }
+};
+
 /* ---------- main ---------- */
 
 export function Home() {
@@ -98,7 +121,6 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 👇 THE CRITICAL FIX IS HERE 👇
   useEffect(() => {
     const fetchAllData = async () => {
       try {
@@ -107,17 +129,14 @@ export function Home() {
         setStats(null);
         setTimeSeriesData(null);
 
-        // 1. Get Token Manually
         const token = localStorage.getItem("token");
         
-        // 2. Configure Headers
         const config = {
           headers: {
             "Authorization": `Bearer ${token}` 
           }
         };
 
-        // 3. Use Full URL (Hardcoded for safety)
         const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
         const [summaryRes, timeSeriesRes] = await Promise.all([
@@ -143,15 +162,15 @@ export function Home() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64 mt-12">
-        <Spinner className="h-12 w-12" />
+      <div className="flex justify-center items-center h-[calc(100vh-100px)]">
+        <Spinner className="h-12 w-12 text-blue-500" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Typography color="red" className="text-center mt-12">
+      <Typography color="red" className="text-center mt-12 font-medium">
         {error}
       </Typography>
     );
@@ -254,15 +273,31 @@ export function Home() {
   /* ---------- UI ---------- */
 
   return (
-    <section className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)]">
-      {/* Background gradient & glows */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
-      <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
+    <div className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)] overflow-hidden">
+      
+      {/* Animated Background Gradient (Same as Notifications) */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
+        <motion.div 
+          animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]" 
+        />
+        <motion.div 
+          animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]" 
+        />
+      </div>
 
-      <div className="mt-6 has-fixed-navbar page w-full flex flex-col">
+      <motion.div 
+        className="mt-6 has-fixed-navbar page w-full flex flex-col relative z-10"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {/* Welcome header */}
-        <div className="mb-8">
+        <motion.div variants={itemVariants} className="mb-8">
           <div className="rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-6 py-5 shadow-sm">
             <div className="flex flex-wrap items-baseline gap-3">
               <Typography variant="h4" color="blue-gray" className="font-normal">
@@ -279,14 +314,18 @@ export function Home() {
               />
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Row 1: Stat cards */}
-        <div className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+        {/* Row 1: Stat cards - Staggered */}
+        <motion.div 
+          variants={itemVariants} 
+          className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
+        >
           {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
-            <div
+            <motion.div
               key={title}
-              className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md"
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
             >
               <StatisticsCard
                 {...rest}
@@ -294,13 +333,13 @@ export function Home() {
                 icon={React.createElement(icon, { className: "w-6 h-6 text-white" })}
                 footer={<Typography className="font-normal text-blue-gray-600">{footer.label}</Typography>}
               />
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Row 2: Charts */}
-        <div className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
+        <motion.div variants={itemVariants} className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300">
             <StatisticsChart
               key="accuracy-chart"
               chart={accuracyChart}
@@ -316,7 +355,7 @@ export function Home() {
             />
           </div>
 
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
+          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300">
             <StatisticsChart
               key="speed-chart"
               chart={speedChart}
@@ -332,7 +371,7 @@ export function Home() {
             />
           </div>
 
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
+          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300">
             <StatisticsChart
               key="breakdown-chart"
               chart={breakdownChart}
@@ -348,10 +387,10 @@ export function Home() {
               }
             />
           </div>
-        </div>
+        </motion.div>
 
         {/* Row 3: Table & Feed */}
-        <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <motion.div variants={itemVariants} className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
           <Card className="overflow-hidden xl:col-span-2 border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
               <div>
@@ -364,7 +403,7 @@ export function Home() {
                 </Typography>
               </div>
               <Link to="/dashboard/practice">
-                <Button variant="text" size="sm" className="flex items-center gap-2">
+                <Button variant="text" size="sm" className="flex items-center gap-2 hover:bg-blue-50">
                   <PencilIcon className="h-4 w-4" />
                   Start Practice
                 </Button>
@@ -389,7 +428,7 @@ export function Home() {
                     const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
                     const uniqueKey = `${item.questionId}-${item.submittedAt}`;
                     return (
-                      <tr key={uniqueKey}>
+                      <tr key={uniqueKey} className="hover:bg-gray-50/50 transition-colors">
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
                             {item.questionText.substring(0, 40)}...
@@ -464,9 +503,9 @@ export function Home() {
               })}
             </CardBody>
           </Card>
-        </div>
-      </div>
-    </section>
+        </motion.div>
+      </motion.div>
+    </div>
   );
 }
 
