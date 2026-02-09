@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
 import {
   Typography,
@@ -29,67 +29,66 @@ import { usePaywall } from "@/context/PaywallContext.jsx";
 import { InformationCircleIcon, SparklesIcon } from "@heroicons/react/24/solid";
 
 /* =========================
-   Helpers
+   Constants & Helpers
 ========================= */
 
-function DynamicFeedbackTitle({ status }) {
-  let title = "Incorrect";
-  let color = "red";
-  if (status === "CORRECT") {
-    title = "Correct!";
-    color = "green";
-  } else if (status === "CLOSE") {
-    title = "Close!";
-    color = "orange";
-  } else if (status === "REVEALED") {
-    title = "Solution Revealed";
-    color = "blue";
+const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+const FREE_ACTION_LIMIT = 3;
+
+// Map status to specific Tailwind classes to ensure JIT compiler picks them up
+const STATUS_STYLES = {
+  CORRECT: {
+    dot: "bg-green-500 shadow-green-500/50",
+    text: "text-green-500",
+    label: "Correct!",
+    chip: "border-green-200 bg-green-50/50 text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-300"
+  },
+  CLOSE: {
+    dot: "bg-orange-500 shadow-orange-500/50",
+    text: "text-orange-500",
+    label: "Close!",
+    chip: "border-orange-200 bg-orange-50/50 text-orange-800 dark:border-orange-900/50 dark:bg-orange-900/20 dark:text-orange-300"
+  },
+  REVEALED: {
+    dot: "bg-blue-500 shadow-blue-500/50",
+    text: "text-blue-500",
+    label: "Solution Revealed",
+    chip: "border-blue-200 bg-blue-50/50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-300"
+  },
+  INCORRECT: {
+    dot: "bg-red-500 shadow-red-500/50",
+    text: "text-red-500",
+    label: "Incorrect",
+    chip: "border-red-200 bg-red-50/50 text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300"
   }
+};
+
+function DynamicFeedbackTitle({ status }) {
+  const style = STATUS_STYLES[status] || STATUS_STYLES.INCORRECT;
+
   return (
-    <div className={`flex items-center gap-2 mb-2`}>
-        <div className={`w-3 h-3 rounded-full bg-${color}-500 shadow-[0_0_8px] shadow-${color}-500/50`}></div>
-        <Typography variant="h6" color={color} className="font-bold tracking-tight uppercase text-sm">
-        {title}
-        </Typography>
+    <div className="flex items-center gap-2 mb-2">
+      <div className={`w-3 h-3 rounded-full shadow-[0_0_8px] ${style.dot}`}></div>
+      <Typography variant="h6" className={`font-bold tracking-tight uppercase text-sm ${style.text}`}>
+        {style.label}
+      </Typography>
     </div>
   );
 }
 
 const formatMarkdownText = (text) => {
   if (!text) return "";
+  // Handles literal \n strings often returned by AI JSON
   return text.replace(/\\n/g, '\n');
 };
 
-function formatDateTime(isoString) {
-  if (!isoString) return "N/A";
-  try {
-    const date = new Date(isoString);
-    return date.toLocaleString(undefined, {
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return "Invalid Date";
-  }
-}
-
 const getStatusChip = (status) => {
-  const base = { variant: "ghost", className: "py-0.5 px-2.5 text-[11px] font-bold uppercase tracking-wide w-fit rounded-full border" };
-  if (!status) return <Chip {...base} className={`${base.className} border-blue-gray-100 text-blue-gray-500`} value="N/A" />;
+  const baseClasses = "py-0.5 px-2.5 text-[11px] font-bold uppercase tracking-wide w-fit rounded-full border";
   
-  switch (status.toUpperCase()) {
-    case "CORRECT":
-      return <Chip {...base} className={`${base.className} border-green-200 bg-green-50/50 text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-300`} value="Correct" />;
-    case "CLOSE":
-      return <Chip {...base} className={`${base.className} border-orange-200 bg-orange-50/50 text-orange-800 dark:border-orange-900/50 dark:bg-orange-900/20 dark:text-orange-300`} value="Close" />;
-    case "REVEALED":
-      return <Chip {...base} className={`${base.className} border-blue-200 bg-blue-50/50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-300`} value="Revealed" />;
-    case "INCORRECT":
-    default:
-      return <Chip {...base} className={`${base.className} border-red-200 bg-red-50/50 text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300`} value="Incorrect" />;
-  }
+  if (!status) return <Chip variant="ghost" className={`${baseClasses} border-blue-gray-100 text-blue-gray-500`} value="N/A" />;
+  
+  const style = STATUS_STYLES[status?.toUpperCase()] || STATUS_STYLES.INCORRECT;
+  return <Chip variant="ghost" className={`${baseClasses} ${style.chip}`} value={status === "REVEALED" ? "Revealed" : style.label} />;
 };
 
 /* =========================
@@ -104,17 +103,20 @@ export function Practice() {
   const [error, setError] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
 
+  // History State
   const [allHistory, setAllHistory] = useState([]);
   const [itemsToShow, setItemsToShow] = useState(10);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedHistory, setSelectedHistory] = useState(null);
 
+  // Generator State
   const [subject, setSubject] = useState("Java");
   const [topic, setTopic] = useState("Object Oriented Programming");
   const [difficulty, setDifficulty] = useState("High School");
-
   const [generating, setGenerating] = useState(false);
 
+  // Question/Answer State
   const [question, setQuestion] = useState(null);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -123,25 +125,22 @@ export function Practice() {
   const [hint, setHint] = useState(null);
   const [loadingHint, setLoadingHint] = useState(false);
   const [loadingAnswer, setLoadingAnswer] = useState(false);
-
-  const [selectedHistory, setSelectedHistory] = useState(null);
   const [openPopover, setOpenPopover] = useState(false);
 
-  const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
-  const FREE_ACTION_LIMIT = 3;
   const actionsRemaining = Math.max(0, FREE_ACTION_LIMIT - (user?.freeActionsUsed || 0));
 
-  const handleOpenModal = (historyItem) => setSelectedHistory(historyItem);
-  const handleCloseModal = () => setSelectedHistory(null);
+  // --- API Helpers ---
 
-  // 1. Fetch Practice History
-  const fetchHistory = async () => {
+  const getAuthHeaders = useCallback(() => {
+    const token = localStorage.getItem("token");
+    return { headers: { "Authorization": `Bearer ${token}` } };
+  }, []);
+
+  const fetchHistory = useCallback(async () => {
     setLoadingHistory(true);
     setError(null);
     try {
-      const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
-      const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
+      const res = await axios.get(`${BASE_URL}/api/practice/history`, getAuthHeaders());
       const raw = Array.isArray(res?.data?.history) ? res.data.history : [];
       const sorted = [...raw].sort((a, b) => {
         const aDate = new Date(a.submittedAt || a.generatedAt || 0);
@@ -149,17 +148,160 @@ export function Practice() {
         return bDate - aDate;
       });
       setAllHistory(sorted);
-      setItemsToShow(10);
     } catch (err) {
       console.error("Error fetching history:", err);
     } finally {
       setLoadingHistory(false);
     }
-  };
+  }, [getAuthHeaders]);
 
   useEffect(() => {
     if (user) fetchHistory();
-  }, [user]);
+  }, [user, fetchHistory]);
+
+  const pollForResult = async (qId) => {
+    for (let i = 0; i < 10; i++) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        const res = await axios.get(`${BASE_URL}/api/practice/history`, getAuthHeaders());
+        const found = res.data.history.find(item => item.questionId === qId);
+        // We stop polling if we find the item AND it has a status (meaning AI finished processing)
+        if (found && found.evaluationStatus) return found;
+      } catch (err) {
+        console.warn("Polling check attempt failed...", err);
+      }
+    }
+    return null;
+  };
+
+  // --- Handlers ---
+
+  const handleAnswerChange = (e) => {
+    const value = e.target.value;
+    setCurrentAnswer(value);
+    const rows = (value.match(/\n/g) || []).length + 1;
+    setTextareaRows(Math.min(Math.max(5, rows), 15));
+  };
+
+  const handleGenerateQuestion = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setError("You must be logged in to generate questions.");
+      return;
+    }
+    
+    // Reset States for new question
+    setGenerating(true);
+    setError("");
+    setFeedback(null);
+    setHint(null);
+    setCurrentAnswer(""); // Clear previous answer
+    setQuestion(null);
+    
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/ai/generate-question`,
+        { subject, topic, difficulty },
+        getAuthHeaders()
+      );
+      setQuestion(response.data);
+      await fetchHistory();
+    } catch (err) {
+      console.error("Error generating question:", err);
+      setError("Failed to generate question. Please try again.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSubmissionLogic = async (apiCall) => {
+    setSubmitting(true);
+    setFeedback(null);
+    setHint(null);
+    setError(null);
+    setIsPolling(true);
+
+    try {
+      // 90s timeout to allow backend time, but if it fails we poll
+      const config = { ...getAuthHeaders(), timeout: 90000 };
+      const res = await apiCall(config);
+      
+      setFeedback(res.data);
+      await fetchHistory();
+      setIsPolling(false);
+      
+      if (user?.subscriptionStatus === "FREE") decrementFreeActions();
+
+    } catch (err) {
+      if (err.response?.status === 402) {
+        showPaywall();
+        setIsPolling(false);
+        return;
+      }
+
+      // Fallback: Poll history if timeout or non-paywall error occurs
+      console.log("Direct response failed, switching to polling...", err);
+      const foundItem = await pollForResult(question.id);
+      
+      setIsPolling(false);
+      
+      if (foundItem) {
+        setFeedback({
+          evaluationStatus: foundItem.evaluationStatus,
+          answerText: foundItem.answerText,
+          feedback: foundItem.feedback,
+          hint: foundItem.hint
+        });
+        await fetchHistory();
+        if (user?.subscriptionStatus === "FREE") decrementFreeActions();
+      } else {
+        setError("We couldn't verify your result due to a connection timeout. Please check your history shortly.");
+      }
+    } finally {
+      setSubmitting(false);
+      setLoadingAnswer(false);
+    }
+  };
+
+  const handleSubmitAnswer = (e) => {
+    e.preventDefault();
+    if (!question || !currentAnswer) return;
+    
+    handleSubmissionLogic((config) => 
+      axios.post(`${BASE_URL}/api/practice/submit`, {
+        questionId: question.id,
+        answerText: currentAnswer,
+      }, config)
+    );
+  };
+
+  const confirmGetAnswer = () => {
+    setOpenPopover(false);
+    if (!question) return;
+    setLoadingAnswer(true);
+
+    handleSubmissionLogic((config) => 
+      axios.post(`${BASE_URL}/api/practice/get-answer`, { questionId: question.id }, config)
+    );
+  };
+
+  const handleGetHint = async () => {
+    if (!question) return;
+    setLoadingHint(true);
+    setHint(null);
+    setError(null);
+    try {
+      const res = await axios.post(`${BASE_URL}/api/ai/get-hint`, { questionId: question.id }, getAuthHeaders());
+      setHint(res.data);
+    } catch (err) {
+      console.error("Error getting hint:", err);
+      setError("Failed to get a hint. Please try again.");
+    } finally {
+      setLoadingHint(false);
+    }
+  };
+
+  // --- Filtering & Memoization ---
 
   const filteredHistory = useMemo(() => {
     if (!searchTerm) return allHistory;
@@ -177,163 +319,9 @@ export function Practice() {
     [filteredHistory, itemsToShow]
   );
 
-  const handleLoadMore = () => setItemsToShow((prev) => prev + 10);
-
-  const handleAnswerChange = (e) => {
-    const value = e.target.value;
-    setCurrentAnswer(value);
-    const rows = (value.match(/\n/g) || []).length + 1;
-    setTextareaRows(Math.min(Math.max(5, rows), 15));
-  };
-
-  /* 2. POLLING HELPER */
-  const pollForAnswer = async (qId) => {
-    const token = localStorage.getItem("token");
-    const config = { headers: { "Authorization": `Bearer ${token}` } };
-    for (let i = 0; i < 10; i++) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
-        const found = res.data.history.find(item => item.questionId === qId);
-        if (found && found.evaluationStatus) return found;
-      } catch (err) {
-        console.warn("Polling check failed...", err);
-      }
-    }
-    return null;
-  };
-
-  // 3. Generate Question
-  const handleGenerateQuestion = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("You must be logged in to generate questions.");
-      return;
-    }
-    setGenerating(true);
-    setError("");
-    try {
-      const response = await axios.post(
-        `${BASE_URL}/api/ai/generate-question`,
-        { subject, topic, difficulty },
-        { headers: { "Authorization": `Bearer ${token}` } }
-      );
-      setQuestion(response.data);
-      await fetchHistory();
-    } catch (err) {
-      console.error("Error generating question:", err);
-      setError("Failed to generate question. Please try again.");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // 4. Submit Answer
-  const handleSubmitAnswer = async (e) => {
-    e.preventDefault();
-    if (!question || !currentAnswer) return;
-    setSubmitting(true);
-    setFeedback(null);
-    setHint(null);
-    setError(null);
-    setIsPolling(true);
-
-    try {
-      const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` }, timeout: 90000 };
-      const res = await axios.post(`${BASE_URL}/api/practice/submit`, {
-        questionId: question.id,
-        answerText: currentAnswer,
-      }, config);
-
-      setFeedback(res.data);
-      await fetchHistory();
-      setIsPolling(false);
-      if (user?.subscriptionStatus === "FREE") decrementFreeActions();
-    } catch (err) {
-      if (err.response?.status === 402) {
-        showPaywall();
-        setIsPolling(false);
-      } else {
-        const foundItem = await pollForAnswer(question.id);
-        setIsPolling(false);
-        if (foundItem) {
-            setFeedback({
-                evaluationStatus: foundItem.evaluationStatus,
-                answerText: foundItem.answerText,
-                feedback: foundItem.feedback,
-                hint: foundItem.hint
-            });
-            await fetchHistory();
-            if (user?.subscriptionStatus === "FREE") decrementFreeActions();
-        } else {
-            setError("We couldn't verify your answer due to a connection timeout. Please check your history shortly.");
-        }
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // 5. Get Hint
-  const handleGetHint = async () => {
-    if (!question) return;
-    setLoadingHint(true);
-    setHint(null);
-    setError(null);
-    try {
-      const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
-      const res = await axios.post(`${BASE_URL}/api/ai/get-hint`, { questionId: question.id }, config);
-      setHint(res.data);
-    } catch (err) {
-      console.error("Error getting hint:", err);
-      setError("Failed to get a hint. Please try again.");
-    } finally {
-      setLoadingHint(false);
-    }
-  };
-
-  // 6. Get Answer
-  const confirmGetAnswer = async () => {
-    setOpenPopover(false);
-    if (!question) return;
-    setLoadingAnswer(true);
-    setFeedback(null);
-    setHint(null);
-    setError(null);
-    setIsPolling(true); 
-
-    try {
-      const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` }, timeout: 90000 };
-      const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, { questionId: question.id }, config);
-      setFeedback(res.data);
-      await fetchHistory();
-      setIsPolling(false);
-    } catch (err) {
-      console.error("Initial request failed or timed out:", err);
-      const foundItem = await pollForAnswer(question.id);
-      setIsPolling(false);
-      if (foundItem) {
-        setFeedback({
-            evaluationStatus: foundItem.evaluationStatus,
-            answerText: foundItem.answerText,
-            feedback: foundItem.feedback,
-            hint: foundItem.hint
-        });
-        await fetchHistory();
-      } else {
-        setError("The server timed out. Please check your history table below in a few moments.");
-      }
-    } finally {
-      setLoadingAnswer(false);
-    }
-  };
-
   return (
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
-      {/* Background Gradient */}
+      {/* Background */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
@@ -560,7 +548,7 @@ export function Practice() {
                     visibleHistory.map((item, index) => (
                         <tr 
                             key={`${item.questionId}-${index}`} 
-                            onClick={() => handleOpenModal(item)}
+                            onClick={() => setSelectedHistory(item)}
                             className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
                         >
                             <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
@@ -593,14 +581,14 @@ export function Practice() {
             
             {filteredHistory.length > visibleHistory.length && (
                 <div className="mt-4 text-center">
-                    <Button variant="text" size="sm" onClick={handleLoadMore}>Load More</Button>
+                    <Button variant="text" size="sm" onClick={() => setItemsToShow(prev => prev + 10)}>Load More</Button>
                 </div>
             )}
           </CardBody>
         </Card>
 
         {/* History Detail Modal */}
-        <Dialog open={!!selectedHistory} handler={handleCloseModal} size="lg" className="dark:bg-gray-900 border dark:border-gray-800">
+        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="dark:bg-gray-900 border dark:border-gray-800">
             <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">
                 Practice Details
             </DialogHeader>
@@ -647,26 +635,31 @@ export function Practice() {
                         <div>
                             <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
                             
-                            <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll ${
-                                selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" :
-                                selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" :
-                                selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" :
-                                "bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-800"
-                            }`}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {/* IF REVEALED: Show solution from answerText. ELSE: Show feedback */}
-                                    {selectedHistory.evaluationStatus === "REVEALED" 
-                                        ? formatMarkdownText(selectedHistory.answerText) 
-                                        : formatMarkdownText(selectedHistory.feedback)
-                                    }
-                                </ReactMarkdown>
-                            </div>
+                            {(() => {
+                                const style = STATUS_STYLES[selectedHistory.evaluationStatus] || STATUS_STYLES.INCORRECT;
+                                // Need to extract just the bg/border logic here or reuse the map
+                                const containerClass = selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" :
+                                                    selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" :
+                                                    selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" :
+                                                    "bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-800";
+                                
+                                return (
+                                    <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll ${containerClass}`}>
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {selectedHistory.evaluationStatus === "REVEALED" 
+                                                ? formatMarkdownText(selectedHistory.answerText) 
+                                                : formatMarkdownText(selectedHistory.feedback)
+                                            }
+                                        </ReactMarkdown>
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 )}
             </DialogBody>
             <DialogFooter className="border-t dark:border-gray-800">
-                <Button variant="gradient" color="blue" onClick={handleCloseModal}>Close</Button>
+                <Button variant="gradient" color="blue" onClick={() => setSelectedHistory(null)}>Close</Button>
             </DialogFooter>
         </Dialog>
 
