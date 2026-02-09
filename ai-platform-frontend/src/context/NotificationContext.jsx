@@ -48,7 +48,7 @@ export function NotificationProvider({ children }) {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
 
-      await axios.put(`${BASE_URL}/api/notifications/${id}/read`, {}, config);
+      await axios.patch(`${BASE_URL}/api/notifications/${id}/read`, {}, config);
       
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       setUnreadCount((prev) => Math.max(0, prev - 1));

@@ -111,18 +111,19 @@ export function Notifications() {
   };
 
   const markAllAsRead = async () => {
-    if (notifications.length === 0) return;
+    // If nothing to read, stop
+    const unreadCount = notifications.filter(n => !n.readFlag).length;
+    if (unreadCount === 0) return;
+
     setMarkingAll(true);
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-      const unreadIds = notifications.filter((n) => !n.readFlag).map((n) => n.id);
 
-      await Promise.all(
-        unreadIds.map((id) =>
-          axios.patch(`${BASE_URL}/api/notifications/${id}/read`, {}, config)
-        )
-      );
+      // 🟢 FIX: Use the single bulk endpoint defined in your backend
+      await axios.patch(`${BASE_URL}/api/notifications/read-all`, {}, config);
+
+      // Refresh data to show updates
       await fetchNotifications();
     } catch (err) {
        console.error("Mark all error:", err);
