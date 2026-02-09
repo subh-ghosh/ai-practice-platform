@@ -47,7 +47,7 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1, // Stagger effect: items appear 0.1s apart
+      staggerChildren: 0.1,
       delayChildren: 0.1
     }
   }
@@ -83,13 +83,11 @@ export function Notifications() {
       
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Top Left Blob - Drifting */}
         <motion.div 
           animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
           className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]" 
         />
-        {/* Bottom Right Blob - Drifting */}
         <motion.div 
           animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
@@ -163,7 +161,7 @@ export function Notifications() {
                     </motion.div>
                 ) : (
                     <motion.div 
-                      key={filter} // Key ensures staggering restarts when tab changes
+                      key={filter} 
                       variants={containerVariants}
                       initial="hidden"
                       animate="visible"
@@ -174,9 +172,11 @@ export function Notifications() {
                         return (
                         <motion.div
                             key={n.id}
-                            layout // Handles smooth reordering when items are removed
+                            layout 
                             variants={itemVariants}
-                            whileHover={{ scale: 1.01, x: 4, transition: { duration: 0.2 } }}
+                            // FIXED: Removed 'scale: 1.01' to prevent white line artifacts and scrollbar jitter.
+                            // Kept 'x: 4' for the smooth sliding effect.
+                            whileHover={{ x: 4, transition: { duration: 0.2 } }}
                             className={`group relative flex items-start gap-3 p-3 rounded-lg border transition-colors duration-200 ${isUnread ? "bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-900/30 shadow-sm" : "bg-transparent border-transparent hover:bg-gray-50/50 dark:hover:bg-gray-800/30"}`}
                         >
                             <div className={`mt-0.5 p-2 rounded-lg shrink-0 ${isUnread ? "bg-blue-50 dark:bg-blue-900/20" : "bg-gray-50 dark:bg-gray-800/50"}`}>
