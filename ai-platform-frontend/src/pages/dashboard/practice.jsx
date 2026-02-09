@@ -26,29 +26,32 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "@/context/ThemeContext.jsx";
 import { usePaywall } from "@/context/PaywallContext.jsx";
-import { InformationCircleIcon } from "@heroicons/react/24/solid";
+import { InformationCircleIcon, SparklesIcon, ClockIcon } from "@heroicons/react/24/solid";
 
 /* =========================
    Helpers
 ========================= */
 
 function DynamicFeedbackTitle({ status }) {
-  let title = "Feedback: Incorrect";
+  let title = "Incorrect";
   let color = "red";
   if (status === "CORRECT") {
-    title = "Feedback: Correct!";
+    title = "Correct!";
     color = "green";
   } else if (status === "CLOSE") {
-    title = "Feedback: Close!";
+    title = "Close!";
     color = "orange";
   } else if (status === "REVEALED") {
     title = "Answer Revealed";
     color = "blue";
   }
   return (
-    <Typography variant="h5" color={color}>
-      {title}
-    </Typography>
+    <div className={`flex items-center gap-2 mb-2`}>
+        <div className={`w-3 h-3 rounded-full bg-${color}-500 shadow-[0_0_8px] shadow-${color}-500/50`}></div>
+        <Typography variant="h5" color={color} className="font-bold tracking-tight">
+        {title}
+        </Typography>
+    </div>
   );
 }
 
@@ -57,7 +60,6 @@ function formatDateTime(isoString) {
   try {
     const date = new Date(isoString);
     return date.toLocaleString(undefined, {
-      year: "numeric",
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -69,18 +71,19 @@ function formatDateTime(isoString) {
 }
 
 const getStatusChip = (status) => {
-  const base = { variant: "gradient", className: "py-0.5 px-2 text-[11px] font-medium w-fit" };
-  if (!status) return <Chip {...base} color="blue-gray" value="N/A" />;
+  const base = { variant: "ghost", className: "py-0.5 px-2.5 text-[11px] font-bold uppercase tracking-wide w-fit rounded-full border" };
+  if (!status) return <Chip {...base} className={`${base.className} border-blue-gray-100 text-blue-gray-500`} value="N/A" />;
+  
   switch (status.toUpperCase()) {
     case "CORRECT":
-      return <Chip {...base} color="green" value="Correct" />;
+      return <Chip {...base} className={`${base.className} border-green-200 bg-green-50/50 text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-300`} value="Correct" />;
     case "CLOSE":
-      return <Chip {...base} color="orange" value="Close" />;
+      return <Chip {...base} className={`${base.className} border-orange-200 bg-orange-50/50 text-orange-800 dark:border-orange-900/50 dark:bg-orange-900/20 dark:text-orange-300`} value="Close" />;
     case "REVEALED":
-      return <Chip {...base} color="blue" value="Revealed" />;
+      return <Chip {...base} className={`${base.className} border-blue-200 bg-blue-50/50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/20 dark:text-blue-300`} value="Revealed" />;
     case "INCORRECT":
     default:
-      return <Chip {...base} color="red" value="Incorrect" />;
+      return <Chip {...base} className={`${base.className} border-red-200 bg-red-50/50 text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300`} value="Incorrect" />;
   }
 };
 
@@ -94,8 +97,6 @@ export function Practice() {
   const { showPaywall } = usePaywall();
 
   const [error, setError] = useState(null);
-  
-  // State for Blue Polling Message
   const [isPolling, setIsPolling] = useState(false);
 
   const [allHistory, setAllHistory] = useState([]);
@@ -122,7 +123,6 @@ export function Practice() {
   const [openPopover, setOpenPopover] = useState(false);
 
   const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
-
   const FREE_ACTION_LIMIT = 3;
   const actionsRemaining = Math.max(0, FREE_ACTION_LIMIT - (user?.freeActionsUsed || 0));
 
@@ -136,9 +136,7 @@ export function Practice() {
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-
       const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
-
       const raw = Array.isArray(res?.data?.history) ? res.data.history : [];
       const sorted = [...raw].sort((a, b) => {
         const aDate = new Date(a.submittedAt || a.generatedAt || 0);
@@ -162,13 +160,7 @@ export function Practice() {
     if (!searchTerm) return allHistory;
     const q = searchTerm.toLowerCase();
     return allHistory.filter((item) => {
-      const fields = [
-        item.questionText,
-        item.subject,
-        item.topic,
-        item.difficulty,
-        item.answerText,
-      ]
+      const fields = [item.questionText, item.subject, item.topic, item.difficulty, item.answerText]
         .filter(Boolean)
         .map((x) => String(x).toLowerCase());
       return fields.some((f) => f.includes(q));
@@ -189,28 +181,18 @@ export function Practice() {
     setTextareaRows(Math.min(Math.max(5, rows), 15));
   };
 
-  /* ============================================================
-     2. POLLING HELPER
-  ============================================================ */
+  /* 2. POLLING HELPER */
   const pollForAnswer = async (qId) => {
     const token = localStorage.getItem("token");
     const config = { headers: { "Authorization": `Bearer ${token}` } };
-
-    // Poll for 30s
     for (let i = 0; i < 10; i++) {
       try {
         await new Promise(resolve => setTimeout(resolve, 3000));
-        console.log(`Polling history... Attempt ${i + 1}`);
-        
         const res = await axios.get(`${BASE_URL}/api/practice/history`, config);
         const found = res.data.history.find(item => item.questionId === qId);
-
-        // If we found it and it has an evaluation status (meaning processing is done)
-        if (found && found.evaluationStatus) {
-          return found;
-        }
+        if (found && found.evaluationStatus) return found;
       } catch (err) {
-        console.warn("Polling check failed, retrying...", err);
+        console.warn("Polling check failed...", err);
       }
     }
     return null;
@@ -219,34 +201,20 @@ export function Practice() {
   // 3. Generate Question
   const handleGenerateQuestion = async () => {
     const token = localStorage.getItem("token");
-
     if (!token) {
       setError("You must be logged in to generate questions.");
       return;
     }
-
     setGenerating(true);
     setError("");
-
     try {
       const response = await axios.post(
         `${BASE_URL}/api/ai/generate-question`,
-        {
-          subject: subject,
-          topic: topic,
-          difficulty: difficulty
-        },
-        {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        }
+        { subject, topic, difficulty },
+        { headers: { "Authorization": `Bearer ${token}` } }
       );
-
       setQuestion(response.data);
       await fetchHistory();
-
     } catch (err) {
       console.error("Error generating question:", err);
       setError("Failed to generate question. Please try again.");
@@ -255,25 +223,19 @@ export function Practice() {
     }
   };
 
-  // 4. Submit Answer (IMMEDIATE BLUE FEEDBACK)
+  // 4. Submit Answer
   const handleSubmitAnswer = async (e) => {
     e.preventDefault();
     if (!question || !currentAnswer) return;
-
     setSubmitting(true);
     setFeedback(null);
     setHint(null);
     setError(null);
-    // 👇 Show blue message immediately
     setIsPolling(true);
 
     try {
       const token = localStorage.getItem("token");
-      const config = { 
-        headers: { "Authorization": `Bearer ${token}` },
-        timeout: 90000 // 90s timeout
-      };
-
+      const config = { headers: { "Authorization": `Bearer ${token}` }, timeout: 90000 };
       const res = await axios.post(`${BASE_URL}/api/practice/submit`, {
         questionId: question.id,
         answerText: currentAnswer,
@@ -281,25 +243,15 @@ export function Practice() {
 
       setFeedback(res.data);
       await fetchHistory();
-      setIsPolling(false); // Done, hide blue message
-
-      if (user?.subscriptionStatus === "FREE") {
-        decrementFreeActions();
-      }
+      setIsPolling(false);
+      if (user?.subscriptionStatus === "FREE") decrementFreeActions();
     } catch (err) {
-      console.error("Error submitting answer:", err);
       if (err.response?.status === 402) {
         showPaywall();
         setIsPolling(false);
       } else {
-        // --- POLLING FALLBACK FOR SUBMIT ---
-        // We are already showing blue message (isPolling=true), so just keep it
-        // and start polling for the result in background.
-
         const foundItem = await pollForAnswer(question.id);
-        
-        setIsPolling(false); // Stop spinner
-
+        setIsPolling(false);
         if (foundItem) {
             setFeedback({
                 evaluationStatus: foundItem.evaluationStatus,
@@ -327,11 +279,7 @@ export function Practice() {
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-
-      const res = await axios.post(`${BASE_URL}/api/ai/get-hint`, {
-        questionId: question.id,
-      }, config);
-
+      const res = await axios.post(`${BASE_URL}/api/ai/get-hint`, { questionId: question.id }, config);
       setHint(res.data);
     } catch (err) {
       console.error("Error getting hint:", err);
@@ -341,41 +289,27 @@ export function Practice() {
     }
   };
 
-  // 6. Get Answer (IMMEDIATE BLUE FEEDBACK)
+  // 6. Get Answer
   const confirmGetAnswer = async () => {
     setOpenPopover(false);
     if (!question) return;
-
     setLoadingAnswer(true);
     setFeedback(null);
     setHint(null);
     setError(null);
-    // 👇 Show blue message immediately
     setIsPolling(true); 
 
     try {
       const token = localStorage.getItem("token");
-      const config = {
-        headers: { "Authorization": `Bearer ${token}` },
-        timeout: 90000 // 90s axios timeout
-      };
-
-      const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, {
-        questionId: question.id,
-      }, config);
-
+      const config = { headers: { "Authorization": `Bearer ${token}` }, timeout: 90000 };
+      const res = await axios.post(`${BASE_URL}/api/practice/get-answer`, { questionId: question.id }, config);
       setFeedback(res.data);
       await fetchHistory();
-      setIsPolling(false); // Done
-
+      setIsPolling(false);
     } catch (err) {
       console.error("Initial request failed or timed out:", err);
-
-      // Keep isPolling=true and check history
       const foundItem = await pollForAnswer(question.id);
-
       setIsPolling(false);
-
       if (foundItem) {
         setFeedback({
             evaluationStatus: foundItem.evaluationStatus,
@@ -393,435 +327,308 @@ export function Practice() {
   };
 
   return (
-    <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)]">
+    <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
+      {/* Background Gradient */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
 
-      <div className="mt-6 page has-fixed-navbar space-y-6">
-        {/* --- Question Generator --- */}
-        <Card className="mb-12 rounded-3xl border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
-          <CardHeader variant="gradient" color="gray" className="mb-6 p-6 rounded-t-3xl">
-            <Typography variant="h6" color="white">
-              Question Generator
-            </Typography>
+      <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto">
+        
+        {/* --- Generator Card --- */}
+        <Card className="overflow-visible border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm">
+          <CardHeader
+            floated={false}
+            shadow={false}
+            className="rounded-t-xl bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 m-0"
+          >
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 rounded-lg">
+                    <SparklesIcon className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                    <Typography variant="h5" color="white" className="font-bold tracking-tight">
+                    AI Question Generator
+                    </Typography>
+                    <Typography variant="small" color="white" className="opacity-90 font-normal">
+                    Select a topic and let AI craft a question for you.
+                    </Typography>
+                </div>
+            </div>
           </CardHeader>
 
-          <CardBody className="p-6">
+          <CardBody className="p-6 md:p-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <Input
-                label="Subject (e.g., JAVA, DBMS, Math)"
+                label="Subject"
+                placeholder="e.g. Java, DBMS"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                color="gray"
-                className="dark:!text-white"
-                labelProps={{ className: "dark:!text-white" }}
+                color="blue"
+                className="!text-blue-gray-900 dark:!text-white"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
               />
 
               <Input
-                label="Topic (e.g., Inheritance, SQL Joins)"
+                label="Topic"
+                placeholder="e.g. Inheritance"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                color="gray"
-                className="dark:!text-white"
-                labelProps={{ className: "dark:!text-white" }}
+                color="blue"
+                className="!text-blue-gray-900 dark:!text-white"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
               />
 
               <Select
                 label="Difficulty"
                 value={difficulty}
                 onChange={(val) => setDifficulty(val)}
-                color="gray"
-                className="dark:!text-white"
-                labelProps={{ className: "dark:!text-white" }}
-                menuProps={{
-                  className:
-                    "rounded-xl dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200",
-                }}
+                color="blue"
+                className="!text-blue-gray-900 dark:!text-white"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                menuProps={{ className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200" }}
               >
-                <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="School">
-                  School
-                </Option>
-                <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="High School">
-                  High School
-                </Option>
-                <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Graduation">
-                  Graduation
-                </Option>
-                <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Post Graduation">
-                  Post Graduation
-                </Option>
-                <Option className="dark:!text-gray-100 dark:hover:!bg-gray-700" value="Research">
-                  Research
-                </Option>
+                {["School", "High School", "Graduation", "Post Graduation", "Research"].map(lvl => (
+                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700 dark:focus:bg-gray-700">{lvl}</Option>
+                ))}
               </Select>
             </div>
 
             {user?.subscriptionStatus === "FREE" && (
-              <Alert color="blue" icon={<InformationCircleIcon className="w-6 h-6" />} className="mt-6">
-                <Typography variant="h6" color="white" className="mb-1">
-                  Free Plan Details
-                </Typography>
-                <Typography color="white" className="font-normal">
-                  You have <strong>{actionsRemaining}</strong> free actions remaining.
-                </Typography>
+              <Alert className="mt-6 border border-blue-100 bg-blue-50/80 text-blue-900 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-100 rounded-lg">
+                <div className="flex items-center gap-3">
+                    <InformationCircleIcon className="w-5 h-5" />
+                    <Typography className="text-sm font-medium">
+                        Free Plan: You have <strong>{actionsRemaining}</strong> generations left today.
+                    </Typography>
+                </div>
               </Alert>
             )}
 
-            <div className="mt-6 flex justify-start">
+            <div className="mt-8 flex justify-start">
               <Button
                 onClick={handleGenerateQuestion}
                 disabled={generating || (user?.subscriptionStatus === "FREE" && actionsRemaining <= 0)}
-                className="w-full md:w-1/3"
+                className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40"
               >
-                {generating ? <Spinner className="h-4 w-4" /> : "Generate New Question"}
+                {generating ? <Spinner className="h-4 w-4" /> : "Generate Question"}
               </Button>
             </div>
 
-            {/* Error Message (Red) */}
-            {error && (
-              <Typography color="red" className="mt-4 text-sm font-medium">
-                {error}
-              </Typography>
-            )}
+            {error && <Typography color="red" className="mt-4 text-sm font-medium text-center">{error}</Typography>}
 
-            {/* Polling Message (Blue/Spinner) - Updated Text & Immediate Show */}
+            {/* Polling Indicator */}
             {isPolling && (
-              <div className="mt-4 flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-800">
-                <Spinner className="h-4 w-4 text-blue-500" />
-                <Typography className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  We are finalizing the answer. This might take a moment...
+              <div className="mt-6 flex items-center justify-center gap-3 p-4 rounded-xl bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800 animate-pulse">
+                <Spinner className="h-5 w-5 text-blue-500" />
+                <Typography className="text-sm font-semibold text-blue-600 dark:text-blue-300">
+                  AI is analyzing your answer...
                 </Typography>
               </div>
             )}
 
+            {/* Active Question Area */}
             {question && (
-              <form onSubmit={handleSubmitAnswer} className="mt-6">
-                <Typography variant="h6" color="blue-gray" className="mb-2">
-                  Your Question:
-                </Typography>
-                <div className="p-4 border rounded-xl bg-blue-gray-50/70 mb-4 whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700 dark:border-gray-600">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {question.questionText}
-                  </ReactMarkdown>
+              <div className="mt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-6">
+                    <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-1">
+                        Question
+                    </Typography>
+                    <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{question.questionText}</ReactMarkdown>
+                        </div>
+                    </div>
                 </div>
 
-                <Textarea
-                  label="Your Answer"
-                  value={currentAnswer}
-                  onChange={handleAnswerChange}
-                  rows={textareaRows}
-                  required
-                  color="gray"
-                  className="dark:!text-white"
-                  labelProps={{ className: "dark:!text-white" }}
-                />
+                <form onSubmit={handleSubmitAnswer}>
+                  <Textarea
+                    label="Write your answer here..."
+                    value={currentAnswer}
+                    onChange={handleAnswerChange}
+                    rows={textareaRows}
+                    color="blue"
+                    className="!text-blue-gray-900 dark:!text-white bg-white dark:bg-gray-900"
+                    containerProps={{ className: "min-w-0" }}
+                    labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                  />
 
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Button type="submit" disabled={submitting || loadingHint || loadingAnswer || isPolling}>
-                    {submitting || isPolling ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
-                  </Button>
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Button type="submit" disabled={submitting || isPolling} className="rounded-lg bg-blue-600">
+                      {submitting || isPolling ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
+                    </Button>
 
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={handleGetHint}
-                    disabled={submitting || loadingHint || loadingAnswer || isPolling}
-                    className="border border-gray-800 text-gray-900 hover:bg-gray-100 dark:border-white dark:text-white dark:hover:bg-white/10"
-                  >
-                    {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
-                  </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={handleGetHint}
+                      disabled={submitting || isPolling}
+                      className="rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                    >
+                      {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
+                    </Button>
 
-                  <Popover open={openPopover} handler={setOpenPopover} placement="top">
-                    <PopoverHandler>
-                      <Button
-                        type="button"
-                        color="red"
-                        variant="outlined"
-                        disabled={submitting || loadingHint || loadingAnswer || isPolling}
-                      >
-                        {loadingAnswer || isPolling ? <Spinner className="h-4 w-4" /> : "Get Answer"}
-                      </Button>
-                    </PopoverHandler>
-                    <PopoverContent className="w-64 z-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200">
-                      <Typography variant="h6" color="blue-gray" className="mb-2 dark:text-gray-100">
-                        Confirm
-                      </Typography>
-                      <Typography variant="small" color="blue-gray" className="mb-4 dark:text-gray-300">
-                        Reveal the answer? This will be saved to your history.
-                      </Typography>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="text" size="sm" onClick={() => setOpenPopover(false)}>
-                          Cancel
+                    <Popover open={openPopover} handler={setOpenPopover} placement="top">
+                      <PopoverHandler>
+                        <Button variant="text" color="red" disabled={submitting || isPolling} className="rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                          {loadingAnswer ? <Spinner className="h-4 w-4" /> : "Reveal Answer"}
                         </Button>
-                        <Button variant="gradient" color="red" size="sm" onClick={confirmGetAnswer}>
-                          Confirm
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </form>
+                      </PopoverHandler>
+                      <PopoverContent className="z-50 border-blue-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                        <Typography color="blue-gray" className="mb-2 font-bold dark:text-white">Confirm Reveal?</Typography>
+                        <Typography variant="small" className="mb-4 font-normal text-blue-gray-500 dark:text-gray-400">
+                          This will count as an attempt.
+                        </Typography>
+                        <div className="flex gap-2 justify-end">
+                          <Button size="sm" variant="text" onClick={() => setOpenPopover(false)} className="dark:text-gray-300">Cancel</Button>
+                          <Button size="sm" color="red" onClick={confirmGetAnswer}>Confirm</Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </form>
+              </div>
             )}
 
-            {/* Hint */}
+            {/* Hint Box */}
             {hint && (
-              <div className="mt-4 p-4 border border-blue-500 rounded-xl bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
-                <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                  <InformationCircleIcon className="h-5 w-5" />
-                  Hint
-                </Typography>
-                <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{hint}</ReactMarkdown>
+              <div className="mt-6 p-5 border border-blue-200 bg-blue-50/50 rounded-2xl dark:bg-blue-900/10 dark:border-blue-800 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-300">
+                    <InformationCircleIcon className="h-5 w-5" />
+                    <span className="font-bold text-sm uppercase">Hint</span>
+                </div>
+                <div className="prose prose-sm dark:prose-invert text-blue-gray-700 dark:text-blue-100">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{hint}</ReactMarkdown>
                 </div>
               </div>
             )}
 
-            {/* Feedback */}
+            {/* Feedback Box */}
             {feedback && (
-              <div className="mt-6 p-4 border rounded-xl dark:border-gray-600">
+              <div className="mt-8 p-6 border rounded-2xl bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm animate-in zoom-in-95 duration-300">
                 <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-                <div className="mt-2 p-4 bg-blue-gray-50/70 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
+                <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {feedback.evaluationStatus === "REVEALED"
-                      ? feedback.answerText
-                      : feedback.feedback}
+                    {feedback.evaluationStatus === "REVEALED" ? feedback.answerText : feedback.feedback}
                   </ReactMarkdown>
                 </div>
-
-                {feedback.hint && feedback.evaluationStatus !== "REVEALED" && (
-                  <div className="mt-4 p-4 border border-blue-500 rounded-xl bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
-                    <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                       <InformationCircleIcon className="h-5 w-5" />
-                      Hint
-                    </Typography>
-                    <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {feedback.hint}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </CardBody>
         </Card>
 
-        {/* Practice History */}
-        <Card className="rounded-3xl border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
-          <CardHeader variant="gradient" color="gray" className="mb-6 p-6 rounded-t-3xl">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <Typography variant="h6" color="white">
-                Practice History
-              </Typography>
-              <div className="w-full md:w-72">
-                <Input
-                  label="Search History"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  color="white"
-                  className="!text-white !bg-gray-800 placeholder:!text-gray-400
-                             !border !border-gray-700 focus:!border-gray-500
-                             focus:!ring-0 rounded-lg pl-2"
-                  labelProps={{
-                    className:
-                      "!text-gray-300 before:content-none after:content-none pl-2",
-                  }}
-                  containerProps={{ className: "min-w-[240px]" }}
-                />
-              </div>
+        {/* --- History Card --- */}
+        <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm">
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 flex flex-col md:flex-row gap-4 justify-between items-center rounded-t-xl">
+            <Typography variant="h6" color="blue-gray" className="dark:text-white">
+              Practice History
+            </Typography>
+            <div className="w-full md:w-72">
+              <Input
+                label="Search"
+                icon={<i className="fas fa-search" />}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="!text-blue-gray-900 dark:!text-white"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+              />
             </div>
           </CardHeader>
 
-          <CardBody className="px-0 pt-0 pb-2">
-            {loadingHistory ? (
-              <div className="flex justify-center p-8">
-                <Spinner className="h-8 w-8" />
-              </div>
-            ) : visibleHistory.length === 0 ? (
-              <Typography className="p-6 text-center">
-                {searchTerm
-                  ? "No history items match your search."
-                  : "You haven't completed any questions yet."}
-              </Typography>
-            ) : (
-              <>
-                <div className="overflow-x-auto hide-scrollbar">
-                  <table className="w-full min-w-[640px] table-auto">
-                    <thead>
-                      <tr>
-                        {[
-                          "SL",
-                          "Question",
-                          "Subject",
-                          "Topic",
-                          "Difficulty",
-                          "Status",
-                          "Your Answer",
-                          "Submitted At",
-                        ].map((el) => (
-                          <th key={el} className="border-b border-blue-gray-50 py-3 px-5 text-left">
-                            <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400">
-                              {el}
-                            </Typography>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visibleHistory.map((item, index) => {
-                        const {
-                          questionId,
-                          questionText,
-                          subject,
-                          topic,
-                          difficulty,
-                          evaluationStatus,
-                          answerText,
-                          submittedAt,
-                        } = item;
-                        const className = "py-3 px-5 border-b border-blue-gray-50";
-                        const uniqueKey = `${questionId}-${submittedAt || index}`;
-                        return (
-                          <tr
-                            key={uniqueKey}
+          <CardBody className="px-0 pt-0 pb-4 overflow-x-auto">
+            <table className="w-full min-w-[640px] table-auto text-left">
+              <thead>
+                <tr>
+                  {["#", "Question", "Subject", "Difficulty", "Status", "Date"].map((head) => (
+                    <th key={head} className="border-b border-blue-gray-50 bg-blue-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                      <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-70 dark:text-gray-300">
+                        {head}
+                      </Typography>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {loadingHistory ? (
+                    <tr><td colSpan="6" className="p-8 text-center"><Spinner className="h-8 w-8 mx-auto" /></td></tr>
+                ) : visibleHistory.length === 0 ? (
+                    <tr><td colSpan="6" className="p-8 text-center text-gray-500">No history found.</td></tr>
+                ) : (
+                    visibleHistory.map((item, index) => (
+                        <tr 
+                            key={`${item.questionId}-${index}`} 
                             onClick={() => handleOpenModal(item)}
-                            className="cursor-pointer hover:bg-blue-gray-50 dark:hover:bg-gray-700/70"
-                          >
-                            <td className={className}>
-                              <Typography className="text-xs font-normal text-blue-gray-500">
-                                {index + 1}
-                              </Typography>
+                            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        >
+                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
+                                <Typography variant="small" color="blue-gray" className="font-normal dark:text-gray-400">{index + 1}</Typography>
                             </td>
-                            <td className={className}>
-                              <Typography className="text-xs font-normal text-blue-gray-500">
-                                {String(questionText || "").substring(0, 40)}...
-                              </Typography>
+                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800 max-w-xs truncate">
+                                <Typography variant="small" color="blue-gray" className="font-medium dark:text-gray-200 truncate">
+                                    {item.questionText}
+                                </Typography>
                             </td>
-                            <td className={className}>
-                              <Typography className="text-xs font-normal text-blue-gray-500">{subject}</Typography>
+                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
+                                <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.subject}</Typography>
                             </td>
-                            <td className={className}>
-                              <Typography className="text-xs font-normal text-blue-gray-500">{topic}</Typography>
+                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
+                                <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.difficulty}</Typography>
                             </td>
-                            <td className={className}>
-                              <Typography className="text-xs font-normal text-blue-gray-500">{difficulty}</Typography>
+                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
+                                {getStatusChip(item.evaluationStatus)}
                             </td>
-                            <td className={className}>{getStatusChip(evaluationStatus)}</td>
-                            <td className={className}>
-                              <Typography className="text-xs font-normal text-blue-gray-500">
-                                {answerText ? `${String(answerText).substring(0, 40)}...` : "Not Answered"}
-                              </Typography>
+                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
+                                <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-500">
+                                    {new Date(item.submittedAt || item.generatedAt).toLocaleDateString()}
+                                </Typography>
                             </td>
-                            <td className={className}>
-                              <Typography className="text-xs font-normal text-blue-gray-500">
-                                {formatDateTime(submittedAt)}
-                              </Typography>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {filteredHistory.length > visibleHistory.length && (
-                  <div className="mt-4 flex justify-center p-4">
-                    <Button variant="text" onClick={handleLoadMore}>
-                      Load More
-                    </Button>
-                  </div>
+                        </tr>
+                    ))
                 )}
-              </>
+              </tbody>
+            </table>
+            
+            {filteredHistory.length > visibleHistory.length && (
+                <div className="mt-4 text-center">
+                    <Button variant="text" size="sm" onClick={handleLoadMore}>Load More</Button>
+                </div>
             )}
           </CardBody>
         </Card>
 
-        {/* History Detail Modal */}
-        <Dialog open={selectedHistory !== null} handler={handleCloseModal} size="lg" className="dark:bg-gray-800">
-          <DialogHeader className="dark:text-gray-200">Practice Result</DialogHeader>
-
-          <DialogBody divider className="flex flex-col gap-4 max-h-[70vh] overflow-y-auto dark:border-gray-700">
-            {selectedHistory && (
-              <>
-                <div>
-                  <div className="flex flex-wrap gap-x-6 gap-y-2 mb-4">
-                    <Typography variant="small" className="dark:text-gray-300">
-                      <span className="font-semibold text-blue-gray-600 dark:text-gray-400">Subject:</span>{" "}
-                      {selectedHistory.subject}
-                    </Typography>
-                    <Typography variant="small" className="dark:text-gray-300">
-                      <span className="font-semibold text-blue-gray-600 dark:text-gray-400">Topic:</span>{" "}
-                      {selectedHistory.topic}
-                    </Typography>
-                    <Typography variant="small" className="dark:text-gray-300">
-                      <span className="font-semibold text-blue-gray-600 dark:text-gray-400">Difficulty:</span>{" "}
-                      {selectedHistory.difficulty}
-                    </Typography>
-                  </div>
-
-                  <Typography variant="small" color="blue-gray" className="dark:text-gray-300">
-                    <span className="font-semibold">Question Generated:</span> {formatDateTime(selectedHistory.generatedAt)}
-                  </Typography>
-                  <Typography variant="small" color="blue-gray" className="font-semibold dark:text-gray-300">
-                    Answer Submitted: {formatDateTime(selectedHistory.submittedAt)}
-                  </Typography>
-
-                  <Typography variant="h6" color="blue-gray" className="mt-2 dark:text-gray-200">
-                    Question
-                  </Typography>
-                  <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {selectedHistory.questionText}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-
-                <div>
-                  <Typography variant="h6" color="blue-gray" className="dark:text-gray-200">
-                    Your Answer
-                  </Typography>
-                  <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {selectedHistory.answerText || "No answer submitted."}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-
-                <div>
-                  <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
-                  <div className="mt-2 p-4 bg-blue-gray-50 rounded-lg whitespace-pre-wrap prose prose-sm max-w-none dark:bg-gray-700">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {selectedHistory.evaluationStatus === "REVEALED"
-                        ? selectedHistory.answerText
-                        : selectedHistory.feedback}
-                    </ReactMarkdown>
-                  </div>
-                </div>
-
-                {selectedHistory.hint && selectedHistory.evaluationStatus !== "REVEALED" && (
-                  <div className="mt-2 p-4 border border-blue-500 rounded-lg bg-blue-50 dark:bg-gray-700 dark:border-blue-400">
-                    <Typography variant="h6" color="blue" className="mb-2 flex items-center gap-2">
-                       <InformationCircleIcon className="h-5 w-5" />
-                      Hint
-                    </Typography>
-                    <div className="whitespace-pre-wrap prose prose-sm max-w-none ml-7">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {selectedHistory.hint}
-                      </ReactMarkdown>
+        {/* Modal */}
+        <Dialog open={!!selectedHistory} handler={handleCloseModal} size="lg" className="dark:bg-gray-900 border dark:border-gray-800">
+            <DialogHeader className="dark:text-white border-b dark:border-gray-800">Practice Details</DialogHeader>
+            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh]">
+                {selectedHistory && (
+                    <div className="space-y-6">
+                        <div>
+                            <Typography variant="small" className="font-bold text-blue-500 uppercase mb-2">Question</Typography>
+                            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.questionText}</ReactMarkdown>
+                            </div>
+                        </div>
+                        <div>
+                            <Typography variant="small" className="font-bold text-gray-500 uppercase mb-2">Your Answer</Typography>
+                            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 text-sm">
+                                {selectedHistory.answerText || <span className="italic text-gray-400">No answer submitted</span>}
+                            </div>
+                        </div>
+                        <div>
+                            <Typography variant="small" className="font-bold text-gray-500 uppercase mb-2">Feedback</Typography>
+                            <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl prose prose-sm dark:prose-invert max-w-none">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {selectedHistory.evaluationStatus === "REVEALED" ? "Answer Revealed" : selectedHistory.feedback}
+                                </ReactMarkdown>
+                            </div>
+                        </div>
                     </div>
-                  </div>
                 )}
-              </>
-            )}
-          </DialogBody>
-
-          <DialogFooter className="dark:border-t dark:border-gray-700">
-            <Button variant="text" color="blue-gray" onClick={handleCloseModal} className="dark:text-gray-200">
-              <span>Close</span>
-            </Button>
-          </DialogFooter>
+            </DialogBody>
+            <DialogFooter className="border-t dark:border-gray-800">
+                <Button variant="gradient" color="blue" onClick={handleCloseModal}>Close</Button>
+            </DialogFooter>
         </Dialog>
+
       </div>
     </section>
   );
