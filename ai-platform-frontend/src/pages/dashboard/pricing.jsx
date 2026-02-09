@@ -1,20 +1,34 @@
 import React, { useState } from "react";
-import axios from "axios"; // 👈 Use direct Axios
+import axios from "axios";
 import {
-  Card,
-  CardBody,
   Typography,
+  Card,
+  CardHeader,
+  CardBody,
+  CardFooter,
   Button,
+  Tabs,
+  TabsHeader,
+  Tab,
+  Chip,
   Spinner,
   Alert,
 } from "@material-tailwind/react";
-import { CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/solid";
+import { 
+  CheckIcon, 
+  XMarkIcon, 
+  ExclamationTriangleIcon, 
+  CheckCircleIcon 
+} from "@heroicons/react/24/solid";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-const PREMIUM_MONTHLY_PLAN_ID = "premium_monthly";
+// --- Constants & Helpers ---
 
-// Helper to load Razorpay Script dynamically
+const PREMIUM_MONTHLY_PLAN_ID = "premium_monthly";
+const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
     const script = document.createElement("script");
@@ -25,15 +39,37 @@ const loadRazorpayScript = () => {
   });
 };
 
+// --- Animation Variants ---
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: { type: "spring", stiffness: 300, damping: 24 },
+  },
+};
+
+// --- Main Component ---
+
 export function Pricing() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  
+  const [billingCycle, setBillingCycle] = useState("monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Hardcoded URL to prevent env issues
-  const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+  // --- Payment Logic ---
 
   const displayRazorpay = async () => {
     setLoading(true);
@@ -48,7 +84,7 @@ export function Pricing() {
       return;
     }
 
-    // 2. Get Token Manually
+    // 2. Get Token
     const token = localStorage.getItem("token");
     if (!token) {
       setError("You must be logged in to upgrade.");
@@ -61,10 +97,10 @@ export function Pricing() {
     };
 
     try {
-      // 3. Create Order (Manual Axios)
+      // 3. Create Order
       const orderRes = await axios.post(
         `${BASE_URL}/api/payments/create-order`, 
-        { productId: PREMIUM_MONTHLY_PLAN_ID },
+        { productId: PREMIUM_MONTHLY_PLAN_ID }, // Currently defaulting to monthly ID
         config
       );
 
@@ -76,12 +112,12 @@ export function Pricing() {
         amount: orderData.amount,
         currency: orderData.currency,
         name: "AI Practice Platform",
-        description: "Premium Monthly Plan",
+        description: "Premium Plan Upgrade",
         order_id: orderData.orderId,
         handler: async function (response) {
-          setLoading(true);
+          setLoading(true); // Keep loading while verifying
           try {
-            // 5. Verify Payment (Manual Axios)
+            // 5. Verify Payment
             const verifyRes = await axios.post(
               `${BASE_URL}/api/payments/verify-payment`,
               {
@@ -92,7 +128,6 @@ export function Pricing() {
               config
             );
 
-            // Update user in context immediately
             if (updateUser) {
                  updateUser(verifyRes.data); 
             }
@@ -127,122 +162,228 @@ export function Pricing() {
     }
   };
 
+  // --- Plan Definitions ---
+
+  const PLANS = [
+    {
+      id: "free",
+      name: "Starter",
+      price: { monthly: 0, yearly: 0 },
+      description: "Essential tools for casual learners.",
+      features: [
+        { text: "10 Free Generations", included: true },
+        { text: "10 Free Evaluations", included: true },
+        { text: "Basic Analytics", included: true },
+        { text: "Unlimited Access", included: false },
+      ],
+      popular: false,
+      isPremium: false,
+    },
+    {
+      id: "premium",
+      name: "Pro Scholar",
+      price: { monthly: 199, yearly: 1999 }, // Yearly is visual only in this demo
+      description: "Advanced AI tools for serious prep.",
+      features: [
+        { text: "Unlimited Generations", included: true },
+        { text: "Unlimited Evaluations", included: true },
+        { text: "Advanced Analytics", included: true },
+        { text: "Unlimited Access", included: true },
+      ],
+      popular: true,
+      isPremium: true,
+    },
+  ];
+
+  // --- Render ---
+
   return (
-    <section
-      className="
-        relative isolate overflow-x-hidden
-        -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8
-        min-h-[calc(100vh-4rem)] pb-12
-        flex
-      "
-    >
-      {/* Background: bluish gradient + soft glows */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-200 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
-      <div className="pointer-events-none absolute -top-10 right-[8%] h-72 w-72 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-36 -left-10 h-80 w-80 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
+    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+      
+      {/* Animated Background Gradient */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]"
+        />
+        <motion.div
+          animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]"
+        />
+      </div>
 
-      {/* Centered column that expands to fill height */}
-      <div className="mt-8 page w-full flex flex-col items-center">
-        {/* Header */}
-        <div className="w-full max-w-5xl text-center">
-          <Typography variant="h4" color="blue-gray" className="mb-3 font-bold dark:text-gray-100">
-            Choose Your Plan
-          </Typography>
-          <Typography
-            variant="paragraph"
-            color="blue-gray"
-            className="text-base mb-6 dark:text-gray-300"
+      {/* Main Content Wrapper */}
+      <div className="relative z-10 p-6 flex flex-col gap-5 h-full">
+        
+        {/* Header & Controls */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
+          <div>
+            <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold tracking-tight">
+              Subscription Plans
+            </Typography>
+            <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal mt-1">
+              Pick a plan that fits your learning goals.
+            </Typography>
+          </div>
+
+          <div className="w-full md:w-64">
+            <Tabs value={billingCycle} className="w-full">
+              <TabsHeader
+                className="bg-gray-100/50 dark:bg-gray-800/70 p-1 border border-gray-200 dark:border-gray-700"
+                indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
+              >
+                <Tab value="monthly" onClick={() => setBillingCycle("monthly")} className="text-xs font-bold py-2">
+                  Monthly
+                </Tab>
+                <Tab value="yearly" onClick={() => setBillingCycle("yearly")} className="text-xs font-bold py-2">
+                  Yearly <span className="text-[9px] text-green-500 ml-1">(-15%)</span>
+                </Tab>
+              </TabsHeader>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* Alerts Area */}
+        <AnimatePresence>
+          {error && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
+                {error}
+              </Alert>
+            </motion.div>
+          )}
+          {success && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <Alert color="green" icon={<CheckCircleIcon className="h-5 w-5" />}>
+                {success}
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Plans Grid */}
+        <div className="flex-1 overflow-y-auto pr-2 pb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
+          <motion.div
+            key={billingCycle} 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 pt-2 max-w-4xl mx-auto"
           >
-            Pick a plan that fits your learning goals. Upgrade anytime to unlock unlimited access.
-          </Typography>
-        </div>
+            {PLANS.map((plan) => {
+              const isCurrentPlan = 
+                (plan.id === "free" && user?.subscriptionStatus === "FREE") ||
+                (plan.id === "premium" && user?.subscriptionStatus === "PREMIUM");
+              
+              const isUpgradable = !isCurrentPlan && plan.isPremium;
 
-        {/* Alerts */}
-        <div className="w-full max-w-5xl">
-          {error && <Alert color="red" className="mb-4">{error}</Alert>}
-          {success && <Alert color="green" className="mb-4">{success}</Alert>}
-        </div>
+              return (
+                <motion.div key={plan.id} variants={itemVariants} layout>
+                  <Card
+                    className={`h-full border transition-all duration-300 ${
+                      plan.popular
+                        ? "border-blue-500 shadow-blue-100 dark:shadow-none dark:border-blue-600 bg-white dark:bg-gray-800 relative"
+                        : "border-blue-gray-50 dark:border-gray-800 bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm hover:border-blue-200"
+                    }`}
+                  >
+                    {plan.popular && (
+                      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                        <Chip
+                          value="Recommended"
+                          size="sm"
+                          color="blue"
+                          className="rounded-full shadow-sm"
+                        />
+                      </div>
+                    )}
 
-        {/* Plans */}
-        <div className="w-full max-w-5xl grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Free */}
-          <Card className="rounded-3xl border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-md hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
-            <CardBody className="p-6 md:p-8 text-center">
-              <Typography variant="h6" color="blue" className="mb-1 font-semibold">
-                Free Plan
-              </Typography>
-              <Typography variant="h3" color="blue-gray" className="mb-3 dark:text-gray-100">
-                ₹0 <span className="text-base font-normal">/ month</span>
-              </Typography>
-              <ul className="flex flex-col gap-2 my-5 text-blue-gray-700 dark:text-gray-300">
-                <li className="flex items-center justify-center gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                  10 Free Generations
-                </li>
-                <li className="flex items-center justify-center gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                  10 Free Evaluations
-                </li>
-                <li className="flex items-center justify-center gap-2">
-                  <XCircleIcon className="w-5 h-5 text-red-500" />
-                  <span className="line-through opacity-60">Unlimited Access</span>
-                </li>
-              </ul>
-              <Button
-                variant="outlined"
-                color="blue"
-                className="w-full md:w-auto rounded-full"
-                disabled={user?.subscriptionStatus === "FREE"}
-              >
-                {user?.subscriptionStatus === "FREE" ? "Your Current Plan" : "Select Plan"}
-              </Button>
-            </CardBody>
-          </Card>
+                    <CardHeader
+                      floated={false}
+                      shadow={false}
+                      color="transparent"
+                      className="m-0 p-6 pb-2 text-center border-b border-blue-gray-50 dark:border-gray-700/50"
+                    >
+                      <Typography variant="h6" color="blue-gray" className="font-bold uppercase dark:text-gray-100">
+                        {plan.name}
+                      </Typography>
+                      <Typography
+                        variant="h1"
+                        color="blue-gray"
+                        className="mt-4 flex justify-center gap-1 text-4xl font-normal dark:text-white"
+                      >
+                        <span className="mt-2 text-xl">₹</span>
+                        {plan.price[billingCycle]}
+                        <span className="self-end text-xl text-gray-500 dark:text-gray-400">
+                          /{billingCycle === "monthly" ? "mo" : "yr"}
+                        </span>
+                      </Typography>
+                      <Typography className="font-normal text-gray-500 dark:text-gray-400 mt-2 text-sm">
+                        {plan.description}
+                      </Typography>
+                    </CardHeader>
 
-          {/* Premium */}
-          <Card className="relative overflow-hidden rounded-3xl border border-blue-200/70 dark:border-blue-700 bg-gradient-to-br from-blue-100 via-sky-200 to-blue-300 dark:from-gray-800 dark:via-blue-900/70 dark:to-gray-800 backdrop-blur-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-tr from-sky-300/40 to-blue-500/10 dark:from-sky-400/20 dark:to-blue-600/20 blur-2xl rounded-3xl -z-10" />
-            <CardBody className="p-6 md:p-8 text-center">
-              <Typography variant="h6" color="blue" className="mb-1 font-semibold">
-                Premium Plan
-              </Typography>
-              <Typography variant="h3" color="blue-gray" className="mb-3 dark:text-gray-100">
-                ₹199 <span className="text-base font-normal">/ month</span>
-              </Typography>
-              <ul className="flex flex-col gap-2 my-5 text-blue-gray-700 dark:text-gray-300">
-                <li className="flex items-center justify-center gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                  Unlimited Generations
-                </li>
-                <li className="flex items-center justify-center gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                  Unlimited Evaluations
-                </li>
-                <li className="flex items-center justify-center gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
-                  Unlimited Access
-                </li>
-              </ul>
-              <Button
-                variant="gradient"
-                color="blue"
-                className="w-full md:w-auto rounded-full"
-                onClick={displayRazorpay}
-                disabled={loading || user?.subscriptionStatus === "PREMIUM"}
-              >
-                {loading ? (
-                  <Spinner className="h-4 w-4" />
-                ) : user?.subscriptionStatus === "PREMIUM" ? (
-                  "Your Current Plan"
-                ) : (
-                  "Upgrade Now"
-                )}
-              </Button>
-            </CardBody>
-          </Card>
+                    <CardBody className="p-6">
+                      <ul className="flex flex-col gap-3">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center gap-3">
+                            <span
+                              className={`p-1 rounded-full ${
+                                feature.included
+                                  ? "bg-green-50 text-green-500 dark:bg-green-900/20"
+                                  : "bg-red-50 text-red-500 dark:bg-red-900/20"
+                              }`}
+                            >
+                              {feature.included ? (
+                                <CheckIcon strokeWidth={3} className="h-3 w-3" />
+                              ) : (
+                                <XMarkIcon strokeWidth={3} className="h-3 w-3" />
+                              )}
+                            </span>
+                            <Typography
+                              className={`text-sm font-normal ${
+                                feature.included ? "text-blue-gray-600 dark:text-gray-300" : "text-gray-400 decoration-line-through"
+                              }`}
+                            >
+                              {feature.text}
+                            </Typography>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardBody>
+
+                    <CardFooter className="mt-auto p-6 pt-0">
+                      <Button
+                        size="lg"
+                        fullWidth={true}
+                        variant={plan.popular ? "gradient" : "outlined"}
+                        color={plan.popular ? "blue" : "gray"}
+                        className={`hover:scale-[1.02] active:scale-[0.98] transition-transform ${
+                          !plan.popular ? "focus:ring-blue-gray-200 dark:border-gray-600 dark:text-white" : ""
+                        }`}
+                        onClick={isUpgradable ? displayRazorpay : undefined}
+                        disabled={isCurrentPlan || (plan.isPremium && loading)}
+                      >
+                         {loading && plan.isPremium ? (
+                            <div className="flex items-center justify-center gap-2">
+                                <Spinner className="h-4 w-4" /> Processing...
+                            </div>
+                         ) : isCurrentPlan ? (
+                            "Current Plan"
+                         ) : (
+                            "Upgrade Now"
+                         )}
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </motion.div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
