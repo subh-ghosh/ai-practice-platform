@@ -26,7 +26,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "@/context/ThemeContext.jsx";
 import { usePaywall } from "@/context/PaywallContext.jsx";
-import { InformationCircleIcon, SparklesIcon, ClockIcon } from "@heroicons/react/24/solid";
+import { InformationCircleIcon, SparklesIcon } from "@heroicons/react/24/solid";
 
 /* =========================
    Helpers
@@ -42,18 +42,24 @@ function DynamicFeedbackTitle({ status }) {
     title = "Close!";
     color = "orange";
   } else if (status === "REVEALED") {
-    title = "Answer Revealed";
+    title = "Solution Revealed";
     color = "blue";
   }
   return (
     <div className={`flex items-center gap-2 mb-2`}>
         <div className={`w-3 h-3 rounded-full bg-${color}-500 shadow-[0_0_8px] shadow-${color}-500/50`}></div>
-        <Typography variant="h5" color={color} className="font-bold tracking-tight">
+        <Typography variant="h6" color={color} className="font-bold tracking-tight uppercase text-sm">
         {title}
         </Typography>
     </div>
   );
 }
+
+// Utility to ensure newlines are rendered correctly in Markdown
+const formatMarkdownText = (text) => {
+  if (!text) return "";
+  return text.replace(/\\n/g, '\n');
+};
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
@@ -417,7 +423,6 @@ export function Practice() {
 
             {error && <Typography color="red" className="mt-4 text-sm font-medium text-center">{error}</Typography>}
 
-            {/* Polling Indicator */}
             {isPolling && (
               <div className="mt-6 flex items-center justify-center gap-3 p-4 rounded-xl bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800 animate-pulse">
                 <Spinner className="h-5 w-5 text-blue-500" />
@@ -427,7 +432,6 @@ export function Practice() {
               </div>
             )}
 
-            {/* Active Question Area */}
             {question && (
               <div className="mt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="mb-6">
@@ -436,7 +440,7 @@ export function Practice() {
                     </Typography>
                     <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
                         <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{question.questionText}</ReactMarkdown>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(question.questionText)}</ReactMarkdown>
                         </div>
                     </div>
                 </div>
@@ -489,7 +493,6 @@ export function Practice() {
               </div>
             )}
 
-            {/* Hint Box */}
             {hint && (
               <div className="mt-6 p-5 border border-blue-200 bg-blue-50/50 rounded-2xl dark:bg-blue-900/10 dark:border-blue-800 animate-in fade-in slide-in-from-top-2">
                 <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-300">
@@ -497,18 +500,20 @@ export function Practice() {
                     <span className="font-bold text-sm uppercase">Hint</span>
                 </div>
                 <div className="prose prose-sm dark:prose-invert text-blue-gray-700 dark:text-blue-100">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{hint}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(hint)}</ReactMarkdown>
                 </div>
               </div>
             )}
 
-            {/* Feedback Box */}
             {feedback && (
               <div className="mt-8 p-6 border rounded-2xl bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm animate-in zoom-in-95 duration-300">
                 <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-                <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed">
+                <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {feedback.evaluationStatus === "REVEALED" ? feedback.answerText : feedback.feedback}
+                    {feedback.evaluationStatus === "REVEALED" 
+                        ? formatMarkdownText(feedback.answerText) 
+                        : formatMarkdownText(feedback.feedback)
+                    }
                   </ReactMarkdown>
                 </div>
               </div>
@@ -595,29 +600,66 @@ export function Practice() {
           </CardBody>
         </Card>
 
-        {/* Modal */}
+        {/* History Detail Modal */}
         <Dialog open={!!selectedHistory} handler={handleCloseModal} size="lg" className="dark:bg-gray-900 border dark:border-gray-800">
-            <DialogHeader className="dark:text-white border-b dark:border-gray-800">Practice Details</DialogHeader>
-            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh]">
+            <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">
+                Practice Details
+            </DialogHeader>
+            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6">
                 {selectedHistory && (
-                    <div className="space-y-6">
+                    <div className="space-y-8">
+                        {/* 1. QUESTION SECTION */}
                         <div>
-                            <Typography variant="small" className="font-bold text-blue-500 uppercase mb-2">Question</Typography>
-                            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-xl prose prose-sm dark:prose-invert max-w-none">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.questionText}</ReactMarkdown>
+                            <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2">
+                                Question
+                            </Typography>
+                            <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
+                                <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                        {formatMarkdownText(selectedHistory.questionText)}
+                                    </ReactMarkdown>
+                                </div>
                             </div>
                         </div>
+
+                        {/* 2. USER ANSWER SECTION */}
                         <div>
-                            <Typography variant="small" className="font-bold text-gray-500 uppercase mb-2">Your Answer</Typography>
-                            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-700 dark:text-gray-300 text-sm">
-                                {selectedHistory.answerText || <span className="italic text-gray-400">No answer submitted</span>}
+                            <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wider mb-2">
+                                {selectedHistory.evaluationStatus === "REVEALED" ? "Action" : "Your Answer"}
+                            </Typography>
+                            <div className={`p-5 border rounded-2xl text-sm ${
+                                selectedHistory.evaluationStatus === "REVEALED" 
+                                ? "border-blue-100 bg-blue-50/30 text-blue-600 italic dark:bg-blue-900/10 dark:border-blue-800 dark:text-blue-300"
+                                : "border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                            }`}>
+                                {selectedHistory.evaluationStatus === "REVEALED" ? (
+                                    "You chose to reveal the answer."
+                                ) : (
+                                    <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                            {formatMarkdownText(selectedHistory.answerText || "No answer submitted.")}
+                                        </ReactMarkdown>
+                                    </div>
+                                )}
                             </div>
                         </div>
+
+                        {/* 3. FEEDBACK / SOLUTION SECTION */}
                         <div>
-                            <Typography variant="small" className="font-bold text-gray-500 uppercase mb-2">Feedback</Typography>
-                            <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl prose prose-sm dark:prose-invert max-w-none">
+                            <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
+                            
+                            <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm ${
+                                selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" :
+                                selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" :
+                                selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" :
+                                "bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-800"
+                            }`}>
                                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                    {selectedHistory.evaluationStatus === "REVEALED" ? "Answer Revealed" : selectedHistory.feedback}
+                                    {/* IF REVEALED: Show solution from answerText. ELSE: Show feedback */}
+                                    {selectedHistory.evaluationStatus === "REVEALED" 
+                                        ? formatMarkdownText(selectedHistory.answerText) 
+                                        : formatMarkdownText(selectedHistory.feedback)
+                                    }
                                 </ReactMarkdown>
                             </div>
                         </div>
