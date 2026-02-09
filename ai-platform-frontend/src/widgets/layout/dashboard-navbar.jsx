@@ -9,13 +9,14 @@ import {
   MenuItem,
   Badge,
   Avatar,
+  Tooltip,
 } from "@material-tailwind/react";
 import {
   UserCircleIcon,
   BellIcon,
   Bars3Icon,
-  CheckCircleIcon,
-  ClockIcon
+  ClockIcon,
+  CheckCircleIcon, // Import the icon for the read button
 } from "@heroicons/react/24/solid";
 
 import { useMaterialTailwindController, setOpenSidenav } from "@/context";
@@ -134,28 +135,49 @@ export function DashboardNavbar() {
                 finalList.map((n) => (
                   <MenuItem 
                     key={n.id} 
-                    className={`flex items-start gap-3 p-3 rounded-lg mb-1 transition-colors 
+                    className={`flex items-center justify-between gap-3 p-3 rounded-lg mb-1 transition-colors cursor-default
                       ${!n.readFlag ? 'bg-blue-50/50 dark:bg-blue-900/20' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'}
                     `}
-                    onClick={() => markRead(n.id)}
+                    // Removed onClick from parent to prevent accidental reads
                   >
-                    <div className={`mt-1 p-1.5 rounded-full ${!n.readFlag ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
-                      <ClockIcon className="h-3.5 w-3.5" />
+                    <div className="flex items-start gap-3 flex-1">
+                        <div className={`mt-1 p-1.5 rounded-full ${!n.readFlag ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'}`}>
+                          <ClockIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-0.5">
+                            <Typography variant="small" className="font-semibold text-xs text-blue-gray-900 dark:text-gray-100">
+                              {n.type}
+                            </Typography>
+                            <Typography variant="small" className="text-[10px] text-gray-400">
+                              {timeAgo(n.createdAt)}
+                            </Typography>
+                          </div>
+                          <Typography className="text-xs font-normal text-blue-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                            {n.message}
+                          </Typography>
+                        </div>
                     </div>
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-0.5">
-                        <Typography variant="small" className="font-semibold text-xs text-blue-gray-900 dark:text-gray-100">
-                          {n.type}
-                        </Typography>
-                        <Typography variant="small" className="text-[10px] text-gray-400">
-                          {timeAgo(n.createdAt)}
-                        </Typography>
-                      </div>
-                      <Typography className="text-xs font-normal text-blue-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
-                        {n.message}
-                      </Typography>
-                    </div>
-                    {!n.readFlag && <div className="mt-2 w-2 h-2 rounded-full bg-blue-500" />}
+
+                    {/* READ BUTTON - Only visible if unread */}
+                    {!n.readFlag && (
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <Tooltip content="Mark as read">
+                                <IconButton 
+                                    variant="text" 
+                                    color="blue" 
+                                    size="sm" 
+                                    className="h-8 w-8 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        markRead(n.id);
+                                    }}
+                                >
+                                    <CheckCircleIcon className="h-5 w-5" />
+                                </IconButton>
+                            </Tooltip>
+                        </div>
+                    )}
                   </MenuItem>
                 ))
               )}
