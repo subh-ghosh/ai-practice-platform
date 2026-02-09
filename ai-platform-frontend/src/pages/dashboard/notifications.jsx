@@ -56,9 +56,10 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    // FIXED: h-[calc(100vh-130px)] forces the card to fit exactly in the viewport
-    // (100vh - approx header height & margins), preventing page scroll.
-    <div className="relative mt-6 w-full h-[calc(100vh-130px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-900">
+    // FIXED: 
+    // 1. Adjusted height to h-[calc(100vh-240px)] to leave ample space for the footer text.
+    // 2. Added mt-10 to push the box down slightly, centering it visually.
+    <div className="relative mt-10 w-full h-[calc(100vh-240px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -94,17 +95,16 @@ export function Notifications() {
           )}
         </div>
 
-        {/* Content Area - Flex Column to manage remaining space */}
+        {/* Content Area */}
         <div className="flex flex-col gap-4 flex-1 min-h-0">
             
-            {/* Tabs - Fixed: w-full and flex settings ensure equal width */}
+            {/* Tabs */}
             <div className="w-full md:w-80 shrink-0">
                 <Tabs value={filter} className="w-full">
                 <TabsHeader 
                     className="bg-gray-100/50 dark:bg-gray-800/70 p-1 border border-gray-200 dark:border-gray-700"
                     indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
                 >
-                    {/* Added w-1/2 to force equal splitting of the tab width */}
                     <Tab value="all" onClick={() => setFilter("all")} className="w-1/2 text-xs font-semibold py-2 transition-colors">
                       All
                     </Tab>
@@ -115,8 +115,17 @@ export function Notifications() {
                 </Tabs>
             </div>
 
-            {/* List - Fixed: overflow-y-auto handles internal scrolling */}
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            {/* List with DARK/HIDDEN SCROLLBAR */}
+            {/* Added custom Tailwind classes to style the scrollbar to be dark and thin */}
+            <div className="flex-1 overflow-y-auto pr-2 
+              [&::-webkit-scrollbar]:w-1.5 
+              [&::-webkit-scrollbar-track]:bg-transparent 
+              [&::-webkit-scrollbar-thumb]:bg-gray-300 
+              dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 
+              [&::-webkit-scrollbar-thumb]:rounded-full
+              hover:[&::-webkit-scrollbar-thumb]:bg-gray-400
+              dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-700"
+            >
                 <AnimatePresence mode="popLayout" initial={false}>
                 {filteredList.length === 0 ? (
                     <motion.div 
