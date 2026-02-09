@@ -67,3 +67,46 @@
   height: 0;                    /* Chrome/Safari */
 }
 
+/* =========================================
+   GLOBAL SCROLLBAR STYLING (Dark Mode Fix)
+   ========================================= */
+
+/* 1. Standard Webkit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Light Mode Defaults */
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* Gray-300 */
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* Gray-400 */
+}
+
+/* Dark Mode Overrides (.dark class must be on html/body) */
+.dark ::-webkit-scrollbar-track {
+  background: #111827; /* Gray-900 (Matches your modal background) */
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #374151; /* Gray-700 */
+  border-radius: 4px;
+  border: 1px solid #111827; /* Creates padding effect */
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563; /* Gray-600 */
+}
+
+/* 2. Firefox Support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+.dark * {
+  scrollbar-color: #374151 #111827;
+}
