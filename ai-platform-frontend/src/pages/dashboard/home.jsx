@@ -25,9 +25,9 @@ import {
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { motion } from "framer-motion"; // Import Animation Library
+import { motion } from "framer-motion";
 
-/* ---------- helpers ---------- */
+/* ---------- Helpers ---------- */
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
@@ -52,28 +52,36 @@ function formatDuration(seconds) {
   return `${m}m ${s}s`;
 }
 
+// Chart Options - Styled for Dark/Glass Theme
 const lineChartOptions = {
   ...chartsConfig,
-  chart: { ...chartsConfig.chart, type: "line" },
-  stroke: { lineCap: "round", curve: "smooth" },
-  markers: { size: 5 },
+  chart: { ...chartsConfig.chart, type: "line", background: "transparent" },
+  stroke: { lineCap: "round", curve: "smooth", width: 3 },
+  markers: { size: 5, strokeWidth: 0, hover: { size: 8 } },
   xaxis: {
     ...chartsConfig.xaxis,
     type: "category",
     labels: {
       ...chartsConfig.xaxis.labels,
-      style: { ...chartsConfig.xaxis.labels.style, colors: "#37474f" },
+      style: { ...chartsConfig.xaxis.labels.style, colors: "#9ca3af" }, // gray-400
     },
+    axisBorder: { show: false },
+    axisTicks: { show: false },
   },
   yaxis: {
     ...chartsConfig.yaxis,
     labels: {
       ...chartsConfig.yaxis.labels,
-      style: { ...chartsConfig.yaxis.labels.style, colors: "#37474f" },
+      style: { ...chartsConfig.yaxis.labels.style, colors: "#9ca3af" }, // gray-400
     },
   },
-  grid: { ...chartsConfig.grid, borderColor: "#e0e0e0" },
-  tooltip: { ...chartsConfig.tooltip, theme: "dark", x: { format: "dd MMM yyyy" } },
+  grid: { ...chartsConfig.grid, borderColor: "rgba(255,255,255,0.05)" },
+  tooltip: { 
+    theme: "dark", 
+    style: { fontSize: "12px", fontFamily: "inherit" },
+    x: { show: false },
+    marker: { show: false },
+  },
 };
 
 const getOverviewIcon = (status) => {
@@ -90,8 +98,7 @@ const getOverviewIcon = (status) => {
   }
 };
 
-// --- Animation Variants (Refined) ---
-
+// --- Animations ---
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -113,7 +120,7 @@ const itemVariants = {
 };
 
 const tableRowVariants = {
-  hidden: { opacity: 0, x: -20 },
+  hidden: { opacity: 0, x: -10 },
   visible: (i) => ({
     opacity: 1,
     x: 0,
@@ -121,7 +128,7 @@ const tableRowVariants = {
   })
 };
 
-/* ---------- main ---------- */
+/* ---------- Main Component ---------- */
 
 export function Home() {
   const { user } = useAuth();
@@ -139,11 +146,8 @@ export function Home() {
         setTimeSeriesData(null);
 
         const token = localStorage.getItem("token");
-        
         const config = {
-          headers: {
-            "Authorization": `Bearer ${token}` 
-          }
+          headers: { "Authorization": `Bearer ${token}` }
         };
 
         const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
@@ -171,8 +175,8 @@ export function Home() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[calc(100vh-100px)]">
-        <Spinner className="h-12 w-12 text-blue-500" />
+      <div className="flex justify-center items-center h-[60vh]">
+        <Spinner className="h-10 w-10 text-blue-500" />
       </div>
     );
   }
@@ -188,12 +192,12 @@ export function Home() {
   if (!stats || !timeSeriesData) {
     return (
       <Typography color="gray" className="text-center mt-12">
-        No statistics data available yet.
+        No statistics data available.
       </Typography>
     );
   }
 
-  /* ---------- data wiring ---------- */
+  /* ---------- Data Prep ---------- */
 
   const statisticsCardsData = [
     {
@@ -201,28 +205,28 @@ export function Home() {
       icon: ArrowPathIcon,
       color: "gray",
       value: stats.totalAttempts,
-      footer: { value: "", label: "in total" },
+      footer: { value: "", label: "All time" },
     },
     {
       title: "Correct Answers",
       icon: CheckIcon,
       color: "green",
       value: stats.correctCount,
-      footer: { value: "", label: "in total" },
+      footer: { value: "", label: "Keep it up!" },
     },
     {
       title: "Incorrect Answers",
       icon: XMarkIcon,
       color: "red",
       value: stats.incorrectCount,
-      footer: { value: "", label: "in total" },
+      footer: { value: "", label: "Opportunities to learn" },
     },
     {
       title: "Overall Accuracy",
       icon: ChartBarIcon,
       color: "blue",
       value: `${stats.accuracyPercentage.toFixed(1)}%`,
-      footer: { value: "", label: "of graded attempts" },
+      footer: { value: "", label: "Graded attempts" },
     },
   ];
 
@@ -232,11 +236,11 @@ export function Home() {
 
   const accuracyChart = {
     type: "line",
-    height: 220,
+    height: 240,
     series: [{ name: "Accuracy", data: timeSeriesData.map((d) => d.accuracy.toFixed(1)) }],
     options: {
       ...lineChartOptions,
-      colors: ["#22c55e"],
+      colors: ["#22c55e"], // Green
       xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
       yaxis: {
         ...lineChartOptions.yaxis,
@@ -244,103 +248,105 @@ export function Home() {
         max: 100,
         labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => `${v}%` },
       },
-      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => `${v}%` } },
     },
   };
 
   const speedChart = {
     type: "line",
-    height: 220,
+    height: 240,
     series: [{ name: "Avg. Speed", data: timeSeriesData.map((d) => d.averageSpeedSeconds.toFixed(1)) }],
     options: {
       ...lineChartOptions,
-      colors: ["#f59e0b"],
+      colors: ["#f59e0b"], // Amber
       xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
       yaxis: {
         ...lineChartOptions.yaxis,
         labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => formatDuration(v) },
       },
-      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => formatDuration(v) } },
     },
   };
 
   const breakdownChart = {
     type: "pie",
-    height: 220,
+    height: 240,
     series: [stats.correctCount, stats.incorrectCount, stats.revealedCount],
     options: {
       ...chartsConfig,
-      chart: { ...chartsConfig.chart, type: "pie" },
+      chart: { ...chartsConfig.chart, type: "pie", background: "transparent" },
       title: { show: "" },
       dataLabels: { enabled: false },
       colors: ["#22c55e", "#ef4444", "#6b7280"],
-      legend: { show: true, position: "bottom", labels: { colors: "#37474f" } },
+      legend: { show: true, position: "bottom", labels: { colors: "#9ca3af" } },
       labels: ["Correct", "Incorrect", "Revealed"],
+      stroke: { show: false }, // Cleaner look for glass
     },
   };
 
   /* ---------- UI ---------- */
 
   return (
-    <div className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="relative min-h-screen pb-8 overflow-hidden">
       
-      {/* Animated Background Gradient */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
-        <motion.div 
-          animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]" 
-        />
-        <motion.div 
-          animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
-          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]" 
-        />
-      </div>
+      {/* === Shared Animated Background (Matching Landing/Auth) === */}
+      <div className="absolute inset-0 -z-10 bg-gray-50 dark:bg-gray-900 transition-colors duration-500" />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/10 pointer-events-none" />
+      
+      <motion.div 
+        animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+        className="fixed top-[-10%] right-[-5%] h-[500px] w-[500px] rounded-full bg-blue-400/10 blur-[120px] pointer-events-none" 
+      />
+      <motion.div 
+        animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
+        transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
+        className="fixed bottom-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-purple-400/10 blur-[120px] pointer-events-none" 
+      />
 
       <motion.div 
-        className="mt-6 has-fixed-navbar page w-full flex flex-col relative z-10"
+        className="mt-6 w-full flex flex-col relative z-10"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* Welcome header */}
+        {/* Welcome Header */}
         <motion.div variants={itemVariants} className="mb-8">
-          <div className="rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-6 py-5 shadow-sm">
+          <div className="rounded-3xl border border-white/40 dark:border-gray-800 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl px-8 py-6 shadow-sm">
             <div className="flex flex-wrap items-baseline gap-3">
-              <Typography variant="h4" color="blue-gray" className="font-normal">
-                Welcome,
+              <Typography variant="h4" className="font-normal text-blue-gray-700 dark:text-gray-300">
+                Welcome back,
               </Typography>
-              <Typography variant="h1" color="blue-gray" className="font-bold">
+              <Typography variant="h1" className="font-bold text-gray-900 dark:text-white">
                 {user.firstName}
               </Typography>
               <Chip
                 variant="ghost"
+                size="sm"
                 color={user.subscriptionStatus === "PREMIUM" ? "green" : "blue-gray"}
-                value={user.subscriptionStatus === "PREMIUM" ? "Premium User" : "Free User"}
-                className="self-center"
+                value={user.subscriptionStatus === "PREMIUM" ? "PRO" : "FREE"}
+                className="self-center ml-2 rounded-full"
               />
             </div>
           </div>
         </motion.div>
 
-        {/* Row 1: Stat cards - Staggered */}
+        {/* Row 1: Stat Cards */}
         <motion.div 
           variants={itemVariants} 
-          className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
+          className="mb-10 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
         >
           {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
             <motion.div
               key={title}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
+              // Consistent Glass Card Style
+              className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-sm relative overflow-hidden"
             >
               <StatisticsCard
                 {...rest}
                 title={title}
                 icon={React.createElement(icon, { className: "w-6 h-6 text-white" })}
-                footer={<Typography className="font-normal text-blue-gray-600">{footer.label}</Typography>}
+                footer={<Typography className="font-normal text-gray-500 dark:text-gray-400 text-xs">{footer.label}</Typography>}
+                // Override default classNames if needed by passing className props to StatisticsCard or wrapping
               />
             </motion.div>
           ))}
@@ -348,93 +354,92 @@ export function Home() {
 
         {/* Row 2: Charts */}
         <motion.div variants={itemVariants} className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+          
           <motion.div 
-             whileHover={{ y: -3, transition: { duration: 0.2 } }}
-             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+             whileHover={{ y: -3 }}
+             className="rounded-3xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-sm p-1"
           >
             <StatisticsChart
               key="accuracy-chart"
               chart={accuracyChart}
-              color="transparent"
+              color="white" // Neutral container for chart
               title="Daily Accuracy"
-              description="Percentage of correct answers over time."
+              description="Your performance trend over time."
               footer={
-                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  &nbsp;Updated just now
+                <Typography variant="small" className="flex items-center font-normal text-gray-500 dark:text-gray-400">
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 mr-1" /> Updated just now
                 </Typography>
               }
             />
           </motion.div>
 
           <motion.div 
-             whileHover={{ y: -3, transition: { duration: 0.2 } }}
-             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+             whileHover={{ y: -3 }}
+             className="rounded-3xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-sm p-1"
           >
             <StatisticsChart
               key="speed-chart"
               chart={speedChart}
-              color="transparent"
+              color="white"
               title="Average Answer Speed"
-              description="Average time to a correct submission."
+              description="Time taken per correct submission."
               footer={
-                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  &nbsp;Updated just now
+                <Typography variant="small" className="flex items-center font-normal text-gray-500 dark:text-gray-400">
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 mr-1" /> Updated just now
                 </Typography>
               }
             />
           </motion.div>
 
           <motion.div 
-             whileHover={{ y: -3, transition: { duration: 0.2 } }}
-             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+             whileHover={{ y: -3 }}
+             className="rounded-3xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-sm p-1"
           >
             <StatisticsChart
               key="breakdown-chart"
               chart={breakdownChart}
-              color="transparent"
-              className="flex flex-col justify-between h-full"
-              title={<div className="mt-12">Answer Breakdown</div>}
-              description="Summary of all practice attempts."
+              color="white"
+              title="Answer Breakdown"
+              description="Distribution of your attempts."
               footer={
-                <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
-                  &nbsp;Updated just now
+                <Typography variant="small" className="flex items-center font-normal text-gray-500 dark:text-gray-400">
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 mr-1" /> Updated just now
                 </Typography>
               }
             />
           </motion.div>
         </motion.div>
 
-        {/* Row 3: Table & Feed */}
+        {/* Row 3: Activity Table & Feed */}
         <motion.div variants={itemVariants} className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <Card className="overflow-hidden xl:col-span-2 border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+          
+          {/* Recent Activity Table */}
+          <Card className="overflow-hidden xl:col-span-2 border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-sm rounded-3xl">
             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
               <div>
-                <Typography variant="h6" color="blue-gray" className="mb-1">
+                <Typography variant="h6" className="mb-1 text-gray-900 dark:text-white">
                   Recent Activity
                 </Typography>
-                <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
-                  <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
+                <Typography variant="small" className="flex items-center gap-1 font-normal text-gray-600 dark:text-gray-400">
+                  <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-green-500" />
                   <strong>{stats.totalAttempts} attempts</strong> in total
                 </Typography>
               </div>
               <Link to="/dashboard/practice">
-                <Button variant="text" size="sm" className="flex items-center gap-2 hover:bg-blue-50">
+                <Button variant="outlined" size="sm" className="flex items-center gap-2 border-gray-300 text-gray-700 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/5">
                   <PencilIcon className="h-4 w-4" />
-                  Start Practice
+                  Practice
                 </Button>
               </Link>
             </CardHeader>
 
-            <CardBody className="overflow-x-auto hide-scrollbar px-0 pt-0 pb-0">
-              <table className="w-full table-auto">
+            <CardBody className="overflow-x-auto px-0 pt-0 pb-0">
+              <table className="w-full table-auto text-left">
                 <thead>
                   <tr>
-                    {["Question", "Subject", "Status", "Submitted"].map((el) => (
-                      <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
-                        <Typography variant="small" className="text-[11px] font-medium uppercase text-blue-gray-400">
+                    {["Question", "Subject", "Status", "Date"].map((el) => (
+                      <th key={el} className="border-b border-gray-200 dark:border-gray-800 py-3 px-6 bg-gray-50/50 dark:bg-gray-800/50">
+                        <Typography variant="small" className="text-[11px] font-bold uppercase text-gray-500 dark:text-gray-400">
                           {el}
                         </Typography>
                       </th>
@@ -443,8 +448,10 @@ export function Home() {
                 </thead>
                 <tbody>
                   {stats.recentActivity.map((item, key) => {
-                    const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                    const isLast = key === stats.recentActivity.length - 1;
+                    const classes = isLast ? "p-4" : "p-4 border-b border-gray-100 dark:border-gray-800";
                     const uniqueKey = `${item.questionId}-${item.submittedAt}`;
+                    
                     return (
                       <motion.tr 
                         key={uniqueKey} 
@@ -452,36 +459,33 @@ export function Home() {
                         variants={tableRowVariants}
                         initial="hidden"
                         animate="visible"
-                        className="hover:bg-gray-50/50 transition-colors"
+                        className="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors"
                       >
-                        <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {item.questionText.substring(0, 40)}...
+                        <td className={classes}>
+                          <Typography variant="small" className="font-medium text-gray-900 dark:text-white">
+                            {item.questionText.substring(0, 45)}...
                           </Typography>
                         </td>
-                        <td className={className}>
-                          <Typography variant="small" className="text-xs font-medium text-blue-gray-600">
+                        <td className={classes}>
+                          <Typography variant="small" className="text-gray-600 dark:text-gray-400">
                             {item.subject}
                           </Typography>
                         </td>
-                        <td className={className}>
+                        <td className={classes}>
                           <Chip
-                            variant="gradient"
-                            color={
-                              item.evaluationStatus === "CORRECT"
-                                ? "green"
-                                : item.evaluationStatus === "REVEALED"
-                                ? "blue"
-                                : item.evaluationStatus === "CLOSE"
-                                ? "orange"
-                                : "red"
-                            }
+                            variant="ghost"
+                            size="sm"
                             value={item.evaluationStatus.toLowerCase()}
-                            className="py-0.5 px-2 text-[11px] font-medium w-fit"
+                            color={
+                              item.evaluationStatus === "CORRECT" ? "green" :
+                              item.evaluationStatus === "INCORRECT" ? "red" :
+                              item.evaluationStatus === "CLOSE" ? "amber" : "blue-gray"
+                            }
+                            className="font-medium w-fit capitalize"
                           />
                         </td>
-                        <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
+                        <td className={classes}>
+                          <Typography variant="small" className="text-gray-500 dark:text-gray-500">
                             {formatDateTime(item.submittedAt)}
                           </Typography>
                         </td>
@@ -493,12 +497,13 @@ export function Home() {
             </CardBody>
           </Card>
 
-          <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+          {/* Submission Overview Feed */}
+          <Card className="border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-sm rounded-3xl">
             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6">
-              <Typography variant="h6" color="blue-gray" className="mb-2">
+              <Typography variant="h6" className="mb-2 text-gray-900 dark:text-white">
                 Submission Overview
               </Typography>
-              <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
+              <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">
                 Your latest 5 attempts.
               </Typography>
             </CardHeader>
@@ -506,26 +511,26 @@ export function Home() {
               {stats.recentActivity.map((item, key) => {
                 const { Icon, color } = getOverviewIcon(item.evaluationStatus);
                 const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
+                const isLast = key === stats.recentActivity.length - 1;
+
                 return (
                   <motion.div 
                     key={uniqueKey} 
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + (key * 0.1), type: "spring", stiffness: 100 }}
+                    transition={{ delay: 0.3 + (key * 0.1) }}
                     className="flex items-start gap-4 py-3"
                   >
-                    <div
-                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                        key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
-                      }`}
-                    >
-                      <Icon className={`!w-5 !h-5 ${color}`} />
+                    <div className={`relative p-1 after:absolute after:left-1/2 after:-translate-x-1/2 after:w-[1px] after:bg-gray-200 dark:after:bg-gray-800 after:content-[''] ${isLast ? "after:h-0" : "after:h-full after:-bottom-full"}`}>
+                      <div className="relative z-10 bg-white dark:bg-gray-900 rounded-full p-1 border border-gray-100 dark:border-gray-800 shadow-sm">
+                         <Icon className={`w-4 h-4 ${color}`} />
+                      </div>
                     </div>
                     <div>
-                      <Typography variant="small" color="blue-gray" className="block font-medium">
+                      <Typography variant="small" className="block font-medium text-gray-900 dark:text-white">
                         {item.subject}: {item.topic.substring(0, 20)}...
                       </Typography>
-                      <Typography as="span" variant="small" className="text-xs font-medium text-blue-gray-500">
+                      <Typography variant="small" className="text-xs text-gray-500 dark:text-gray-500">
                         {formatDateTime(item.submittedAt)}
                       </Typography>
                     </div>
