@@ -382,42 +382,51 @@ export function Practice() {
 
           <CardBody className="p-6 md:p-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <div className="transition-all duration-300 focus-within:translate-y-[-2px]">
+              <div className="w-full">
                 <Input
+                  size="lg"
                   label="Subject"
                   placeholder="e.g. Java, DBMS"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   color="blue"
-                  className="!text-blue-gray-900 dark:!text-white"
+                  className="!text-blue-gray-900 dark:!text-white !bg-white/90 dark:!bg-gray-800/90 !border-blue-gray-100 focus:!border-blue-500 shadow-sm"
                   labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
                 />
               </div>
 
-              <div className="transition-all duration-300 focus-within:translate-y-[-2px]">
+              <div className="w-full">
                 <Input
+                  size="lg"
                   label="Topic"
                   placeholder="e.g. Inheritance"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   color="blue"
-                  className="!text-blue-gray-900 dark:!text-white"
+                  className="!text-blue-gray-900 dark:!text-white !bg-white/90 dark:!bg-gray-800/90 !border-blue-gray-100 focus:!border-blue-500 shadow-sm"
                   labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
                 />
               </div>
 
-              <div className="transition-all duration-300 focus-within:translate-y-[-2px]">
+              <div className="w-full">
                 <Select
+                  size="lg"
                   label="Difficulty"
                   value={difficulty}
                   onChange={(val) => setDifficulty(val)}
                   color="blue"
-                  className="!text-blue-gray-900 dark:!text-white"
+                  className="!text-blue-gray-900 dark:!text-white !bg-white/90 dark:!bg-gray-800/90 !border-blue-gray-100 focus:!border-blue-500 shadow-sm"
                   labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-                  menuProps={{ className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 animate-fade-in" }}
+                  menuProps={{ 
+                      className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 z-[9999] min-w-[200px]",
+                      animate: {
+                          mount: { y: 0, scale: 1, opacity: 1 },
+                          unmount: { y: 25, scale: 0.9, opacity: 0 },
+                      },
+                  }}
                 >
                   {["School", "High School", "Graduation", "Post Graduation", "Research"].map(lvl => (
-                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors">{lvl}</Option>
+                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700 dark:focus:bg-gray-700">{lvl}</Option>
                   ))}
                 </Select>
               </div>
