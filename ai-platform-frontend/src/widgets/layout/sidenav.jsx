@@ -14,7 +14,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
   const [controller, dispatch] = useMaterialTailwindController();
   const { openSidenav } = controller;
 
-  // GLASS STYLES: This class makes the sidebar blurred and semi-transparent
+  // GLASS STYLES
   const glassClasses = "bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-2xl shadow-blue-gray-900/10";
 
   return (
@@ -25,6 +25,8 @@ export function Sidenav({ brandImg, brandName, routes }) {
         transition-transform duration-300 ease-in-out
         ${openSidenav ? "translate-x-0" : "-translate-x-[120%]"} 
         xl:translate-x-0
+        /* Prevent scrolling on the main container */
+        overflow-hidden
       `}
     >
       {/* BRAND HEADER */}
@@ -53,48 +55,55 @@ export function Sidenav({ brandImg, brandName, routes }) {
       </div>
 
       {/* NAV LINKS */}
-      <div className="m-4 overflow-y-auto h-[calc(100vh-140px)] custom-scroll">
-        {routes.map(({ layout, title, pages }, key) => (
-          <ul key={key} className="mb-4 flex flex-col gap-1">
-            {title && (
-              <li className="mx-3.5 mt-4 mb-2">
-                <Typography
-                  variant="small"
-                  className="font-bold uppercase opacity-75 text-blue-gray-500 dark:text-white/60 text-[11px] tracking-wider"
-                >
-                  {title}
-                </Typography>
-              </li>
-            )}
+      {/* Changed overflow-y-auto to overflow-hidden to remove scrollbar */}
+      <div className="m-4 h-[calc(100vh-140px)] overflow-hidden">
+        {routes.map(({ layout, title, pages }, key) => {
+          
+          // 🛑 FILTER: Skip the "auth" section entirely
+          if (layout === "auth") return null;
 
-            {pages.map(({ icon, name, path }) => (
-              <li key={name}>
-                <NavLink to={`/${layout}${path}`}>
-                  {({ isActive }) => (
-                    <div
-                      className={`
-                        flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300
-                        ${isActive
-                          ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30 translate-x-1"
-                          : "text-blue-gray-500 dark:text-blue-gray-300 hover:bg-blue-gray-50 dark:hover:bg-white/5 hover:text-blue-gray-900 dark:hover:text-white"
-                        }
-                      `}
-                    >
-                      {/* Icon */}
-                      <div className={`grid place-items-center mr-2 ${isActive ? "opacity-100" : "opacity-70"}`}>
-                         {icon}
+          return (
+            <ul key={key} className="mb-4 flex flex-col gap-1">
+              {title && (
+                <li className="mx-3.5 mt-4 mb-2">
+                  <Typography
+                    variant="small"
+                    className="font-bold uppercase opacity-75 text-blue-gray-500 dark:text-white/60 text-[11px] tracking-wider"
+                  >
+                    {title}
+                  </Typography>
+                </li>
+              )}
+
+              {pages.map(({ icon, name, path }) => (
+                <li key={name}>
+                  <NavLink to={`/${layout}${path}`}>
+                    {({ isActive }) => (
+                      <div
+                        className={`
+                          flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300
+                          ${isActive
+                            ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30 translate-x-1"
+                            : "text-blue-gray-500 dark:text-blue-gray-300 hover:bg-blue-gray-50 dark:hover:bg-white/5 hover:text-blue-gray-900 dark:hover:text-white"
+                          }
+                        `}
+                      >
+                        {/* Icon */}
+                        <div className={`grid place-items-center mr-2 ${isActive ? "opacity-100" : "opacity-70"}`}>
+                           {icon}
+                        </div>
+
+                        <Typography color="inherit" className="font-medium capitalize">
+                          {name}
+                        </Typography>
                       </div>
-
-                      <Typography color="inherit" className="font-medium capitalize">
-                        {name}
-                      </Typography>
-                    </div>
-                  )}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        ))}
+                    )}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          );
+        })}
       </div>
     </aside>
   );
