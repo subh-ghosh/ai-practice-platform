@@ -4,7 +4,6 @@ import {
   Card,
   CardBody,
   Typography,
-  Tooltip,
   Button,
   Input,
   Radio,
@@ -35,9 +34,9 @@ const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
 // --- Animation Variants ---
 const fadeVariants = {
-  hidden: { opacity: 0, x: -10 },
+  hidden: { opacity: 0, x: -5 },
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
-  exit: { opacity: 0, x: 10, transition: { duration: 0.2 } },
+  exit: { opacity: 0, x: 5, transition: { duration: 0.2 } },
 };
 
 /* ============================ Sub-Components ============================ */
@@ -62,127 +61,118 @@ function EditForm({
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="max-w-3xl mx-auto"
+      className="max-w-4xl mx-auto w-full"
     >
       <div className="mb-6">
         <Typography variant="h5" color="blue-gray" className="dark:text-white">
-          Personal Information
+          Edit Personal Details
         </Typography>
-        <Typography className="text-gray-600 font-normal dark:text-gray-400">
-          Update your identity details here.
+        <Typography className="text-gray-600 font-normal dark:text-gray-400 text-sm">
+          Update your public identity information.
         </Typography>
       </div>
 
-      <Card className="border border-blue-gray-100 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <CardBody className="p-8 flex flex-col gap-6">
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <Alert
-                  color="red"
-                  icon={<ExclamationTriangleIcon className="h-5 w-5" />}
-                >
-                  {error}
-                </Alert>
-              </motion.div>
-            )}
-            {success && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <Alert
-                  color="green"
-                  icon={<CheckCircleIcon className="h-5 w-5" />}
-                >
-                  {success}
-                </Alert>
-              </motion.div>
-            )}
-          </AnimatePresence>
+      {/* Alerts Area - Fixed height wrapper to minimize layout jumps could be added here, 
+          but scrolling container solves the main footer shift issue. */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            className="overflow-hidden"
+          >
+            <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
+              {error}
+            </Alert>
+          </motion.div>
+        )}
+        {success && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: "auto", marginBottom: 16 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            className="overflow-hidden"
+          >
+            <Alert color="green" icon={<CheckCircleIcon className="h-5 w-5" />}>
+              {success}
+            </Alert>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-          <form onSubmit={onSubmit} className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                required
-                size="lg"
-                color="blue"
-                className="dark:text-white"
-              />
-              <Input
-                label="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                size="lg"
-                color="blue"
-                className="dark:text-white"
-              />
-            </div>
+      <form onSubmit={onSubmit} className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Input
+            label="First Name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+            size="lg"
+            color="blue"
+            className="dark:text-white"
+            labelProps={{ className: "dark:text-gray-400" }}
+          />
+          <Input
+            label="Last Name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            size="lg"
+            color="blue"
+            className="dark:text-white"
+            labelProps={{ className: "dark:text-gray-400" }}
+          />
+        </div>
 
-            <Input
-              label="Email Address"
-              value={email || ""}
-              disabled
-              size="lg"
-              className="!border-blue-gray-100 bg-blue-gray-50/50 text-blue-gray-500 dark:bg-gray-800 dark:text-gray-400"
-              icon={<UserCircleIcon className="h-5 w-5 text-blue-gray-300" />}
+        <Input
+          label="Email Address"
+          value={email || ""}
+          disabled
+          size="lg"
+          className="!border-blue-gray-100 bg-blue-gray-50/50 text-blue-gray-500 dark:bg-gray-800/50 dark:text-gray-400 dark:!border-gray-700"
+          labelProps={{ className: "dark:text-gray-500" }}
+          icon={<UserCircleIcon className="h-5 w-5 text-blue-gray-300" />}
+        />
+
+        <div className="space-y-3">
+          <Typography variant="small" className="font-semibold text-blue-gray-500 dark:text-gray-400">
+            Gender
+          </Typography>
+          <div className="flex gap-10">
+            <Radio
+              name="gender"
+              label="Male"
+              value="male"
+              checked={gender === "male"}
+              onChange={(e) => setGender(e.target.value)}
+              color="blue"
+              labelProps={{ className: "dark:text-gray-300" }}
             />
+            <Radio
+              name="gender"
+              label="Female"
+              value="female"
+              checked={gender === "female"}
+              onChange={(e) => setGender(e.target.value)}
+              color="pink"
+              labelProps={{ className: "dark:text-gray-300" }}
+            />
+          </div>
+        </div>
 
-            <div className="space-y-2">
-              <Typography
-                variant="small"
-                color="blue-gray"
-                className="font-medium dark:text-gray-300"
-              >
-                Gender
-              </Typography>
-              <div className="flex gap-10">
-                <Radio
-                  name="gender"
-                  label="Male"
-                  value="male"
-                  checked={gender === "male"}
-                  onChange={(e) => setGender(e.target.value)}
-                  color="blue"
-                />
-                <Radio
-                  name="gender"
-                  label="Female"
-                  value="female"
-                  checked={gender === "female"}
-                  onChange={(e) => setGender(e.target.value)}
-                  color="pink"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4">
-              <Button
-                type="submit"
-                variant="gradient"
-                color="blue"
-                disabled={saving}
-                className="flex items-center gap-2"
-              >
-                {saving ? (
-                  <Spinner className="h-4 w-4" />
-                ) : (
-                  <PencilSquareIcon className="h-4 w-4" />
-                )}
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          </form>
-        </CardBody>
-      </Card>
+        <div className="flex justify-end pt-4 border-t border-gray-100 dark:border-gray-700/50">
+          <Button
+            type="submit"
+            variant="gradient"
+            color="blue"
+            disabled={saving}
+            className="flex items-center gap-2"
+          >
+            {saving ? <Spinner className="h-4 w-4" /> : <PencilSquareIcon className="h-4 w-4" />}
+            {saving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </form>
     </motion.div>
   );
 }
@@ -206,123 +196,107 @@ function SecurityPanel({
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="max-w-3xl mx-auto space-y-8"
+      className="max-w-4xl mx-auto w-full space-y-8"
     >
       {/* Password Section */}
       <div>
         <div className="mb-6">
-          <Typography
-            variant="h5"
-            color="blue-gray"
-            className="dark:text-white"
-          >
+          <Typography variant="h5" color="blue-gray" className="dark:text-white">
             Security Settings
           </Typography>
-          <Typography className="text-gray-600 font-normal dark:text-gray-400">
-            Manage your password and account security.
+          <Typography className="text-gray-600 font-normal dark:text-gray-400 text-sm">
+            Manage your password and authentication.
           </Typography>
         </div>
 
-        <Card className="border border-blue-gray-100 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <CardBody className="p-8 flex flex-col gap-6">
-            <AnimatePresence>
-              {(error || success) && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mb-2"
-                >
-                  <Alert
-                    color={error ? "red" : "green"}
-                    icon={
-                      error ? (
-                        <ExclamationTriangleIcon className="h-5 w-5" />
-                      ) : (
-                        <CheckCircleIcon className="h-5 w-5" />
-                      )
-                    }
-                  >
-                    {error || success}
-                  </Alert>
-                </motion.div>
-              )}
-            </AnimatePresence>
+        <AnimatePresence>
+          {(error || success) && (
+            <motion.div
+              initial={{ opacity: 0, y: -5, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 overflow-hidden"
+            >
+              <Alert
+                color={error ? "red" : "green"}
+                icon={error ? <ExclamationTriangleIcon className="h-5 w-5" /> : <CheckCircleIcon className="h-5 w-5" />}
+              >
+                {error || success}
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <form onSubmit={onChangePassword} className="flex flex-col gap-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  type="password"
-                  label="Current Password"
-                  value={oldPassword}
-                  onChange={(e) => setOldPassword(e.target.value)}
-                  required
-                  disabled={changing}
-                  icon={<KeyIcon className="h-5 w-5 text-gray-400" />}
-                  className="dark:text-white"
-                />
-                <Input
-                  type="password"
-                  label="New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  disabled={changing}
-                  icon={<KeyIcon className="h-5 w-5 text-gray-400" />}
-                  className="dark:text-white"
-                />
-              </div>
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  variant="outlined"
-                  color="blue-gray"
-                  disabled={changing}
-                  className="flex items-center gap-2 dark:text-white dark:border-gray-600"
-                >
-                  {changing ? (
-                    <Spinner className="h-4 w-4" />
-                  ) : (
-                    "Update Password"
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardBody>
-        </Card>
+        <form onSubmit={onChangePassword} className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input
+              type="password"
+              label="Current Password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              required
+              disabled={changing}
+              icon={<KeyIcon className="h-5 w-5 text-gray-400" />}
+              className="dark:text-white"
+              labelProps={{ className: "dark:text-gray-400" }}
+            />
+            <Input
+              type="password"
+              label="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              disabled={changing}
+              icon={<KeyIcon className="h-5 w-5 text-gray-400" />}
+              className="dark:text-white"
+              labelProps={{ className: "dark:text-gray-400" }}
+            />
+          </div>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              variant="outlined"
+              color="blue-gray"
+              disabled={changing}
+              className="flex items-center gap-2 dark:text-white dark:border-gray-600 hover:dark:bg-white/10"
+            >
+              {changing ? <Spinner className="h-4 w-4" /> : "Update Password"}
+            </Button>
+          </div>
+        </form>
       </div>
 
       {/* Danger Zone */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <Typography variant="h6" color="red" className="mb-2 flex items-center gap-2">
+      <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
+        <Typography variant="h6" color="red" className="mb-3 flex items-center gap-2">
           <ExclamationTriangleIcon className="h-5 w-5" /> Danger Zone
         </Typography>
-        <Card className="border border-red-100 bg-red-50/20 shadow-none dark:bg-red-900/10 dark:border-red-900/30">
-          <CardBody className="p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <Typography variant="small" color="blue-gray" className="font-bold dark:text-red-100">
-                Delete Account
-              </Typography>
-              <Typography variant="small" className="text-gray-600 dark:text-red-200/70">
-                Once you delete your account, there is no going back. Please be certain.
-              </Typography>
-            </div>
-            <Button
-              variant="gradient"
-              color="red"
-              onClick={onDeleteAccount}
-              disabled={deleting}
-              className="shrink-0"
-            >
-              {deleting ? (
-                 <Spinner className="h-4 w-4 text-white" />
-              ) : (
-                <div className="flex items-center gap-2">
-                    <TrashIcon className="h-4 w-4" /> Delete Account
-                </div>
-              )}
-            </Button>
-          </CardBody>
-        </Card>
+        <div className="rounded-lg border border-red-100 bg-red-50/30 p-4 dark:bg-red-900/10 dark:border-red-900/30 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <Typography variant="small" color="blue-gray" className="font-bold dark:text-red-200">
+              Delete Account
+            </Typography>
+            <Typography variant="small" className="text-gray-600 dark:text-red-200/60">
+              This action is irreversible. All data will be lost.
+            </Typography>
+          </div>
+          <Button
+            variant="gradient"
+            color="red"
+            size="sm"
+            onClick={onDeleteAccount}
+            disabled={deleting}
+            className="shrink-0"
+          >
+            {deleting ? (
+              <Spinner className="h-4 w-4 text-white" />
+            ) : (
+              <div className="flex items-center gap-2">
+                <TrashIcon className="h-4 w-4" /> Delete Account
+              </div>
+            )}
+          </Button>
+        </div>
       </div>
     </motion.div>
   );
@@ -336,22 +310,27 @@ function ViewProfile({ user, onEditRequest }) {
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="h-full"
+      className="max-w-4xl mx-auto w-full h-full"
     >
-        <div className="mb-6 flex justify-between items-center">
-            <div>
-                <Typography variant="h5" color="blue-gray" className="dark:text-white">
-                Profile Overview
-                </Typography>
-                <Typography className="text-gray-600 font-normal dark:text-gray-400">
-                Your public profile details.
-                </Typography>
-            </div>
-            <Button size="sm" variant="text" className="flex items-center gap-2 dark:text-blue-400" onClick={onEditRequest}>
-                <PencilSquareIcon className="h-4 w-4" /> Edit
-            </Button>
+      <div className="flex justify-between items-end mb-6 border-b border-gray-100 dark:border-gray-800 pb-4">
+        <div>
+          <Typography variant="h5" color="blue-gray" className="dark:text-white">
+            Profile Overview
+          </Typography>
+          <Typography className="text-gray-600 font-normal dark:text-gray-400 text-sm">
+            Your public profile information.
+          </Typography>
         </div>
-        
+        <Button 
+          size="sm" 
+          variant="text" 
+          className="flex items-center gap-2 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20" 
+          onClick={onEditRequest}
+        >
+          <PencilSquareIcon className="h-4 w-4" /> Edit
+        </Button>
+      </div>
+
       <ProfileInfoCard
         title=""
         description=""
@@ -360,10 +339,10 @@ function ViewProfile({ user, onEditRequest }) {
           "Last Name": user?.lastName || "—",
           "Email": user?.email || "—",
           "Gender": (user?.gender || "male").charAt(0).toUpperCase() + (user?.gender || "male").slice(1),
-          "Account Status": "Active Student",
+          "Account Type": "Student",
           "Region": "India",
         }}
-        action={null} 
+        action={null}
       />
     </motion.div>
   );
@@ -374,22 +353,17 @@ export function Profile() {
   const { user, updateUser, logout } = useAuth();
   const { theme } = useTheme();
 
-  // Navigation State
   const [activeTab, setActiveTab] = useState("profile");
-
-  // Form States
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [gender, setGender] = useState(user?.gender || "male");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  // Loading States
   const [savingProfile, setSavingProfile] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
 
-  // Feedback States
   const [editError, setEditError] = useState(null);
   const [editSuccess, setEditSuccess] = useState(null);
   const [secError, setSecError] = useState(null);
@@ -403,7 +377,6 @@ export function Profile() {
     }
   }, [user]);
 
-  // Clear errors when switching tabs
   useEffect(() => {
     setEditError(null);
     setEditSuccess(null);
@@ -428,12 +401,7 @@ export function Profile() {
       if (updateUser && res.data) updateUser(res.data);
       setEditSuccess("Profile updated successfully!");
     } catch (err) {
-      let msg = "Failed to update profile.";
-      if (err.response?.data) {
-        const data = err.response.data;
-        msg = typeof data === "string" ? data : data.message || msg;
-      }
-      setEditError(msg);
+      setEditError(err.response?.data?.message || "Failed to update profile.");
     } finally {
       setSavingProfile(false);
     }
@@ -452,20 +420,14 @@ export function Profile() {
       setOldPassword("");
       setNewPassword("");
     } catch (err) {
-      let msg = "Failed to change password.";
-      if (err.response?.data) {
-        const data = err.response.data;
-        msg = typeof data === "string" ? data : data.message || msg;
-      }
-      setSecError(msg);
+      setSecError(err.response?.data?.message || "Failed to change password.");
     } finally {
       setChangingPassword(false);
     }
   };
 
   const handleDeleteAccount = async () => {
-    const ok = window.confirm("Are you sure? This cannot be undone.");
-    if (!ok) return;
+    if (!window.confirm("Are you sure? This cannot be undone.")) return;
     setDeletingAccount(true);
     try {
       const token = localStorage.getItem("token");
@@ -478,68 +440,87 @@ export function Profile() {
     }
   };
 
-  // Define Navigation Items
   const navItems = [
     { value: "profile", label: "Overview", icon: UserCircleIcon },
     { value: "edit", label: "Edit Profile", icon: PencilSquareIcon },
-    { value: "security", label: "Password & Security", icon: ShieldCheckIcon },
+    { value: "security", label: "Security", icon: ShieldCheckIcon },
   ];
 
   return (
-    <div className="w-full h-full p-4 md:p-8 bg-gray-50 dark:bg-gray-900 overflow-hidden flex flex-col">
-        
-      {/* Main Container - Split Layout */}
-      <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto w-full h-full">
-        
-        {/* LEFT SIDEBAR: Navigation & User Summary */}
-        <div className="w-full lg:w-80 shrink-0 flex flex-col gap-6">
-          <Card className="shadow-lg border border-blue-gray-50 dark:border-gray-800 dark:bg-gray-800/50">
-            <CardBody className="flex flex-col items-center text-center p-8">
-              <div className="relative">
-                <Avatar
-                    src={avatarSrc}
-                    alt="avatar"
-                    size="xxl"
-                    className="border-4 border-white shadow-lg dark:border-gray-700"
-                />
-                <div className="absolute bottom-1 right-1 h-4 w-4 bg-green-400 border-2 border-white rounded-full dark:border-gray-700"></div>
-              </div>
-              <Typography variant="h4" color="blue-gray" className="mt-4 mb-1 dark:text-white">
-                {user?.firstName} {user?.lastName}
-              </Typography>
-              <Typography className="font-normal text-blue-gray-500 mb-6 dark:text-gray-400">
-                {user?.email}
-              </Typography>
-              
-              <Button size="sm" variant="outlined" color="red" className="flex items-center gap-2" onClick={logout}>
-                <ArrowRightOnRectangleIcon className="h-4 w-4" /> Sign Out
-              </Button>
-            </CardBody>
-          </Card>
+    // Outer container
+    <div className="w-full h-full p-6 flex flex-col gap-6 overflow-hidden">
+      
+      {/* Title / Header Section */}
+      <div className="shrink-0">
+         <Typography variant="h4" color="white" className="mb-1">
+             Profile Settings
+         </Typography>
+         <Typography variant="small" className="text-gray-400 font-normal">
+             Manage your personal information and account security.
+         </Typography>
+      </div>
 
-          {/* Navigation Menu */}
-          <Card className="shadow-md border border-blue-gray-50 dark:border-gray-800 dark:bg-gray-800/50 overflow-hidden">
-             <List className="p-2">
+      <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
+        
+        {/* LEFT SIDEBAR (Navigation) - Fixed width */}
+        <Card className="w-full lg:w-72 shrink-0 h-fit border border-blue-gray-50 dark:border-gray-800 bg-white dark:bg-[#111c44] shadow-sm">
+          <CardBody className="p-4 flex flex-col items-center gap-4">
+             <Avatar
+                src={avatarSrc}
+                alt="avatar"
+                size="xl"
+                className="border-2 border-white dark:border-gray-600 shadow-md"
+             />
+             <div className="text-center mb-2">
+                 <Typography variant="h6" color="blue-gray" className="dark:text-white">
+                     {user?.firstName} {user?.lastName}
+                 </Typography>
+                 <Typography variant="small" className="text-gray-500 font-normal dark:text-gray-400">
+                     Student Account
+                 </Typography>
+             </div>
+             
+             <div className="w-full h-px bg-gray-200 dark:bg-gray-700 my-1" />
+
+             <List className="w-full min-w-0 p-0">
                 {navItems.map(({ value, label, icon: Icon }) => (
                     <ListItem 
                         key={value}
                         onClick={() => setActiveTab(value)}
-                        className={`p-3 mb-1 ${activeTab === value ? "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400" : "dark:text-gray-300 dark:hover:bg-gray-700"}`}
-                        selected={activeTab === value}
+                        className={`p-3 rounded-lg transition-colors ${
+                            activeTab === value 
+                            ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 font-medium" 
+                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800/50"
+                        }`}
                     >
                         <ListItemPrefix>
                             <Icon className="h-5 w-5" />
                         </ListItemPrefix>
-                        <span className="font-medium">{label}</span>
+                        {label}
                     </ListItem>
                 ))}
+                <ListItem 
+                    onClick={logout}
+                    className="p-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 hover:text-red-600 mt-2"
+                >
+                    <ListItemPrefix>
+                        <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                    </ListItemPrefix>
+                    Sign Out
+                </ListItem>
              </List>
-          </Card>
-        </div>
+          </CardBody>
+        </Card>
 
-        {/* RIGHT SIDE: Content Area */}
-        <div className="flex-1 min-w-0">
-             <div className="h-full overflow-y-auto pr-2 pb-10 custom-scrollbar">
+        {/* RIGHT CONTENT AREA - Flex-1 to fill space */}
+        {/* Added border and background here to match 'Notifications' page */}
+        <div className="flex-1 flex flex-col min-w-0 rounded-xl border border-blue-gray-50 dark:border-gray-800 bg-white dark:bg-[#111c44] shadow-sm overflow-hidden">
+             
+             {/* SCROLLABLE CONTENT AREA 
+                 This is the key fix: 'overflow-y-auto' is applied HERE. 
+                 The footer below is OUTSIDE this div, so it stays pinned to the bottom.
+             */}
+             <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar relative">
                 <AnimatePresence mode="wait">
                     {activeTab === "profile" && (
                         <ViewProfile key="profile" user={user} onEditRequest={() => setActiveTab("edit")} />
@@ -572,7 +553,15 @@ export function Profile() {
                     )}
                 </AnimatePresence>
              </div>
+
+             {/* STATIC FOOTER (Inside the Card) - Ensures it never shifts */}
+             <div className="shrink-0 p-4 border-t border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/20 text-center">
+                 <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-500">
+                    &copy; 2026, made by Subarta Ghosh
+                 </Typography>
+             </div>
         </div>
+
       </div>
     </div>
   );
