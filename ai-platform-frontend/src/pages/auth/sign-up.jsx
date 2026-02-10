@@ -120,13 +120,13 @@ export function SignUp() {
     <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden">
       
       {/* === Autofill Fix Style Block === */}
-      {/* Forces dark background #09090b on autofill to match theme */}
+      {/* Forces the autofill background to match the gray-900 theme shade (#111827) */}
       <style>{`
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
         input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 1000px ${theme === 'dark' ? '#09090b' : '#ffffff'} inset !important;
+          -webkit-box-shadow: 0 0 0 1000px ${theme === 'dark' ? '#111827' : '#ffffff'} inset !important;
           -webkit-text-fill-color: ${theme === 'dark' ? '#ffffff' : '#000000'} !important;
           transition: background-color 5000s ease-in-out 0s;
         }
