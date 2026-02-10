@@ -1,85 +1,90 @@
 import PropTypes from "prop-types";
 import { Link, NavLink } from "react-router-dom";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { Button, IconButton, Typography } from "@material-tailwind/react";
+import {
+  Button,
+  IconButton,
+  Typography,
+  Tooltip,
+} from "@material-tailwind/react";
 import {
   useMaterialTailwindController,
   setOpenSidenav,
 } from "../../context";
-import { useState } from "react";
+import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 
 export function Sidenav({ brandImg, brandName, routes }) {
   const [controller, dispatch] = useMaterialTailwindController();
-  const { sidenavType, openSidenav } = controller;
+  const { openSidenav } = controller;
 
   const [mini, setMini] = useState(false);
+  const [hovered, setHovered] = useState(false);
 
-  // Glass style variants
-  const typeClass = {
-    dark: `
-      bg-gradient-to-b from-gray-900 to-black
-      text-white border border-white/10
-      shadow-xl shadow-blue-500/10
-    `,
-    white: `
-      bg-white/80 backdrop-blur-xl
-      text-blue-gray-900
-      border border-black/5
-      shadow-lg
-    `,
-    transparent: `
-      bg-gradient-to-b from-white/10 to-white/5
-      dark:from-gray-900/40 dark:to-gray-900/20
-      backdrop-blur-xl
-      border border-white/10
-      shadow-xl shadow-blue-500/5
-      text-white
-    `,
-  }[sidenavType];
+  const expanded = !mini || hovered;
 
-  const dashboardRoutes = routes.filter(({ layout }) => layout === "dashboard");
+  // Auto collapse on smaller screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1280) setMini(false);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const dashboardRoutes = routes.filter((r) => r.layout === "dashboard");
 
   return (
-    <aside
+    <motion.aside
+      initial={{ x: -100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={`
-        ${typeClass}
-        ${openSidenav ? "translate-x-0" : "-translate-x-80"}
         fixed inset-y-0 left-0 z-50 m-4
-        ${mini ? "w-20" : "w-72"}
-        rounded-2xl
+        ${expanded ? "w-72" : "w-20"}
+        ${openSidenav ? "translate-x-0" : "-translate-x-96"}
         transition-all duration-300
-        xl:translate-x-0
+        rounded-2xl
+        
+        bg-gradient-to-b from-white/10 to-white/5
+        dark:from-gray-900/40 dark:to-gray-900/20
+        backdrop-blur-xl
+        border border-white/10
+        shadow-xl shadow-blue-500/10
+        
         overflow-y-auto overflow-x-hidden
+        xl:translate-x-0
         
         [&::-webkit-scrollbar]:w-1.5
         [&::-webkit-scrollbar-thumb]:bg-white/20
         [&::-webkit-scrollbar-thumb]:rounded-full
-        hover:[&::-webkit-scrollbar-thumb]:bg-white/40
       `}
     >
       {/* 🌌 Glow Background */}
-      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
         <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-0 right-0 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
       </div>
 
       {/* 🔷 Brand */}
-      <div className="relative flex items-center justify-between px-6 py-6">
+      <div className="flex items-center justify-between px-5 py-6">
         <Link to="/" className="flex items-center gap-3">
-          <img src={brandImg} alt="logo" className="h-8 w-8" />
+          <img src={brandImg} className="h-9 w-9" />
 
-          {!mini && (
-            <Typography variant="h6" className="font-bold">
-              {brandName}
-            </Typography>
+          {expanded && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Typography className="font-bold text-white">
+                {brandName}
+              </Typography>
+            </motion.div>
           )}
         </Link>
 
-        {/* Close */}
         <IconButton
           variant="text"
           size="sm"
-          className="xl:hidden"
+          className="xl:hidden text-white"
           onClick={() => setOpenSidenav(dispatch, false)}
         >
           <XMarkIcon className="h-5 w-5" />
@@ -87,12 +92,12 @@ export function Sidenav({ brandImg, brandName, routes }) {
       </div>
 
       {/* 🔘 Collapse Toggle */}
-      <div className="px-4 mb-2 hidden xl:block">
+      <div className="px-3 mb-4 hidden xl:block">
         <Button
           size="sm"
           variant="text"
+          className="text-xs text-white/70"
           onClick={() => setMini(!mini)}
-          className="w-full text-xs opacity-70 hover:opacity-100"
         >
           {mini ? "Expand" : "Collapse"}
         </Button>
@@ -100,11 +105,10 @@ export function Sidenav({ brandImg, brandName, routes }) {
 
       {/* 📌 Routes */}
       <div className="px-3">
-        {dashboardRoutes.map(({ title, pages }, key) => (
-          <ul key={key} className="mb-6">
-            {/* Section Title */}
-            {!mini && title && (
-              <li className="px-4 mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+        {dashboardRoutes.map(({ title, pages }, i) => (
+          <ul key={i} className="mb-6">
+            {expanded && title && (
+              <li className="px-4 mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
                 {title}
               </li>
             )}
@@ -112,44 +116,55 @@ export function Sidenav({ brandImg, brandName, routes }) {
             {pages.map(({ icon, name, path }) => (
               <li key={name}>
                 <NavLink to={`/dashboard${path}`} end>
-                  {({ isActive }) => (
-                    <Button
-                      variant="text"
-                      fullWidth
-                      className={`
-                        relative group flex items-center gap-3 px-4 py-3 mb-1
-                        rounded-xl transition-all duration-200
-                        hover:bg-white/10
-                        hover:translate-x-1
-                        hover:scale-[1.02]
-                        ${isActive ? "bg-white/10" : ""}
-                      `}
-                    >
-                      {/* Active Glow Bar */}
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full shadow-[0_0_10px] shadow-blue-500" />
-                      )}
+                  {({ isActive }) => {
+                    const content = (
+                      <motion.div
+                        whileHover={{ x: 4, scale: 1.02 }}
+                        className={`
+                          relative flex items-center gap-3 px-4 py-3 mb-1
+                          rounded-xl cursor-pointer
+                          transition-all duration-200
+                          ${
+                            isActive
+                              ? "bg-white/15"
+                              : "hover:bg-white/10"
+                          }
+                        `}
+                      >
+                        {/* Active Glow */}
+                        {isActive && (
+                          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full shadow-[0_0_12px] shadow-blue-500" />
+                        )}
 
-                      {/* Icon */}
-                      <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 group-hover:bg-white/10 transition">
-                        {icon}
-                      </span>
+                        {/* Icon */}
+                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/5">
+                          {icon}
+                        </div>
 
-                      {/* Text */}
-                      {!mini && (
-                        <Typography className="font-medium capitalize">
-                          {name}
-                        </Typography>
-                      )}
-                    </Button>
-                  )}
+                        {/* Text */}
+                        {expanded && (
+                          <Typography className="text-white font-medium">
+                            {name}
+                          </Typography>
+                        )}
+                      </motion.div>
+                    );
+
+                    return !expanded ? (
+                      <Tooltip content={name} placement="right">
+                        {content}
+                      </Tooltip>
+                    ) : (
+                      content
+                    );
+                  }}
                 </NavLink>
               </li>
             ))}
           </ul>
         ))}
       </div>
-    </aside>
+    </motion.aside>
   );
 }
 
@@ -161,7 +176,7 @@ Sidenav.defaultProps = {
 Sidenav.propTypes = {
   brandImg: PropTypes.string,
   brandName: PropTypes.string,
-  routes: PropTypes.arrayOf(PropTypes.object).isRequired,
+  routes: PropTypes.array.isRequired,
 };
 
 export default Sidenav;
