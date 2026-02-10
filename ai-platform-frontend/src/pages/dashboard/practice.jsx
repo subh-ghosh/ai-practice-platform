@@ -33,7 +33,7 @@ import { InformationCircleIcon, SparklesIcon } from "@heroicons/react/24/solid";
 ========================= */
 
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
-const FREE_ACTION_LIMIT = 3;
+const FREE_ACTION_LIMIT = 10;
 
 const STATUS_STYLES = {
   CORRECT: {
