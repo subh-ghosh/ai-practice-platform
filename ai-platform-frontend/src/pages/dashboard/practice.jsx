@@ -26,7 +26,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useTheme } from "@/context/ThemeContext.jsx";
 import { usePaywall } from "@/context/PaywallContext.jsx";
-import { InformationCircleIcon, SparklesIcon, CheckCircleIcon, XCircleIcon, EyeIcon } from "@heroicons/react/24/solid";
+import { InformationCircleIcon, SparklesIcon } from "@heroicons/react/24/solid";
 
 /* =========================
    Constants & Helpers
@@ -35,35 +35,31 @@ import { InformationCircleIcon, SparklesIcon, CheckCircleIcon, XCircleIcon, EyeI
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 const FREE_ACTION_LIMIT = 3;
 
-// Refined Status Styles with Modern Colors and Shadows
+// Map status to specific Tailwind classes
 const STATUS_STYLES = {
   CORRECT: {
-    dot: "bg-emerald-500 shadow-emerald-500/50",
-    text: "text-emerald-600 dark:text-emerald-400",
+    dot: "bg-green-500 shadow-green-500/50",
+    text: "text-green-500",
     label: "Correct!",
-    chip: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
-    icon: <CheckCircleIcon className="w-5 h-5 text-emerald-500" />
+    chip: "border-green-200 bg-green-50/40 backdrop-blur-sm text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300"
   },
   CLOSE: {
-    dot: "bg-amber-500 shadow-amber-500/50",
-    text: "text-amber-600 dark:text-amber-400",
+    dot: "bg-orange-500 shadow-orange-500/50",
+    text: "text-orange-500",
     label: "Close!",
-    chip: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    icon: <InformationCircleIcon className="w-5 h-5 text-amber-500" />
+    chip: "border-orange-200 bg-orange-50/40 backdrop-blur-sm text-orange-800 dark:border-orange-900/50 dark:bg-orange-900/30 dark:text-orange-300"
   },
   REVEALED: {
-    dot: "bg-indigo-500 shadow-indigo-500/50",
-    text: "text-indigo-600 dark:text-indigo-400",
+    dot: "bg-blue-500 shadow-blue-500/50",
+    text: "text-blue-500",
     label: "Solution Revealed",
-    chip: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300",
-    icon: <EyeIcon className="w-5 h-5 text-indigo-500" />
+    chip: "border-blue-200 bg-blue-50/40 backdrop-blur-sm text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/30 dark:text-blue-300"
   },
   INCORRECT: {
-    dot: "bg-rose-500 shadow-rose-500/50",
-    text: "text-rose-600 dark:text-rose-400",
+    dot: "bg-red-500 shadow-red-500/50",
+    text: "text-red-500",
     label: "Incorrect",
-    chip: "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/30 dark:text-rose-300",
-    icon: <XCircleIcon className="w-5 h-5 text-rose-500" />
+    chip: "border-red-200 bg-red-50/40 backdrop-blur-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/30 dark:text-red-300"
   }
 };
 
@@ -71,10 +67,8 @@ function DynamicFeedbackTitle({ status }) {
   const style = STATUS_STYLES[status] || STATUS_STYLES.INCORRECT;
 
   return (
-    <div className="flex items-center gap-2 mb-3 animate-in slide-in-from-left-2 duration-500">
-      <div className={`p-1 rounded-full bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm`}>
-        {style.icon}
-      </div>
+    <div className="flex items-center gap-2 mb-2">
+      <div className={`w-3 h-3 rounded-full shadow-[0_0_8px] ${style.dot}`}></div>
       <Typography variant="h6" className={`font-bold tracking-tight uppercase text-sm ${style.text}`}>
         {style.label}
       </Typography>
@@ -88,16 +82,12 @@ const formatMarkdownText = (text) => {
 };
 
 const getStatusChip = (status) => {
-  const baseClasses = "py-1 px-3 text-[10px] font-bold uppercase tracking-wider w-fit rounded-full border shadow-sm transition-all hover:scale-105";
+  const baseClasses = "py-0.5 px-2.5 text-[11px] font-bold uppercase tracking-wide w-fit rounded-full border shadow-sm";
   
-  if (!status) return <Chip variant="ghost" className={`${baseClasses} border-gray-200 bg-gray-50 text-gray-500`} value="N/A" />;
+  if (!status) return <Chip variant="ghost" className={`${baseClasses} border-blue-gray-100 bg-blue-gray-50/50 backdrop-blur-sm text-blue-gray-500`} value="N/A" />;
   
   const style = STATUS_STYLES[status?.toUpperCase()] || STATUS_STYLES.INCORRECT;
-  return (
-    <div className={`${baseClasses} ${style.chip}`}>
-      {status === "REVEALED" ? "Revealed" : style.label}
-    </div>
-  );
+  return <Chip variant="ghost" className={`${baseClasses} ${style.chip}`} value={status === "REVEALED" ? "Revealed" : style.label} />;
 };
 
 /* =========================
@@ -244,8 +234,10 @@ export function Practice() {
         setIsPolling(false);
         return;
       }
+
       console.log("Direct response failed, switching to polling...", err);
       const foundItem = await pollForResult(question.id);
+      
       setIsPolling(false);
       
       if (foundItem) {
@@ -323,85 +315,78 @@ export function Practice() {
   );
 
   return (
-    <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)] overflow-hidden">
-      {/* Dynamic Animated Background */}
-      <div className="absolute inset-0 -z-10 bg-slate-50 dark:bg-gray-950 transition-colors duration-700" />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none overflow-hidden">
-         <div className="absolute top-[-10%] left-[-10%] h-[500px] w-[500px] rounded-full bg-indigo-400/20 dark:bg-indigo-600/10 blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
-         <div className="absolute bottom-[-10%] right-[-10%] h-[500px] w-[500px] rounded-full bg-blue-400/20 dark:bg-blue-600/10 blur-[100px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }} />
-         <div className="absolute top-[40%] left-[60%] h-[300px] w-[300px] rounded-full bg-emerald-300/20 dark:bg-emerald-600/10 blur-[80px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '2s' }} />
-      </div>
+    <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
+      {/* Background with blurry blobs */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-950 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
+      <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-400/30 dark:bg-sky-600/20 blur-[100px]" />
+      <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-400/30 dark:bg-blue-700/20 blur-[100px]" />
+      <div className="pointer-events-none absolute bottom-10 right-10 h-80 w-80 rounded-full bg-purple-300/20 dark:bg-purple-900/20 blur-[120px]" />
 
-      <div className="mt-8 page has-fixed-navbar space-y-10 max-w-7xl mx-auto">
+      <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto">
         
-        {/* --- Generator Card --- */}
-        <Card className="overflow-visible border border-white/50 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-xl shadow-indigo-900/5 ring-1 ring-black/5">
+        {/* --- Generator Card (Frosted) --- */}
+        <Card className="overflow-visible border border-white/40 dark:border-gray-700/50 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-xl shadow-blue-gray-900/5">
           <CardHeader
             floated={false}
             shadow={false}
-            className="rounded-t-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-blue-500 px-8 py-6 m-0 relative overflow-hidden group"
+            className="rounded-t-xl bg-gradient-to-r from-blue-600/90 to-blue-500/90 backdrop-blur-md px-6 py-4 m-0 border-b border-white/10"
           >
-            {/* Header shine effect */}
-            <div className="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:left-[100%] transition-all duration-1000 ease-in-out" />
-            
-            <div className="flex items-center gap-4 relative z-10">
-                <div className="p-3 bg-white/20 backdrop-blur-md rounded-xl shadow-inner border border-white/10">
-                    <SparklesIcon className="h-7 w-7 text-white drop-shadow-md" />
+            <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-lg border border-white/20 shadow-inner">
+                    <SparklesIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                    <Typography variant="h4" color="white" className="font-bold tracking-tight text-shadow-sm">
+                    <Typography variant="h5" color="white" className="font-bold tracking-tight drop-shadow-sm">
                     AI Question Generator
                     </Typography>
-                    <Typography variant="small" color="white" className="opacity-90 font-medium text-indigo-50">
+                    <Typography variant="small" color="white" className="opacity-90 font-normal">
                     Select a topic and let AI craft a question for you.
                     </Typography>
                 </div>
             </div>
           </CardHeader>
 
-          <CardBody className="p-6 md:p-10">
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          <CardBody className="p-6 md:p-8">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <Input
-                variant="outlined"
                 label="Subject"
                 placeholder="e.g. Java, DBMS"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                color="indigo"
-                className="!text-gray-900 dark:!text-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                labelProps={{ className: "!text-gray-500 dark:!text-gray-400" }}
+                color="blue"
+                className="!text-blue-gray-900 dark:!text-white bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-gray-800/80 transition-all"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
               />
 
               <Input
-                variant="outlined"
                 label="Topic"
                 placeholder="e.g. Inheritance"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                color="indigo"
-                className="!text-gray-900 dark:!text-white focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                labelProps={{ className: "!text-gray-500 dark:!text-gray-400" }}
+                color="blue"
+                className="!text-blue-gray-900 dark:!text-white bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-gray-800/80 transition-all"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
               />
 
               <Select
                 label="Difficulty"
                 value={difficulty}
                 onChange={(val) => setDifficulty(val)}
-                color="indigo"
-                className="!text-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-gray-500 dark:!text-gray-400" }}
-                menuProps={{ className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 shadow-xl" }}
+                color="blue"
+                className="!text-blue-gray-900 dark:!text-white bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm focus:bg-white/80 dark:focus:bg-gray-800/80 transition-all"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                menuProps={{ className: "dark:bg-gray-800/95 backdrop-blur-xl border border-white/10 dark:border-gray-700 dark:text-gray-200 shadow-xl" }}
               >
                 {["School", "High School", "Graduation", "Post Graduation", "Research"].map(lvl => (
-                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700 dark:focus:bg-gray-700">{lvl}</Option>
+                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700/50 dark:focus:bg-gray-700/50">{lvl}</Option>
                 ))}
               </Select>
             </div>
 
             {user?.subscriptionStatus === "FREE" && (
-              <Alert className="mt-8 border border-indigo-100 bg-indigo-50/80 text-indigo-900 dark:bg-indigo-900/20 dark:border-indigo-800 dark:text-indigo-100 rounded-xl shadow-sm">
+              <Alert className="mt-6 border border-blue-200/50 bg-blue-50/60 dark:bg-blue-900/30 backdrop-blur-md text-blue-900 dark:border-blue-800/50 dark:text-blue-100 rounded-lg shadow-sm">
                 <div className="flex items-center gap-3">
-                    <InformationCircleIcon className="w-5 h-5 text-indigo-500" />
+                    <InformationCircleIcon className="w-5 h-5" />
                     <Typography className="text-sm font-medium">
                         Free Plan: You have <strong>{actionsRemaining}</strong> generations left today.
                     </Typography>
@@ -409,43 +394,35 @@ export function Practice() {
               </Alert>
             )}
 
-            <div className="mt-10 flex justify-start">
+            <div className="mt-8 flex justify-start">
               <Button
                 onClick={handleGenerateQuestion}
                 disabled={generating || (user?.subscriptionStatus === "FREE" && actionsRemaining <= 0)}
-                className="w-full md:w-auto px-10 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:scale-[1.02] active:scale-95 transition-all duration-300"
+                className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] transition-all"
               >
-                {generating ? <Spinner className="h-4 w-4 text-white" /> : "Generate Question"}
+                {generating ? <Spinner className="h-4 w-4" /> : "Generate Question"}
               </Button>
             </div>
 
-            {error && <Typography color="red" className="mt-6 text-sm font-medium text-center animate-pulse">{error}</Typography>}
+            {error && <Typography color="red" className="mt-4 text-sm font-medium text-center drop-shadow-sm">{error}</Typography>}
 
             {isPolling && (
-              <div className="mt-8 flex items-center justify-center gap-3 p-6 rounded-xl bg-indigo-50/50 border border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-800 animate-pulse">
-                <Spinner className="h-5 w-5 text-indigo-500" />
-                <Typography className="text-sm font-semibold text-indigo-600 dark:text-indigo-300">
+              <div className="mt-6 flex items-center justify-center gap-3 p-4 rounded-xl bg-blue-50/40 backdrop-blur-sm border border-blue-100/50 dark:bg-blue-900/20 dark:border-blue-800/50 animate-pulse">
+                <Spinner className="h-5 w-5 text-blue-500" />
+                <Typography className="text-sm font-semibold text-blue-600 dark:text-blue-300">
                   AI is analyzing your answer...
                 </Typography>
               </div>
             )}
 
             {question && (
-              <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 animate-in fade-in slide-in-from-bottom-6 duration-700 ease-out">
-                <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-3">
-                        <span className="flex h-2 w-2 rounded-full bg-indigo-500"></span>
-                        <Typography variant="small" className="font-bold text-indigo-500 uppercase tracking-widest text-xs">
-                            Current Question
-                        </Typography>
-                    </div>
-                    
-                    <div className="p-6 md:p-8 border border-indigo-50 rounded-2xl bg-indigo-50/30 dark:bg-gray-800/50 dark:border-gray-700 shadow-sm relative group">
-                         {/* Subtle decor */}
-                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <SparklesIcon className="w-16 h-16 text-indigo-900 dark:text-white" />
-                         </div>
-                        <div className="prose prose-sm md:prose-base dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 font-medium leading-relaxed relative z-10">
+              <div className="mt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="mb-6">
+                    <Typography variant="small" className="font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2 ml-1">
+                        Question
+                    </Typography>
+                    <div className="p-6 border border-white/50 dark:border-gray-700/50 rounded-2xl bg-white/40 dark:bg-gray-800/40 backdrop-blur-md shadow-inner">
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(question.questionText)}</ReactMarkdown>
                         </div>
                     </div>
@@ -457,16 +434,14 @@ export function Practice() {
                     value={currentAnswer}
                     onChange={handleAnswerChange}
                     rows={textareaRows}
-                    color="indigo"
-                    className="!text-gray-900 dark:!text-white bg-white dark:bg-gray-950/50 !border-gray-300 dark:!border-gray-700 focus:!border-indigo-500"
+                    color="blue"
+                    className="!text-blue-gray-900 dark:!text-white bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm focus:bg-white/90 dark:focus:bg-gray-900/90"
                     containerProps={{ className: "min-w-0" }}
-                    labelProps={{ className: "!text-gray-500 dark:!text-gray-400" }}
+                    labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
                   />
 
-                  <div className="mt-6 flex flex-wrap gap-4">
-                    <Button type="submit" disabled={submitting || isPolling} 
-                        className="rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5"
-                    >
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Button type="submit" disabled={submitting || isPolling} className="rounded-lg bg-blue-600 shadow-blue-500/20">
                       {submitting || isPolling ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
                     </Button>
 
@@ -474,20 +449,20 @@ export function Practice() {
                       variant="outlined"
                       onClick={handleGetHint}
                       disabled={submitting || isPolling}
-                      className="rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors"
+                      className="rounded-lg border-gray-300/60 bg-white/30 backdrop-blur-sm text-gray-700 hover:bg-white/50 dark:border-gray-600/60 dark:text-gray-300 dark:hover:bg-gray-800/50"
                     >
                       {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
                     </Button>
 
                     <Popover open={openPopover} handler={setOpenPopover} placement="top">
                       <PopoverHandler>
-                        <Button variant="text" color="red" disabled={submitting || isPolling} className="rounded-lg hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600">
+                        <Button variant="text" color="red" disabled={submitting || isPolling} className="rounded-lg hover:bg-red-50/50 dark:hover:bg-red-900/20">
                           {loadingAnswer ? <Spinner className="h-4 w-4" /> : "Reveal Answer"}
                         </Button>
                       </PopoverHandler>
-                      <PopoverContent className="z-50 border-gray-200 shadow-xl dark:bg-gray-800 dark:border-gray-700">
+                      <PopoverContent className="z-50 border border-white/20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-2xl dark:border-gray-700/50">
                         <Typography color="blue-gray" className="mb-2 font-bold dark:text-white">Confirm Reveal?</Typography>
-                        <Typography variant="small" className="mb-4 font-normal text-gray-500 dark:text-gray-400">
+                        <Typography variant="small" className="mb-4 font-normal text-blue-gray-500 dark:text-gray-400">
                           This will count as an attempt.
                         </Typography>
                         <div className="flex gap-2 justify-end">
@@ -502,69 +477,58 @@ export function Practice() {
             )}
 
             {hint && (
-              <div className="mt-8 p-6 border-l-4 border-l-amber-400 bg-amber-50/50 rounded-r-xl dark:bg-amber-900/10 dark:border-l-amber-600 animate-in fade-in slide-in-from-left-4 duration-500">
-                <div className="flex items-center gap-2 mb-3 text-amber-700 dark:text-amber-400">
+              <div className="mt-6 p-5 border border-blue-200/60 bg-blue-50/40 backdrop-blur-md rounded-2xl dark:bg-blue-900/20 dark:border-blue-800/60 animate-in fade-in slide-in-from-top-2 shadow-sm">
+                <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-300">
                     <InformationCircleIcon className="h-5 w-5" />
-                    <span className="font-bold text-sm uppercase tracking-wide">Helpful Hint</span>
+                    <span className="font-bold text-sm uppercase">Hint</span>
                 </div>
-                <div className="prose prose-sm dark:prose-invert text-gray-700 dark:text-gray-300">
+                <div className="prose prose-sm dark:prose-invert text-blue-gray-700 dark:text-blue-100">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(hint)}</ReactMarkdown>
                 </div>
               </div>
             )}
 
             {feedback && (
-              <div className="mt-10 p-1 bg-gradient-to-br from-white/80 to-gray-50/80 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 slide-in-from-bottom-4 duration-500 ease-out">
-                  <div className={`p-6 md:p-8 rounded-xl h-full ${
-                      feedback.evaluationStatus === "CORRECT" ? "bg-emerald-50/30 dark:bg-emerald-900/10" :
-                      feedback.evaluationStatus === "CLOSE" ? "bg-amber-50/30 dark:bg-amber-900/10" :
-                      feedback.evaluationStatus === "REVEALED" ? "bg-indigo-50/30 dark:bg-indigo-900/10" :
-                      "bg-rose-50/30 dark:bg-rose-900/10"
-                  }`}>
-                    <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-                    <div className="mt-4 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto custom-scroll">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {feedback.evaluationStatus === "REVEALED" 
-                            ? formatMarkdownText(feedback.answerText) 
-                            : formatMarkdownText(feedback.feedback)
-                        }
-                    </ReactMarkdown>
-                    </div>
+              <div className="mt-8 p-6 border border-white/50 dark:border-gray-700/50 rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg shadow-lg animate-in zoom-in-95 duration-300">
+                <DynamicFeedbackTitle status={feedback.evaluationStatus} />
+                <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto custom-scroll">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {feedback.evaluationStatus === "REVEALED" 
+                        ? formatMarkdownText(feedback.answerText) 
+                        : formatMarkdownText(feedback.feedback)
+                    }
+                  </ReactMarkdown>
                 </div>
               </div>
             )}
           </CardBody>
         </Card>
 
-        {/* --- History Card --- */}
-        <Card className="border border-white/50 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-lg">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 flex flex-col md:flex-row gap-4 justify-between items-center rounded-t-xl border-b border-gray-100 dark:border-gray-800">
-            <div className="flex items-center gap-2">
-                <div className="w-1 h-6 bg-indigo-500 rounded-full"></div>
-                <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold">
-                Practice History
-                </Typography>
-            </div>
+        {/* --- History Card (Frosted) --- */}
+        <Card className="border border-white/40 dark:border-gray-700/50 bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl shadow-xl shadow-blue-gray-900/5">
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 flex flex-col md:flex-row gap-4 justify-between items-center rounded-t-xl border-b border-white/10">
+            <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold">
+              Practice History
+            </Typography>
             <div className="w-full md:w-72">
               <Input
-                label="Search Questions"
+                label="Search"
                 icon={<i className="fas fa-search" />}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="!text-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-gray-500 dark:!text-gray-400" }}
-                color="indigo"
+                className="!text-blue-gray-900 dark:!text-white bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm"
+                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
               />
             </div>
           </CardHeader>
 
           <CardBody className="px-0 pt-0 pb-4 overflow-x-auto custom-scroll">
-            <table className="w-full min-w-[640px] table-auto text-left border-collapse">
+            <table className="w-full min-w-[640px] table-auto text-left">
               <thead>
                 <tr>
                   {["#", "Question", "Subject", "Difficulty", "Status", "Date"].map((head) => (
-                    <th key={head} className="border-b border-gray-200 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-800/80 backdrop-blur-sm sticky top-0 z-10">
-                      <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-70 dark:text-gray-300 uppercase text-xs tracking-wider">
+                    <th key={head} className="border-b border-blue-gray-50/50 bg-blue-gray-50/30 backdrop-blur-sm p-4 dark:border-gray-700/50 dark:bg-gray-800/30">
+                      <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-70 dark:text-gray-300">
                         {head}
                       </Typography>
                     </th>
@@ -573,35 +537,35 @@ export function Practice() {
               </thead>
               <tbody>
                 {loadingHistory ? (
-                    <tr><td colSpan="6" className="p-12 text-center"><Spinner className="h-8 w-8 mx-auto text-indigo-500" /></td></tr>
+                    <tr><td colSpan="6" className="p-8 text-center"><Spinner className="h-8 w-8 mx-auto" /></td></tr>
                 ) : visibleHistory.length === 0 ? (
-                    <tr><td colSpan="6" className="p-12 text-center text-gray-500 italic">No history found.</td></tr>
+                    <tr><td colSpan="6" className="p-8 text-center text-gray-500 font-medium italic">No history found.</td></tr>
                 ) : (
                     visibleHistory.map((item, index) => (
                         <tr 
                             key={`${item.questionId}-${index}`} 
                             onClick={() => setSelectedHistory(item)}
-                            className="cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors duration-200 group border-b border-gray-100 dark:border-gray-800 last:border-0"
+                            className="cursor-pointer hover:bg-blue-50/30 dark:hover:bg-white/5 transition-colors"
                         >
-                            <td className="p-4">
-                                <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-400">{index + 1}</Typography>
+                            <td className="p-4 border-b border-blue-gray-50/50 dark:border-gray-800/50">
+                                <Typography variant="small" color="blue-gray" className="font-normal dark:text-gray-400">{index + 1}</Typography>
                             </td>
-                            <td className="p-4 max-w-xs truncate">
-                                <Typography variant="small" className="font-semibold text-gray-800 dark:text-gray-200 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                            <td className="p-4 border-b border-blue-gray-50/50 dark:border-gray-800/50 max-w-xs truncate">
+                                <Typography variant="small" color="blue-gray" className="font-medium dark:text-gray-200 truncate">
                                     {item.questionText}
                                 </Typography>
                             </td>
-                            <td className="p-4">
-                                <Chip variant="ghost" value={item.subject} className="rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 text-[10px] py-0.5 px-2" />
+                            <td className="p-4 border-b border-blue-gray-50/50 dark:border-gray-800/50">
+                                <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.subject}</Typography>
                             </td>
-                            <td className="p-4">
-                                <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-400 text-xs">{item.difficulty}</Typography>
+                            <td className="p-4 border-b border-blue-gray-50/50 dark:border-gray-800/50">
+                                <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.difficulty}</Typography>
                             </td>
-                            <td className="p-4">
+                            <td className="p-4 border-b border-blue-gray-50/50 dark:border-gray-800/50">
                                 {getStatusChip(item.evaluationStatus)}
                             </td>
-                            <td className="p-4">
-                                <Typography variant="small" className="font-normal text-gray-400 dark:text-gray-500 text-xs">
+                            <td className="p-4 border-b border-blue-gray-50/50 dark:border-gray-800/50">
+                                <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-500">
                                     {new Date(item.submittedAt || item.generatedAt).toLocaleDateString()}
                                 </Typography>
                             </td>
@@ -612,40 +576,33 @@ export function Practice() {
             </table>
             
             {filteredHistory.length > visibleHistory.length && (
-                <div className="mt-6 text-center">
-                    <Button variant="text" size="sm" color="indigo" onClick={() => setItemsToShow(prev => prev + 10)} className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20">Load More</Button>
+                <div className="mt-4 text-center">
+                    <Button variant="text" size="sm" onClick={() => setItemsToShow(prev => prev + 10)} className="bg-white/20 backdrop-blur-sm">Load More</Button>
                 </div>
             )}
           </CardBody>
         </Card>
 
-        {/* History Detail Modal */}
+        {/* History Detail Modal (Frosted Glass) */}
         <Dialog 
             open={!!selectedHistory} 
             handler={() => setSelectedHistory(null)} 
             size="lg" 
-            className="dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden"
-            animate={{
-                mount: { scale: 1, y: 0 },
-                unmount: { scale: 0.9, y: -100 },
-            }}
+            className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-2xl border border-white/20 dark:border-gray-700/50 shadow-2xl"
         >
-            <DialogHeader className="bg-gray-50 dark:bg-gray-800/50 border-b dark:border-gray-800 flex justify-between items-center p-6">
-                <Typography variant="h5" className="text-gray-900 dark:text-white font-bold">Practice Details</Typography>
-                <div className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer transition-colors" onClick={() => setSelectedHistory(null)}>
-                     <XCircleIcon className="h-6 w-6 text-gray-500" />
-                </div>
+            <DialogHeader className="dark:text-white border-b border-gray-200/50 dark:border-gray-700/50 flex justify-between items-center bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm rounded-t-lg">
+                Practice Details
             </DialogHeader>
-            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-8 custom-scroll bg-white dark:bg-gray-900">
+            <DialogBody divider className="border-gray-200/50 dark:border-gray-700/50 overflow-y-auto max-h-[70vh] p-6 custom-scroll">
                 {selectedHistory && (
-                    <div className="space-y-10">
+                    <div className="space-y-8">
                         {/* 1. QUESTION SECTION */}
-                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <Typography variant="small" className="font-bold text-indigo-500 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-indigo-500"></span> Question
+                        <div>
+                            <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2">
+                                Question
                             </Typography>
-                            <div className="p-6 border border-gray-200 rounded-2xl bg-gray-50 dark:bg-gray-800/50 dark:border-gray-700">
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto custom-scroll">
+                            <div className="p-5 border border-gray-200/60 rounded-2xl bg-gray-50/50 dark:bg-gray-800/40 dark:border-gray-700/60 backdrop-blur-md shadow-inner">
+                                <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto custom-scroll">
                                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                         {formatMarkdownText(selectedHistory.questionText)}
                                     </ReactMarkdown>
@@ -654,19 +611,17 @@ export function Practice() {
                         </div>
 
                         {/* 2. USER ANSWER SECTION */}
-                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-100">
+                        <div>
                             <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                {selectedHistory.evaluationStatus === "REVEALED" ? "Action Taken" : "Your Answer"}
+                                {selectedHistory.evaluationStatus === "REVEALED" ? "Action" : "Your Answer"}
                             </Typography>
-                            <div className={`p-6 border rounded-2xl text-sm transition-colors ${
+                            <div className={`p-5 border rounded-2xl text-sm backdrop-blur-sm ${
                                 selectedHistory.evaluationStatus === "REVEALED" 
-                                ? "border-indigo-100 bg-indigo-50/50 text-indigo-600 italic dark:bg-indigo-900/10 dark:border-indigo-800 dark:text-indigo-300"
-                                : "border-gray-200 bg-white dark:bg-gray-950 dark:border-gray-700 text-gray-700 dark:text-gray-300"
+                                ? "border-blue-100/60 bg-blue-50/40 text-blue-600 italic dark:bg-blue-900/20 dark:border-blue-800/60 dark:text-blue-300"
+                                : "border-gray-200/60 bg-white/60 dark:bg-gray-900/40 dark:border-gray-700/60 text-gray-700 dark:text-gray-300"
                             }`}>
                                 {selectedHistory.evaluationStatus === "REVEALED" ? (
-                                    <div className="flex items-center gap-2">
-                                        <EyeIcon className="h-4 w-4" /> You chose to reveal the answer.
-                                    </div>
+                                    "You chose to reveal the answer."
                                 ) : (
                                     <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto custom-scroll">
                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -678,18 +633,18 @@ export function Practice() {
                         </div>
 
                         {/* 3. FEEDBACK / SOLUTION SECTION */}
-                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 delay-200">
+                        <div>
                             <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
                             
                             {(() => {
-                                // Need to extract just the bg/border logic here or reuse the map
-                                const containerClass = selectedHistory.evaluationStatus === "CORRECT" ? "bg-emerald-50/50 border border-emerald-100 dark:bg-emerald-900/10 dark:border-emerald-800" :
-                                                    selectedHistory.evaluationStatus === "CLOSE" ? "bg-amber-50/50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-800" :
-                                                    selectedHistory.evaluationStatus === "REVEALED" ? "bg-indigo-50/50 border border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-800" :
-                                                    "bg-rose-50/50 border border-rose-100 dark:bg-rose-900/10 dark:border-rose-800";
+                                const style = STATUS_STYLES[selectedHistory.evaluationStatus] || STATUS_STYLES.INCORRECT;
+                                const containerClass = selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100/60 dark:bg-green-900/20 dark:border-green-800/60" :
+                                                    selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100/60 dark:bg-orange-900/20 dark:border-orange-800/60" :
+                                                    selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100/60 dark:bg-blue-900/20 dark:border-blue-800/60" :
+                                                    "bg-red-50/50 border border-red-100/60 dark:bg-red-900/20 dark:border-red-800/60";
                                 
                                 return (
-                                    <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll ${containerClass}`}>
+                                    <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll backdrop-blur-md ${containerClass}`}>
                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                             {selectedHistory.evaluationStatus === "REVEALED" 
                                                 ? formatMarkdownText(selectedHistory.answerText) 
@@ -703,8 +658,8 @@ export function Practice() {
                     </div>
                 )}
             </DialogBody>
-            <DialogFooter className="border-t dark:border-gray-800 p-4">
-                <Button variant="text" color="gray" onClick={() => setSelectedHistory(null)} className="mr-2">Close</Button>
+            <DialogFooter className="border-t border-gray-200/50 dark:border-gray-700/50">
+                <Button variant="gradient" color="blue" onClick={() => setSelectedHistory(null)} className="shadow-blue-500/20">Close</Button>
             </DialogFooter>
         </Dialog>
 
