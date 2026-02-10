@@ -16,7 +16,6 @@ import {
 } from "@material-tailwind/react";
 import {
   UserCircleIcon,
-  PencilSquareIcon,
   ShieldCheckIcon,
   EnvelopeIcon,
   MapPinIcon,
@@ -32,15 +31,16 @@ const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
 /* ============================ Components ============================ */
 
-// Input style that blends into the dark theme (Notification style)
-const DarkInput = ({ label, ...props }) => (
+// Standard Input (Clean White Style)
+const StandardInput = ({ label, ...props }) => (
   <div className="w-full">
-    <Typography variant="small" className="mb-2 font-medium text-gray-400">
+    <Typography variant="small" color="blue-gray" className="mb-1 font-semibold">
       {label}
     </Typography>
     <Input
       {...props}
-      className="!border-gray-800 bg-gray-900/50 text-white placeholder:text-gray-600 focus:!border-blue-500 transition-colors"
+      size="lg"
+      className="!border-blue-gray-200 bg-white text-blue-gray-900 focus:!border-blue-500 placeholder:opacity-100"
       labelProps={{
         className: "hidden",
       }}
@@ -51,17 +51,17 @@ const DarkInput = ({ label, ...props }) => (
   </div>
 );
 
-// A row item similar to a "Notification Item"
+// Row Item (Like a Notification List Item)
 const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-800 bg-[#18181b]/50 hover:bg-[#18181b] transition-colors">
-    <div className="p-2 rounded-full bg-blue-500/10 text-blue-500">
+  <div className="flex items-center gap-4 p-4 border-b border-blue-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+    <div className="p-2.5 rounded-full bg-blue-50 text-blue-500">
       <Icon className="h-5 w-5" />
     </div>
     <div className="flex-1">
-      <Typography variant="small" className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+      <Typography variant="small" className="font-bold text-blue-gray-400 uppercase text-[10px] tracking-wider">
         {label}
       </Typography>
-      <Typography variant="h6" className="text-gray-200 text-sm font-medium">
+      <Typography variant="h6" color="blue-gray" className="text-sm font-semibold">
         {value}
       </Typography>
     </div>
@@ -128,7 +128,7 @@ export function Profile() {
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm("This action is irreversible. Delete account?")) return;
+    if (!window.confirm("Are you sure? This cannot be undone.")) return;
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -147,55 +147,47 @@ export function Profile() {
     : "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-user-circle-icon.png";
 
   return (
-    // OUTER CONTAINER: Matches the Notification Box dimensions and style
-    <div className="w-full h-full p-6 flex flex-col">
+    // MAIN WRAPPER: Centers the "Notification Box" style card
+    <div className="flex justify-center w-full p-4 mt-4">
       
-      <Card className="flex-1 w-full bg-[#111113] border border-gray-800 shadow-xl overflow-hidden flex flex-col">
+      {/* THE BOX: Clean White, Shadow, Rounded */}
+      <Card className="w-full max-w-4xl bg-white border border-blue-gray-100 shadow-md overflow-hidden flex flex-col h-[600px]">
         
-        {/* HEADER SECTION (Like Notification Header) */}
-        <div className="p-6 border-b border-gray-800 bg-[#111113]">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            
-            {/* Title & Subtitle */}
-            <div>
-              <Typography variant="h4" color="white" className="font-semibold tracking-tight">
-                Profile
-              </Typography>
-              <Typography variant="small" className="text-gray-500 font-medium mt-1">
-                Manage your personal information and security.
-              </Typography>
-            </div>
-
-            {/* Avatar & User Info (Integrated into header) */}
-            <div className="flex items-center gap-4 bg-gray-900/50 p-2 pr-6 rounded-full border border-gray-800">
-              <Avatar src={avatarSrc} variant="circular" size="sm" className="border border-gray-700" />
-              <div>
-                <Typography variant="small" color="white" className="font-bold leading-none">
+        {/* HEADER SECTION */}
+        <div className="px-6 py-5 border-b border-blue-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white">
+          <div className="flex items-center gap-4">
+             <Avatar 
+                src={avatarSrc} 
+                variant="rounded" 
+                size="md" 
+                className="border border-blue-gray-100 shadow-sm p-0.5 bg-white" 
+             />
+             <div>
+                <Typography variant="h5" color="blue-gray" className="font-bold tracking-tight">
                   {user?.firstName} {user?.lastName}
                 </Typography>
-                <Typography variant="small" className="text-gray-500 text-[10px] font-medium leading-none mt-0.5">
+                <Typography variant="small" className="text-blue-gray-500 font-medium">
                   {user?.email}
                 </Typography>
-              </div>
-            </div>
+             </div>
           </div>
 
-          {/* TABS (Styled like the Notification toggles) */}
-          <div className="mt-8 w-full md:w-fit">
+          {/* TABS - Clean Gray Pill Style */}
+          <div className="w-full md:w-auto">
             <Tabs value={activeTab}>
               <TabsHeader
-                className="bg-gray-900/50 border border-gray-800 p-1 h-10"
+                className="bg-blue-gray-50/60 p-1 h-10 border border-blue-gray-50"
                 indicatorProps={{
-                  className: "bg-[#1f1f23] border border-gray-700 shadow-none text-white",
+                  className: "bg-white shadow-sm border border-blue-gray-100",
                 }}
               >
-                <Tab value="profile" onClick={() => setActiveTab("profile")} className={`text-xs font-bold px-6 transition-colors ${activeTab === "profile" ? "text-white" : "text-gray-500"}`}>
-                  Overview
+                <Tab value="profile" onClick={() => setActiveTab("profile")} className="text-xs font-bold px-4 text-blue-gray-500">
+                  Profile
                 </Tab>
-                <Tab value="edit" onClick={() => setActiveTab("edit")} className={`text-xs font-bold px-6 transition-colors ${activeTab === "edit" ? "text-white" : "text-gray-500"}`}>
+                <Tab value="edit" onClick={() => setActiveTab("edit")} className="text-xs font-bold px-4 text-blue-gray-500">
                   Edit
                 </Tab>
-                <Tab value="security" onClick={() => setActiveTab("security")} className={`text-xs font-bold px-6 transition-colors ${activeTab === "security" ? "text-white" : "text-gray-500"}`}>
+                <Tab value="security" onClick={() => setActiveTab("security")} className="text-xs font-bold px-4 text-blue-gray-500">
                   Security
                 </Tab>
               </TabsHeader>
@@ -204,62 +196,55 @@ export function Profile() {
         </div>
 
         {/* CONTENT BODY */}
-        <CardBody className="flex-1 overflow-y-auto p-6 bg-[#111113]">
+        <CardBody className="flex-1 overflow-y-auto p-0 scrollbar-thin scrollbar-thumb-blue-gray-100">
           
           <AnimatePresence mode="wait">
             
-            {/* 1. OVERVIEW TAB */}
+            {/* 1. OVERVIEW TAB (List Style) */}
             {activeTab === "profile" && (
               <motion.div 
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="flex flex-col"
               >
+                <div className="p-4 bg-blue-50/30 border-b border-blue-gray-50">
+                    <Typography variant="small" className="font-bold text-blue-gray-600">Personal Information</Typography>
+                </div>
                 <InfoRow icon={UserCircleIcon} label="Full Name" value={`${user?.firstName} ${user?.lastName}`} />
                 <InfoRow icon={EnvelopeIcon} label="Email Address" value={user?.email} />
-                <InfoRow icon={IdentificationIcon} label="Account Type" value="Student" />
-                <InfoRow icon={MapPinIcon} label="Region" value="India" />
+                <InfoRow icon={IdentificationIcon} label="Role" value="Student" />
+                <InfoRow icon={MapPinIcon} label="Location" value="India" />
                 <InfoRow icon={UserCircleIcon} label="Gender" value={user?.gender || "Male"} />
-                <div className="flex items-center gap-4 p-4 rounded-lg border border-blue-900/30 bg-blue-900/10">
-                   <div className="p-2 rounded-full bg-blue-500/20 text-blue-400">
-                      <CheckCircleIcon className="h-5 w-5" />
-                   </div>
-                   <div>
-                     <Typography variant="small" className="font-bold text-blue-300 uppercase text-[10px] tracking-wider">Status</Typography>
-                     <Typography variant="h6" className="text-blue-100 text-sm font-medium">Active Member</Typography>
-                   </div>
-                </div>
               </motion.div>
             )}
 
-            {/* 2. EDIT TAB */}
+            {/* 2. EDIT TAB (Form Style) */}
             {activeTab === "edit" && (
               <motion.div 
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                className="max-w-3xl mx-auto flex flex-col gap-6"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="p-6 md:p-8 max-w-2xl mx-auto w-full flex flex-col gap-6"
               >
                 {status.message && (
-                  <Alert color={status.type === "error" ? "red" : "green"} variant="ghost" className="text-xs py-2 px-4 flex items-center gap-2 border border-current">
-                     {status.type === "error" ? <ExclamationTriangleIcon className="h-4 w-4" /> : <CheckCircleIcon className="h-4 w-4" />}
+                  <Alert color={status.type === "error" ? "red" : "green"} variant="ghost" className="text-xs py-2 px-3 border border-current">
                      {status.message}
                   </Alert>
                 )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <DarkInput label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                   <DarkInput label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                   <StandardInput label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                   <StandardInput label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
                 
-                <div className="p-4 rounded-lg border border-gray-800 bg-[#18181b]/50">
-                    <Typography variant="small" className="mb-3 font-medium text-gray-400">Gender Selection</Typography>
+                <div className="p-4 rounded-lg border border-blue-gray-100 bg-gray-50/50">
+                    <Typography variant="small" className="mb-3 font-bold text-blue-gray-700">Gender</Typography>
                     <div className="flex gap-6">
-                        <Radio name="gender" label="Male" value="male" checked={gender === "male"} onChange={(e) => setGender(e.target.value)} color="blue" labelProps={{ className: "text-gray-300" }} />
-                        <Radio name="gender" label="Female" value="female" checked={gender === "female"} onChange={(e) => setGender(e.target.value)} color="pink" labelProps={{ className: "text-gray-300" }} />
+                        <Radio name="gender" label="Male" value="male" checked={gender === "male"} onChange={(e) => setGender(e.target.value)} color="blue" />
+                        <Radio name="gender" label="Female" value="female" checked={gender === "female"} onChange={(e) => setGender(e.target.value)} color="pink" />
                     </div>
                 </div>
 
                 <div className="flex justify-end pt-4">
-                  <Button onClick={handleUpdateProfile} disabled={loading} color="blue" className="normal-case w-40 flex justify-center items-center">
-                    {loading ? <Spinner className="h-4 w-4" /> : "Save Changes"}
+                  <Button onClick={handleUpdateProfile} disabled={loading} color="blue" className="normal-case w-32 shadow-blue-500/20">
+                    {loading ? <Spinner className="h-4 w-4 mx-auto" /> : "Save"}
                   </Button>
                 </div>
               </motion.div>
@@ -268,43 +253,40 @@ export function Profile() {
             {/* 3. SECURITY TAB */}
             {activeTab === "security" && (
               <motion.div 
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                className="max-w-3xl mx-auto flex flex-col gap-8"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="p-6 md:p-8 max-w-2xl mx-auto w-full flex flex-col gap-8"
               >
                  {status.message && (
-                  <Alert color={status.type === "error" ? "red" : "green"} variant="ghost" className="text-xs py-2 px-4 flex items-center gap-2 border border-current">
-                     {status.type === "error" ? <ExclamationTriangleIcon className="h-4 w-4" /> : <CheckCircleIcon className="h-4 w-4" />}
+                  <Alert color={status.type === "error" ? "red" : "green"} variant="ghost" className="text-xs py-2 px-3 border border-current">
                      {status.message}
                   </Alert>
                 )}
 
                 {/* Password Section */}
-                <div className="flex flex-col gap-4">
-                   <div className="flex items-center gap-2 mb-2 border-b border-gray-800 pb-2">
+                <div className="flex flex-col gap-5">
+                   <div className="flex items-center gap-2 border-b border-blue-gray-100 pb-2">
                       <ShieldCheckIcon className="h-5 w-5 text-green-500" />
-                      <Typography color="white" className="font-semibold">Password Update</Typography>
+                      <Typography color="blue-gray" className="font-bold">Change Password</Typography>
                    </div>
-                   <DarkInput type="password" label="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
-                   <DarkInput type="password" label="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                   <StandardInput type="password" label="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+                   <StandardInput type="password" label="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                    <div className="flex justify-end">
-                      <Button onClick={handleChangePassword} disabled={loading} variant="outlined" color="white" className="normal-case border-gray-700 text-gray-300 hover:bg-gray-800 focus:ring-0">
+                      <Button onClick={handleChangePassword} disabled={loading} variant="outlined" color="blue-gray" className="normal-case border-blue-gray-200">
                         {loading ? "Updating..." : "Update Password"}
                       </Button>
                    </div>
                 </div>
 
                 {/* Danger Zone */}
-                <div className="mt-4 p-5 rounded-lg border border-red-900/30 bg-red-900/5 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="mt-2 p-4 rounded-lg border border-red-100 bg-red-50/30 flex items-center justify-between gap-4">
                     <div>
-                        <Typography color="red" className="font-bold flex items-center gap-2 text-sm">
-                           <ExclamationTriangleIcon className="h-4 w-4" /> Delete Account
-                        </Typography>
-                        <Typography variant="small" className="text-red-300/60 mt-1 max-w-sm">
-                           All your data will be permanently erased. This action cannot be undone.
+                        <Typography color="red" className="font-bold text-sm">Delete Account</Typography>
+                        <Typography variant="small" className="text-red-400 text-xs">
+                           Permanently remove your data.
                         </Typography>
                     </div>
-                    <Button color="red" variant="gradient" className="shrink-0" onClick={handleDeleteAccount} disabled={loading}>
-                       {loading ? "Deleting..." : "Delete Account"}
+                    <Button size="sm" color="red" variant="gradient" className="shrink-0 shadow-none hover:shadow-md" onClick={handleDeleteAccount} disabled={loading}>
+                       {loading ? "..." : "Delete"}
                     </Button>
                 </div>
 
@@ -314,10 +296,10 @@ export function Profile() {
           </AnimatePresence>
         </CardBody>
         
-        {/* Footer Text (Matching Notification Page) */}
-        <div className="p-4 border-t border-gray-800 bg-[#111113]">
-             <Typography variant="small" className="text-center text-gray-600 font-normal text-[11px]">
-                &copy; 2026, made by Subarta Ghosh
+        {/* Footer Text */}
+        <div className="p-3 border-t border-blue-gray-50 bg-gray-50/50">
+             <Typography variant="small" className="text-center text-blue-gray-400 font-normal text-[10px]">
+                Account ID: {user?._id || "#######"} • Secure Connection
              </Typography>
         </div>
 
