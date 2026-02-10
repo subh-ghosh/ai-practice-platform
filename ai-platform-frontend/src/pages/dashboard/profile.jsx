@@ -6,7 +6,6 @@ import {
   CardHeader,
   Avatar,
   Typography,
-  Tooltip,
   Button,
   Input,
   Radio,
@@ -35,17 +34,16 @@ const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
 /* ============================ Custom Components ============================ */
 
-// Enhanced Visibility Input
+// HIGH VISIBILITY INPUT: Opaque background + Brighter Text + Distinct Border
 const CustomInput = ({ label, ...props }) => (
   <div className="w-full">
     <Input
       variant="outlined"
       label={label}
       color="blue"
-      // Added slightly darker bg and clearer border for better visibility
-      className="text-blue-gray-900 dark:text-white bg-blue-gray-50/20 dark:bg-black/30 border-blue-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400"
+      className="!border-blue-gray-200 dark:!border-gray-600 !bg-white dark:!bg-gray-800 text-blue-gray-900 dark:text-white focus:!border-blue-500 ring-4 ring-transparent focus:ring-blue-500/20"
       labelProps={{
-        className: "text-blue-gray-600 dark:text-gray-400 peer-placeholder-shown:text-blue-gray-500",
+        className: "text-blue-gray-500 dark:text-gray-300 peer-placeholder-shown:text-blue-gray-500",
       }}
       {...props}
     />
@@ -54,7 +52,7 @@ const CustomInput = ({ label, ...props }) => (
 
 /* ============================ Tab Views ============================ */
 
-// 1. Profile View (Forced Height)
+// 1. Profile View
 function ProfileView({ user, onEdit }) {
   const details = [
     { label: "Full Name", value: `${user?.firstName} ${user?.lastName}`, icon: UserCircleIcon },
@@ -66,24 +64,18 @@ function ProfileView({ user, onEdit }) {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 5 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      exit={{ opacity: 0, y: -5 }} 
-      transition={{ duration: 0.2 }}
-      className="h-full w-full" // FORCE FULL HEIGHT
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="h-full w-full flex flex-col"
     >
-      <Card className="h-full w-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
-        <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+      <Card className="flex-1 w-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col overflow-hidden">
+        <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
           <Typography variant="h6" className="dark:text-white flex items-center gap-2">
             <UserCircleIcon className="h-5 w-5 text-blue-500" />
             About Me
           </Typography>
-          <Button size="sm" variant="text" className="flex items-center gap-2" onClick={onEdit}>
-            <PencilIcon className="h-4 w-4" /> Edit
-          </Button>
         </CardHeader>
         
-        {/* Body takes remaining space and scrolls internally */}
+        {/* CardBody grows to fill remaining height */}
         <CardBody className="p-6 flex-1 overflow-y-auto">
           <Typography variant="paragraph" className="mb-6 font-normal text-blue-gray-500 dark:text-gray-400">
             Student on AI Practice Platform.
@@ -91,15 +83,15 @@ function ProfileView({ user, onEdit }) {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
              {details.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-4 p-3 rounded-lg bg-blue-gray-50/50 dark:bg-gray-800/30 border border-blue-gray-100 dark:border-gray-700/50">
-                    <div className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm shrink-0">
+                <div key={idx} className="flex items-center gap-4 p-4 rounded-lg bg-blue-gray-50/50 dark:bg-gray-800 border border-blue-gray-100 dark:border-gray-700">
+                    <div className="p-2.5 rounded-full bg-white dark:bg-gray-900 shadow-sm shrink-0">
                       <item.icon className="h-5 w-5 text-blue-500" />
                     </div>
                     <div>
-                      <Typography variant="small" className="text-[10px] uppercase font-bold text-blue-gray-400">
+                      <Typography variant="small" className="text-[10px] uppercase font-bold text-blue-gray-500 dark:text-gray-400">
                         {item.label}
                       </Typography>
-                      <Typography variant="h6" className="text-sm dark:text-gray-100">
+                      <Typography variant="h6" className="text-sm dark:text-gray-100 font-semibold">
                         {item.value}
                       </Typography>
                     </div>
@@ -107,30 +99,31 @@ function ProfileView({ user, onEdit }) {
              ))}
           </div>
         </CardBody>
+        
+        {/* Spacer to mimic footer if needed */}
+        <div className="h-16 shrink-0"></div> 
       </Card>
     </motion.div>
   );
 }
 
-// 2. Edit View (Forced Height)
+// 2. Edit View
 function EditForm({ firstName, lastName, email, gender, setFirstName, setLastName, setGender, onSubmit, saving, error, success }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 5 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      exit={{ opacity: 0, y: -5 }} 
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="h-full w-full"
     >
+        {/* Grid takes full height */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
             {/* Left Card */}
-            <Card className="h-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
+            <Card className="h-full flex flex-col border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm overflow-hidden">
                 <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
                     <Typography variant="h6" className="dark:text-white flex items-center gap-2">
                         <UserCircleIcon className="h-5 w-5 text-blue-500" /> Personal Details
                     </Typography>
                 </CardHeader>
-                <CardBody className="p-6 flex-1 overflow-y-auto flex flex-col gap-5">
+                <CardBody className="p-6 flex-1 overflow-y-auto flex flex-col gap-6">
                     <AnimatePresence>
                         {(error || success) && (
                             <Alert color={error ? "red" : "green"} variant="ghost" className="py-2 px-3 text-xs flex items-center gap-2">
@@ -145,24 +138,24 @@ function EditForm({ firstName, lastName, email, gender, setFirstName, setLastNam
             </Card>
 
             {/* Right Card */}
-            <Card className="h-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
+            <Card className="h-full flex flex-col border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm overflow-hidden">
                 <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
                     <Typography variant="h6" className="dark:text-white flex items-center gap-2">
                         <PencilIcon className="h-5 w-5 text-purple-500" /> Preferences
                     </Typography>
                 </CardHeader>
-                <CardBody className="p-6 flex-1 overflow-y-auto flex flex-col gap-5">
+                <CardBody className="p-6 flex-1 overflow-y-auto flex flex-col gap-6">
                      <CustomInput label="Email Address" value={email || ""} disabled />
-                     <div className="p-4 rounded-lg border border-blue-gray-100 dark:border-gray-700 bg-blue-gray-50/30 dark:bg-black/20">
-                        <Typography variant="small" className="font-semibold dark:text-gray-200 mb-3">Gender</Typography>
+                     <div className="p-4 rounded-lg border border-blue-gray-100 dark:border-gray-700 bg-blue-gray-50/50 dark:bg-gray-800">
+                        <Typography variant="small" className="font-bold dark:text-gray-200 mb-3">Gender Selection</Typography>
                         <div className="flex gap-6">
-                            <Radio name="gender" label="Male" value="male" checked={gender === "male"} onChange={(e) => setGender(e.target.value)} color="blue" labelProps={{ className: "dark:text-gray-300" }} />
-                            <Radio name="gender" label="Female" value="female" checked={gender === "female"} onChange={(e) => setGender(e.target.value)} color="pink" labelProps={{ className: "dark:text-gray-300" }} />
+                            <Radio name="gender" label="Male" value="male" checked={gender === "male"} onChange={(e) => setGender(e.target.value)} color="blue" labelProps={{ className: "dark:text-gray-300 font-medium" }} />
+                            <Radio name="gender" label="Female" value="female" checked={gender === "female"} onChange={(e) => setGender(e.target.value)} color="pink" labelProps={{ className: "dark:text-gray-300 font-medium" }} />
                         </div>
                     </div>
                 </CardBody>
                 <div className="p-6 pt-0 mt-auto shrink-0">
-                    <Button onClick={onSubmit} variant="gradient" color="blue" fullWidth disabled={saving}>
+                    <Button onClick={onSubmit} variant="gradient" color="blue" fullWidth disabled={saving} className="h-10">
                         {saving ? <Spinner className="h-4 w-4 mx-auto" /> : "Save Changes"}
                     </Button>
                 </div>
@@ -172,25 +165,22 @@ function EditForm({ firstName, lastName, email, gender, setFirstName, setLastNam
   );
 }
 
-// 3. Security View (Forced Height)
+// 3. Security View
 function SecurityPanel({ oldPassword, newPassword, setOldPassword, setNewPassword, onChangePassword, changing, onDeleteAccount, deleting, error, success }) {
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 5 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      exit={{ opacity: 0, y: -5 }} 
-      transition={{ duration: 0.2 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="h-full w-full"
     >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
             {/* Password Card */}
-            <Card className="h-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
+            <Card className="h-full flex flex-col border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm overflow-hidden">
                 <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
                     <Typography variant="h6" className="dark:text-white flex items-center gap-2">
                         <ShieldCheckIcon className="h-5 w-5 text-green-500" /> Password
                     </Typography>
                 </CardHeader>
-                <CardBody className="p-6 flex-1 overflow-y-auto flex flex-col gap-5">
+                <CardBody className="p-6 flex-1 overflow-y-auto flex flex-col gap-6">
                     <AnimatePresence>
                         {(error || success) && (
                             <Alert color={error ? "red" : "green"} variant="ghost" className="py-2 px-3 text-xs flex items-center gap-2">
@@ -203,21 +193,21 @@ function SecurityPanel({ oldPassword, newPassword, setOldPassword, setNewPasswor
                     <CustomInput type="password" label="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={changing} />
                 </CardBody>
                 <div className="p-6 pt-0 mt-auto shrink-0">
-                     <Button onClick={onChangePassword} variant="gradient" color="gray" fullWidth disabled={changing}>
+                     <Button onClick={onChangePassword} variant="gradient" color="gray" fullWidth disabled={changing} className="h-10">
                         {changing ? <Spinner className="h-4 w-4 mx-auto" /> : "Update Password"}
                     </Button>
                 </div>
             </Card>
 
             {/* Delete Card */}
-            <Card className="h-full border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 shadow-none flex flex-col">
+            <Card className="h-full flex flex-col border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 shadow-none overflow-hidden">
                 <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-red-100 dark:border-red-900/30">
                     <Typography variant="h6" color="red" className="flex items-center gap-2">
                         <ExclamationTriangleIcon className="h-5 w-5" /> Danger Zone
                     </Typography>
                 </CardHeader>
-                <CardBody className="p-6 flex-1 flex flex-col justify-between">
-                    <div className="rounded-lg bg-white/60 dark:bg-black/20 p-4 border border-red-100 dark:border-red-900/20">
+                <CardBody className="p-6 flex-1 overflow-y-auto flex flex-col justify-between">
+                    <div className="rounded-lg bg-white/80 dark:bg-black/40 p-5 border border-red-100 dark:border-red-900/30">
                        <Typography variant="small" className="font-bold text-red-900 dark:text-red-200 mb-2">
                          Permanently Delete Account
                        </Typography>
@@ -225,7 +215,7 @@ function SecurityPanel({ oldPassword, newPassword, setOldPassword, setNewPasswor
                          All your practice history will be lost. Any active subscriptions will be cancelled immediately. This action cannot be undone.
                        </Typography>
                     </div>
-                    <Button variant="outlined" color="red" fullWidth onClick={onDeleteAccount} disabled={deleting} className="mt-4 bg-white dark:bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <Button variant="outlined" color="red" fullWidth onClick={onDeleteAccount} disabled={deleting} className="mt-4 bg-white dark:bg-transparent hover:bg-red-50 dark:hover:bg-red-900/20 h-10">
                         {deleting ? <Spinner className="h-4 w-4 mx-auto text-red-500" /> : "Delete My Account"}
                     </Button>
                 </CardBody>
@@ -272,7 +262,6 @@ export function Profile() {
   const femaleAvatar = "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png";
   const avatarSrc = (gender || user?.gender) === "female" ? femaleAvatar : maleAvatar;
 
-  // Handlers
   const handleProfileUpdate = async (e) => {
     e.preventDefault(); setSavingProfile(true); setEditError(null); setEditSuccess(null);
     try {
@@ -305,10 +294,11 @@ export function Profile() {
   };
 
   return (
-    // MAIN CONTAINER: Forces fixed height calculation
-    <div className="relative w-full h-[calc(100%-1.5rem)] mt-6 flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // MAIN WRAPPER: Fixed height calculated from viewport (e.g., 85vh or calc(100vh - 4rem))
+    // This effectively locks the container size so it never jumps.
+    <div className="relative w-full h-[calc(100vh-6rem)] mt-6 flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
-      {/* Background */}
+      {/* Background Ambience */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/5 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/5 blur-[120px]" />
@@ -316,7 +306,7 @@ export function Profile() {
 
       <div className="relative z-10 p-3 flex flex-col h-full w-full">
         
-        {/* Banner (Fixed Height) */}
+        {/* Banner - Fixed Height */}
         <div className="relative w-full shrink-0">
             <div className="relative h-28 w-full overflow-hidden rounded-xl bg-gray-900 shadow-inner">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-purple-900 opacity-90" />
@@ -357,7 +347,7 @@ export function Profile() {
             </div>
             
             <div className="md:hidden mt-4">
-                 <Tabs value={activeTab} className="w-full">
+                 <Tabs value={activeTab}>
                     <TabsHeader className="bg-blue-gray-50/50">
                         <Tab value="profile" onClick={() => setActiveTab("profile")}>Profile</Tab>
                         <Tab value="edit" onClick={() => setActiveTab("edit")}>Edit</Tab>
@@ -367,12 +357,13 @@ export function Profile() {
             </div>
         </div>
 
-        {/* Content Area (Fills Remaining Space Exactly) */}
-        <div className="mt-4 flex-1 relative min-h-0 w-full overflow-hidden">
+        {/* Content Area - Fills remaining height rigidly */}
+        <div className="mt-4 flex-1 min-h-0 w-full overflow-hidden relative">
             <AnimatePresence mode="wait">
                 {activeTab === "profile" && (
                     <ProfileView key="profile" user={user} onEdit={() => setActiveTab("edit")} />
                 )}
+
                 {activeTab === "edit" && (
                     <EditForm
                         key="edit"
@@ -390,6 +381,7 @@ export function Profile() {
                         success={editSuccess}
                     />
                 )}
+
                 {activeTab === "security" && (
                     <SecurityPanel
                         key="security"
