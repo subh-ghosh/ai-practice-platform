@@ -153,3 +153,29 @@
 .dark * {
   scrollbar-color: #374151 #111827;
 }
+/* Apply this to any container with the .custom-scroll class */
+.custom-scroll::-webkit-scrollbar {
+  width: 8px;  /* Width of the vertical scrollbar */
+  height: 8px; /* Height of the horizontal scrollbar */
+}
+
+.custom-scroll::-webkit-scrollbar-track {
+  background: #111827; /* Tailwind gray-900 */
+  border-radius: 4px;
+}
+
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #374151; /* Tailwind gray-700 */
+  border-radius: 4px;
+  border: 2px solid #111827; /* Creates a padding effect around the thumb */
+}
+
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background: #4b5563; /* Tailwind gray-600 */
+}
+
+/* Firefox Support */
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 #111827;
+}
