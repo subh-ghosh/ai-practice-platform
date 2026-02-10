@@ -3,7 +3,6 @@ import axios from "axios";
 import {
   Typography,
   Card,
-  CardHeader,
   CardBody,
   Button,
   Input,
@@ -20,22 +19,35 @@ import {
   PopoverHandler,
   PopoverContent,
   Alert,
+  Tabs,
+  TabsHeader,
+  Tab,
+  TabsBody,
+  TabPanel,
+  IconButton
 } from "@material-tailwind/react";
+import { 
+  InformationCircleIcon, 
+  SparklesIcon, 
+  ClockIcon, 
+  PencilSquareIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationCircleIcon,
+  EyeIcon
+} from "@heroicons/react/24/solid";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useTheme } from "@/context/ThemeContext.jsx";
-import { usePaywall } from "@/context/PaywallContext.jsx";
-import { InformationCircleIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import { useTheme } from "@/context/ThemeContext.jsx"; // Assuming context exists
+import { usePaywall } from "@/context/PaywallContext.jsx"; // Assuming context exists
 
-/* =========================
-   Constants & Helpers
-========================= */
+// --- Constants & Helpers ---
 
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 const FREE_ACTION_LIMIT = 3;
 
-// Map status to specific Tailwind classes to ensure JIT compiler picks them up
 const STATUS_STYLES = {
   CORRECT: {
     dot: "bg-green-500 shadow-green-500/50",
@@ -63,12 +75,49 @@ const STATUS_STYLES = {
   }
 };
 
+const formatMarkdownText = (text) => text ? text.replace(/\\n/g, '\n') : "";
+
+const getStatusChip = (status) => {
+  const baseClasses = "py-0.5 px-2.5 text-[10px] font-bold uppercase tracking-wide w-fit rounded-full border";
+  if (!status) return <Chip variant="ghost" className={`${baseClasses} border-blue-gray-100 text-blue-gray-500`} value="N/A" />;
+  
+  const style = STATUS_STYLES[status?.toUpperCase()] || STATUS_STYLES.INCORRECT;
+  return (
+    <div className={`flex items-center gap-1.5 ${baseClasses} ${style.chip}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${style.dot.split(' ')[0]}`} />
+      {status === "REVEALED" ? "Revealed" : style.label}
+    </div>
+  );
+};
+
+// --- Animations ---
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 10, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { type: "spring", stiffness: 300, damping: 24 }
+  }
+};
+
+// --- Sub-Components ---
+
 function DynamicFeedbackTitle({ status }) {
   const style = STATUS_STYLES[status] || STATUS_STYLES.INCORRECT;
+  const Icon = status === 'CORRECT' ? CheckCircleIcon : status === 'INCORRECT' ? XCircleIcon : ExclamationCircleIcon;
 
   return (
-    <div className="flex items-center gap-2 mb-2">
-      <div className={`w-3 h-3 rounded-full shadow-[0_0_8px] ${style.dot}`}></div>
+    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+      <Icon className={`h-5 w-5 ${style.text}`} />
       <Typography variant="h6" className={`font-bold tracking-tight uppercase text-sm ${style.text}`}>
         {style.label}
       </Typography>
@@ -76,30 +125,14 @@ function DynamicFeedbackTitle({ status }) {
   );
 }
 
-const formatMarkdownText = (text) => {
-  if (!text) return "";
-  // Handles literal \n strings often returned by AI JSON
-  return text.replace(/\\n/g, '\n');
-};
-
-const getStatusChip = (status) => {
-  const baseClasses = "py-0.5 px-2.5 text-[11px] font-bold uppercase tracking-wide w-fit rounded-full border";
-  
-  if (!status) return <Chip variant="ghost" className={`${baseClasses} border-blue-gray-100 text-blue-gray-500`} value="N/A" />;
-  
-  const style = STATUS_STYLES[status?.toUpperCase()] || STATUS_STYLES.INCORRECT;
-  return <Chip variant="ghost" className={`${baseClasses} ${style.chip}`} value={status === "REVEALED" ? "Revealed" : style.label} />;
-};
-
-/* =========================
-   Component
-========================= */
+// --- Main Component ---
 
 export function Practice() {
   const { user, decrementFreeActions } = useAuth();
-  const { theme } = useTheme();
   const { showPaywall } = usePaywall();
 
+  // State
+  const [activeTab, setActiveTab] = useState("practice");
   const [error, setError] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
 
@@ -116,12 +149,12 @@ export function Practice() {
   const [difficulty, setDifficulty] = useState("High School");
   const [generating, setGenerating] = useState(false);
 
-  // Question/Answer State
+  // Question State
   const [question, setQuestion] = useState(null);
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
-  const [textareaRows, setTextareaRows] = useState(5);
+  const [textareaRows, setTextareaRows] = useState(4);
   const [hint, setHint] = useState(null);
   const [loadingHint, setLoadingHint] = useState(false);
   const [loadingAnswer, setLoadingAnswer] = useState(false);
@@ -129,7 +162,7 @@ export function Practice() {
 
   const actionsRemaining = Math.max(0, FREE_ACTION_LIMIT - (user?.freeActionsUsed || 0));
 
-  // --- API Helpers ---
+  // --- API Logic ---
 
   const getAuthHeaders = useCallback(() => {
     const token = localStorage.getItem("token");
@@ -138,16 +171,10 @@ export function Practice() {
 
   const fetchHistory = useCallback(async () => {
     setLoadingHistory(true);
-    setError(null);
     try {
       const res = await axios.get(`${BASE_URL}/api/practice/history`, getAuthHeaders());
       const raw = Array.isArray(res?.data?.history) ? res.data.history : [];
-      const sorted = [...raw].sort((a, b) => {
-        const aDate = new Date(a.submittedAt || a.generatedAt || 0);
-        const bDate = new Date(b.submittedAt || b.generatedAt || 0);
-        return bDate - aDate;
-      });
-      setAllHistory(sorted);
+      setAllHistory([...raw].sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0)));
     } catch (err) {
       console.error("Error fetching history:", err);
     } finally {
@@ -159,43 +186,17 @@ export function Practice() {
     if (user) fetchHistory();
   }, [user, fetchHistory]);
 
-  const pollForResult = async (qId) => {
-    for (let i = 0; i < 10; i++) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        const res = await axios.get(`${BASE_URL}/api/practice/history`, getAuthHeaders());
-        const found = res.data.history.find(item => item.questionId === qId);
-        // We stop polling if we find the item AND it has a status (meaning AI finished processing)
-        if (found && found.evaluationStatus) return found;
-      } catch (err) {
-        console.warn("Polling check attempt failed...", err);
-      }
-    }
-    return null;
-  };
-
-  // --- Handlers ---
-
-  const handleAnswerChange = (e) => {
-    const value = e.target.value;
-    setCurrentAnswer(value);
-    const rows = (value.match(/\n/g) || []).length + 1;
-    setTextareaRows(Math.min(Math.max(5, rows), 15));
-  };
-
   const handleGenerateQuestion = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setError("You must be logged in to generate questions.");
+    if (!localStorage.getItem("token")) {
+      setError("You must be logged in.");
       return;
     }
     
-    // Reset States for new question
     setGenerating(true);
     setError("");
     setFeedback(null);
     setHint(null);
-    setCurrentAnswer(""); // Clear previous answer
+    setCurrentAnswer("");
     setQuestion(null);
     
     try {
@@ -205,13 +206,25 @@ export function Practice() {
         getAuthHeaders()
       );
       setQuestion(response.data);
+      setActiveTab("practice"); // Ensure we are on the right tab
       await fetchHistory();
     } catch (err) {
-      console.error("Error generating question:", err);
       setError("Failed to generate question. Please try again.");
     } finally {
       setGenerating(false);
     }
+  };
+
+  const pollForResult = async (qId) => {
+    for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        try {
+            const res = await axios.get(`${BASE_URL}/api/practice/history`, getAuthHeaders());
+            const found = res.data.history.find(item => item.questionId === qId && item.evaluationStatus);
+            if (found) return found;
+        } catch(e) { console.log(e); }
+    }
+    return null;
   };
 
   const handleSubmissionLogic = async (apiCall) => {
@@ -222,40 +235,27 @@ export function Practice() {
     setIsPolling(true);
 
     try {
-      // 90s timeout to allow backend time, but if it fails we poll
       const config = { ...getAuthHeaders(), timeout: 90000 };
       const res = await apiCall(config);
-      
       setFeedback(res.data);
       await fetchHistory();
       setIsPolling(false);
-      
       if (user?.subscriptionStatus === "FREE") decrementFreeActions();
-
     } catch (err) {
       if (err.response?.status === 402) {
         showPaywall();
         setIsPolling(false);
         return;
       }
-
-      // Fallback: Poll history if timeout or non-paywall error occurs
-      console.log("Direct response failed, switching to polling...", err);
+      // Fallback polling
       const foundItem = await pollForResult(question.id);
-      
       setIsPolling(false);
-      
       if (foundItem) {
-        setFeedback({
-          evaluationStatus: foundItem.evaluationStatus,
-          answerText: foundItem.answerText,
-          feedback: foundItem.feedback,
-          hint: foundItem.hint
-        });
+        setFeedback(foundItem);
         await fetchHistory();
         if (user?.subscriptionStatus === "FREE") decrementFreeActions();
       } else {
-        setError("We couldn't verify your result due to a connection timeout. Please check your history shortly.");
+        setError("Connection timeout. Please check history shortly.");
       }
     } finally {
       setSubmitting(false);
@@ -266,12 +266,8 @@ export function Practice() {
   const handleSubmitAnswer = (e) => {
     e.preventDefault();
     if (!question || !currentAnswer) return;
-    
     handleSubmissionLogic((config) => 
-      axios.post(`${BASE_URL}/api/practice/submit`, {
-        questionId: question.id,
-        answerText: currentAnswer,
-      }, config)
+      axios.post(`${BASE_URL}/api/practice/submit`, { questionId: question.id, answerText: currentAnswer }, config)
     );
   };
 
@@ -279,7 +275,6 @@ export function Practice() {
     setOpenPopover(false);
     if (!question) return;
     setLoadingAnswer(true);
-
     handleSubmissionLogic((config) => 
       axios.post(`${BASE_URL}/api/practice/get-answer`, { questionId: question.id }, config)
     );
@@ -288,383 +283,372 @@ export function Practice() {
   const handleGetHint = async () => {
     if (!question) return;
     setLoadingHint(true);
-    setHint(null);
-    setError(null);
     try {
       const res = await axios.post(`${BASE_URL}/api/ai/get-hint`, { questionId: question.id }, getAuthHeaders());
       setHint(res.data);
     } catch (err) {
-      console.error("Error getting hint:", err);
-      setError("Failed to get a hint. Please try again.");
+      setError("Failed to get hint.");
     } finally {
       setLoadingHint(false);
     }
   };
 
-  // --- Filtering & Memoization ---
+  // --- Filter Logic ---
 
   const filteredHistory = useMemo(() => {
     if (!searchTerm) return allHistory;
     const q = searchTerm.toLowerCase();
-    return allHistory.filter((item) => {
-      const fields = [item.questionText, item.subject, item.topic, item.difficulty, item.answerText]
-        .filter(Boolean)
-        .map((x) => String(x).toLowerCase());
-      return fields.some((f) => f.includes(q));
-    });
+    return allHistory.filter((item) => 
+      [item.questionText, item.subject, item.topic].some(str => String(str).toLowerCase().includes(q))
+    );
   }, [allHistory, searchTerm]);
 
-  const visibleHistory = useMemo(
-    () => filteredHistory.slice(0, itemsToShow),
-    [filteredHistory, itemsToShow]
-  );
+  const visibleHistory = useMemo(() => filteredHistory.slice(0, itemsToShow), [filteredHistory, itemsToShow]);
+
+  // --- Render ---
 
   return (
-    <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
-      {/* Background */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
-      <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
-
-      <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto">
-        
-        {/* --- Generator Card --- */}
-        <Card className="overflow-visible border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm">
-          <CardHeader
-            floated={false}
-            shadow={false}
-            className="rounded-t-xl bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 m-0"
-          >
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg">
-                    <SparklesIcon className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                    <Typography variant="h5" color="white" className="font-bold tracking-tight">
-                    AI Question Generator
-                    </Typography>
-                    <Typography variant="small" color="white" className="opacity-90 font-normal">
-                    Select a topic and let AI craft a question for you.
-                    </Typography>
-                </div>
-            </div>
-          </CardHeader>
-
-          <CardBody className="p-6 md:p-8">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <Input
-                label="Subject"
-                placeholder="e.g. Java, DBMS"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                color="blue"
-                className="!text-blue-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-              />
-
-              <Input
-                label="Topic"
-                placeholder="e.g. Inheritance"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                color="blue"
-                className="!text-blue-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-              />
-
-              <Select
-                label="Difficulty"
-                value={difficulty}
-                onChange={(val) => setDifficulty(val)}
-                color="blue"
-                className="!text-blue-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-                menuProps={{ className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200" }}
-              >
-                {["School", "High School", "Graduation", "Post Graduation", "Research"].map(lvl => (
-                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700 dark:focus:bg-gray-700">{lvl}</Option>
-                ))}
-              </Select>
-            </div>
-
-            {user?.subscriptionStatus === "FREE" && (
-              <Alert className="mt-6 border border-blue-100 bg-blue-50/80 text-blue-900 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-100 rounded-lg">
-                <div className="flex items-center gap-3">
-                    <InformationCircleIcon className="w-5 h-5" />
-                    <Typography className="text-sm font-medium">
-                        Free Plan: You have <strong>{actionsRemaining}</strong> generations left today.
-                    </Typography>
-                </div>
-              </Alert>
-            )}
-
-            <div className="mt-8 flex justify-start">
-              <Button
-                onClick={handleGenerateQuestion}
-                disabled={generating || (user?.subscriptionStatus === "FREE" && actionsRemaining <= 0)}
-                className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40"
-              >
-                {generating ? <Spinner className="h-4 w-4" /> : "Generate Question"}
-              </Button>
-            </div>
-
-            {error && <Typography color="red" className="mt-4 text-sm font-medium text-center">{error}</Typography>}
-
-            {isPolling && (
-              <div className="mt-6 flex items-center justify-center gap-3 p-4 rounded-xl bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800 animate-pulse">
-                <Spinner className="h-5 w-5 text-blue-500" />
-                <Typography className="text-sm font-semibold text-blue-600 dark:text-blue-300">
-                  AI is analyzing your answer...
-                </Typography>
-              </div>
-            )}
-
-            {question && (
-              <div className="mt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="mb-6">
-                    <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-1">
-                        Question
-                    </Typography>
-                    <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
-                        <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(question.questionText)}</ReactMarkdown>
-                        </div>
-                    </div>
-                </div>
-
-                <form onSubmit={handleSubmitAnswer}>
-                  <Textarea
-                    label="Write your answer here..."
-                    value={currentAnswer}
-                    onChange={handleAnswerChange}
-                    rows={textareaRows}
-                    color="blue"
-                    className="!text-blue-gray-900 dark:!text-white bg-white dark:bg-gray-900"
-                    containerProps={{ className: "min-w-0" }}
-                    labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-                  />
-
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Button type="submit" disabled={submitting || isPolling} className="rounded-lg bg-blue-600">
-                      {submitting || isPolling ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
-                    </Button>
-
-                    <Button
-                      variant="outlined"
-                      onClick={handleGetHint}
-                      disabled={submitting || isPolling}
-                      className="rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-                    >
-                      {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
-                    </Button>
-
-                    <Popover open={openPopover} handler={setOpenPopover} placement="top">
-                      <PopoverHandler>
-                        <Button variant="text" color="red" disabled={submitting || isPolling} className="rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
-                          {loadingAnswer ? <Spinner className="h-4 w-4" /> : "Reveal Answer"}
-                        </Button>
-                      </PopoverHandler>
-                      <PopoverContent className="z-50 border-blue-gray-100 dark:bg-gray-800 dark:border-gray-700">
-                        <Typography color="blue-gray" className="mb-2 font-bold dark:text-white">Confirm Reveal?</Typography>
-                        <Typography variant="small" className="mb-4 font-normal text-blue-gray-500 dark:text-gray-400">
-                          This will count as an attempt.
-                        </Typography>
-                        <div className="flex gap-2 justify-end">
-                          <Button size="sm" variant="text" onClick={() => setOpenPopover(false)} className="dark:text-gray-300">Cancel</Button>
-                          <Button size="sm" color="red" onClick={confirmGetAnswer}>Confirm</Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {hint && (
-              <div className="mt-6 p-5 border border-blue-200 bg-blue-50/50 rounded-2xl dark:bg-blue-900/10 dark:border-blue-800 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-300">
-                    <InformationCircleIcon className="h-5 w-5" />
-                    <span className="font-bold text-sm uppercase">Hint</span>
-                </div>
-                <div className="prose prose-sm dark:prose-invert text-blue-gray-700 dark:text-blue-100">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(hint)}</ReactMarkdown>
-                </div>
-              </div>
-            )}
-
-            {feedback && (
-              <div className="mt-8 p-6 border rounded-2xl bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm animate-in zoom-in-95 duration-300">
-                <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-                <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto custom-scroll">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {feedback.evaluationStatus === "REVEALED" 
-                        ? formatMarkdownText(feedback.answerText) 
-                        : formatMarkdownText(feedback.feedback)
-                    }
-                  </ReactMarkdown>
-                </div>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-
-        {/* --- History Card --- */}
-        <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 flex flex-col md:flex-row gap-4 justify-between items-center rounded-t-xl">
-            <Typography variant="h6" color="blue-gray" className="dark:text-white">
-              Practice History
-            </Typography>
-            <div className="w-full md:w-72">
-              <Input
-                label="Search"
-                icon={<i className="fas fa-search" />}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="!text-blue-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-              />
-            </div>
-          </CardHeader>
-
-          <CardBody className="px-0 pt-0 pb-4 overflow-x-auto custom-scroll">
-            <table className="w-full min-w-[640px] table-auto text-left">
-              <thead>
-                <tr>
-                  {["#", "Question", "Subject", "Difficulty", "Status", "Date"].map((head) => (
-                    <th key={head} className="border-b border-blue-gray-50 bg-blue-gray-50/50 p-4 dark:border-gray-700 dark:bg-gray-800">
-                      <Typography variant="small" color="blue-gray" className="font-bold leading-none opacity-70 dark:text-gray-300">
-                        {head}
-                      </Typography>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loadingHistory ? (
-                    <tr><td colSpan="6" className="p-8 text-center"><Spinner className="h-8 w-8 mx-auto" /></td></tr>
-                ) : visibleHistory.length === 0 ? (
-                    <tr><td colSpan="6" className="p-8 text-center text-gray-500">No history found.</td></tr>
-                ) : (
-                    visibleHistory.map((item, index) => (
-                        <tr 
-                            key={`${item.questionId}-${index}`} 
-                            onClick={() => setSelectedHistory(item)}
-                            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-                        >
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
-                                <Typography variant="small" color="blue-gray" className="font-normal dark:text-gray-400">{index + 1}</Typography>
-                            </td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800 max-w-xs truncate">
-                                <Typography variant="small" color="blue-gray" className="font-medium dark:text-gray-200 truncate">
-                                    {item.questionText}
-                                </Typography>
-                            </td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
-                                <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.subject}</Typography>
-                            </td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
-                                <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.difficulty}</Typography>
-                            </td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
-                                {getStatusChip(item.evaluationStatus)}
-                            </td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
-                                <Typography variant="small" className="font-normal text-gray-500 dark:text-gray-500">
-                                    {new Date(item.submittedAt || item.generatedAt).toLocaleDateString()}
-                                </Typography>
-                            </td>
-                        </tr>
-                    ))
-                )}
-              </tbody>
-            </table>
-            
-            {filteredHistory.length > visibleHistory.length && (
-                <div className="mt-4 text-center">
-                    <Button variant="text" size="sm" onClick={() => setItemsToShow(prev => prev + 10)}>Load More</Button>
-                </div>
-            )}
-          </CardBody>
-        </Card>
-
-        {/* History Detail Modal */}
-        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="dark:bg-gray-900 border dark:border-gray-800">
-            <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">
-                Practice Details
-            </DialogHeader>
-            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6 custom-scroll">
-                {selectedHistory && (
-                    <div className="space-y-8">
-                        {/* 1. QUESTION SECTION */}
-                        <div>
-                            <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2">
-                                Question
-                            </Typography>
-                            <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto custom-scroll">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {formatMarkdownText(selectedHistory.questionText)}
-                                    </ReactMarkdown>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 2. USER ANSWER SECTION */}
-                        <div>
-                            <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wider mb-2">
-                                {selectedHistory.evaluationStatus === "REVEALED" ? "Action" : "Your Answer"}
-                            </Typography>
-                            <div className={`p-5 border rounded-2xl text-sm ${
-                                selectedHistory.evaluationStatus === "REVEALED" 
-                                ? "border-blue-100 bg-blue-50/30 text-blue-600 italic dark:bg-blue-900/10 dark:border-blue-800 dark:text-blue-300"
-                                : "border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-700 dark:text-gray-300"
-                            }`}>
-                                {selectedHistory.evaluationStatus === "REVEALED" ? (
-                                    "You chose to reveal the answer."
-                                ) : (
-                                    <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto custom-scroll">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {formatMarkdownText(selectedHistory.answerText || "No answer submitted.")}
-                                        </ReactMarkdown>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* 3. FEEDBACK / SOLUTION SECTION */}
-                        <div>
-                            <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
-                            
-                            {(() => {
-                                const style = STATUS_STYLES[selectedHistory.evaluationStatus] || STATUS_STYLES.INCORRECT;
-                                // Need to extract just the bg/border logic here or reuse the map
-                                const containerClass = selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" :
-                                                    selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" :
-                                                    selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" :
-                                                    "bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-800";
-                                
-                                return (
-                                    <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll ${containerClass}`}>
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                            {selectedHistory.evaluationStatus === "REVEALED" 
-                                                ? formatMarkdownText(selectedHistory.answerText) 
-                                                : formatMarkdownText(selectedHistory.feedback)
-                                            }
-                                        </ReactMarkdown>
-                                    </div>
-                                );
-                            })()}
-                        </div>
-                    </div>
-                )}
-            </DialogBody>
-            <DialogFooter className="border-t dark:border-gray-800">
-                <Button variant="gradient" color="blue" onClick={() => setSelectedHistory(null)}>Close</Button>
-            </DialogFooter>
-        </Dialog>
-
+    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900 flex flex-col">
+      
+      {/* Animated Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <motion.div
+          animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]"
+        />
+        <motion.div
+          animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-400/5 blur-[100px]"
+        />
       </div>
-    </section>
+
+      {/* Header Section */}
+      <div className="relative z-10 px-6 pt-6 pb-2 shrink-0 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold tracking-tight flex items-center gap-2">
+            <PencilSquareIcon className="h-6 w-6 text-blue-500" />
+            AI Practice Lab
+          </Typography>
+          <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal mt-1">
+            Generate questions, write code, and get instant feedback.
+          </Typography>
+        </div>
+
+        <div className="w-full md:w-auto">
+          <Tabs value={activeTab} className="bg-transparent">
+            <TabsHeader
+              className="bg-gray-100/50 dark:bg-gray-800/70 p-1 border border-gray-200 dark:border-gray-700 min-w-[200px]"
+              indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
+            >
+              <Tab value="practice" onClick={() => setActiveTab("practice")} className="text-xs font-bold py-2 px-4">
+                Workspace
+              </Tab>
+              <Tab value="history" onClick={() => setActiveTab("history")} className="text-xs font-bold py-2 px-4">
+                History
+              </Tab>
+            </TabsHeader>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Content Area (Scrollable) */}
+      <div className="relative z-10 flex-1 overflow-hidden">
+        <Tabs value={activeTab} className="h-full flex flex-col">
+          <TabsBody 
+            className="flex-1 overflow-y-auto p-6 pt-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400"
+            animate={{ initial: { y: 250 }, mount: { y: 0 }, unmount: { y: 250 } }}
+          >
+            
+            {/* --- TAB 1: PRACTICE WORKSPACE --- */}
+            <TabPanel value="practice" className="p-0 h-full max-w-5xl mx-auto">
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" className="flex flex-col gap-6 pb-10">
+                
+                {/* Generator Config */}
+                <motion.div variants={itemVariants}>
+                  <Card className="border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
+                    <CardBody className="p-4 md:p-5 flex flex-col md:flex-row gap-4 items-end">
+                      <div className="w-full md:flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Input 
+                          label="Subject" 
+                          value={subject} 
+                          onChange={(e) => setSubject(e.target.value)} 
+                          className="!bg-white dark:!bg-gray-900"
+                          containerProps={{ className: "min-w-[100px]" }}
+                        />
+                        <Input 
+                          label="Topic" 
+                          value={topic} 
+                          onChange={(e) => setTopic(e.target.value)} 
+                          className="!bg-white dark:!bg-gray-900"
+                        />
+                        <Select 
+                          label="Difficulty" 
+                          value={difficulty} 
+                          onChange={(val) => setDifficulty(val)}
+                          className="!bg-white dark:!bg-gray-900"
+                          menuProps={{ className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200" }}
+                        >
+                          {["School", "High School", "Graduation", "Post Graduation", "Research"].map(l => (
+                            <Option key={l} value={l}>{l}</Option>
+                          ))}
+                        </Select>
+                      </div>
+                      
+                      <Button
+                        onClick={handleGenerateQuestion}
+                        disabled={generating || (user?.subscriptionStatus === "FREE" && actionsRemaining <= 0)}
+                        className="w-full md:w-auto min-w-[140px] flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-blue-500"
+                      >
+                        {generating ? <Spinner className="h-4 w-4" /> : <><SparklesIcon className="h-4 w-4" /> Generate</>}
+                      </Button>
+                    </CardBody>
+                  </Card>
+                </motion.div>
+
+                {user?.subscriptionStatus === "FREE" && (
+                   <motion.div variants={itemVariants} className="flex justify-center">
+                     <div className="text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700">
+                        Free Plan: {actionsRemaining} generations left today
+                     </div>
+                   </motion.div>
+                )}
+
+                {/* Question & Answer Area */}
+                <AnimatePresence mode="wait">
+                  {question ? (
+                    <motion.div 
+                      key={question.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className="space-y-6"
+                    >
+                      {/* Question Card */}
+                      <Card className="border border-blue-100 dark:border-gray-700 bg-blue-50/30 dark:bg-gray-800/40 backdrop-blur-sm shadow-none">
+                        <CardBody className="p-5">
+                          <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2">
+                             Question
+                          </Typography>
+                          <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200">
+                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(question.questionText)}</ReactMarkdown>
+                          </div>
+                        </CardBody>
+                      </Card>
+
+                      {/* Hint Display */}
+                      <AnimatePresence>
+                        {hint && (
+                          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                            <Alert icon={<InformationCircleIcon className="mt-px h-5 w-5" />} className="bg-amber-50 border border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-100 rounded-lg">
+                               <Typography variant="small" className="font-bold uppercase">Hint</Typography>
+                               <div className="prose prose-sm max-w-none text-amber-900/90 dark:text-amber-100/90 mt-1">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(hint)}</ReactMarkdown>
+                               </div>
+                            </Alert>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      {/* Answer Input */}
+                      <form onSubmit={handleSubmitAnswer} className="flex flex-col gap-4">
+                        <div className="relative">
+                          <Textarea
+                            label="Your Answer"
+                            value={currentAnswer}
+                            onChange={(e) => {
+                                setCurrentAnswer(e.target.value);
+                                const rows = (e.target.value.match(/\n/g) || []).length + 1;
+                                setTextareaRows(Math.min(Math.max(4, rows), 15));
+                            }}
+                            rows={textareaRows}
+                            className="!bg-white dark:!bg-gray-900"
+                            disabled={submitting || isPolling}
+                          />
+                        </div>
+
+                        <div className="flex flex-wrap gap-3 items-center justify-between">
+                           <div className="flex gap-2">
+                             <Button type="submit" disabled={submitting || isPolling} className="bg-blue-600 w-32 justify-center">
+                               {submitting || isPolling ? <Spinner className="h-4 w-4" /> : "Submit"}
+                             </Button>
+                           </div>
+                           
+                           <div className="flex gap-2">
+                             <Button variant="outlined" size="sm" onClick={handleGetHint} disabled={submitting || isPolling} className="border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300">
+                                {loadingHint ? <Spinner className="h-3 w-3" /> : "Hint"}
+                             </Button>
+                             
+                             <Popover open={openPopover} handler={setOpenPopover} placement="top">
+                                <PopoverHandler>
+                                  <Button variant="text" size="sm" color="red" disabled={submitting || isPolling}>
+                                    {loadingAnswer ? <Spinner className="h-3 w-3" /> : "Reveal"}
+                                  </Button>
+                                </PopoverHandler>
+                                <PopoverContent className="z-50 p-4 border-blue-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                                  <Typography color="blue-gray" className="mb-2 font-bold dark:text-white text-xs uppercase">Confirm Reveal</Typography>
+                                  <Typography variant="small" className="mb-4 text-gray-500">Counts as an attempt.</Typography>
+                                  <div className="flex gap-2 justify-end">
+                                    <Button size="sm" variant="text" onClick={() => setOpenPopover(false)} className="dark:text-gray-300">Cancel</Button>
+                                    <Button size="sm" color="red" onClick={confirmGetAnswer}>Confirm</Button>
+                                  </div>
+                                </PopoverContent>
+                             </Popover>
+                           </div>
+                        </div>
+                      </form>
+
+                      {/* Feedback Result */}
+                      {feedback && (
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm">
+                           <DynamicFeedbackTitle status={feedback.evaluationStatus} />
+                           <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 overflow-x-auto">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {feedback.evaluationStatus === "REVEALED" ? formatMarkdownText(feedback.answerText) : formatMarkdownText(feedback.feedback)}
+                              </ReactMarkdown>
+                           </div>
+                        </motion.div>
+                      )}
+
+                    </motion.div>
+                  ) : (
+                    <motion.div 
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+                        className="flex flex-col items-center justify-center h-[40vh] text-center opacity-50"
+                    >
+                        <SparklesIcon className="h-16 w-16 text-gray-300 mb-4" />
+                        <Typography variant="h6" className="text-gray-400 font-normal">
+                          Configure the generator above to start practicing.
+                        </Typography>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                
+                {isPolling && (
+                   <div className="flex justify-center p-4">
+                      <div className="flex items-center gap-2 text-blue-500 animate-pulse">
+                         <Spinner className="h-4 w-4" /> <span className="text-sm font-medium">Analyzing...</span>
+                      </div>
+                   </div>
+                )}
+              </motion.div>
+            </TabPanel>
+
+            {/* --- TAB 2: HISTORY --- */}
+            <TabPanel value="history" className="p-0 h-full">
+              <div className="flex flex-col h-full gap-4">
+                 <div className="w-full md:w-72 self-end">
+                    <Input
+                       label="Search History"
+                       icon={<i className="fas fa-search" />}
+                       value={searchTerm}
+                       onChange={(e) => setSearchTerm(e.target.value)}
+                       className="!bg-white dark:!bg-gray-900"
+                    />
+                 </div>
+                 
+                 <div className="flex-1 overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                    <table className="w-full min-w-[700px] table-auto text-left">
+                       <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 z-10">
+                          <tr>
+                             {["Topic", "Difficulty", "Status", "Date", "Action"].map((h) => (
+                               <th key={h} className="border-b border-gray-200 dark:border-gray-700 p-4">
+                                  <Typography variant="small" className="font-bold text-gray-500 leading-none opacity-70 uppercase text-[10px]">
+                                    {h}
+                                  </Typography>
+                               </th>
+                             ))}
+                          </tr>
+                       </thead>
+                       <tbody>
+                          {loadingHistory ? (
+                             <tr><td colSpan="5" className="p-8 text-center"><Spinner className="h-6 w-6 mx-auto" /></td></tr>
+                          ) : visibleHistory.length === 0 ? (
+                             <tr><td colSpan="5" className="p-8 text-center text-gray-500 text-sm">No history found.</td></tr>
+                          ) : (
+                             visibleHistory.map((item, idx) => (
+                                <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0">
+                                   <td className="p-4">
+                                      <Typography variant="small" className="font-medium dark:text-white">{item.topic}</Typography>
+                                      <Typography variant="small" className="text-[10px] text-gray-500">{item.subject}</Typography>
+                                   </td>
+                                   <td className="p-4">
+                                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{item.difficulty}</span>
+                                   </td>
+                                   <td className="p-4">{getStatusChip(item.evaluationStatus)}</td>
+                                   <td className="p-4">
+                                      <div className="flex items-center gap-1 text-gray-500 text-xs">
+                                         <ClockIcon className="h-3 w-3" />
+                                         {new Date(item.submittedAt || item.generatedAt).toLocaleDateString()}
+                                      </div>
+                                   </td>
+                                   <td className="p-4">
+                                      <IconButton size="sm" variant="text" onClick={() => setSelectedHistory(item)}>
+                                         <EyeIcon className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+                                      </IconButton>
+                                   </td>
+                                </tr>
+                             ))
+                          )}
+                       </tbody>
+                    </table>
+                    {filteredHistory.length > visibleHistory.length && (
+                      <div className="p-4 text-center border-t dark:border-gray-700">
+                         <Button size="sm" variant="text" onClick={() => setItemsToShow(p => p + 10)}>Load More</Button>
+                      </div>
+                    )}
+                 </div>
+              </div>
+            </TabPanel>
+
+          </TabsBody>
+        </Tabs>
+      </div>
+
+      {/* Details Dialog */}
+      <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="dark:bg-gray-900 border dark:border-gray-800 outline-none">
+        <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center text-lg p-5">
+           Practice Details
+           <IconButton variant="text" color="gray" onClick={() => setSelectedHistory(null)}><XCircleIcon className="h-6 w-6" /></IconButton>
+        </DialogHeader>
+        <DialogBody className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6 custom-scroll">
+           {selectedHistory && (
+              <div className="space-y-6">
+                 <div>
+                    <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2 text-xs">Question</Typography>
+                    <div className="p-4 border rounded-xl bg-gray-50/50 dark:bg-gray-800/30 dark:border-gray-700 text-sm dark:text-gray-200">
+                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(selectedHistory.questionText)}</ReactMarkdown>
+                    </div>
+                 </div>
+                 
+                 <div>
+                    <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wider mb-2 text-xs">
+                       {selectedHistory.evaluationStatus === "REVEALED" ? "Action Taken" : "Your Answer"}
+                    </Typography>
+                    <div className="p-4 border rounded-xl bg-white dark:bg-gray-900 dark:border-gray-700 text-sm dark:text-gray-300">
+                       {selectedHistory.evaluationStatus === "REVEALED" ? (
+                          <span className="italic text-gray-500">Answer revealed.</span>
+                       ) : (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(selectedHistory.answerText || "No answer.")}</ReactMarkdown>
+                       )}
+                    </div>
+                 </div>
+
+                 <div>
+                    <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
+                    <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300">
+                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {selectedHistory.evaluationStatus === "REVEALED" ? formatMarkdownText(selectedHistory.answerText) : formatMarkdownText(selectedHistory.feedback)}
+                       </ReactMarkdown>
+                    </div>
+                 </div>
+              </div>
+           )}
+        </DialogBody>
+      </Dialog>
+
+    </div>
   );
 }
 
