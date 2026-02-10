@@ -69,20 +69,17 @@ function EditForm({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      // COMPACT: Reduced gap
       className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full"
     >
       {/* LEFT: Name */}
       <motion.div variants={itemVariants} className="h-full">
         <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
-          {/* COMPACT: Reduced Padding p-3 */}
           <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-blue-gray-50 dark:border-gray-700/50">
             <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2 text-sm">
               <UserCircleIcon className="h-4 w-4 text-blue-500" />
               Personal Details
             </Typography>
           </CardHeader>
-          {/* COMPACT: Reduced Padding p-4, Reduced Gap gap-3 */}
           <CardBody className="p-4 flex flex-col gap-3 flex-1">
             <AnimatePresence>
                 {error && (
@@ -428,7 +425,8 @@ export function Profile() {
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // FIX 1: Changed h-full to h-[calc(100%-1.5rem)] and added mt-6 to create the gap
+    <div className="relative w-full h-[calc(100%-1.5rem)] mt-6 flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -444,20 +442,17 @@ export function Profile() {
         />
       </div>
 
-      {/* Main Content Area: Reduced padding from p-6 to p-3 */}
       <div className="relative z-10 p-3 flex flex-col h-full w-full">
         
-        {/* Banner Section: Reduced Height h-48 -> h-28 */}
+        {/* Banner Section - Compact h-28 */}
         <div className="relative w-full shrink-0">
             <div className="relative h-28 w-full overflow-hidden rounded-xl bg-gray-900">
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-80" />
                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30" />
             </div>
             
-            {/* Banner Content: Tighter negative margins */}
             <div className="px-4 -mt-10 flex items-end justify-between gap-4">
                 <div className="flex items-end gap-3">
-                    {/* Avatar: Size xl instead of xxl */}
                     <Avatar 
                         src={avatarSrc} 
                         alt="avatar" 
@@ -506,7 +501,7 @@ export function Profile() {
             </div>
         </div>
 
-        {/* Tab Content: Reduced top margin */}
+        {/* Tab Content */}
         <div className="mt-3 flex-1 min-h-0 w-full">
             <AnimatePresence mode="wait">
                 {activeTab === "profile" && (
