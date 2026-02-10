@@ -28,12 +28,15 @@ export function Navbar({ brandName, routes, action }) {
           as="li"
           variant="small"
           color="blue-gray"
-          className="capitalize"
+          className="capitalize font-medium"
         >
-          <Link to={path} className="flex items-center gap-1 p-1 font-normal">
+          <Link 
+            to={path} 
+            className="flex items-center gap-1 p-1 transition-colors hover:text-blue-500 dark:text-gray-200 dark:hover:text-blue-400"
+          >
             {icon &&
               React.createElement(icon, {
-                className: "w-[18px] h-[18px] opacity-50 mr-1",
+                className: "w-[18px] h-[18px] opacity-75 mr-1",
               })}
             {name}
           </Link>
@@ -43,20 +46,28 @@ export function Navbar({ brandName, routes, action }) {
   );
 
   return (
-    <MTNavbar className="p-3">
-      <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
+    <MTNavbar 
+      color="transparent"
+      className="p-3 sticky top-0 z-50 max-w-full rounded-none border-b border-white/10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-sm"
+    >
+      <div className="container mx-auto flex items-center justify-between text-blue-gray-900 dark:text-white">
         <Link to="/">
           <Typography
             variant="small"
-            className="mr-4 ml-2 cursor-pointer py-1.5 font-bold"
+            className="mr-4 ml-2 cursor-pointer py-1.5 font-bold tracking-wide"
           >
             {brandName}
           </Typography>
         </Link>
+        
         <div className="hidden lg:block">{navList}</div>
-        {React.cloneElement(action, {
-          className: "hidden lg:inline-block",
-        })}
+        
+        {/* Desktop Action Button */}
+        <div className="hidden lg:inline-block">
+          {action}
+        </div>
+
+        {/* Mobile Toggle */}
         <IconButton
           variant="text"
           size="sm"
@@ -70,12 +81,15 @@ export function Navbar({ brandName, routes, action }) {
           )}
         </IconButton>
       </div>
+      
       <Collapse open={openNav}>
-        <div className="container mx-auto">
+        <div className="container mx-auto mt-3 border-t border-white/10 pt-2">
           {navList}
-          {React.cloneElement(action, {
-            className: "w-full block lg:hidden",
-          })}
+          <div className="mt-4 mb-2">
+             {React.cloneElement(action, {
+                className: "w-full block lg:hidden",
+             })}
+          </div>
         </div>
       </Collapse>
     </MTNavbar>
@@ -83,16 +97,13 @@ export function Navbar({ brandName, routes, action }) {
 }
 
 Navbar.defaultProps = {
-  brandName: "Material Tailwind React",
+  brandName: "AI Practice Platform",
   action: (
-    <a
-      href="https://www.creative-tim.com/product/material-tailwind-dashboard-react"
-      target="_blank"
-    >
-      <Button variant="gradient" size="sm" fullWidth>
-        free download
+    <Link to="/auth/sign-in">
+      <Button variant="gradient" size="sm" fullWidth className="from-blue-600 to-blue-400 shadow-blue-500/20">
+        Sign In
       </Button>
-    </a>
+    </Link>
   ),
 };
 

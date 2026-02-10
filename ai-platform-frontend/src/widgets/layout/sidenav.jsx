@@ -4,129 +4,91 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import {
   IconButton,
   Typography,
-  Tooltip,
-  Badge,
 } from "@material-tailwind/react";
 import {
   useMaterialTailwindController,
   setOpenSidenav,
-} from "../../context";
-import { useEffect, useState } from "react";
+} from "@/context";
 
 export function Sidenav({ brandImg, brandName, routes }) {
   const [controller, dispatch] = useMaterialTailwindController();
   const { openSidenav } = controller;
 
-  // Detect mobile
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 1280);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1280);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const dashboardRoutes = routes.filter(r => r.layout === "dashboard");
+  // GLASS STYLES: This class makes the sidebar blurred and semi-transparent
+  const glassClasses = "bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-2xl shadow-blue-gray-900/10";
 
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-50 m-4
-        w-72
-        ${openSidenav ? "translate-x-0" : "-translate-x-96"}
+        ${glassClasses}
+        fixed inset-y-0 left-0 z-50 m-4 w-72 rounded-2xl 
         transition-transform duration-300 ease-in-out
-        rounded-3xl
-
-        bg-gradient-to-b from-white/10 to-white/5
-        dark:from-gray-900/40 dark:to-gray-900/20
-        backdrop-blur-lg
-        border border-white/10
-        shadow-xl
-
-        overflow-y-auto overflow-x-hidden
-
-        // Desktop always visible
+        ${openSidenav ? "translate-x-0" : "-translate-x-[120%]"} 
         xl:translate-x-0
-
-        [&::-webkit-scrollbar]:w-1.5
-        [&::-webkit-scrollbar-thumb]:bg-white/20
-        [&::-webkit-scrollbar-thumb]:rounded-full
       `}
     >
-
-      {/* BRAND */}
-      <div className="flex items-center justify-between px-5 py-6">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={brandImg} className="h-9 w-9" />
-
-          <Typography className="font-bold text-white">
+      {/* BRAND HEADER */}
+      <div className="relative border-b border-blue-gray-50 dark:border-white/10 p-6">
+        <Link to="/" className="flex items-center gap-4 py-2 px-1">
+          <img src={brandImg} alt="Brand" className="h-9 w-9" />
+          <Typography
+            variant="h6"
+            className="text-blue-gray-900 dark:text-white tracking-wide font-bold"
+          >
             {brandName}
           </Typography>
         </Link>
-
-        {/* Close button only on mobile */}
-        {isMobile && (
-          <IconButton
-            variant="text"
-            size="sm"
-            className="text-white"
-            onClick={() => setOpenSidenav(dispatch, false)}
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </IconButton>
-        )}
+        
+        {/* Close button for mobile */}
+        <IconButton
+          variant="text"
+          color="white"
+          size="sm"
+          ripple={false}
+          className="absolute right-2 top-2 grid rounded-br-none rounded-tl-none xl:hidden text-blue-gray-500 hover:text-blue-gray-900 dark:text-white/70 dark:hover:text-white"
+          onClick={() => setOpenSidenav(dispatch, false)}
+        >
+          <XMarkIcon strokeWidth={2.5} className="h-5 w-5" />
+        </IconButton>
       </div>
 
-      {/* ROUTES */}
-      <div className="px-3">
-        {dashboardRoutes.map(({ title, pages }, i) => (
-          <ul key={i} className="mb-6">
-
-            {/* Section Title */}
+      {/* NAV LINKS */}
+      <div className="m-4 overflow-y-auto h-[calc(100vh-140px)] custom-scroll">
+        {routes.map(({ layout, title, pages }, key) => (
+          <ul key={key} className="mb-4 flex flex-col gap-1">
             {title && (
-              <li className="px-4 mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                {title}
+              <li className="mx-3.5 mt-4 mb-2">
+                <Typography
+                  variant="small"
+                  className="font-bold uppercase opacity-75 text-blue-gray-500 dark:text-white/60 text-[11px] tracking-wider"
+                >
+                  {title}
+                </Typography>
               </li>
             )}
 
-            {pages.map(({ icon, name, path, badge }) => (
+            {pages.map(({ icon, name, path }) => (
               <li key={name}>
-                <NavLink to={`/dashboard${path}`} end>
+                <NavLink to={`/${layout}${path}`}>
                   {({ isActive }) => (
-
                     <div
                       className={`
-                        relative flex items-center gap-3 px-4 py-3 mb-2
-                        rounded-xl cursor-pointer
-                        transition-all duration-200
-
+                        flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300
                         ${isActive
-                          ? "bg-blue-500/20"
-                          : "hover:bg-white/10"}
+                          ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30 translate-x-1"
+                          : "text-blue-gray-500 dark:text-blue-gray-300 hover:bg-blue-gray-50 dark:hover:bg-white/5 hover:text-blue-gray-900 dark:hover:text-white"
+                        }
                       `}
                     >
-
-                      {/* Active bar */}
-                      {isActive && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r-full" />
-                      )}
-
                       {/* Icon */}
-                      <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 shrink-0">
-                        {badge
-                          ? <Badge content={badge} color="red">{icon}</Badge>
-                          : icon}
+                      <div className={`grid place-items-center mr-2 ${isActive ? "opacity-100" : "opacity-70"}`}>
+                         {icon}
                       </div>
 
-                      <Typography className="text-white font-medium">
+                      <Typography color="inherit" className="font-medium capitalize">
                         {name}
                       </Typography>
-
                     </div>
-
                   )}
                 </NavLink>
               </li>
@@ -146,7 +108,7 @@ Sidenav.defaultProps = {
 Sidenav.propTypes = {
   brandImg: PropTypes.string,
   brandName: PropTypes.string,
-  routes: PropTypes.array.isRequired,
+  routes: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
 export default Sidenav;
