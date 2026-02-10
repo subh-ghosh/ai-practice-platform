@@ -43,6 +43,7 @@ public class SecurityConfig {
             // 3. Define Access Rules
             .authorizeHttpRequests(auth -> auth
                 // Public Endpoints
+                .requestMatchers("/health", "/actuator/health").permitAll()
                 .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**", "/api/payments/webhook", "/api/students/verify-email/**").permitAll()
                 .requestMatchers("/api/students/oauth/google").permitAll()
                 
