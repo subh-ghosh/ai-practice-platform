@@ -67,8 +67,8 @@ function DynamicFeedbackTitle({ status }) {
   const style = STATUS_STYLES[status] || STATUS_STYLES.INCORRECT;
 
   return (
-    <div className="flex items-center gap-2 mb-2">
-      <div className={`w-3 h-3 rounded-full shadow-[0_0_8px] ${style.dot}`}></div>
+    <div className="flex items-center gap-2 mb-2 animate-fade-in-scale">
+      <div className={`w-3 h-3 rounded-full shadow-[0_0_8px] ${style.dot} transition-all duration-500`}></div>
       <Typography variant="h6" className={`font-bold tracking-tight uppercase text-sm ${style.text}`}>
         {style.label}
       </Typography>
@@ -82,7 +82,7 @@ const formatMarkdownText = (text) => {
 };
 
 const getStatusChip = (status) => {
-  const baseClasses = "py-0.5 px-2.5 text-[11px] font-bold uppercase tracking-wide w-fit rounded-full border";
+  const baseClasses = "py-0.5 px-2.5 text-[11px] font-bold uppercase tracking-wide w-fit rounded-full border transition-all duration-300 hover:scale-105";
   
   if (!status) return <Chip variant="ghost" className={`${baseClasses} border-blue-gray-100 text-blue-gray-500`} value="N/A" />;
   
@@ -317,67 +317,57 @@ export function Practice() {
   return (
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
       
-      {/* INJECTED STYLES: 
-        This style block forces the scrollbar customization. 
-        It handles both Light and Dark modes automatically.
-      */}
+      {/* INJECTED STYLES & ANIMATIONS */}
       <style>{`
         /* Default (Light Mode) */
-        .custom-scroll::-webkit-scrollbar {
-          width: 8px;
-          height: 8px;
-        }
-        .custom-scroll::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb {
-          background-color: #cbd5e1; /* slate-300 */
-          border-radius: 4px;
-        }
-        .custom-scroll::-webkit-scrollbar-thumb:hover {
-          background-color: #94a3b8; /* slate-400 */
-        }
+        .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
 
-        /* Dark Mode Override (Assumes 'dark' class is on a parent/html) */
-        .dark .custom-scroll::-webkit-scrollbar-track {
-          background: #111827; /* gray-900 */
-        }
-        .dark .custom-scroll::-webkit-scrollbar-thumb {
-          background-color: #374151; /* gray-700 */
-          border: 2px solid #111827; /* gray-900 (Creates padding effect) */
-          border-radius: 4px;
-        }
-        .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
-          background-color: #4b5563; /* gray-600 */
-        }
+        /* Dark Mode Override */
+        .dark .custom-scroll::-webkit-scrollbar-track { background: #111827; }
+        .dark .custom-scroll::-webkit-scrollbar-thumb { background-color: #374151; border: 2px solid #111827; border-radius: 4px; }
+        .dark .custom-scroll::-webkit-scrollbar-thumb:hover { background-color: #4b5563; }
 
         /* Firefox Support */
-        .custom-scroll {
-          scrollbar-width: thin;
-          scrollbar-color: #cbd5e1 transparent;
-        }
-        .dark .custom-scroll {
-          scrollbar-color: #374151 #111827;
-        }
+        .custom-scroll { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+        .dark .custom-scroll { scrollbar-color: #374151 #111827; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        
+        .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+        .animate-slide-up { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-pop-in { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-fade-in-scale { animation: scaleIn 0.4s ease-out forwards; }
+        .animate-pulse-soft { animation: pulseSoft 2s infinite ease-in-out; }
+        
+        /* Delays */
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
       `}</style>
 
       {/* Background */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
-      <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-colors duration-700" />
+      <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl animate-pulse-soft" />
+      <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
 
       <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto">
         
         {/* --- Generator Card --- */}
-        <Card className="overflow-visible border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm">
+        <Card className="overflow-visible border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up">
           <CardHeader
             floated={false}
             shadow={false}
             className="rounded-t-xl bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 m-0"
           >
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg">
-                    <SparklesIcon className="h-6 w-6 text-white" />
+                <div className="p-2 bg-white/20 rounded-lg shadow-inner">
+                    <SparklesIcon className="h-6 w-6 text-white animate-pulse" />
                 </div>
                 <div>
                     <Typography variant="h5" color="white" className="font-bold tracking-tight">
@@ -392,43 +382,49 @@ export function Practice() {
 
           <CardBody className="p-6 md:p-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-              <Input
-                label="Subject"
-                placeholder="e.g. Java, DBMS"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                color="blue"
-                className="!text-blue-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-              />
+              <div className="transition-all duration-300 focus-within:translate-y-[-2px]">
+                <Input
+                  label="Subject"
+                  placeholder="e.g. Java, DBMS"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  color="blue"
+                  className="!text-blue-gray-900 dark:!text-white"
+                  labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                />
+              </div>
 
-              <Input
-                label="Topic"
-                placeholder="e.g. Inheritance"
-                value={topic}
-                onChange={(e) => setTopic(e.target.value)}
-                color="blue"
-                className="!text-blue-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-              />
+              <div className="transition-all duration-300 focus-within:translate-y-[-2px]">
+                <Input
+                  label="Topic"
+                  placeholder="e.g. Inheritance"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  color="blue"
+                  className="!text-blue-gray-900 dark:!text-white"
+                  labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                />
+              </div>
 
-              <Select
-                label="Difficulty"
-                value={difficulty}
-                onChange={(val) => setDifficulty(val)}
-                color="blue"
-                className="!text-blue-gray-900 dark:!text-white"
-                labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-                menuProps={{ className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200" }}
-              >
-                {["School", "High School", "Graduation", "Post Graduation", "Research"].map(lvl => (
-                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700 dark:focus:bg-gray-700">{lvl}</Option>
-                ))}
-              </Select>
+              <div className="transition-all duration-300 focus-within:translate-y-[-2px]">
+                <Select
+                  label="Difficulty"
+                  value={difficulty}
+                  onChange={(val) => setDifficulty(val)}
+                  color="blue"
+                  className="!text-blue-gray-900 dark:!text-white"
+                  labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                  menuProps={{ className: "dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 animate-fade-in" }}
+                >
+                  {["School", "High School", "Graduation", "Post Graduation", "Research"].map(lvl => (
+                    <Option key={lvl} value={lvl} className="dark:hover:bg-gray-700 dark:focus:bg-gray-700 transition-colors">{lvl}</Option>
+                  ))}
+                </Select>
+              </div>
             </div>
 
             {user?.subscriptionStatus === "FREE" && (
-              <Alert className="mt-6 border border-blue-100 bg-blue-50/80 text-blue-900 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-100 rounded-lg">
+              <Alert className="mt-6 border border-blue-100 bg-blue-50/80 text-blue-900 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-100 rounded-lg animate-fade-in">
                 <div className="flex items-center gap-3">
                     <InformationCircleIcon className="w-5 h-5" />
                     <Typography className="text-sm font-medium">
@@ -442,13 +438,17 @@ export function Practice() {
               <Button
                 onClick={handleGenerateQuestion}
                 disabled={generating || (user?.subscriptionStatus === "FREE" && actionsRemaining <= 0)}
-                className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40"
+                className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-300 active:scale-95 hover:scale-[1.02]"
               >
                 {generating ? <Spinner className="h-4 w-4" /> : "Generate Question"}
               </Button>
             </div>
 
-            {error && <Typography color="red" className="mt-4 text-sm font-medium text-center">{error}</Typography>}
+            {error && (
+                <div className="mt-4 animate-pop-in">
+                    <Typography color="red" className="text-sm font-medium text-center">{error}</Typography>
+                </div>
+            )}
 
             {isPolling && (
               <div className="mt-6 flex items-center justify-center gap-3 p-4 rounded-xl bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800 animate-pulse">
@@ -460,12 +460,12 @@ export function Practice() {
             )}
 
             {question && (
-              <div className="mt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="mt-10 animate-slide-up">
                 <div className="mb-6">
                     <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-1">
                         Question
                     </Typography>
-                    <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
+                    <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700 transition-all hover:border-blue-200 dark:hover:border-blue-900">
                         <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(question.questionText)}</ReactMarkdown>
                         </div>
@@ -473,19 +473,21 @@ export function Practice() {
                 </div>
 
                 <form onSubmit={handleSubmitAnswer}>
-                  <Textarea
-                    label="Write your answer here..."
-                    value={currentAnswer}
-                    onChange={handleAnswerChange}
-                    rows={textareaRows}
-                    color="blue"
-                    className="!text-blue-gray-900 dark:!text-white bg-white dark:bg-gray-900"
-                    containerProps={{ className: "min-w-0" }}
-                    labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
-                  />
+                  <div className="transition-all focus-within:scale-[1.01] duration-300">
+                    <Textarea
+                        label="Write your answer here..."
+                        value={currentAnswer}
+                        onChange={handleAnswerChange}
+                        rows={textareaRows}
+                        color="blue"
+                        className="!text-blue-gray-900 dark:!text-white bg-white dark:bg-gray-900"
+                        containerProps={{ className: "min-w-0" }}
+                        labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                    />
+                  </div>
 
                   <div className="mt-4 flex flex-wrap gap-3">
-                    <Button type="submit" disabled={submitting || isPolling} className="rounded-lg bg-blue-600">
+                    <Button type="submit" disabled={submitting || isPolling} className="rounded-lg bg-blue-600 transition-all active:scale-95 hover:shadow-lg hover:shadow-blue-500/20">
                       {submitting || isPolling ? <Spinner className="h-4 w-4" /> : "Submit Answer"}
                     </Button>
 
@@ -493,25 +495,28 @@ export function Practice() {
                       variant="outlined"
                       onClick={handleGetHint}
                       disabled={submitting || isPolling}
-                      className="rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                      className="rounded-lg border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 transition-all active:scale-95"
                     >
                       {loadingHint ? <Spinner className="h-4 w-4" /> : "Get Hint"}
                     </Button>
 
-                    <Popover open={openPopover} handler={setOpenPopover} placement="top">
+                    <Popover open={openPopover} handler={setOpenPopover} placement="top" animate={{
+                        mount: { scale: 1, y: 0 },
+                        unmount: { scale: 0, y: 25 },
+                      }}>
                       <PopoverHandler>
-                        <Button variant="text" color="red" disabled={submitting || isPolling} className="rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20">
+                        <Button variant="text" color="red" disabled={submitting || isPolling} className="rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95">
                           {loadingAnswer ? <Spinner className="h-4 w-4" /> : "Reveal Answer"}
                         </Button>
                       </PopoverHandler>
-                      <PopoverContent className="z-50 border-blue-gray-100 dark:bg-gray-800 dark:border-gray-700">
+                      <PopoverContent className="z-50 border-blue-gray-100 dark:bg-gray-800 dark:border-gray-700 shadow-xl">
                         <Typography color="blue-gray" className="mb-2 font-bold dark:text-white">Confirm Reveal?</Typography>
                         <Typography variant="small" className="mb-4 font-normal text-blue-gray-500 dark:text-gray-400">
                           This will count as an attempt.
                         </Typography>
                         <div className="flex gap-2 justify-end">
-                          <Button size="sm" variant="text" onClick={() => setOpenPopover(false)} className="dark:text-gray-300">Cancel</Button>
-                          <Button size="sm" color="red" onClick={confirmGetAnswer}>Confirm</Button>
+                          <Button size="sm" variant="text" onClick={() => setOpenPopover(false)} className="dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</Button>
+                          <Button size="sm" color="red" onClick={confirmGetAnswer} className="hover:shadow-red-500/20">Confirm</Button>
                         </div>
                       </PopoverContent>
                     </Popover>
@@ -521,7 +526,7 @@ export function Practice() {
             )}
 
             {hint && (
-              <div className="mt-6 p-5 border border-blue-200 bg-blue-50/50 rounded-2xl dark:bg-blue-900/10 dark:border-blue-800 animate-in fade-in slide-in-from-top-2">
+              <div className="mt-6 p-5 border border-blue-200 bg-blue-50/50 rounded-2xl dark:bg-blue-900/10 dark:border-blue-800 animate-slide-up">
                 <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-300">
                     <InformationCircleIcon className="h-5 w-5" />
                     <span className="font-bold text-sm uppercase">Hint</span>
@@ -533,7 +538,7 @@ export function Practice() {
             )}
 
             {feedback && (
-              <div className="mt-8 p-6 border rounded-2xl bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm animate-in zoom-in-95 duration-300">
+              <div className="mt-8 p-6 border rounded-2xl bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm animate-pop-in">
                 <DynamicFeedbackTitle status={feedback.evaluationStatus} />
                 <div className="mt-3 prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed overflow-x-auto custom-scroll">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -549,12 +554,12 @@ export function Practice() {
         </Card>
 
         {/* --- History Card --- */}
-        <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm">
+        <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up delay-100">
           <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 flex flex-col md:flex-row gap-4 justify-between items-center rounded-t-xl">
             <Typography variant="h6" color="blue-gray" className="dark:text-white">
               Practice History
             </Typography>
-            <div className="w-full md:w-72">
+            <div className="w-full md:w-72 transition-all focus-within:scale-[1.02]">
               <Input
                 label="Search"
                 icon={<i className="fas fa-search" />}
@@ -589,13 +594,13 @@ export function Practice() {
                         <tr 
                             key={`${item.questionId}-${index}`} 
                             onClick={() => setSelectedHistory(item)}
-                            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                            className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-200 group"
                         >
                             <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">
-                                <Typography variant="small" color="blue-gray" className="font-normal dark:text-gray-400">{index + 1}</Typography>
+                                <Typography variant="small" color="blue-gray" className="font-normal dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">{index + 1}</Typography>
                             </td>
                             <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800 max-w-xs truncate">
-                                <Typography variant="small" color="blue-gray" className="font-medium dark:text-gray-200 truncate">
+                                <Typography variant="small" color="blue-gray" className="font-medium dark:text-gray-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                                     {item.questionText}
                                 </Typography>
                             </td>
@@ -621,20 +626,29 @@ export function Practice() {
             
             {filteredHistory.length > visibleHistory.length && (
                 <div className="mt-4 text-center">
-                    <Button variant="text" size="sm" onClick={() => setItemsToShow(prev => prev + 10)}>Load More</Button>
+                    <Button variant="text" size="sm" onClick={() => setItemsToShow(prev => prev + 10)} className="hover:bg-blue-50 dark:hover:bg-gray-800 transition-all">Load More</Button>
                 </div>
             )}
           </CardBody>
         </Card>
 
         {/* History Detail Modal */}
-        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-white dark:bg-gray-900 border dark:border-gray-800">
+        <Dialog 
+            open={!!selectedHistory} 
+            handler={() => setSelectedHistory(null)} 
+            size="lg" 
+            className="bg-white dark:bg-gray-900 border dark:border-gray-800"
+            animate={{
+                mount: { scale: 1, y: 0, opacity: 1 },
+                unmount: { scale: 0.9, y: -100, opacity: 0 },
+            }}
+        >
             <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">
                 Practice Details
             </DialogHeader>
             <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6 custom-scroll">
                 {selectedHistory && (
-                    <div className="space-y-8">
+                    <div className="space-y-8 animate-fade-in">
                         {/* 1. QUESTION SECTION */}
                         <div>
                             <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2">
@@ -654,7 +668,7 @@ export function Practice() {
                             <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wider mb-2">
                                 {selectedHistory.evaluationStatus === "REVEALED" ? "Action" : "Your Answer"}
                             </Typography>
-                            <div className={`p-5 border rounded-2xl text-sm ${
+                            <div className={`p-5 border rounded-2xl text-sm transition-all duration-300 ${
                                 selectedHistory.evaluationStatus === "REVEALED" 
                                 ? "border-blue-100 bg-blue-50/30 text-blue-600 italic dark:bg-blue-900/10 dark:border-blue-800 dark:text-blue-300"
                                 : "border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-700 dark:text-gray-300"
@@ -672,7 +686,7 @@ export function Practice() {
                         </div>
 
                         {/* 3. FEEDBACK / SOLUTION SECTION */}
-                        <div>
+                        <div className="animate-slide-up delay-100">
                             <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
                             
                             {(() => {
@@ -683,7 +697,7 @@ export function Practice() {
                                                     "bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-800";
                                 
                                 return (
-                                    <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll ${containerClass}`}>
+                                    <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll transition-all duration-500 ${containerClass}`}>
                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                             {selectedHistory.evaluationStatus === "REVEALED" 
                                                 ? formatMarkdownText(selectedHistory.answerText) 
@@ -698,7 +712,7 @@ export function Practice() {
                 )}
             </DialogBody>
             <DialogFooter className="border-t dark:border-gray-800">
-                <Button variant="gradient" color="blue" onClick={() => setSelectedHistory(null)}>Close</Button>
+                <Button variant="gradient" color="blue" onClick={() => setSelectedHistory(null)} className="hover:scale-105 transition-transform">Close</Button>
             </DialogFooter>
         </Dialog>
 
