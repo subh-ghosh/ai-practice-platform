@@ -55,7 +55,6 @@ export function Sidenav({ brandImg, brandName, routes }) {
       </div>
 
       {/* NAV LINKS */}
-      {/* Changed overflow-y-auto to overflow-hidden to remove scrollbar */}
       <div className="m-4 h-[calc(100vh-140px)] overflow-hidden">
         {routes.map(({ layout, title, pages }, key) => {
           
@@ -83,7 +82,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
                         className={`
                           flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300
                           ${isActive
-                            ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30 translate-x-1"
+                            ? "bg-gradient-to-r from-blue-600 to-blue-400 text-white shadow-lg shadow-blue-500/30" // Removed translate-x-1 here
                             : "text-blue-gray-500 dark:text-blue-gray-300 hover:bg-blue-gray-50 dark:hover:bg-white/5 hover:text-blue-gray-900 dark:hover:text-white"
                           }
                         `}
