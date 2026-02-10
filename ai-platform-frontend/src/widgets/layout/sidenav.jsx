@@ -25,7 +25,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
     <aside
       className={`
         fixed inset-y-0 left-0 z-50 m-4
-        ${mini ? "w-20" : "w-72"}
+        ${mini ? "w-20" : "w-72"} will-change-[width]
         ${openSidenav ? "translate-x-0" : "-translate-x-96"}
         transition-all duration-300 ease-in-out
         rounded-3xl
@@ -45,16 +45,29 @@ export function Sidenav({ brandImg, brandName, routes }) {
       `}
     >
 
-      {/* Brand */}
-      <div className="flex items-center justify-between px-5 py-6">
-        <Link to="/" className="flex items-center gap-3">
-          <img src={brandImg} className="h-9 w-9" />
+      {/* BRAND */}
+      <div className="flex items-center justify-between px-5 py-6 overflow-hidden">
+        <Link to="/" className="flex items-center gap-3 overflow-hidden">
 
-          {!mini && (
-            <Typography className="font-bold text-white">
-              {brandName}
-            </Typography>
-          )}
+          {/* Logo never shrinks */}
+          <img
+            src={brandImg}
+            className="h-9 w-9 min-w-[36px]"
+          />
+
+          {/* Brand text stays in DOM */}
+          <Typography
+            className={`
+              font-bold text-white whitespace-nowrap
+              transition-all duration-300
+              ${mini
+                ? "opacity-0 w-0 ml-0"
+                : "opacity-100 w-auto ml-1"}
+            `}
+          >
+            {brandName}
+          </Typography>
+
         </Link>
 
         <IconButton
@@ -67,7 +80,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
         </IconButton>
       </div>
 
-      {/* Collapse Toggle */}
+      {/* COLLAPSE BUTTON */}
       <div className="px-4 mb-4">
         <button
           onClick={() => setMini(!mini)}
@@ -77,16 +90,22 @@ export function Sidenav({ brandImg, brandName, routes }) {
         </button>
       </div>
 
-      {/* Routes */}
+      {/* ROUTES */}
       <div className="px-3">
         {dashboardRoutes.map(({ title, pages }, i) => (
           <ul key={i} className="mb-6">
 
-            {!mini && title && (
-              <li className="px-4 mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                {title}
-              </li>
-            )}
+            {/* Section Title */}
+            <li
+              className={`
+                px-4 mt-6 mb-2 text-[11px] font-semibold
+                uppercase tracking-wider text-gray-400
+                transition-all duration-300
+                ${mini ? "opacity-0 h-0" : "opacity-100"}
+              `}
+            >
+              {!mini && title}
+            </li>
 
             {pages.map(({ icon, name, path, badge }) => (
               <li key={name}>
@@ -98,7 +117,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
                         className={`
                           relative flex items-center gap-3 px-4 py-3 mb-2
                           rounded-xl cursor-pointer
-                          transition-colors duration-200
+                          transition-all duration-200
 
                           ${isActive
                             ? "bg-blue-500/20"
@@ -111,17 +130,26 @@ export function Sidenav({ brandImg, brandName, routes }) {
                           <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r-full" />
                         )}
 
-                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/5">
+                        {/* Icon */}
+                        <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/5 shrink-0">
                           {badge
                             ? <Badge content={badge} color="red">{icon}</Badge>
                             : icon}
                         </div>
 
-                        {!mini && (
-                          <Typography className="text-white font-medium">
-                            {name}
-                          </Typography>
-                        )}
+                        {/* Label stays mounted */}
+                        <Typography
+                          className={`
+                            text-white font-medium whitespace-nowrap
+                            transition-all duration-200
+                            ${mini
+                              ? "opacity-0 w-0"
+                              : "opacity-100 w-auto"}
+                          `}
+                        >
+                          {name}
+                        </Typography>
+
                       </div>
                     );
 
