@@ -37,18 +37,6 @@ export function Sidenav({ brandImg, brandName, routes }) {
         overflow-y-auto overflow-x-hidden overscroll-contain
       `}
     >
-      {/* Animation Styles */}
-      <style>{`
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .nav-item-animate {
-          opacity: 0;
-          animation: fadeSlideUp 0.5s ease-out forwards;
-        }
-      `}</style>
-
       {/* Brand + close */}
       <div className="relative">
         <Link
@@ -101,12 +89,8 @@ export function Sidenav({ brandImg, brandName, routes }) {
               </li>
             )}
 
-            {pages.map(({ icon, name, path, exact = true }, index) => (
-              <li 
-                key={name}
-                className="nav-item-animate"
-                style={{ animationDelay: `${(key * 3 + index) * 100}ms` }}
-              >
+            {pages.map(({ icon, name, path, exact = true }) => (
+              <li key={name}>
                 <NavLink to={`/${layout}${path}`} end={exact} title={name}>
                   {({ isActive }) => (
                     <Button
