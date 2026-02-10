@@ -314,8 +314,11 @@ export function Practice() {
 
       <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto">
         
-        {/* --- Generator Card --- */}
-        <Card className="overflow-visible border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up">
+        {/* --- Generator Card (Top) --- 
+            Z-INDEX FIX: z-20 keeps this card (and the dropdowns inside it) above the history card below.
+            OVERFLOW FIX: overflow-visible allows the dropdown to hang outside the card.
+        */}
+        <Card className="overflow-visible relative z-20 border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up">
           <CardHeader floated={false} shadow={false} className="rounded-t-xl bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 m-0">
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/20 rounded-lg shadow-inner">
@@ -328,7 +331,7 @@ export function Practice() {
             </div>
           </CardHeader>
 
-          <CardBody className="p-6 md:p-8">
+          <CardBody className="p-6 md:p-8 overflow-visible">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {/* Subject Input */}
               <div className="w-full">
@@ -358,8 +361,8 @@ export function Practice() {
                 />
               </div>
 
-              {/* Difficulty Select - Modernized */}
-              <div className="w-full">
+              {/* Difficulty Select - Modernized & Fixed Z-Index */}
+              <div className="w-full relative">
                 <Select
                   size="lg"
                   label="Difficulty"
@@ -369,7 +372,7 @@ export function Practice() {
                   className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
                   labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
                   menuProps={{
-                    className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] z-[9999]",
+                    className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
                     animate: {
                       mount: { y: 0, scale: 1, opacity: 1 },
                       unmount: { y: 10, scale: 0.95, opacity: 0 },
@@ -433,7 +436,7 @@ export function Practice() {
                 </div>
 
                 <form onSubmit={handleSubmitAnswer}>
-                  {/* Textarea Wrapper - No Focus Transform here to avoid click issues */}
+                  {/* Textarea Wrapper */}
                   <div className="group">
                     <Textarea
                         label="Write your answer here..."
@@ -497,8 +500,10 @@ export function Practice() {
           </CardBody>
         </Card>
 
-        {/* --- History Card --- */}
-        <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up delay-100">
+        {/* --- History Card (Bottom) ---
+            Z-INDEX FIX: z-0 ensures this sits BELOW the card above it.
+        */}
+        <Card className="relative z-0 border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up delay-100">
           <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6 flex flex-col md:flex-row gap-4 justify-between items-center rounded-t-xl">
             <Typography variant="h6" color="blue-gray" className="dark:text-white">Practice History</Typography>
             <div className="w-full md:w-72">
