@@ -3,402 +3,325 @@ import axios from "axios";
 import {
   Card,
   CardBody,
-  CardHeader,
-  Avatar,
   Typography,
   Button,
   Input,
-  Radio,
-  Alert,
-  Spinner,
   Tabs,
   TabsHeader,
   Tab,
+  Avatar,
+  Alert,
+  Spinner,
+  Radio,
 } from "@material-tailwind/react";
 import {
-  PencilIcon,
   UserCircleIcon,
+  PencilSquareIcon,
   ShieldCheckIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
   EnvelopeIcon,
   MapPinIcon,
-  IdentificationIcon
+  IdentificationIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
 } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { useTheme } from "@/context/ThemeProvider.jsx";
 
 /* ============================ Config ============================ */
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
-/* ============================ Custom Components ============================ */
+/* ============================ Components ============================ */
 
-// 1. High Visibility Input (Opaque background, clear border)
-const CustomInput = ({ label, ...props }) => (
+// Input style that blends into the dark theme (Notification style)
+const DarkInput = ({ label, ...props }) => (
   <div className="w-full">
+    <Typography variant="small" className="mb-2 font-medium text-gray-400">
+      {label}
+    </Typography>
     <Input
-      variant="outlined"
-      label={label}
-      color="blue"
-      className="!border-blue-gray-300 dark:!border-gray-600 !bg-white dark:!bg-gray-800 text-blue-gray-900 dark:text-white focus:!border-blue-600 focus:!bg-white ring-4 ring-transparent focus:ring-blue-500/10 shadow-sm"
-      labelProps={{
-        className: "text-blue-gray-600 dark:text-gray-400 peer-placeholder-shown:text-blue-gray-500",
-      }}
       {...props}
+      className="!border-gray-800 bg-gray-900/50 text-white placeholder:text-gray-600 focus:!border-blue-500 transition-colors"
+      labelProps={{
+        className: "hidden",
+      }}
+      containerProps={{
+        className: "!min-w-0",
+      }}
     />
   </div>
 );
 
-/* ============================ Tab Views ============================ */
+// A row item similar to a "Notification Item"
+const InfoRow = ({ icon: Icon, label, value }) => (
+  <div className="flex items-center gap-4 p-4 rounded-lg border border-gray-800 bg-[#18181b]/50 hover:bg-[#18181b] transition-colors">
+    <div className="p-2 rounded-full bg-blue-500/10 text-blue-500">
+      <Icon className="h-5 w-5" />
+    </div>
+    <div className="flex-1">
+      <Typography variant="small" className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+        {label}
+      </Typography>
+      <Typography variant="h6" className="text-gray-200 text-sm font-medium">
+        {value}
+      </Typography>
+    </div>
+  </div>
+);
 
-// 1. Profile View
-function ProfileView({ user, onEdit }) {
-  const details = [
-    { label: "Full Name", value: `${user?.firstName} ${user?.lastName}`, icon: UserCircleIcon },
-    { label: "Email", value: user?.email, icon: EnvelopeIcon },
-    { label: "Role", value: "Student", icon: IdentificationIcon },
-    { label: "Location", value: "India", icon: MapPinIcon },
-    { label: "Gender", value: (user?.gender || "Male"), icon: UserCircleIcon },
-  ];
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="h-full w-full flex flex-col"
-    >
-      <Card className="flex-1 w-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-none flex flex-col overflow-hidden">
-        <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
-          <Typography variant="h6" className="dark:text-white flex items-center gap-2 text-sm uppercase tracking-wide">
-            <UserCircleIcon className="h-5 w-5 text-blue-600" />
-            About Me
-          </Typography>
-        </CardHeader>
-        
-        <CardBody className="p-4 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-             {details.map((item, idx) => (
-                <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-blue-gray-50/50 dark:bg-gray-800 border border-blue-gray-100 dark:border-gray-700">
-                    <div className="p-2 rounded-full bg-white dark:bg-gray-900 shadow-sm shrink-0">
-                      <item.icon className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <div>
-                      <Typography variant="small" className="text-[10px] uppercase font-bold text-blue-gray-500 dark:text-gray-400">
-                        {item.label}
-                      </Typography>
-                      <Typography variant="h6" className="text-sm dark:text-gray-100 font-semibold text-blue-gray-900">
-                        {item.value}
-                      </Typography>
-                    </div>
-                </div>
-             ))}
-          </div>
-          <div className="mt-6 p-4 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30">
-             <Typography variant="small" className="text-blue-800 dark:text-blue-200 font-medium text-center">
-                "Consistency is the key to mastery."
-             </Typography>
-          </div>
-        </CardBody>
-      </Card>
-    </motion.div>
-  );
-}
-
-// 2. Edit View
-function EditForm({ firstName, lastName, email, gender, setFirstName, setLastName, setGender, onSubmit, saving, error, success }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="h-full w-full"
-    >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
-            {/* Left Card */}
-            <Card className="h-full flex flex-col border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-none overflow-hidden">
-                <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
-                    <Typography variant="h6" className="dark:text-white flex items-center gap-2 text-sm uppercase tracking-wide">
-                        <UserCircleIcon className="h-5 w-5 text-blue-600" /> Personal
-                    </Typography>
-                </CardHeader>
-                <CardBody className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
-                    <AnimatePresence>
-                        {(error || success) && (
-                            <Alert color={error ? "red" : "green"} variant="ghost" className="py-2 px-3 text-xs flex items-center gap-2">
-                                {error || success}
-                            </Alert>
-                        )}
-                    </AnimatePresence>
-                    <CustomInput label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-                    <CustomInput label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                </CardBody>
-            </Card>
-
-            {/* Right Card */}
-            <Card className="h-full flex flex-col border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-none overflow-hidden">
-                <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
-                    <Typography variant="h6" className="dark:text-white flex items-center gap-2 text-sm uppercase tracking-wide">
-                        <PencilIcon className="h-5 w-5 text-purple-500" /> Preferences
-                    </Typography>
-                </CardHeader>
-                <CardBody className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
-                     <CustomInput label="Email" value={email || ""} disabled />
-                     <div className="p-3 rounded-lg border border-blue-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-                        <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-gray-200 mb-2">Gender</Typography>
-                        <div className="flex gap-4">
-                            <Radio name="gender" label="Male" value="male" checked={gender === "male"} onChange={(e) => setGender(e.target.value)} color="blue" />
-                            <Radio name="gender" label="Female" value="female" checked={gender === "female"} onChange={(e) => setGender(e.target.value)} color="pink" />
-                        </div>
-                    </div>
-                </CardBody>
-                <div className="p-4 pt-0 mt-auto shrink-0">
-                    <Button onClick={onSubmit} variant="gradient" color="blue" fullWidth disabled={saving} className="h-9 shadow-blue-500/20">
-                        {saving ? <Spinner className="h-4 w-4 mx-auto" /> : "Save Changes"}
-                    </Button>
-                </div>
-            </Card>
-        </div>
-    </motion.div>
-  );
-}
-
-// 3. Security View
-function SecurityPanel({ oldPassword, newPassword, setOldPassword, setNewPassword, onChangePassword, changing, onDeleteAccount, deleting, error, success }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="h-full w-full"
-    >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
-            {/* Password Card */}
-            <Card className="h-full flex flex-col border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-none overflow-hidden">
-                <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
-                    <Typography variant="h6" className="dark:text-white flex items-center gap-2 text-sm uppercase tracking-wide">
-                        <ShieldCheckIcon className="h-5 w-5 text-green-600" /> Password
-                    </Typography>
-                </CardHeader>
-                <CardBody className="p-4 flex-1 overflow-y-auto flex flex-col gap-4">
-                    <AnimatePresence>
-                        {(error || success) && (
-                            <Alert color={error ? "red" : "green"} variant="ghost" className="py-2 px-3 text-xs flex items-center gap-2">
-                                {error || success}
-                            </Alert>
-                        )}
-                    </AnimatePresence>
-                    <CustomInput type="password" label="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} disabled={changing} />
-                    <CustomInput type="password" label="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={changing} />
-                </CardBody>
-                <div className="p-4 pt-0 mt-auto shrink-0">
-                     <Button onClick={onChangePassword} variant="gradient" color="gray" fullWidth disabled={changing} className="h-9">
-                        {changing ? <Spinner className="h-4 w-4 mx-auto" /> : "Update Password"}
-                    </Button>
-                </div>
-            </Card>
-
-            {/* Delete Card */}
-            <Card className="h-full flex flex-col border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 shadow-none overflow-hidden">
-                <CardHeader floated={false} shadow={false} className="m-0 p-4 shrink-0 border-b border-red-100 dark:border-red-900/30">
-                    <Typography variant="h6" color="red" className="flex items-center gap-2 text-sm uppercase tracking-wide">
-                        <ExclamationTriangleIcon className="h-5 w-5" /> Danger Zone
-                    </Typography>
-                </CardHeader>
-                <CardBody className="p-4 flex-1 overflow-y-auto flex flex-col justify-between">
-                    <div className="rounded-lg bg-white/80 dark:bg-black/40 p-4 border border-red-100 dark:border-red-900/30">
-                       <Typography variant="small" className="font-bold text-red-900 dark:text-red-200 mb-1">
-                         Delete Account
-                       </Typography>
-                       <Typography variant="small" className="text-red-800/80 dark:text-red-300/80 text-[11px] leading-snug">
-                         This action cannot be undone. All data will be lost.
-                       </Typography>
-                    </div>
-                    <Button variant="outlined" color="red" fullWidth onClick={onDeleteAccount} disabled={deleting} className="mt-4 bg-white dark:bg-transparent h-9 border-red-200">
-                        {deleting ? <Spinner className="h-4 w-4 mx-auto text-red-500" /> : "Delete My Account"}
-                    </Button>
-                </CardBody>
-            </Card>
-        </div>
-    </motion.div>
-  );
-}
-
-/* ================================ Main Page ================================ */
+/* ============================ Main Page ============================ */
 export function Profile() {
   const { user, updateUser, logout } = useAuth();
-  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState("profile");
 
+  // Form States
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
   const [gender, setGender] = useState(user?.gender || "male");
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
-  const [deletingAccount, setDeletingAccount] = useState(false);
-
-  const [editError, setEditError] = useState(null);
-  const [editSuccess, setEditSuccess] = useState(null);
-  const [secError, setSecError] = useState(null);
-  const [secSuccess, setSecSuccess] = useState(null);
+  // UI States
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState({ type: "", message: "" });
 
   useEffect(() => {
     if (user) {
-        setFirstName(user.firstName || "");
-        setLastName(user.lastName || "");
-        setGender(user.gender || "male");
+      setFirstName(user.firstName || "");
+      setLastName(user.lastName || "");
+      setGender(user.gender || "male");
     }
   }, [user]);
 
+  // Clear messages on tab switch
   useEffect(() => {
-    setEditError(null); setEditSuccess(null); setSecError(null); setSecSuccess(null);
+    setStatus({ type: "", message: "" });
   }, [activeTab]);
 
-  const maleAvatar = "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-user-circle-icon.png";
-  const femaleAvatar = "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png";
-  const avatarSrc = (gender || user?.gender) === "female" ? femaleAvatar : maleAvatar;
-
-  // -- Handlers --
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault(); setSavingProfile(true); setEditError(null); setEditSuccess(null);
+  const handleUpdateProfile = async () => {
+    setLoading(true); setStatus({ type: "", message: "" });
     try {
       const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
-      const res = await axios.put(`${BASE_URL}/api/students/profile`, { firstName, lastName, gender }, config);
-      if(updateUser && res.data) updateUser(res.data);
-      setEditSuccess("Updated!");
-    } catch (err) { setEditError("Update failed."); } finally { setSavingProfile(false); }
+      const res = await axios.put(`${BASE_URL}/api/students/profile`, 
+        { firstName, lastName, gender }, 
+        { headers: { "Authorization": `Bearer ${token}` } }
+      );
+      if (updateUser) updateUser(res.data);
+      setStatus({ type: "success", message: "Profile updated successfully." });
+    } catch (error) {
+      setStatus({ type: "error", message: "Failed to update profile." });
+    } finally { setLoading(false); }
   };
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault(); setChangingPassword(true); setSecError(null); setSecSuccess(null);
+  const handleChangePassword = async () => {
+    setLoading(true); setStatus({ type: "", message: "" });
     try {
-        const token = localStorage.getItem("token");
-        const config = { headers: { "Authorization": `Bearer ${token}` } };
-        await axios.put(`${BASE_URL}/api/students/password`, { oldPassword, newPassword }, config);
-        setSecSuccess("Password updated!"); setOldPassword(""); setNewPassword("");
-    } catch (err) { setSecError("Update failed."); } finally { setChangingPassword(false); }
+      const token = localStorage.getItem("token");
+      await axios.put(`${BASE_URL}/api/students/password`, 
+        { oldPassword, newPassword }, 
+        { headers: { "Authorization": `Bearer ${token}` } }
+      );
+      setStatus({ type: "success", message: "Password changed successfully." });
+      setOldPassword(""); setNewPassword("");
+    } catch (error) {
+      setStatus({ type: "error", message: "Failed to change password." });
+    } finally { setLoading(false); }
   };
 
   const handleDeleteAccount = async () => {
-    if (!window.confirm("Are you sure?")) return;
-    setDeletingAccount(true);
+    if (!window.confirm("This action is irreversible. Delete account?")) return;
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(`${BASE_URL}/api/students/account`, { headers: { "Authorization": `Bearer ${token}` } });
+      await axios.delete(`${BASE_URL}/api/students/account`, 
+        { headers: { "Authorization": `Bearer ${token}` } }
+      );
       logout();
-    } catch { setSecError("Delete failed."); setDeletingAccount(false); }
+    } catch (error) {
+      setStatus({ type: "error", message: "Could not delete account." });
+      setLoading(false);
+    }
   };
 
-  return (
-    // MAIN CONTAINER: Fixed Height (600px) + Max Width (4xl)
-    // This creates the "Small Box" effect that matches other cards.
-    <div className="relative w-full max-w-4xl mx-auto h-[600px] mt-6 flex flex-col overflow-hidden rounded-2xl border border-blue-gray-100 dark:border-gray-800 shadow-xl bg-white dark:bg-gray-900">
-      
-      {/* Background Ambience */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-50">
-        <div className="absolute top-[-50%] left-[-20%] w-[80%] h-[80%] rounded-full bg-blue-400/10 blur-[100px]" />
-        <div className="absolute bottom-[-50%] right-[-20%] w-[80%] h-[80%] rounded-full bg-purple-400/10 blur-[100px]" />
-      </div>
+  const avatarSrc = gender === "female" 
+    ? "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png" 
+    : "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-user-circle-icon.png";
 
-      <div className="relative z-10 flex flex-col h-full w-full">
+  return (
+    // OUTER CONTAINER: Matches the Notification Box dimensions and style
+    <div className="w-full h-full p-6 flex flex-col">
+      
+      <Card className="flex-1 w-full bg-[#111113] border border-gray-800 shadow-xl overflow-hidden flex flex-col">
         
-        {/* Banner - Compact */}
-        <div className="relative w-full shrink-0">
-            <div className="relative h-24 w-full bg-gray-900">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-800 to-purple-800" />
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20" />
-            </div>
+        {/* HEADER SECTION (Like Notification Header) */}
+        <div className="p-6 border-b border-gray-800 bg-[#111113]">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             
-            <div className="px-6 -mt-8 flex items-end justify-between gap-4">
-                <div className="flex items-end gap-3">
-                    <Avatar 
-                        src={avatarSrc} 
-                        alt="avatar" 
-                        size="lg" 
-                        variant="rounded"
-                        className="border-4 border-white dark:border-gray-900 bg-white shadow-md" 
-                    />
-                    <div className="mb-1">
-                        <Typography variant="h6" className="font-bold text-blue-gray-900 dark:text-white">
-                            {user?.firstName} {user?.lastName}
-                        </Typography>
-                        <Typography variant="small" className="text-gray-500 font-medium text-[10px]">
-                            {user?.email}
-                        </Typography>
+            {/* Title & Subtitle */}
+            <div>
+              <Typography variant="h4" color="white" className="font-semibold tracking-tight">
+                Profile
+              </Typography>
+              <Typography variant="small" className="text-gray-500 font-medium mt-1">
+                Manage your personal information and security.
+              </Typography>
+            </div>
+
+            {/* Avatar & User Info (Integrated into header) */}
+            <div className="flex items-center gap-4 bg-gray-900/50 p-2 pr-6 rounded-full border border-gray-800">
+              <Avatar src={avatarSrc} variant="circular" size="sm" className="border border-gray-700" />
+              <div>
+                <Typography variant="small" color="white" className="font-bold leading-none">
+                  {user?.firstName} {user?.lastName}
+                </Typography>
+                <Typography variant="small" className="text-gray-500 text-[10px] font-medium leading-none mt-0.5">
+                  {user?.email}
+                </Typography>
+              </div>
+            </div>
+          </div>
+
+          {/* TABS (Styled like the Notification toggles) */}
+          <div className="mt-8 w-full md:w-fit">
+            <Tabs value={activeTab}>
+              <TabsHeader
+                className="bg-gray-900/50 border border-gray-800 p-1 h-10"
+                indicatorProps={{
+                  className: "bg-[#1f1f23] border border-gray-700 shadow-none text-white",
+                }}
+              >
+                <Tab value="profile" onClick={() => setActiveTab("profile")} className={`text-xs font-bold px-6 transition-colors ${activeTab === "profile" ? "text-white" : "text-gray-500"}`}>
+                  Overview
+                </Tab>
+                <Tab value="edit" onClick={() => setActiveTab("edit")} className={`text-xs font-bold px-6 transition-colors ${activeTab === "edit" ? "text-white" : "text-gray-500"}`}>
+                  Edit
+                </Tab>
+                <Tab value="security" onClick={() => setActiveTab("security")} className={`text-xs font-bold px-6 transition-colors ${activeTab === "security" ? "text-white" : "text-gray-500"}`}>
+                  Security
+                </Tab>
+              </TabsHeader>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* CONTENT BODY */}
+        <CardBody className="flex-1 overflow-y-auto p-6 bg-[#111113]">
+          
+          <AnimatePresence mode="wait">
+            
+            {/* 1. OVERVIEW TAB */}
+            {activeTab === "profile" && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+              >
+                <InfoRow icon={UserCircleIcon} label="Full Name" value={`${user?.firstName} ${user?.lastName}`} />
+                <InfoRow icon={EnvelopeIcon} label="Email Address" value={user?.email} />
+                <InfoRow icon={IdentificationIcon} label="Account Type" value="Student" />
+                <InfoRow icon={MapPinIcon} label="Region" value="India" />
+                <InfoRow icon={UserCircleIcon} label="Gender" value={user?.gender || "Male"} />
+                <div className="flex items-center gap-4 p-4 rounded-lg border border-blue-900/30 bg-blue-900/10">
+                   <div className="p-2 rounded-full bg-blue-500/20 text-blue-400">
+                      <CheckCircleIcon className="h-5 w-5" />
+                   </div>
+                   <div>
+                     <Typography variant="small" className="font-bold text-blue-300 uppercase text-[10px] tracking-wider">Status</Typography>
+                     <Typography variant="h6" className="text-blue-100 text-sm font-medium">Active Member</Typography>
+                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* 2. EDIT TAB */}
+            {activeTab === "edit" && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                className="max-w-3xl mx-auto flex flex-col gap-6"
+              >
+                {status.message && (
+                  <Alert color={status.type === "error" ? "red" : "green"} variant="ghost" className="text-xs py-2 px-4 flex items-center gap-2 border border-current">
+                     {status.type === "error" ? <ExclamationTriangleIcon className="h-4 w-4" /> : <CheckCircleIcon className="h-4 w-4" />}
+                     {status.message}
+                  </Alert>
+                )}
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                   <DarkInput label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                   <DarkInput label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                </div>
+                
+                <div className="p-4 rounded-lg border border-gray-800 bg-[#18181b]/50">
+                    <Typography variant="small" className="mb-3 font-medium text-gray-400">Gender Selection</Typography>
+                    <div className="flex gap-6">
+                        <Radio name="gender" label="Male" value="male" checked={gender === "male"} onChange={(e) => setGender(e.target.value)} color="blue" labelProps={{ className: "text-gray-300" }} />
+                        <Radio name="gender" label="Female" value="female" checked={gender === "female"} onChange={(e) => setGender(e.target.value)} color="pink" labelProps={{ className: "text-gray-300" }} />
                     </div>
                 </div>
 
-                {/* Desktop Tabs */}
-                <div className="mb-0 hidden md:block">
-                      <Tabs value={activeTab} className="w-auto">
-                        <TabsHeader 
-                            className="bg-blue-gray-50/80 p-1 h-9"
-                            indicatorProps={{ className: "bg-white shadow-sm" }}
-                        >
-                            <Tab value="profile" onClick={() => setActiveTab("profile")} className="text-xs px-4 py-1 font-bold">Profile</Tab>
-                            <Tab value="edit" onClick={() => setActiveTab("edit")} className="text-xs px-4 py-1 font-bold">Edit</Tab>
-                            <Tab value="security" onClick={() => setActiveTab("security")} className="text-xs px-4 py-1 font-bold">Security</Tab>
-                        </TabsHeader>
-                    </Tabs>
+                <div className="flex justify-end pt-4">
+                  <Button onClick={handleUpdateProfile} disabled={loading} color="blue" className="normal-case w-40 flex justify-center items-center">
+                    {loading ? <Spinner className="h-4 w-4" /> : "Save Changes"}
+                  </Button>
                 </div>
-            </div>
-            
-            {/* Mobile Tabs */}
-            <div className="md:hidden mt-3 px-4">
-                 <Tabs value={activeTab}>
-                    <TabsHeader className="bg-blue-gray-50 h-9">
-                        <Tab value="profile" onClick={() => setActiveTab("profile")} className="text-xs">Profile</Tab>
-                        <Tab value="edit" onClick={() => setActiveTab("edit")} className="text-xs">Edit</Tab>
-                        <Tab value="security" onClick={() => setActiveTab("security")} className="text-xs">Security</Tab>
-                    </TabsHeader>
-                 </Tabs>
-            </div>
+              </motion.div>
+            )}
+
+            {/* 3. SECURITY TAB */}
+            {activeTab === "security" && (
+              <motion.div 
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                className="max-w-3xl mx-auto flex flex-col gap-8"
+              >
+                 {status.message && (
+                  <Alert color={status.type === "error" ? "red" : "green"} variant="ghost" className="text-xs py-2 px-4 flex items-center gap-2 border border-current">
+                     {status.type === "error" ? <ExclamationTriangleIcon className="h-4 w-4" /> : <CheckCircleIcon className="h-4 w-4" />}
+                     {status.message}
+                  </Alert>
+                )}
+
+                {/* Password Section */}
+                <div className="flex flex-col gap-4">
+                   <div className="flex items-center gap-2 mb-2 border-b border-gray-800 pb-2">
+                      <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+                      <Typography color="white" className="font-semibold">Password Update</Typography>
+                   </div>
+                   <DarkInput type="password" label="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+                   <DarkInput type="password" label="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                   <div className="flex justify-end">
+                      <Button onClick={handleChangePassword} disabled={loading} variant="outlined" color="white" className="normal-case border-gray-700 text-gray-300 hover:bg-gray-800 focus:ring-0">
+                        {loading ? "Updating..." : "Update Password"}
+                      </Button>
+                   </div>
+                </div>
+
+                {/* Danger Zone */}
+                <div className="mt-4 p-5 rounded-lg border border-red-900/30 bg-red-900/5 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                        <Typography color="red" className="font-bold flex items-center gap-2 text-sm">
+                           <ExclamationTriangleIcon className="h-4 w-4" /> Delete Account
+                        </Typography>
+                        <Typography variant="small" className="text-red-300/60 mt-1 max-w-sm">
+                           All your data will be permanently erased. This action cannot be undone.
+                        </Typography>
+                    </div>
+                    <Button color="red" variant="gradient" className="shrink-0" onClick={handleDeleteAccount} disabled={loading}>
+                       {loading ? "Deleting..." : "Delete Account"}
+                    </Button>
+                </div>
+
+              </motion.div>
+            )}
+
+          </AnimatePresence>
+        </CardBody>
+        
+        {/* Footer Text (Matching Notification Page) */}
+        <div className="p-4 border-t border-gray-800 bg-[#111113]">
+             <Typography variant="small" className="text-center text-gray-600 font-normal text-[11px]">
+                &copy; 2026, made by Subarta Ghosh
+             </Typography>
         </div>
 
-        {/* Content Area - Rigid Height */}
-        <div className="flex-1 min-h-0 w-full p-4 overflow-hidden relative">
-            <AnimatePresence mode="wait">
-                {activeTab === "profile" && (
-                    <ProfileView key="profile" user={user} onEdit={() => setActiveTab("edit")} />
-                )}
-
-                {activeTab === "edit" && (
-                    <EditForm
-                        key="edit"
-                        firstName={firstName}
-                        lastName={lastName}
-                        email={user?.email}
-                        gender={gender}
-                        setFirstName={setFirstName}
-                        setLastName={setLastName}
-                        setGender={setGender}
-                        onSubmit={handleProfileUpdate}
-                        saving={savingProfile}
-                        theme={theme}
-                        error={editError}
-                        success={editSuccess}
-                    />
-                )}
-
-                {activeTab === "security" && (
-                    <SecurityPanel
-                        key="security"
-                        oldPassword={oldPassword}
-                        newPassword={newPassword}
-                        setOldPassword={setOldPassword}
-                        setNewPassword={setNewPassword}
-                        onChangePassword={handlePasswordChange}
-                        changing={changingPassword}
-                        onDeleteAccount={handleDeleteAccount}
-                        deleting={deletingAccount}
-                        theme={theme}
-                        error={secError}
-                        success={secSuccess}
-                    />
-                )}
-            </AnimatePresence>
-        </div>
-
-      </div>
+      </Card>
     </div>
   );
 }
