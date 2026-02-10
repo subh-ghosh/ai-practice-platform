@@ -4,22 +4,41 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base color + typography */
+/* Base color + typography + GLOBAL GRADIENT */
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
   }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300;
+    
+    /* THE GLASS BACKDROP: Subtle radial gradients that stay fixed behind the content */
+    background-image: 
+      radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15), transparent 25%), 
+      radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.15), transparent 25%);
+    background-attachment: fixed;
   }
+
   ::selection {
     background: rgba(var(--primary) / 0.18);
   }
 }
 
-/* Layout helpers */
+/* Layout helpers & Glass Utilities */
 @layer components {
+  /* --- NEW GLASS UTILITIES --- */
+  .glass-panel {
+    @apply bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-blue-gray-900/5;
+  }
+  
+  .glass-btn {
+    @apply bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/30 transition-all active:scale-95;
+  }
+
+  /* --- EXISTING UTILITIES --- */
   .page {
     @apply container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
@@ -30,6 +49,7 @@
     @apply text-muted-foreground;
   }
   .card {
+    /* Updated to use glass effect by default if you want, or keep solid */
     @apply bg-card border border-border rounded-2xl shadow-soft;
   }
   .btn-base {
@@ -151,31 +171,5 @@
   scrollbar-color: #cbd5e1 transparent;
 }
 .dark * {
-  scrollbar-color: #374151 #111827;
-}
-/* Apply this to any container with the .custom-scroll class */
-.custom-scroll::-webkit-scrollbar {
-  width: 8px;  /* Width of the vertical scrollbar */
-  height: 8px; /* Height of the horizontal scrollbar */
-}
-
-.custom-scroll::-webkit-scrollbar-track {
-  background: #111827; /* Tailwind gray-900 */
-  border-radius: 4px;
-}
-
-.custom-scroll::-webkit-scrollbar-thumb {
-  background: #374151; /* Tailwind gray-700 */
-  border-radius: 4px;
-  border: 2px solid #111827; /* Creates a padding effect around the thumb */
-}
-
-.custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: #4b5563; /* Tailwind gray-600 */
-}
-
-/* Firefox Support */
-.custom-scroll {
-  scrollbar-width: thin;
   scrollbar-color: #374151 #111827;
 }

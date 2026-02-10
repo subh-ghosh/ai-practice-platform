@@ -3,12 +3,12 @@ import colors from "tailwindcss/colors";
 
 /** @type {import('tailwindcss').Config} */
 export default withMT({
-  content: ["./index.html","./src/**/*.{js,jsx,ts,tsx}"],
+  content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   darkMode: "class",
   theme: {
     extend: {
       colors: {
-        "blue-gray": colors.slate, // enables text-blue-gray-* etc.
+        "blue-gray": colors.slate,
         background: "rgb(var(--bg) / <alpha-value>)",
         foreground: "rgb(var(--fg) / <alpha-value>)",
         muted: { DEFAULT: "rgb(var(--muted) / <alpha-value>)", foreground: "rgb(var(--muted-fg) / <alpha-value>)" },
@@ -16,13 +16,40 @@ export default withMT({
         border: "rgb(var(--border) / <alpha-value>)",
         card: "rgb(var(--card) / <alpha-value>)",
         ring: "rgb(var(--ring) / <alpha-value>)",
+        // Glass Colors
+        glass: {
+            100: "rgba(255, 255, 255, 0.1)",
+            200: "rgba(255, 255, 255, 0.2)",
+            300: "rgba(255, 255, 255, 0.3)",
+        }
       },
       fontFamily: {
         sans: ["Inter", "ui-sans-serif", "system-ui", "Arial"],
         mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo"],
       },
       borderRadius: { xl: "0.9rem", "2xl": "1.25rem" },
-      boxShadow: { soft: "0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.06)" },
+      boxShadow: { 
+        soft: "0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.06)",
+        // New Shadows for Glass effect
+        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        'glow': '0 0 20px rgba(59, 130, 246, 0.5)',
+      },
+      // Custom Animations
+      animation: {
+        'float': 'float 6s ease-in-out infinite',
+        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+        'spin-slow': 'spin 12s linear infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        }
+      },
     },
   },
   plugins: [
