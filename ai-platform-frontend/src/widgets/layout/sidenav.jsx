@@ -11,19 +11,18 @@ export function Sidenav({ brandImg, brandName, routes }) {
   const [controller, dispatch] = useMaterialTailwindController();
   const { sidenavColor, sidenavType, openSidenav } = controller;
 
-  // Added gradients to the type classes
   const typeClass =
     {
       dark:
-        // Deep gradient from gray to blue-black
-        "bg-gradient-to-br from-gray-900 via-gray-800 to-blue-gray-900 text-white ring-1 ring-white/10 shadow-xl",
+        // deep gradient + soft ring
+        "bg-gradient-to-br from-gray-800 to-gray-900 text-white ring-1 ring-white/10",
       white:
-        // Subtle gradient from white to very light blue
-        "bg-gradient-to-b from-white to-blue-50 text-blue-gray-800 shadow-lg ring-1 ring-black/5",
+        // clean surface
+        "bg-white text-blue-gray-800 shadow-sm ring-1 ring-black/5",
       transparent:
-        // Glass gradient
-        "bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md text-white ring-1 ring-white/10",
-    }[sidenavType] || "bg-gradient-to-b from-white to-blue-50 text-blue-gray-800 ring-1 ring-black/5";
+        // glass panel
+        "bg-white/10 backdrop-blur-md text-white ring-1 ring-white/10",
+    }[sidenavType] || "bg-white text-blue-gray-800 ring-1 ring-black/5";
 
   // Only dashboard routes
   const dashboardRoutes = routes.filter(({ layout }) => layout === "dashboard");
@@ -38,15 +37,15 @@ export function Sidenav({ brandImg, brandName, routes }) {
         overflow-y-auto overflow-x-hidden overscroll-contain
       `}
     >
-      {/* 1. Animation Styles Injected Here */}
+      {/* Animation Styles */}
       <style>{`
-        @keyframes fadeSlideIn {
-          from { opacity: 0; transform: translateX(-10px); }
-          to { opacity: 1; transform: translateX(0); }
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .nav-item-animate {
           opacity: 0;
-          animation: fadeSlideIn 0.4s ease-out forwards;
+          animation: fadeSlideUp 0.5s ease-out forwards;
         }
       `}</style>
 
@@ -105,9 +104,8 @@ export function Sidenav({ brandImg, brandName, routes }) {
             {pages.map(({ icon, name, path, exact = true }, index) => (
               <li 
                 key={name}
-                // 2. Applied Animation Class with Staggered Delay
                 className="nav-item-animate"
-                style={{ animationDelay: `${(key * 3 + index) * 75}ms` }} 
+                style={{ animationDelay: `${(key * 3 + index) * 100}ms` }}
               >
                 <NavLink to={`/${layout}${path}`} end={exact} title={name}>
                   {({ isActive }) => (
@@ -127,7 +125,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
                             ? "focus-visible:ring-black/10"
                             : "focus-visible:ring-white/30"
                         }
-                        ${isActive ? "shadow-lg" : "opacity-90 hover:opacity-100 hover:bg-white/10"}
+                        ${isActive ? "" : "opacity-90 hover:opacity-100"}
                       `}
                       fullWidth
                       aria-current={isActive ? "page" : undefined}
