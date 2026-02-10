@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Typography,
@@ -25,9 +25,9 @@ import {
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; // Import Animation Library
 
-/* ---------- Helpers ---------- */
+/* ---------- helpers ---------- */
 
 function formatDateTime(isoString) {
   if (!isoString) return "N/A";
@@ -51,27 +51,6 @@ function formatDuration(seconds) {
   const s = (seconds % 60).toFixed(0);
   return `${m}m ${s}s`;
 }
-
-// Helper for Status Colors (Replaces nested ternary)
-const getStatusColor = (status) => {
-  switch (status) {
-    case "CORRECT": return "green";
-    case "REVEALED": return "blue";
-    case "CLOSE": return "orange";
-    case "INCORRECT": return "red";
-    default: return "blue-gray";
-  }
-};
-
-const getOverviewIcon = (status) => {
-  switch ((status || "").toUpperCase()) {
-    case "CORRECT": return { Icon: CheckCircleIcon, color: "text-green-500" };
-    case "INCORRECT":
-    case "CLOSE": return { Icon: XCircleIcon, color: "text-red-500" };
-    case "REVEALED": return { Icon: EyeIcon, color: "text-blue-500" };
-    default: return { Icon: ClockIcon, color: "text-gray-500" };
-  }
-};
 
 const lineChartOptions = {
   ...chartsConfig,
@@ -97,12 +76,30 @@ const lineChartOptions = {
   tooltip: { ...chartsConfig.tooltip, theme: "dark", x: { format: "dd MMM yyyy" } },
 };
 
-/* ---------- Animation Variants ---------- */
+const getOverviewIcon = (status) => {
+  switch ((status || "").toUpperCase()) {
+    case "CORRECT":
+      return { Icon: CheckCircleIcon, color: "text-green-500" };
+    case "INCORRECT":
+    case "CLOSE":
+      return { Icon: XCircleIcon, color: "text-red-500" };
+    case "REVEALED":
+      return { Icon: EyeIcon, color: "text-blue-500" };
+    default:
+      return { Icon: ClockIcon, color: "text-gray-500" };
+  }
+};
+
+// --- Animation Variants (Refined) ---
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
   }
 };
 
@@ -111,12 +108,23 @@ const itemVariants = {
   visible: { 
     y: 0, 
     opacity: 1,
-    transition: { type: "spring", stiffness: 300, damping: 24 }
+    transition: { type: "spring", stiffness: 260, damping: 20 }
   }
 };
 
+const tableRowVariants = {
+  hidden: { opacity: 0, x: -20 },
+  visible: (i) => ({
+    opacity: 1,
+    x: 0,
+    transition: { delay: i * 0.05, duration: 0.3 }
+  })
+};
+
+/* ---------- main ---------- */
+
 export function Home() {
-  const { user } = useAuth(); // Assuming useAuth might provide token in future, otherwise using localStorage is fine
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -127,12 +135,18 @@ export function Home() {
       try {
         setLoading(true);
         setError(null);
+        setStats(null);
+        setTimeSeriesData(null);
 
         const token = localStorage.getItem("token");
-        const config = { headers: { "Authorization": `Bearer ${token}` } };
         
-        // Use Env Variable for URL (Vite example)
-        const BASE_URL = import.meta.env.VITE_API_URL || "https://ai-platform-backend-vauw.onrender.com";
+        const config = {
+          headers: {
+            "Authorization": `Bearer ${token}` 
+          }
+        };
+
+        const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
         const [summaryRes, timeSeriesRes] = await Promise.all([
           axios.get(`${BASE_URL}/api/stats/summary`, config),
@@ -148,109 +162,12 @@ export function Home() {
       } catch (err) {
         console.error("Error fetching stats:", err);
         setError("Could not load statistics.");
-      } finally {
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     fetchAllData();
-  }, []); // Add dependencies if token/user changes frequently
-
-  /* ---------- Data Preparation (Memoized) ---------- */
-
-  const statisticsCardsData = useMemo(() => {
-    if (!stats) return [];
-    return [
-      {
-        title: "Total Attempts",
-        icon: ArrowPathIcon,
-        color: "gray",
-        value: stats.totalAttempts,
-        footer: { label: "in total" },
-      },
-      {
-        title: "Correct Answers",
-        icon: CheckIcon,
-        color: "green",
-        value: stats.correctCount,
-        footer: { label: "in total" },
-      },
-      {
-        title: "Incorrect Answers",
-        icon: XMarkIcon,
-        color: "red",
-        value: stats.incorrectCount,
-        footer: { label: "in total" },
-      },
-      {
-        title: "Overall Accuracy",
-        icon: ChartBarIcon,
-        color: "blue",
-        value: `${stats.accuracyPercentage.toFixed(1)}%`,
-        footer: { label: "of graded attempts" },
-      },
-    ];
-  }, [stats]);
-
-  const { accuracyChart, speedChart, breakdownChart } = useMemo(() => {
-    if (!timeSeriesData || !stats) return {};
-
-    const chartLabels = timeSeriesData.map((d) =>
-      new Date(d.date).toLocaleString("en-US", { day: "numeric", month: "short" })
-    );
-
-    return {
-      accuracyChart: {
-        type: "line",
-        height: 220,
-        series: [{ name: "Accuracy", data: timeSeriesData.map((d) => d.accuracy.toFixed(1)) }],
-        options: {
-          ...lineChartOptions,
-          colors: ["#22c55e"],
-          xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
-          yaxis: {
-            ...lineChartOptions.yaxis,
-            min: 0,
-            max: 100,
-            labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => `${v}%` },
-          },
-          tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => `${v}%` } },
-        },
-      },
-      speedChart: {
-        type: "line",
-        height: 220,
-        series: [{ name: "Avg. Speed", data: timeSeriesData.map((d) => d.averageSpeedSeconds.toFixed(1)) }],
-        options: {
-          ...lineChartOptions,
-          colors: ["#f59e0b"],
-          xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
-          yaxis: {
-            ...lineChartOptions.yaxis,
-            labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => formatDuration(v) },
-          },
-          tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => formatDuration(v) } },
-        },
-      },
-      breakdownChart: {
-        type: "pie",
-        height: 220,
-        series: [stats.correctCount, stats.incorrectCount, stats.revealedCount],
-        options: {
-          ...chartsConfig,
-          chart: { ...chartsConfig.chart, type: "pie" },
-          title: { show: "" },
-          dataLabels: { enabled: false },
-          colors: ["#22c55e", "#ef4444", "#6b7280"],
-          legend: { show: true, position: "bottom", labels: { colors: "#37474f" } },
-          labels: ["Correct", "Incorrect", "Revealed"],
-        },
-      }
-    };
-  }, [timeSeriesData, stats]);
-
-
-  /* ---------- Render ---------- */
+  }, []);
 
   if (loading) {
     return (
@@ -268,12 +185,106 @@ export function Home() {
     );
   }
 
-  if (!stats || !timeSeriesData) return null;
+  if (!stats || !timeSeriesData) {
+    return (
+      <Typography color="gray" className="text-center mt-12">
+        No statistics data available yet.
+      </Typography>
+    );
+  }
+
+  /* ---------- data wiring ---------- */
+
+  const statisticsCardsData = [
+    {
+      title: "Total Attempts",
+      icon: ArrowPathIcon,
+      color: "gray",
+      value: stats.totalAttempts,
+      footer: { value: "", label: "in total" },
+    },
+    {
+      title: "Correct Answers",
+      icon: CheckIcon,
+      color: "green",
+      value: stats.correctCount,
+      footer: { value: "", label: "in total" },
+    },
+    {
+      title: "Incorrect Answers",
+      icon: XMarkIcon,
+      color: "red",
+      value: stats.incorrectCount,
+      footer: { value: "", label: "in total" },
+    },
+    {
+      title: "Overall Accuracy",
+      icon: ChartBarIcon,
+      color: "blue",
+      value: `${stats.accuracyPercentage.toFixed(1)}%`,
+      footer: { value: "", label: "of graded attempts" },
+    },
+  ];
+
+  const chartLabels = timeSeriesData.map((d) =>
+    new Date(d.date).toLocaleString("en-US", { day: "numeric", month: "short" })
+  );
+
+  const accuracyChart = {
+    type: "line",
+    height: 220,
+    series: [{ name: "Accuracy", data: timeSeriesData.map((d) => d.accuracy.toFixed(1)) }],
+    options: {
+      ...lineChartOptions,
+      colors: ["#22c55e"],
+      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
+      yaxis: {
+        ...lineChartOptions.yaxis,
+        min: 0,
+        max: 100,
+        labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => `${v}%` },
+      },
+      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => `${v}%` } },
+    },
+  };
+
+  const speedChart = {
+    type: "line",
+    height: 220,
+    series: [{ name: "Avg. Speed", data: timeSeriesData.map((d) => d.averageSpeedSeconds.toFixed(1)) }],
+    options: {
+      ...lineChartOptions,
+      colors: ["#f59e0b"],
+      xaxis: { ...lineChartOptions.xaxis, categories: chartLabels },
+      yaxis: {
+        ...lineChartOptions.yaxis,
+        labels: { ...lineChartOptions.yaxis.labels, formatter: (v) => formatDuration(v) },
+      },
+      tooltip: { ...lineChartOptions.tooltip, y: { formatter: (v) => formatDuration(v) } },
+    },
+  };
+
+  const breakdownChart = {
+    type: "pie",
+    height: 220,
+    series: [stats.correctCount, stats.incorrectCount, stats.revealedCount],
+    options: {
+      ...chartsConfig,
+      chart: { ...chartsConfig.chart, type: "pie" },
+      title: { show: "" },
+      dataLabels: { enabled: false },
+      colors: ["#22c55e", "#ef4444", "#6b7280"],
+      legend: { show: true, position: "bottom", labels: { colors: "#37474f" } },
+      labels: ["Correct", "Incorrect", "Revealed"],
+    },
+  };
+
+  /* ---------- UI ---------- */
 
   return (
     <div className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)] overflow-hidden">
       
-      {/* Background */}
+      {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
         <motion.div 
@@ -294,7 +305,7 @@ export function Home() {
         initial="hidden"
         animate="visible"
       >
-        {/* Header */}
+        {/* Welcome header */}
         <motion.div variants={itemVariants} className="mb-8">
           <div className="rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-6 py-5 shadow-sm">
             <div className="flex flex-wrap items-baseline gap-3">
@@ -314,8 +325,11 @@ export function Home() {
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
-        <motion.div variants={itemVariants} className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+        {/* Row 1: Stat cards - Staggered */}
+        <motion.div 
+          variants={itemVariants} 
+          className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
+        >
           {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
             <motion.div
               key={title}
@@ -332,58 +346,75 @@ export function Home() {
           ))}
         </motion.div>
 
-        {/* Charts */}
+        {/* Row 2: Charts */}
         <motion.div variants={itemVariants} className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-           <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm">
+          <motion.div 
+             whileHover={{ y: -3, transition: { duration: 0.2 } }}
+             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+          >
             <StatisticsChart
               key="accuracy-chart"
               chart={accuracyChart}
+              color="transparent"
               title="Daily Accuracy"
               description="Percentage of correct answers over time."
               footer={
                 <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />&nbsp;Updated just now
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+                  &nbsp;Updated just now
                 </Typography>
               }
             />
-          </div>
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm">
+          </motion.div>
+
+          <motion.div 
+             whileHover={{ y: -3, transition: { duration: 0.2 } }}
+             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+          >
             <StatisticsChart
               key="speed-chart"
               chart={speedChart}
+              color="transparent"
               title="Average Answer Speed"
               description="Average time to a correct submission."
               footer={
                 <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />&nbsp;Updated just now
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+                  &nbsp;Updated just now
                 </Typography>
               }
             />
-          </div>
-          <div className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm">
+          </motion.div>
+
+          <motion.div 
+             whileHover={{ y: -3, transition: { duration: 0.2 } }}
+             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+          >
             <StatisticsChart
               key="breakdown-chart"
               chart={breakdownChart}
+              color="transparent"
               className="flex flex-col justify-between h-full"
               title={<div className="mt-12">Answer Breakdown</div>}
               description="Summary of all practice attempts."
               footer={
                 <Typography variant="small" className="flex items-center font-normal text-blue-gray-600">
-                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />&nbsp;Updated just now
+                  <ClockIcon strokeWidth={2} className="h-4 w-4 text-blue-gray-400" />
+                  &nbsp;Updated just now
                 </Typography>
               }
             />
-          </div>
+          </motion.div>
         </motion.div>
 
-        {/* Recent Activity Table & List */}
+        {/* Row 3: Table & Feed */}
         <motion.div variants={itemVariants} className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-          
-          {/* Main Table */}
           <Card className="overflow-hidden xl:col-span-2 border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
               <div>
-                <Typography variant="h6" color="blue-gray" className="mb-1">Recent Activity</Typography>
+                <Typography variant="h6" color="blue-gray" className="mb-1">
+                  Recent Activity
+                </Typography>
                 <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
                   <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
                   <strong>{stats.totalAttempts} attempts</strong> in total
@@ -391,7 +422,8 @@ export function Home() {
               </div>
               <Link to="/dashboard/practice">
                 <Button variant="text" size="sm" className="flex items-center gap-2 hover:bg-blue-50">
-                  <PencilIcon className="h-4 w-4" /> Start Practice
+                  <PencilIcon className="h-4 w-4" />
+                  Start Practice
                 </Button>
               </Link>
             </CardHeader>
@@ -412,9 +444,16 @@ export function Home() {
                 <tbody>
                   {stats.recentActivity.map((item, key) => {
                     const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
-                    const uniqueKey = item._id || `${item.questionId}-${item.submittedAt}`; // Prefer DB ID
+                    const uniqueKey = `${item.questionId}-${item.submittedAt}`;
                     return (
-                      <tr key={uniqueKey} className="hover:bg-gray-50/50 transition-colors">
+                      <motion.tr 
+                        key={uniqueKey} 
+                        custom={key}
+                        variants={tableRowVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="hover:bg-gray-50/50 transition-colors"
+                      >
                         <td className={className}>
                           <Typography className="text-xs font-normal text-blue-gray-500">
                             {item.questionText.substring(0, 40)}...
@@ -428,7 +467,15 @@ export function Home() {
                         <td className={className}>
                           <Chip
                             variant="gradient"
-                            color={getStatusColor(item.evaluationStatus)}
+                            color={
+                              item.evaluationStatus === "CORRECT"
+                                ? "green"
+                                : item.evaluationStatus === "REVEALED"
+                                ? "blue"
+                                : item.evaluationStatus === "CLOSE"
+                                ? "orange"
+                                : "red"
+                            }
                             value={item.evaluationStatus.toLowerCase()}
                             className="py-0.5 px-2 text-[11px] font-medium w-fit"
                           />
@@ -438,7 +485,7 @@ export function Home() {
                             {formatDateTime(item.submittedAt)}
                           </Typography>
                         </td>
-                      </tr>
+                      </motion.tr>
                     );
                   })}
                 </tbody>
@@ -446,23 +493,32 @@ export function Home() {
             </CardBody>
           </Card>
 
-          {/* Side List (Timeline) */}
           <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6">
-              <Typography variant="h6" color="blue-gray" className="mb-2">Submission Overview</Typography>
+              <Typography variant="h6" color="blue-gray" className="mb-2">
+                Submission Overview
+              </Typography>
               <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
                 Your latest 5 attempts.
               </Typography>
             </CardHeader>
             <CardBody className="pt-0">
-              {stats.recentActivity.slice(0, 5).map((item, key) => {
+              {stats.recentActivity.map((item, key) => {
                 const { Icon, color } = getOverviewIcon(item.evaluationStatus);
-                const uniqueKey = item._id ? `${item._id}-overview` : `${item.questionId}-${item.submittedAt}-${key}`;
-                const isLast = key === 4 || key === stats.recentActivity.length - 1;
-                
+                const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
                 return (
-                  <div key={uniqueKey} className="flex items-start gap-4 py-3">
-                    <div className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${isLast ? "after:h-0" : "after:h-4/6"}`}>
+                  <motion.div 
+                    key={uniqueKey} 
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + (key * 0.1), type: "spring", stiffness: 100 }}
+                    className="flex items-start gap-4 py-3"
+                  >
+                    <div
+                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
+                        key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
+                      }`}
+                    >
                       <Icon className={`!w-5 !h-5 ${color}`} />
                     </div>
                     <div>
@@ -473,12 +529,11 @@ export function Home() {
                         {formatDateTime(item.submittedAt)}
                       </Typography>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </CardBody>
           </Card>
-
         </motion.div>
       </motion.div>
     </div>
