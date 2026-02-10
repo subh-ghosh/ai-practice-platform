@@ -32,7 +32,10 @@ export function Sidenav({ brandImg, brandName, routes }) {
       className={`
         ${typeClass}
         ${openSidenav ? "translate-x-0" : "-translate-x-80"}
-        fixed inset-0 z-50 my-4 ml-4 h-[calc(100vh-32px)] w-72
+        fixed inset-0 z-50 my-4 ml-4 
+        /* CHANGED HEIGHT FROM 32px TO 64px TO MOVE BORDER UP */
+        h-[calc(100vh-64px)] 
+        w-72
         rounded-xl transition-transform duration-300 xl:translate-x-0
         overflow-y-auto overflow-x-hidden overscroll-contain
       `}
