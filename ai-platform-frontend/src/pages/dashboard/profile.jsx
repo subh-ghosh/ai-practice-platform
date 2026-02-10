@@ -21,7 +21,6 @@ import {
   ShieldCheckIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  FingerPrintIcon
 } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProfileInfoCard } from "@/widgets/cards";
@@ -31,7 +30,7 @@ import { useTheme } from "@/context/ThemeProvider.jsx";
 /* ============================ Config ============================ */
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
-// --- Animation Variants (Unified) ---
+// --- Animation Variants ---
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -71,7 +70,7 @@ function EditForm({
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4"
     >
       {/* Personal Details Card */}
       <motion.div variants={itemVariants}>
@@ -219,7 +218,7 @@ function SecurityPanel({
       initial="hidden"
       animate="visible"
       exit="exit"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4"
     >
       {/* Password Change */}
       <motion.div variants={itemVariants}>
@@ -436,7 +435,7 @@ export function Profile() {
   return (
     <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
-      {/* Animated Background Gradient (Exactly like Notification) */}
+      {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div 
           animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
@@ -453,7 +452,7 @@ export function Profile() {
       {/* Main Content Wrapper */}
       <div className="relative z-10 p-6 flex flex-col gap-5 h-full">
         
-        {/* Header Section (Fixed at top of container) */}
+        {/* Header Section (Fixed at top) */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
           <div className="flex items-center gap-4">
              <Avatar 
@@ -505,10 +504,11 @@ export function Profile() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
+                        className="mt-8" /* MOVED DOWN */
                     >
                          <motion.div variants={itemVariants} className="w-full">
-                            {/* Wrapping external widget in unified glass style */}
-                            <div className="bg-white dark:bg-gray-800 border border-blue-gray-50 dark:border-blue-900/30 shadow-sm rounded-xl overflow-hidden">
+                            {/* ADDED TOP BORDER ACCENT */}
+                            <div className="bg-white dark:bg-gray-800 border border-blue-gray-50 dark:border-blue-900/30 border-t-4 border-t-blue-500 shadow-sm rounded-xl overflow-hidden">
                                 <CardBody className="p-0">
                                     <ProfileInfoCard
                                         title="About Me"
