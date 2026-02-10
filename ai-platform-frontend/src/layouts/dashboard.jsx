@@ -1,3 +1,4 @@
+import React, { useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import {
   Sidenav,
@@ -5,47 +6,55 @@ import {
   Footer,
 } from "@/widgets/layout";
 import routes from "@/routes";
-import { useMaterialTailwindController, setSidenavType } from "@/context"; // 👈 --- IMPORT setSidenavType
-import { useTheme } from "@/context/ThemeContext"; // 👈 --- IMPORT useTheme
-import React from "react"; // 👈 --- IMPORT React
+import { 
+  useMaterialTailwindController, 
+  setSidenavType 
+} from "@/context";
+import { useTheme } from "@/context/ThemeContext";
 
 export function Dashboard() {
-  const [controller, dispatch] = useMaterialTailwindController(); // 👈 --- GET dispatch
+  const [controller, dispatch] = useMaterialTailwindController();
   const { sidenavType } = controller;
-  const { theme } = useTheme(); // 👈 --- GET theme
+  const { theme } = useTheme();
 
-  // --- THIS IS THE FIX ---
-  // Syncs the sidenav's visual style (light/dark) with the global theme
-  React.useEffect(() => {
-    if (theme === "dark") {
-      setSidenavType(dispatch, "dark");
-    } else {
-      setSidenavType(dispatch, "white");
+  // --- THEME SYNC LOGIC ---
+  // Syncs the sidenav's visual style (light/dark) with the global theme.
+  // We added a check to ensure we only dispatch if the value is actually different.
+  useEffect(() => {
+    const targetType = theme === "dark" ? "dark" : "white";
+    
+    if (sidenavType !== targetType) {
+      setSidenavType(dispatch, targetType);
     }
-  }, [theme, dispatch]);
-  // --- END OF FIX ---
+  }, [theme, dispatch, sidenavType]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
       <Sidenav
         routes={routes}
         brandImg={
           sidenavType === "dark" ? "/img/logo-ct.png" : "/img/logo-ct-dark.png"
         }
       />
-      <div className="p-4 xl:ml-80 dashboard-content">
+      
+      <div className="p-4 xl:ml-80">
         <DashboardNavbar />
-
+        
         <Routes>
-          {routes.map(
-            ({ layout, pages }) =>
-              layout === "dashboard" &&
-              pages.map(({ path, element }) => (
-                <Route exact path={path} element={element} />
-              ))
+          {routes.map(({ layout, pages }) =>
+            layout === "dashboard" &&
+            pages.map(({ path, element }) => (
+              <Route 
+                exact 
+                path={path} 
+                element={element} 
+                key={path} // <--- FIXED: Added unique key
+              />
+            ))
           )}
         </Routes>
-        <div className="text-blue-gray-600">
+        
+        <div className="text-blue-gray-600 mt-8">
           <Footer />
         </div>
       </div>
