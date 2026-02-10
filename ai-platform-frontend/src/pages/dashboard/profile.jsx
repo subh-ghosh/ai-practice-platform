@@ -21,10 +21,12 @@ import {
   UserCircleIcon,
   ShieldCheckIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  IdentificationIcon
 } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
-import { ProfileInfoCard } from "@/widgets/cards";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeProvider.jsx";
 
@@ -36,12 +38,12 @@ const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+    transition: { staggerChildren: 0.05, delayChildren: 0.1 },
   },
 };
 
 const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 10, opacity: 0 },
   visible: {
     y: 0,
     opacity: 1,
@@ -49,8 +51,88 @@ const itemVariants = {
   },
 };
 
-/* ============================ Sub-Components ============================ */
+/* ============================ Custom Components ============================ */
 
+// 1. Better looking Input Field wrapper
+const CustomInput = ({ label, ...props }) => (
+  <div className="w-full">
+    <Input
+      variant="outlined"
+      label={label}
+      color="blue"
+      className="text-blue-gray-900 dark:text-white bg-white/50 dark:bg-black/20 border-blue-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400"
+      labelProps={{
+        className: "text-blue-gray-500 dark:text-gray-400 peer-placeholder-shown:text-blue-gray-500",
+      }}
+      containerProps={{ className: "min-w-[100px]" }}
+      {...props}
+    />
+  </div>
+);
+
+// 2. Profile Details Row (for the Read-Only tab)
+const ProfileDetailRow = ({ icon: Icon, label, value }) => (
+  <div className="flex items-center gap-4 p-3 rounded-lg bg-blue-gray-50/50 dark:bg-gray-800/30 border border-blue-gray-50 dark:border-gray-700/50">
+    <div className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm shrink-0">
+      <Icon className="h-5 w-5 text-blue-500" />
+    </div>
+    <div className="flex flex-col">
+      <Typography variant="small" className="font-normal text-blue-gray-500 dark:text-gray-400 text-[10px] uppercase tracking-wide">
+        {label}
+      </Typography>
+      <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 text-sm font-medium">
+        {value}
+      </Typography>
+    </div>
+  </div>
+);
+
+/* ============================ Tab Components ============================ */
+
+// --- TAB 1: Read-Only Profile (Stretched to fit height) ---
+function ProfileView({ user, onEdit }) {
+  const details = [
+    { label: "Full Name", value: `${user?.firstName} ${user?.lastName}`, icon: UserCircleIcon },
+    { label: "Email Address", value: user?.email, icon: EnvelopeIcon },
+    { label: "Account Type", value: "Student", icon: IdentificationIcon },
+    { label: "Location", value: "India", icon: MapPinIcon },
+    { label: "Gender", value: (user?.gender || "Male"), icon: UserCircleIcon }, // capitalized in UI
+  ];
+
+  return (
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" className="h-full w-full">
+      <Card className="h-full w-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
+        <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-4 border-b border-blue-gray-50 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-white/5">
+          <Typography variant="h6" color="blue-gray" className="dark:text-white flex items-center gap-2">
+            <UserCircleIcon className="h-5 w-5 text-blue-500" />
+            About Me
+          </Typography>
+          <Tooltip content="Edit Profile">
+             <Button size="sm" variant="text" className="flex items-center gap-2" onClick={onEdit}>
+                <PencilIcon className="h-4 w-4" /> Edit
+             </Button>
+          </Tooltip>
+        </CardHeader>
+        
+        <CardBody className="p-6 flex-1 overflow-y-auto">
+          <Typography variant="paragraph" className="mb-6 font-normal text-blue-gray-500 dark:text-gray-400">
+            Student on AI Practice Platform. Managing learning goals and tracking progress.
+          </Typography>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             {details.map((item, idx) => (
+                <motion.div key={idx} variants={itemVariants}>
+                  <ProfileDetailRow {...item} />
+                </motion.div>
+             ))}
+          </div>
+        </CardBody>
+      </Card>
+    </motion.div>
+  );
+}
+
+// --- TAB 2: Edit Form (Split Grid) ---
 function EditForm({
   firstName,
   lastName,
@@ -69,113 +151,59 @@ function EditForm({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full"
     >
-      {/* LEFT: Name */}
-      <motion.div variants={itemVariants} className="h-full">
-        <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-blue-gray-50 dark:border-gray-700/50">
-            <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2 text-sm">
-              <UserCircleIcon className="h-4 w-4 text-blue-500" />
+      {/* LEFT COL */}
+      <motion.div variants={itemVariants} className="h-full flex flex-col">
+        <Card className="h-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-4 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
+            <Typography variant="h6" className="dark:text-white flex items-center gap-2">
+              <UserCircleIcon className="h-5 w-5 text-blue-500" />
               Personal Details
             </Typography>
           </CardHeader>
-          <CardBody className="p-4 flex flex-col gap-3 flex-1">
-            <AnimatePresence>
-                {error && (
+          <CardBody className="p-6 flex flex-col gap-5 flex-1">
+             <AnimatePresence>
+                {(error || success) && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="red" className="py-2 px-3 text-xs" icon={<ExclamationTriangleIcon className="h-4 w-4" />}>{error}</Alert>
+                        <Alert color={error ? "red" : "green"} className="py-2 px-3 text-xs" icon={error ? <ExclamationTriangleIcon className="h-4 w-4"/> : <CheckCircleIcon className="h-4 w-4"/>}>
+                            {error || success}
+                        </Alert>
                     </motion.div>
                 )}
-                {success && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="green" className="py-2 px-3 text-xs" icon={<CheckCircleIcon className="h-4 w-4" />}>{success}</Alert>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <Input
-              label="First Name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              required
-              color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
-            />
-            <Input
-              label="Last Name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
-            />
+             </AnimatePresence>
+             <CustomInput label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
+             <CustomInput label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </CardBody>
         </Card>
       </motion.div>
 
-      {/* RIGHT: Contact + Gender */}
-      <motion.div variants={itemVariants} className="h-full">
-        <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-blue-gray-50 dark:border-gray-700/50">
-            <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2 text-sm">
-               <PencilIcon className="h-4 w-4 text-purple-500" />
+      {/* RIGHT COL */}
+      <motion.div variants={itemVariants} className="h-full flex flex-col">
+        <Card className="h-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-4 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
+            <Typography variant="h6" className="dark:text-white flex items-center gap-2">
+               <PencilIcon className="h-5 w-5 text-purple-500" />
                Preferences
             </Typography>
           </CardHeader>
 
           <form onSubmit={onSubmit} className="flex flex-col h-full flex-1">
-            <CardBody className="p-4 flex flex-col gap-3 flex-1">
-              <Input
-                label="Email Address"
-                value={email || ""}
-                disabled
-                className="!border-t-blue-gray-200 focus:!border-t-gray-900 dark:text-gray-400"
-                labelProps={{
-                  className: "before:content-none after:content-none",
-                }}
-                containerProps={{ className: "opacity-70 cursor-not-allowed" }}
-              />
-
-              <div>
-                <Typography variant="small" color="blue-gray" className="font-semibold dark:text-gray-200 mb-2">
-                  Gender
-                </Typography>
-                <div className="flex gap-4">
-                  <Radio
-                    name="gender"
-                    label="Male"
-                    value="male"
-                    checked={gender === "male"}
-                    onChange={(e) => setGender(e.target.value)}
-                    color="blue"
-                    labelProps={{ className: "dark:text-gray-300 font-medium text-sm" }}
-                  />
-                  <Radio
-                    name="gender"
-                    label="Female"
-                    value="female"
-                    checked={gender === "female"}
-                    onChange={(e) => setGender(e.target.value)}
-                    color="pink"
-                    labelProps={{ className: "dark:text-gray-300 font-medium text-sm" }}
-                  />
+            <CardBody className="p-6 flex flex-col gap-5 flex-1">
+              <CustomInput label="Email Address" value={email || ""} disabled />
+              
+              <div className="p-3 rounded-lg border border-blue-gray-100 dark:border-gray-700/50 bg-blue-gray-50/20 dark:bg-black/20">
+                <Typography variant="small" className="font-semibold dark:text-gray-200 mb-2">Gender</Typography>
+                <div className="flex gap-6">
+                  <Radio name="gender" label="Male" value="male" checked={gender === "male"} onChange={(e) => setGender(e.target.value)} color="blue" labelProps={{ className: "dark:text-gray-300" }} />
+                  <Radio name="gender" label="Female" value="female" checked={gender === "female"} onChange={(e) => setGender(e.target.value)} color="pink" labelProps={{ className: "dark:text-gray-300" }} />
                 </div>
               </div>
             </CardBody>
             
-            <div className="p-4 pt-0 mt-auto">
-                <Button
-                    type="submit"
-                    variant="gradient"
-                    color="blue"
-                    fullWidth
-                    size="sm"
-                    disabled={saving}
-                    className="flex items-center justify-center gap-2"
-                >
-                    {saving ? <Spinner className="h-3 w-3" /> : "Save Changes"}
+            <div className="p-6 pt-0 mt-auto">
+                <Button type="submit" variant="gradient" color="blue" fullWidth className="flex items-center justify-center gap-2 shadow-blue-500/20">
+                    {saving ? <Spinner className="h-4 w-4" /> : "Save Changes"}
                 </Button>
             </div>
           </form>
@@ -185,6 +213,7 @@ function EditForm({
   );
 }
 
+// --- TAB 3: Security (Split Grid) ---
 function SecurityPanel({
   oldPassword,
   newPassword,
@@ -197,112 +226,67 @@ function SecurityPanel({
   error,
   success,
 }) {
-
   return (
     <motion.div 
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full"
     >
-      {/* LEFT: Password Change */}
-      <motion.div variants={itemVariants} className="h-full">
-        <Card className="h-full w-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-blue-gray-50 dark:border-gray-700/50">
-              <Typography variant="h6" color="blue-gray" className="dark:text-gray-100 flex items-center gap-2 text-sm">
-                <ShieldCheckIcon className="h-4 w-4 text-green-500" />
-                Password & Security
+      <motion.div variants={itemVariants} className="h-full flex flex-col">
+        <Card className="h-full border border-blue-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900/50 shadow-sm flex flex-col">
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-4 border-b border-blue-gray-50 dark:border-gray-800 bg-gray-50/50 dark:bg-white/5">
+              <Typography variant="h6" className="dark:text-white flex items-center gap-2">
+                <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+                Password Update
             </Typography>
           </CardHeader>
 
           <form onSubmit={onChangePassword} className="flex flex-col h-full flex-1">
-            <CardBody className="p-4 flex flex-col gap-3 flex-1">
+            <CardBody className="p-6 flex flex-col gap-5 flex-1">
                <AnimatePresence>
-                {error && (
+                {(error || success) && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="red" className="py-2 px-3 text-xs" icon={<ExclamationTriangleIcon className="h-4 w-4" />}>{error}</Alert>
-                    </motion.div>
-                )}
-                {success && (
-                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                        <Alert color="green" className="py-2 px-3 text-xs" icon={<CheckCircleIcon className="h-4 w-4" />}>{success}</Alert>
+                        <Alert color={error ? "red" : "green"} className="py-2 px-3 text-xs" icon={error ? <ExclamationTriangleIcon className="h-4 w-4"/> : <CheckCircleIcon className="h-4 w-4"/>}>
+                            {error || success}
+                        </Alert>
                     </motion.div>
                 )}
                </AnimatePresence>
-
-              <Input
-                type="password"
-                label="Current Password"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                required
-                disabled={changing}
-                color="blue"
-                className="dark:text-white"
-                labelProps={{ className: "dark:text-gray-400" }}
-              />
-              <Input
-                type="password"
-                label="New Password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                disabled={changing}
-                color="blue"
-                className="dark:text-white"
-                labelProps={{ className: "dark:text-gray-400" }}
-              />
+              <CustomInput type="password" label="Current Password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} required disabled={changing} />
+              <CustomInput type="password" label="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required disabled={changing} />
             </CardBody>
-            <div className="p-4 pt-0 mt-auto">
-                  <Button
-                    type="submit"
-                    variant="gradient"
-                    color="gray"
-                    fullWidth
-                    size="sm"
-                    disabled={changing}
-                    className="flex items-center justify-center gap-2"
-                >
-                    {changing ? <Spinner className="h-3 w-3" /> : "Update Password"}
+            <div className="p-6 pt-0 mt-auto">
+                  <Button type="submit" variant="gradient" color="gray" fullWidth disabled={changing} className="flex items-center justify-center gap-2">
+                    {changing ? <Spinner className="h-4 w-4" /> : "Update Password"}
                 </Button>
             </div>
           </form>
         </Card>
       </motion.div>
 
-      {/* RIGHT: Danger Zone */}
-      <motion.div variants={itemVariants} className="h-full">
-        <Card className="h-full w-full border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 backdrop-blur-sm shadow-none flex flex-col">
-          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-3 border-b border-red-100 dark:border-red-900/30">
-              <Typography variant="h6" color="red" className="flex items-center gap-2 text-sm">
-                <ExclamationTriangleIcon className="h-4 w-4" />
+      <motion.div variants={itemVariants} className="h-full flex flex-col">
+        <Card className="h-full border border-red-100 dark:border-red-900/30 bg-red-50/30 dark:bg-red-900/10 shadow-none flex flex-col">
+          <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-4 border-b border-red-100 dark:border-red-900/30">
+              <Typography variant="h6" color="red" className="flex items-center gap-2">
+                <ExclamationTriangleIcon className="h-5 w-5" />
                 Danger Zone
             </Typography>
           </CardHeader>
 
-          <CardBody className="p-4 flex flex-col justify-between flex-1 gap-2">
-            <div className="rounded-lg bg-white/60 dark:bg-black/20 p-3 border border-red-100 dark:border-red-900/20">
-               <Typography variant="small" className="font-bold text-red-900 dark:text-red-200 mb-1 text-xs">
-                 Before you delete:
+          <CardBody className="p-6 flex flex-col justify-between flex-1 gap-4">
+            <div className="rounded-lg bg-white/60 dark:bg-black/20 p-4 border border-red-100 dark:border-red-900/20">
+               <Typography variant="small" className="font-bold text-red-900 dark:text-red-200 mb-2">
+                 Permanently Delete Account
                </Typography>
-               <ul className="list-disc pl-4 text-[10px] text-red-800/80 dark:text-red-300/80 space-y-0.5">
-                 <li>All your practice history will be lost.</li>
-                 <li>Any active subscriptions will be cancelled.</li>
-                 <li>This action cannot be undone.</li>
-               </ul>
+               <Typography variant="small" className="text-red-800/80 dark:text-red-300/80 text-xs leading-relaxed">
+                 All your practice history will be lost. Any active subscriptions will be cancelled immediately. This action cannot be undone.
+               </Typography>
             </div>
 
             <div className="mt-auto">
-              <Button
-                variant="outlined"
-                color="red"
-                size="sm"
-                fullWidth
-                onClick={onDeleteAccount}
-                disabled={deleting}
-                className="bg-white hover:bg-red-50 focus:ring-red-200 dark:bg-transparent dark:hover:bg-red-900/20"
-              >
-                {deleting ? <Spinner className="h-3 w-3 mx-auto text-red-500" /> : "Delete My Account"}
+              <Button variant="outlined" color="red" fullWidth onClick={onDeleteAccount} disabled={deleting} className="bg-white hover:bg-red-50 dark:bg-transparent dark:hover:bg-red-900/20 border-red-200 dark:border-red-800">
+                {deleting ? <Spinner className="h-4 w-4 mx-auto text-red-500" /> : "Delete My Account"}
               </Button>
             </div>
           </CardBody>
@@ -312,7 +296,7 @@ function SecurityPanel({
   );
 }
 
-/* ================================ Page ================================ */
+/* ================================ Main Page ================================ */
 export function Profile() {
   const { user, updateUser, logout } = useAuth();
   const { theme } = useTheme();
@@ -342,154 +326,100 @@ export function Profile() {
   }, [user]);
 
   useEffect(() => {
-    setEditError(null);
-    setEditSuccess(null);
-    setSecError(null);
-    setSecSuccess(null);
+    setEditError(null); setEditSuccess(null); setSecError(null); setSecSuccess(null);
   }, [activeTab]);
 
   const maleAvatar = "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/man-user-circle-icon.png";
   const femaleAvatar = "https://uxwing.com/wp-content/themes/uxwing/download/peoples-avatars/woman-user-circle-icon.png";
   const avatarSrc = (gender || user?.gender) === "female" ? femaleAvatar : maleAvatar;
 
-  // --- Handlers ---
-
+  // --- Handlers (Same as before) ---
   const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-    setSavingProfile(true);
-    setEditError(null);
-    setEditSuccess(null);
-    
+    e.preventDefault(); setSavingProfile(true); setEditError(null); setEditSuccess(null);
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { "Authorization": `Bearer ${token}` } };
       const res = await axios.put(`${BASE_URL}/api/students/profile`, { firstName, lastName, gender }, config);
-
-      try {
-        if(updateUser && res.data) updateUser(res.data);
-      } catch (ctxErr) { console.warn("Context update warning:", ctxErr); }
-
+      if(updateUser && res.data) updateUser(res.data);
       setEditSuccess("Profile updated successfully!");
     } catch (err) {
-      console.error("Profile update error:", err);
-      let msg = "Failed to update profile.";
-      if (err.response?.data) {
-        const data = err.response.data;
-        msg = typeof data === "string" ? data : (data.message || data.error || msg);
-      }
-      setEditError(msg);
-    } finally {
-      setSavingProfile(false);
-    }
+      setEditError("Failed to update profile.");
+    } finally { setSavingProfile(false); }
   };
 
   const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    setChangingPassword(true);
-    setSecError(null);
-    setSecSuccess(null);
-    
+    e.preventDefault(); setChangingPassword(true); setSecError(null); setSecSuccess(null);
     try {
         const token = localStorage.getItem("token");
         const config = { headers: { "Authorization": `Bearer ${token}` } };
         await axios.put(`${BASE_URL}/api/students/password`, { oldPassword, newPassword }, config);
-        
-        setSecSuccess("Password changed successfully!");
-        setOldPassword("");
-        setNewPassword("");
-    } catch (err) {
-        let msg = "Failed to change password.";
-        if (err.response?.data) {
-            const data = err.response.data;
-            msg = typeof data === "string" ? data : (data.message || msg);
-        }
-        setSecError(msg);
-    } finally {
-      setChangingPassword(false);
-    }
+        setSecSuccess("Password changed successfully!"); setOldPassword(""); setNewPassword("");
+    } catch (err) { setSecError("Failed to change password."); } finally { setChangingPassword(false); }
   };
 
   const handleDeleteAccount = async () => {
-    const ok = window.confirm("Are you sure? This cannot be undone.");
-    if (!ok) return;
+    if (!window.confirm("Are you sure?")) return;
     setDeletingAccount(true);
     try {
       const token = localStorage.getItem("token");
-      const config = { headers: { "Authorization": `Bearer ${token}` } };
-      await axios.delete(`${BASE_URL}/api/students/account`, config);
+      await axios.delete(`${BASE_URL}/api/students/account`, { headers: { "Authorization": `Bearer ${token}` } });
       logout();
-    } catch {
-      setSecError("Failed to delete account.");
-      setDeletingAccount(false);
-    }
+    } catch { setSecError("Failed to delete account."); setDeletingAccount(false); }
   };
 
   return (
-    // FIX 1: Changed h-full to h-[calc(100%-1.5rem)] and added mt-6 to create the gap
+    // Fixed Height Container + Top Margin
     <div className="relative w-full h-[calc(100%-1.5rem)] mt-6 flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
-      {/* Background Gradient */}
+      {/* Background Ambience */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <motion.div
-          animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]"
-        />
-        <motion.div
-          animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
-          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]"
-        />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-500/5 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-500/5 blur-[120px]" />
       </div>
 
       <div className="relative z-10 p-3 flex flex-col h-full w-full">
         
-        {/* Banner Section - Compact h-28 */}
+        {/* Banner */}
         <div className="relative w-full shrink-0">
-            <div className="relative h-28 w-full overflow-hidden rounded-xl bg-gray-900">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-80" />
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30" />
+            <div className="relative h-28 w-full overflow-hidden rounded-xl bg-gray-900 shadow-inner">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-900 to-purple-900 opacity-90" />
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay" />
             </div>
             
-            <div className="px-4 -mt-10 flex items-end justify-between gap-4">
-                <div className="flex items-end gap-3">
+            <div className="px-5 -mt-10 flex items-end justify-between gap-4">
+                <div className="flex items-end gap-4">
                     <Avatar 
                         src={avatarSrc} 
                         alt="avatar" 
                         size="xl" 
                         variant="rounded"
-                        className="border-4 border-white dark:border-gray-900 bg-white shadow-lg" 
+                        className="border-[3px] border-white dark:border-gray-900 bg-white shadow-xl" 
                     />
-                    <div className="mb-1">
-                        <Typography variant="h5" color="white" className="font-bold drop-shadow-md">
+                    <div className="mb-1.5">
+                        <Typography variant="h5" color="white" className="font-bold drop-shadow-md tracking-tight">
                             {user?.firstName} {user?.lastName}
                         </Typography>
-                        <Typography variant="small" className="text-blue-50 font-medium text-xs">
+                        <Typography variant="small" className="text-blue-100/80 font-medium text-xs">
                             {user?.email}
                         </Typography>
                     </div>
                 </div>
 
-                <div className="mb-1 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-lg p-1 shadow-sm border border-white/20 hidden md:block">
+                <div className="mb-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md rounded-lg p-1 shadow-lg border border-white/20 hidden md:block">
                       <Tabs value={activeTab} className="w-80">
                         <TabsHeader 
                             className="bg-transparent h-8"
-                            indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
+                            indicatorProps={{ className: "bg-gradient-to-r from-blue-500 to-purple-500 shadow-md text-white" }}
                         >
-                            <Tab value="profile" onClick={() => setActiveTab("profile")} className="py-1 text-[10px] font-bold uppercase">
-                                Profile
-                            </Tab>
-                            <Tab value="edit" onClick={() => setActiveTab("edit")} className="py-1 text-[10px] font-bold uppercase">
-                                Edit
-                            </Tab>
-                            <Tab value="security" onClick={() => setActiveTab("security")} className="py-1 text-[10px] font-bold uppercase">
-                                Security
-                            </Tab>
+                            <Tab value="profile" onClick={() => setActiveTab("profile")} className={`py-1 text-[10px] font-bold uppercase transition-colors ${activeTab === 'profile' ? 'text-white' : ''}`}>Profile</Tab>
+                            <Tab value="edit" onClick={() => setActiveTab("edit")} className={`py-1 text-[10px] font-bold uppercase transition-colors ${activeTab === 'edit' ? 'text-white' : ''}`}>Edit</Tab>
+                            <Tab value="security" onClick={() => setActiveTab("security")} className={`py-1 text-[10px] font-bold uppercase transition-colors ${activeTab === 'security' ? 'text-white' : ''}`}>Security</Tab>
                         </TabsHeader>
                     </Tabs>
                 </div>
             </div>
-            {/* Mobile Tabs fallback */}
+            
+            {/* Mobile Tab Fallback */}
             <div className="md:hidden mt-4">
                  <Tabs value={activeTab}>
                     <TabsHeader className="bg-blue-gray-50/50">
@@ -501,79 +431,46 @@ export function Profile() {
             </div>
         </div>
 
-        {/* Tab Content */}
-        <div className="mt-3 flex-1 min-h-0 w-full">
+        {/* Dynamic Content Area (Fills remaining height) */}
+        <div className="mt-4 flex-1 min-h-0 w-full">
             <AnimatePresence mode="wait">
                 {activeTab === "profile" && (
-                    <motion.div
-                        key="profile"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="h-full"
-                    >
-                         <Card className="w-full h-full border border-blue-gray-50 dark:border-gray-800 bg-white/50 dark:bg-gray-900/40 backdrop-blur-sm shadow-sm">
-                            <CardBody className="p-4">
-                                <ProfileInfoCard
-                                    title="About Me"
-                                    description="Student on AI Practice Platform."
-                                    details={{
-                                        "Full Name": `${firstName} ${lastName}`.trim() || "—",
-                                        "Email": user?.email || "—",
-                                        "Gender": (user?.gender || "male").charAt(0).toUpperCase() + (user?.gender || "male").slice(1),
-                                        "Account Type": "Student",
-                                        "Location": "India",
-                                    }}
-                                    action={
-                                        <Tooltip content="Edit Profile">
-                                            <PencilIcon
-                                                className="h-4 w-4 cursor-pointer text-blue-gray-500 hover:text-blue-500 transition-colors"
-                                                onClick={() => setActiveTab("edit")}
-                                            />
-                                        </Tooltip>
-                                    }
-                                />
-                            </CardBody>
-                        </Card>
-                    </motion.div>
+                    <ProfileView key="profile" user={user} onEdit={() => setActiveTab("edit")} />
                 )}
 
                 {activeTab === "edit" && (
-                    <motion.div key="edit" className="w-full h-full">
-                         <EditForm
-                            firstName={firstName}
-                            lastName={lastName}
-                            email={user?.email}
-                            gender={gender}
-                            setFirstName={setFirstName}
-                            setLastName={setLastName}
-                            setGender={setGender}
-                            onSubmit={handleProfileUpdate}
-                            saving={savingProfile}
-                            theme={theme}
-                            error={editError}
-                            success={editSuccess}
-                        />
-                    </motion.div>
+                    <EditForm
+                        key="edit"
+                        firstName={firstName}
+                        lastName={lastName}
+                        email={user?.email}
+                        gender={gender}
+                        setFirstName={setFirstName}
+                        setLastName={setLastName}
+                        setGender={setGender}
+                        onSubmit={handleProfileUpdate}
+                        saving={savingProfile}
+                        theme={theme}
+                        error={editError}
+                        success={editSuccess}
+                    />
                 )}
 
                 {activeTab === "security" && (
-                    <motion.div key="security" className="w-full h-full">
-                        <SecurityPanel
-                            oldPassword={oldPassword}
-                            newPassword={newPassword}
-                            setOldPassword={setOldPassword}
-                            setNewPassword={setNewPassword}
-                            onChangePassword={handlePasswordChange}
-                            changing={changingPassword}
-                            onDeleteAccount={handleDeleteAccount}
-                            deleting={deletingAccount}
-                            theme={theme}
-                            error={secError}
-                            success={secSuccess}
-                        />
-                    </motion.div>
+                    <SecurityPanel
+                        key="security"
+                        oldPassword={oldPassword}
+                        newPassword={newPassword}
+                        setOldPassword={setOldPassword}
+                        setNewPassword={setNewPassword}
+                        onChangePassword={handlePasswordChange}
+                        changing={changingPassword}
+                        onDeleteAccount={handleDeleteAccount}
+                        deleting={deletingAccount}
+                        theme={theme}
+                        error={secError}
+                        success={secSuccess}
+                    />
                 )}
             </AnimatePresence>
         </div>
