@@ -1,125 +1,159 @@
 import React from "react";
 import { Card, CardBody, Typography, Button } from "@material-tailwind/react";
 import { PhoneIcon, EnvelopeIcon, BugAntIcon, LightBulbIcon } from "@heroicons/react/24/solid";
+import { motion } from "framer-motion";
+
+// --- Animations ---
+const fadeInUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0, 
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 export function Contact() {
   return (
     <section className="relative overflow-hidden min-h-[calc(100vh-80px)] flex items-start md:items-center">
-      {/* Background gradient + subtle glow blobs */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-gray-100 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900" />
-      <div className="pointer-events-none absolute -top-16 right-[-10%] h-72 w-72 rounded-full bg-blue-600/25 blur-[120px]" />
-      <div className="pointer-events-none absolute -bottom-20 left-[-10%] h-72 w-72 rounded-full bg-indigo-600/25 blur-[120px]" />
-      <div className="pointer-events-none absolute top-1/3 left-[28%] h-52 w-52 rounded-full bg-fuchsia-500/20 blur-[90px]" />
+      
+      {/* === Animated Background === */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-gray-100 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900 transition-colors duration-500" />
+      
+      <motion.div 
+        animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
+        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
+        className="absolute top-[-10%] right-[-10%] h-[400px] w-[400px] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none" 
+      />
+      <motion.div 
+        animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
+        transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
+        className="absolute bottom-[-10%] left-[-10%] h-[400px] w-[400px] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none" 
+      />
+      <div className="absolute top-1/3 left-[28%] h-52 w-52 rounded-full bg-fuchsia-500/15 blur-[90px] pointer-events-none" />
 
       <div className="container mx-auto max-w-6xl px-4 py-8 md:py-10">
-        {/* Header */}
-        <div className="mb-5 text-center">
-          <Typography variant="h2" className="mb-2 text-gray-900 dark:text-gray-100">
-            Contact & Support
-          </Typography>
-          <Typography variant="lead" className="text-blue-gray-700 dark:text-gray-300">
-            Questions, ideas, or issues — I’d love to hear from you.
-          </Typography>
-        </div>
-
-        {/* Support policy — compact, glassy */}
-        <Card className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl mb-5">
-          <CardBody className="px-6 py-4">
-            <Typography variant="h6" className="mb-1 text-gray-900 dark:text-gray-100">
-              Support policy
+        
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
+          {/* Header */}
+          <motion.div variants={fadeInUp} className="mb-10 text-center">
+            <Typography variant="h2" className="mb-3 text-gray-900 dark:text-gray-100 font-bold">
+              Contact & Support
             </Typography>
-            <ul className="list-disc pl-5 space-y-1 text-sm text-blue-gray-700 dark:text-gray-300">
-              <li>Made for students who want quick, clear practice.</li>
-              <li>We usually reply within 48 hours (Mon–Fri, IST).</li>
-              <li>Please share what you tried, what you saw, and a screenshot if you can.</li>
-            </ul>
-          </CardBody>
-        </Card>
+            <Typography variant="lead" className="text-blue-gray-700 dark:text-gray-300 font-normal">
+              Questions, ideas, or issues — I’d love to hear from you.
+            </Typography>
+          </motion.div>
 
-        {/* Four cards on one row (desktop) */}
-        <div className="grid gap-4 md:grid-cols-4">
-          {/* Email */}
-          <Card className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-shadow">
-            <CardBody className="p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <EnvelopeIcon className="h-6 w-6 text-blue-500" />
-                <Typography variant="h6" className="text-gray-900 dark:text-gray-100">Email</Typography>
-              </div>
-              <Typography className="text-sm text-blue-gray-700 dark:text-gray-300">
-                subartaghosh6@gmail.com
-              </Typography>
-              <Button
-                variant="text"
-                onClick={() => (window.location.href = "mailto:subartaghosh6@gmail.com")}
-                className="mt-2 text-blue-600 dark:text-blue-300 underline text-sm px-0"
-              >
-                Write an email
-              </Button>
-            </CardBody>
-          </Card>
+          {/* Support policy — compact, glassy */}
+          <motion.div variants={fadeInUp}>
+            <Card className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl mb-8">
+              <CardBody className="px-6 py-5">
+                <Typography variant="h6" className="mb-2 text-gray-900 dark:text-gray-100 font-bold">
+                  Support policy
+                </Typography>
+                <ul className="list-disc pl-5 space-y-1.5 text-sm text-blue-gray-700 dark:text-gray-300">
+                  <li>Made for students who want quick, clear practice.</li>
+                  <li>We usually reply within 48 hours (Mon–Fri, IST).</li>
+                  <li>Please share what you tried, what you saw, and a screenshot if you can.</li>
+                </ul>
+              </CardBody>
+            </Card>
+          </motion.div>
 
-          {/* Phone */}
-          <Card className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-shadow">
-            <CardBody className="p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <PhoneIcon className="h-6 w-6 text-blue-500" />
-                <Typography variant="h6" className="text-gray-900 dark:text-gray-100">Phone</Typography>
-              </div>
-              <Typography className="text-sm text-blue-gray-700 dark:text-gray-300">
-                +91 73195 91361
-              </Typography>
-              <Button
-                variant="text"
-                onClick={() => (window.location.href = "tel:+917319591361")}
-                className="mt-2 text-blue-600 dark:text-blue-300 underline text-sm px-0"
-              >
-                Call now
-              </Button>
-            </CardBody>
-          </Card>
-
-          {/* Report a bug */}
-          <Card className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-shadow">
-            <CardBody className="p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <BugAntIcon className="h-6 w-6 text-red-500" />
-                <Typography variant="h6" className="text-gray-900 dark:text-gray-100">Report a bug</Typography>
-              </div>
-              <Typography className="text-sm text-blue-gray-700 dark:text-gray-300">
-                If something doesn’t work, tell us what happened and how we can see it too.
-              </Typography>
-              <a
-                href="https://github.com/subh-ghosh/ai-practice-platform/issues"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-blue-600 dark:text-blue-300 underline text-sm"
-              >
-                Open a GitHub issue
-              </a>
-            </CardBody>
-          </Card>
-
-          {/* Request a feature */}
-          <Card className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-shadow">
-            <CardBody className="p-5">
-              <div className="flex items-center gap-3 mb-2">
-                <LightBulbIcon className="h-6 w-6 text-amber-500" />
-                <Typography variant="h6" className="text-gray-900 dark:text-gray-100">Request a feature</Typography>
-              </div>
-              <Typography className="text-sm text-blue-gray-700 dark:text-gray-300">
-                Want a new subject, levels, or a better way to review? Tell us.
-              </Typography>
-              <a
-                href="https://github.com/subh-ghosh/ai-practice-platform/discussions"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-blue-600 dark:text-blue-300 underline text-sm"
-              >
-                Start a discussion
-              </a>
-            </CardBody>
-          </Card>
-        </div>
+          {/* Four cards on one row (desktop) */}
+          <motion.div 
+            variants={staggerContainer}
+            className="grid gap-5 md:grid-cols-2 lg:grid-cols-4"
+          >
+            {[
+              {
+                title: "Email",
+                icon: EnvelopeIcon,
+                color: "blue",
+                content: "subartaghosh6@gmail.com",
+                action: "Write an email",
+                onClick: () => (window.location.href = "mailto:subartaghosh6@gmail.com"),
+              },
+              {
+                title: "Phone",
+                icon: PhoneIcon,
+                color: "blue",
+                content: "+91 73195 91361",
+                action: "Call now",
+                onClick: () => (window.location.href = "tel:+917319591361"),
+              },
+              {
+                title: "Report a bug",
+                icon: BugAntIcon,
+                color: "red",
+                content: "If something doesn’t work, tell us what happened.",
+                action: "Open a GitHub issue",
+                href: "https://github.com/subh-ghosh/ai-practice-platform/issues",
+              },
+              {
+                title: "Request a feature",
+                icon: LightBulbIcon,
+                color: "amber",
+                content: "Want a new subject, levels, or feature? Tell us.",
+                action: "Start a discussion",
+                href: "https://github.com/subh-ghosh/ai-practice-platform/discussions",
+              },
+            ].map((item, index) => (
+              <motion.div key={index} variants={fadeInUp} whileHover={{ y: -5 }}>
+                <Card className="h-full rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                  <CardBody className="p-6 flex flex-col h-full">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className={`p-2 rounded-lg bg-${item.color}-50 dark:bg-${item.color}-900/20`}>
+                        <item.icon className={`h-5 w-5 text-${item.color}-500`} />
+                      </div>
+                      <Typography variant="h6" className="text-gray-900 dark:text-gray-100">
+                        {item.title}
+                      </Typography>
+                    </div>
+                    <Typography className="text-sm text-blue-gray-600 dark:text-gray-400 mb-4 flex-grow">
+                      {item.content}
+                    </Typography>
+                    
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-block text-${item.color === 'red' || item.color === 'amber' ? 'blue' : item.color}-600 dark:text-blue-400 font-medium text-sm hover:underline`}
+                      >
+                        {item.action}
+                      </a>
+                    ) : (
+                      <Button
+                        variant="text"
+                        onClick={item.onClick}
+                        className={`p-0 text-${item.color}-600 dark:text-blue-400 font-medium text-sm normal-case hover:bg-transparent justify-start`}
+                        ripple={false}
+                      >
+                        <span className="hover:underline">{item.action}</span>
+                      </Button>
+                    )}
+                  </CardBody>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   );
