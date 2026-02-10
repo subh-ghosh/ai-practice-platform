@@ -5,26 +5,38 @@ import { Button, IconButton, Typography } from "@material-tailwind/react";
 import {
   useMaterialTailwindController,
   setOpenSidenav,
-} from "../../context"; // fixed import path
+} from "../../context";
+import { useState } from "react";
 
 export function Sidenav({ brandImg, brandName, routes }) {
   const [controller, dispatch] = useMaterialTailwindController();
-  const { sidenavColor, sidenavType, openSidenav } = controller;
+  const { sidenavType, openSidenav } = controller;
 
-  const typeClass =
-    {
-      dark:
-        // deep gradient + soft ring
-        "bg-gradient-to-br from-gray-800 to-gray-900 text-white ring-1 ring-white/10",
-      white:
-        // clean surface
-        "bg-white text-blue-gray-800 shadow-sm ring-1 ring-black/5",
-      transparent:
-        // glass panel
-        "bg-white/10 backdrop-blur-md text-white ring-1 ring-white/10",
-    }[sidenavType] || "bg-white text-blue-gray-800 ring-1 ring-black/5";
+  const [mini, setMini] = useState(false);
 
-  // Only dashboard routes
+  // Glass style variants
+  const typeClass = {
+    dark: `
+      bg-gradient-to-b from-gray-900 to-black
+      text-white border border-white/10
+      shadow-xl shadow-blue-500/10
+    `,
+    white: `
+      bg-white/80 backdrop-blur-xl
+      text-blue-gray-900
+      border border-black/5
+      shadow-lg
+    `,
+    transparent: `
+      bg-gradient-to-b from-white/10 to-white/5
+      dark:from-gray-900/40 dark:to-gray-900/20
+      backdrop-blur-xl
+      border border-white/10
+      shadow-xl shadow-blue-500/5
+      text-white
+    `,
+  }[sidenavType];
+
   const dashboardRoutes = routes.filter(({ layout }) => layout === "dashboard");
 
   return (
@@ -32,97 +44,103 @@ export function Sidenav({ brandImg, brandName, routes }) {
       className={`
         ${typeClass}
         ${openSidenav ? "translate-x-0" : "-translate-x-80"}
-        fixed inset-0 z-50 my-4 ml-4 
-        /* HEIGHT ADJUSTED TO 48px FOR A SUBTLE LIFT */
-        h-[calc(100vh-48px)] 
-        w-72
-        rounded-xl transition-transform duration-300 xl:translate-x-0
-        overflow-y-auto overflow-x-hidden overscroll-contain
+        fixed inset-y-0 left-0 z-50 m-4
+        ${mini ? "w-20" : "w-72"}
+        rounded-2xl
+        transition-all duration-300
+        xl:translate-x-0
+        overflow-y-auto overflow-x-hidden
+        
+        [&::-webkit-scrollbar]:w-1.5
+        [&::-webkit-scrollbar-thumb]:bg-white/20
+        [&::-webkit-scrollbar-thumb]:rounded-full
+        hover:[&::-webkit-scrollbar-thumb]:bg-white/40
       `}
     >
-      {/* Brand + close */}
-      <div className="relative">
-        <Link
-          to="/"
-          className="flex items-center gap-4 py-6 px-8 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-t-xl"
-          aria-label="Go to home"
-        >
-          <img src={brandImg} alt="Brand Logo" className="h-8 w-8" />
-          <Typography
-            variant="h6"
-            color={sidenavType === "white" ? "blue-gray" : "white"}
-            className="font-semibold"
-          >
-            {brandName}
-          </Typography>
+      {/* 🌌 Glow Background */}
+      <div className="absolute inset-0 -z-10 pointer-events-none overflow-hidden">
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-0 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+      </div>
+
+      {/* 🔷 Brand */}
+      <div className="relative flex items-center justify-between px-6 py-6">
+        <Link to="/" className="flex items-center gap-3">
+          <img src={brandImg} alt="logo" className="h-8 w-8" />
+
+          {!mini && (
+            <Typography variant="h6" className="font-bold">
+              {brandName}
+            </Typography>
+          )}
         </Link>
 
+        {/* Close */}
         <IconButton
           variant="text"
-          color={sidenavType === "white" ? "blue-gray" : "white"}
           size="sm"
-          ripple={false}
-          className="absolute right-0 top-0 grid rounded-br-none rounded-tl-none xl:hidden focus-visible:ring-2 focus-visible:ring-white/40"
+          className="xl:hidden"
           onClick={() => setOpenSidenav(dispatch, false)}
-          aria-label="Close sidebar"
         >
-          <XMarkIcon
-            strokeWidth={2.5}
-            className={`h-5 w-5 ${
-              sidenavType === "white" ? "text-blue-gray-700" : "text-white"
-            }`}
-          />
+          <XMarkIcon className="h-5 w-5" />
         </IconButton>
       </div>
 
-      {/* Sections */}
-      <div className="m-4 pr-1">
-        {dashboardRoutes.map(({ layout, title, pages }, key) => (
-          <ul key={key} className="mb-4 flex flex-col gap-1">
-            {title && (
-              <li className="mx-3.5 mt-4 mb-2">
-                <Typography
-                  variant="small"
-                  className={`font-black uppercase opacity-75 ${
-                    sidenavType === "white" ? "text-blue-gray-600" : "text-white"
-                  }`}
-                >
-                  {title}
-                </Typography>
+      {/* 🔘 Collapse Toggle */}
+      <div className="px-4 mb-2 hidden xl:block">
+        <Button
+          size="sm"
+          variant="text"
+          onClick={() => setMini(!mini)}
+          className="w-full text-xs opacity-70 hover:opacity-100"
+        >
+          {mini ? "Expand" : "Collapse"}
+        </Button>
+      </div>
+
+      {/* 📌 Routes */}
+      <div className="px-3">
+        {dashboardRoutes.map(({ title, pages }, key) => (
+          <ul key={key} className="mb-6">
+            {/* Section Title */}
+            {!mini && title && (
+              <li className="px-4 mt-6 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                {title}
               </li>
             )}
 
-            {pages.map(({ icon, name, path, exact = true }) => (
+            {pages.map(({ icon, name, path }) => (
               <li key={name}>
-                <NavLink to={`/${layout}${path}`} end={exact} title={name}>
+                <NavLink to={`/dashboard${path}`} end>
                   {({ isActive }) => (
                     <Button
-                      variant={isActive ? "gradient" : "text"}
-                      color={
-                        isActive
-                          ? // active: use configured accent (fallback "blue")
-                            (sidenavColor || "blue")
-                          : // inactive: readable contrast for current type
-                            sidenavType === "white" ? "blue-gray" : "white"
-                      }
-                      className={`flex items-center gap-4 px-4 py-3 capitalize justify-start
-                        focus:outline-none focus-visible:ring-2
-                        ${
-                          sidenavType === "white"
-                            ? "focus-visible:ring-black/10"
-                            : "focus-visible:ring-white/30"
-                        }
-                        ${isActive ? "" : "opacity-90 hover:opacity-100"}
-                      `}
+                      variant="text"
                       fullWidth
-                      aria-current={isActive ? "page" : undefined}
+                      className={`
+                        relative group flex items-center gap-3 px-4 py-3 mb-1
+                        rounded-xl transition-all duration-200
+                        hover:bg-white/10
+                        hover:translate-x-1
+                        hover:scale-[1.02]
+                        ${isActive ? "bg-white/10" : ""}
+                      `}
                     >
-                      {/* icon inherits color */}
-                      <span className="grid h-5 w-5 place-items-center">{icon}</span>
+                      {/* Active Glow Bar */}
+                      {isActive && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full shadow-[0_0_10px] shadow-blue-500" />
+                      )}
 
-                      <Typography color="inherit" className="font-medium capitalize">
-                        {name}
-                      </Typography>
+                      {/* Icon */}
+                      <span className="grid h-9 w-9 place-items-center rounded-lg bg-white/5 group-hover:bg-white/10 transition">
+                        {icon}
+                      </span>
+
+                      {/* Text */}
+                      {!mini && (
+                        <Typography className="font-medium capitalize">
+                          {name}
+                        </Typography>
+                      )}
                     </Button>
                   )}
                 </NavLink>
@@ -146,5 +164,4 @@ Sidenav.propTypes = {
   routes: PropTypes.arrayOf(PropTypes.object).isRequired,
 };
 
-Sidenav.displayName = "/src/widgets/layout/sidenav.jsx";
 export default Sidenav;
