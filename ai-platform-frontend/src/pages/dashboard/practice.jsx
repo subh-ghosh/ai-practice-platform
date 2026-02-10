@@ -35,7 +35,7 @@ import { InformationCircleIcon, SparklesIcon } from "@heroicons/react/24/solid";
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 const FREE_ACTION_LIMIT = 3;
 
-// Map status to specific Tailwind classes to ensure JIT compiler picks them up
+// Map status to specific Tailwind classes
 const STATUS_STYLES = {
   CORRECT: {
     dot: "bg-green-500 shadow-green-500/50",
@@ -78,7 +78,6 @@ function DynamicFeedbackTitle({ status }) {
 
 const formatMarkdownText = (text) => {
   if (!text) return "";
-  // Handles literal \n strings often returned by AI JSON
   return text.replace(/\\n/g, '\n');
 };
 
@@ -165,7 +164,6 @@ export function Practice() {
         await new Promise(resolve => setTimeout(resolve, 3000));
         const res = await axios.get(`${BASE_URL}/api/practice/history`, getAuthHeaders());
         const found = res.data.history.find(item => item.questionId === qId);
-        // We stop polling if we find the item AND it has a status (meaning AI finished processing)
         if (found && found.evaluationStatus) return found;
       } catch (err) {
         console.warn("Polling check attempt failed...", err);
@@ -190,12 +188,11 @@ export function Practice() {
       return;
     }
     
-    // Reset States for new question
     setGenerating(true);
     setError("");
     setFeedback(null);
     setHint(null);
-    setCurrentAnswer(""); // Clear previous answer
+    setCurrentAnswer(""); 
     setQuestion(null);
     
     try {
@@ -222,7 +219,6 @@ export function Practice() {
     setIsPolling(true);
 
     try {
-      // 90s timeout to allow backend time, but if it fails we poll
       const config = { ...getAuthHeaders(), timeout: 90000 };
       const res = await apiCall(config);
       
@@ -239,7 +235,6 @@ export function Practice() {
         return;
       }
 
-      // Fallback: Poll history if timeout or non-paywall error occurs
       console.log("Direct response failed, switching to polling...", err);
       const foundItem = await pollForResult(question.id);
       
@@ -321,6 +316,51 @@ export function Practice() {
 
   return (
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
+      
+      {/* INJECTED STYLES: 
+        This style block forces the scrollbar customization. 
+        It handles both Light and Dark modes automatically.
+      */}
+      <style>{`
+        /* Default (Light Mode) */
+        .custom-scroll::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+          background-color: #cbd5e1; /* slate-300 */
+          border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #94a3b8; /* slate-400 */
+        }
+
+        /* Dark Mode Override (Assumes 'dark' class is on a parent/html) */
+        .dark .custom-scroll::-webkit-scrollbar-track {
+          background: #111827; /* gray-900 */
+        }
+        .dark .custom-scroll::-webkit-scrollbar-thumb {
+          background-color: #374151; /* gray-700 */
+          border: 2px solid #111827; /* gray-900 (Creates padding effect) */
+          border-radius: 4px;
+        }
+        .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #4b5563; /* gray-600 */
+        }
+
+        /* Firefox Support */
+        .custom-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+        .dark .custom-scroll {
+          scrollbar-color: #374151 #111827;
+        }
+      `}</style>
+
       {/* Background */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl" />
@@ -588,7 +628,7 @@ export function Practice() {
         </Card>
 
         {/* History Detail Modal */}
-        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="dark:bg-gray-900 border dark:border-gray-800">
+        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-white dark:bg-gray-900 border dark:border-gray-800">
             <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">
                 Practice Details
             </DialogHeader>
@@ -636,8 +676,7 @@ export function Practice() {
                             <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
                             
                             {(() => {
-                                const style = STATUS_STYLES[selectedHistory.evaluationStatus] || STATUS_STYLES.INCORRECT;
-                                // Need to extract just the bg/border logic here or reuse the map
+                                // Dynamic styling based on status
                                 const containerClass = selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" :
                                                     selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" :
                                                     selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" :
