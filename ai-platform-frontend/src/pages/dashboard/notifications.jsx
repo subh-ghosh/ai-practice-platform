@@ -79,7 +79,8 @@ export function Notifications() {
   const hasUnread = notifications.some(n => !n.readFlag);
 
   return (
-    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // FIX: Use min-h instead of h to allow the page to scroll to the footer
+    <div className="relative mt-6 mb-8 w-full min-h-[calc(100vh-140px)] flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -96,7 +97,7 @@ export function Notifications() {
       </div>
 
       {/* Main Content Wrapper */}
-      <div className="relative z-10 p-6 flex flex-col gap-5 h-full">
+      <div className="relative z-10 p-6 flex flex-col gap-5 flex-1">
         
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
@@ -126,7 +127,7 @@ export function Notifications() {
         </div>
 
         {/* Content Area */}
-        <div className="flex flex-col gap-4 flex-1 min-h-0">
+        <div className="flex flex-col gap-4 flex-1">
             
             {/* Tabs */}
             <div className="w-full md:w-80 shrink-0">
@@ -145,8 +146,8 @@ export function Notifications() {
                 </Tabs>
             </div>
 
-            {/* List with DARK/HIDDEN SCROLLBAR */}
-            <div className="flex-1 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400 dark:hover:[&::-webkit-scrollbar-thumb]:bg-gray-700">
+            {/* List - No internal scroll, grows with content */}
+            <div className="flex-1">
                 <AnimatePresence mode="wait">
                 {filteredList.length === 0 ? (
                     <motion.div 
@@ -154,7 +155,7 @@ export function Notifications() {
                         initial={{ opacity: 0, scale: 0.9 }} 
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="flex flex-col items-center justify-center h-full opacity-60"
+                        className="flex flex-col items-center justify-center h-64 opacity-60"
                     >
                         <BellIcon className="h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
                         <Typography variant="small" className="text-gray-500">No notifications found.</Typography>
@@ -165,15 +166,13 @@ export function Notifications() {
                       variants={containerVariants}
                       initial="hidden"
                       animate="visible"
-                      className="flex flex-col gap-2 pb-6"
+                      className="flex flex-col gap-2 pb-2"
                     >
                     {filteredList.map((n) => {
                         const isUnread = !n.readFlag;
                         return (
                         <motion.div
                             key={n.id}
-                            // FIXED: Restored 'layout' because shaking was not our fault.
-                            // This gives you the smooth reordering animations back!
                             layout 
                             variants={itemVariants}
                             whileHover={{ x: 4, transition: { duration: 0.2 } }}

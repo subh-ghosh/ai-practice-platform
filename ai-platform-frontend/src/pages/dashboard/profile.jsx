@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
-  Card,
   CardBody,
   Avatar,
   Typography,
@@ -433,7 +432,8 @@ export function Profile() {
   // --- Render ---
 
   return (
-    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // FIX: Changed from fixed h-[...] to min-h-[...] and enabled flex col
+    <div className="relative mt-6 mb-8 w-full min-h-[calc(100vh-140px)] flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -450,9 +450,9 @@ export function Profile() {
       </div>
 
       {/* Main Content Wrapper */}
-      <div className="relative z-10 p-6 flex flex-col gap-5 h-full">
+      <div className="relative z-10 p-6 flex flex-col gap-5 flex-1">
         
-        {/* Header Section (Fixed at top) */}
+        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
           <div className="flex items-center gap-4">
              <Avatar 
@@ -493,8 +493,8 @@ export function Profile() {
           </div>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 min-h-0 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
+        {/* Content Area - Removed internal scrolling, now grows naturally */}
+        <div className="flex-1">
             <AnimatePresence mode="wait">
                 
                 {activeTab === "profile" && (
@@ -504,10 +504,9 @@ export function Profile() {
                         initial="hidden"
                         animate="visible"
                         exit="exit"
-                        className="mt-8" /* MOVED DOWN */
+                        className="mt-8"
                     >
                          <motion.div variants={itemVariants} className="w-full">
-                            {/* ADDED TOP BORDER ACCENT */}
                             <div className="bg-white dark:bg-gray-800 border border-blue-gray-50 dark:border-blue-900/30 border-t-4 border-t-blue-500 shadow-sm rounded-xl overflow-hidden">
                                 <CardBody className="p-0">
                                     <ProfileInfoCard

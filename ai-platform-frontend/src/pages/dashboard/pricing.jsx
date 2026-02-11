@@ -14,11 +14,11 @@ import {
   Spinner,
   Alert,
 } from "@material-tailwind/react";
-import { 
-  CheckIcon, 
-  XMarkIcon, 
-  ExclamationTriangleIcon, 
-  CheckCircleIcon 
+import {
+  CheckIcon,
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
 } from "@heroicons/react/24/solid";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -63,7 +63,7 @@ const itemVariants = {
 export function Pricing() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
-  
+
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -93,13 +93,13 @@ export function Pricing() {
     }
 
     const config = {
-      headers: { "Authorization": `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     };
 
     try {
       // 3. Create Order
       const orderRes = await axios.post(
-        `${BASE_URL}/api/payments/create-order`, 
+        `${BASE_URL}/api/payments/create-order`,
         { productId: PREMIUM_MONTHLY_PLAN_ID },
         config
       );
@@ -114,7 +114,7 @@ export function Pricing() {
         name: "AI Practice Platform",
         description: "Premium Plan Upgrade",
         order_id: orderData.orderId,
-        
+
         // --- Success Handler ---
         handler: async function (response) {
           // Keep loading true while we verify backend
@@ -130,9 +130,9 @@ export function Pricing() {
             );
 
             if (updateUser) {
-                 updateUser(verifyRes.data); 
+              updateUser(verifyRes.data);
             }
-            
+
             setSuccess("Payment successful! Your account has been upgraded.");
             setLoading(false); // Stop loading on success
             setTimeout(() => navigate("/dashboard/home"), 2000);
@@ -143,12 +143,12 @@ export function Pricing() {
           }
         },
 
-        // --- User Close Handler (The Fix) ---
+        // --- User Close Handler ---
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             console.log("Payment modal closed by user");
-            setLoading(false); // <--- THIS STOPS THE INFINITE LOADING
-          }
+            setLoading(false);
+          },
         },
 
         prefill: {
@@ -159,16 +159,17 @@ export function Pricing() {
       };
 
       const rzp = new window.Razorpay(options);
-      
+
       // --- Failure Handler ---
       rzp.on("payment.failed", function (response) {
         console.error("Razorpay payment failed:", response.error);
-        setError(`Payment failed: ${response.error.description || "Unknown error"}`);
+        setError(
+          `Payment failed: ${response.error.description || "Unknown error"}`
+        );
         setLoading(false); // Stop loading on failure
       });
-      
-      rzp.open();
 
+      rzp.open();
     } catch (err) {
       console.error("Error creating order:", err);
       setError("Could not initiate payment. Please try again.");
@@ -212,7 +213,8 @@ export function Pricing() {
   // --- Render ---
 
   return (
-    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-175px)] overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+    // Updated container height to h-[calc(100vh-140px)] and added flex-col
+    <div className="relative mt-6 mb-8 w-full h-[calc(100vh-140px)] flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
       
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -234,10 +236,17 @@ export function Pricing() {
         {/* Header & Controls */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
           <div>
-            <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold tracking-tight">
+            <Typography
+              variant="h5"
+              color="blue-gray"
+              className="dark:text-white font-bold tracking-tight"
+            >
               Subscription Plans
             </Typography>
-            <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal mt-1">
+            <Typography
+              variant="small"
+              className="text-gray-500 dark:text-gray-400 font-normal mt-1"
+            >
               Pick a plan that fits your learning goals.
             </Typography>
           </div>
@@ -246,12 +255,22 @@ export function Pricing() {
             <Tabs value={billingCycle} className="w-full">
               <TabsHeader
                 className="bg-gray-100/50 dark:bg-gray-800/70 p-1 border border-gray-200 dark:border-gray-700"
-                indicatorProps={{ className: "bg-white dark:bg-gray-700 shadow-sm" }}
+                indicatorProps={{
+                  className: "bg-white dark:bg-gray-700 shadow-sm",
+                }}
               >
-                <Tab value="monthly" onClick={() => setBillingCycle("monthly")} className="text-xs font-bold py-2">
+                <Tab
+                  value="monthly"
+                  onClick={() => setBillingCycle("monthly")}
+                  className="text-xs font-bold py-2"
+                >
                   Monthly
                 </Tab>
-                <Tab value="yearly" onClick={() => setBillingCycle("yearly")} className="text-xs font-bold py-2">
+                <Tab
+                  value="yearly"
+                  onClick={() => setBillingCycle("yearly")}
+                  className="text-xs font-bold py-2"
+                >
                   Yearly <span className="text-[9px] text-green-500 ml-1">(-15%)</span>
                 </Tab>
               </TabsHeader>
@@ -262,14 +281,22 @@ export function Pricing() {
         {/* Alerts Area */}
         <AnimatePresence>
           {error && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
               <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
                 {error}
               </Alert>
             </motion.div>
           )}
           {success && (
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+            >
               <Alert color="green" icon={<CheckCircleIcon className="h-5 w-5" />}>
                 {success}
               </Alert>
@@ -277,20 +304,22 @@ export function Pricing() {
           )}
         </AnimatePresence>
 
-        {/* Plans Grid */}
+        {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto pr-2 pb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
+          
+          {/* Plans Grid */}
           <motion.div
-            key={billingCycle} 
+            key={billingCycle}
             variants={containerVariants}
             initial="hidden"
             animate="visible"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 pt-2 max-w-4xl mx-auto"
           >
             {PLANS.map((plan) => {
-              const isCurrentPlan = 
+              const isCurrentPlan =
                 (plan.id === "free" && user?.subscriptionStatus === "FREE") ||
                 (plan.id === "premium" && user?.subscriptionStatus === "PREMIUM");
-              
+
               const isUpgradable = !isCurrentPlan && plan.isPremium;
 
               return (
@@ -319,7 +348,11 @@ export function Pricing() {
                       color="transparent"
                       className="m-0 p-6 pb-2 text-center border-b border-blue-gray-50 dark:border-gray-700/50"
                     >
-                      <Typography variant="h6" color="blue-gray" className="font-bold uppercase dark:text-gray-100">
+                      <Typography
+                        variant="h6"
+                        color="blue-gray"
+                        className="font-bold uppercase dark:text-gray-100"
+                      >
                         {plan.name}
                       </Typography>
                       <Typography
@@ -357,7 +390,9 @@ export function Pricing() {
                             </span>
                             <Typography
                               className={`text-sm font-normal ${
-                                feature.included ? "text-blue-gray-600 dark:text-gray-300" : "text-gray-400 decoration-line-through"
+                                feature.included
+                                  ? "text-blue-gray-600 dark:text-gray-300"
+                                  : "text-gray-400 decoration-line-through"
                               }`}
                             >
                               {feature.text}
@@ -374,20 +409,22 @@ export function Pricing() {
                         variant={plan.popular ? "gradient" : "outlined"}
                         color={plan.popular ? "blue" : "gray"}
                         className={`hover:scale-[1.02] active:scale-[0.98] transition-transform ${
-                          !plan.popular ? "focus:ring-blue-gray-200 dark:border-gray-600 dark:text-white" : ""
+                          !plan.popular
+                            ? "focus:ring-blue-gray-200 dark:border-gray-600 dark:text-white"
+                            : ""
                         }`}
                         onClick={isUpgradable ? displayRazorpay : undefined}
                         disabled={isCurrentPlan || (plan.isPremium && loading)}
                       >
-                         {loading && plan.isPremium ? (
-                            <div className="flex items-center justify-center gap-2">
-                                <Spinner className="h-4 w-4" /> Processing...
-                            </div>
-                         ) : isCurrentPlan ? (
-                            "Current Plan"
-                         ) : (
-                            "Upgrade Now"
-                         )}
+                        {loading && plan.isPremium ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Spinner className="h-4 w-4" /> Processing...
+                          </div>
+                        ) : isCurrentPlan ? (
+                          "Current Plan"
+                        ) : (
+                          "Upgrade Now"
+                        )}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -395,6 +432,14 @@ export function Pricing() {
               );
             })}
           </motion.div>
+
+          {/* --- Added Footer Section within Scrollable Area --- */}
+          <div className="mt-12 pt-6 border-t border-blue-gray-50 dark:border-gray-800 text-center">
+            <Typography variant="small" className="font-normal text-blue-gray-500 dark:text-gray-400">
+              &copy; {new Date().getFullYear()} AI Practice Platform. All rights reserved.
+            </Typography>
+          </div>
+
         </div>
       </div>
     </div>
