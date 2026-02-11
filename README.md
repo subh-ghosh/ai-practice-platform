@@ -1,4 +1,5 @@
 # Smart Self-Practice Platform Powered by AI
+link: ai-practice-platform.vercel.app
 
 This project is a full-stack web application designed to help students practice specific subjects and difficulty levels. It uses **generative AI** to dynamically create unique questions and provides immediate, context-aware feedback on the submitted answers.
 
