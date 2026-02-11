@@ -432,14 +432,6 @@ export function Pricing() {
               );
             })}
           </motion.div>
-
-          {/* --- Added Footer Section within Scrollable Area --- */}
-          <div className="mt-12 pt-6 border-t border-blue-gray-50 dark:border-gray-800 text-center">
-            <Typography variant="small" className="font-normal text-blue-gray-500 dark:text-gray-400">
-              &copy; {new Date().getFullYear()} AI Practice Platform. All rights reserved.
-            </Typography>
-          </div>
-
         </div>
       </div>
     </div>
