@@ -8,7 +8,11 @@ import {
   TrophyIcon,
   CodeBracketIcon,
   AcademicCapIcon,
-  ArrowRightIcon
+  ArrowRightIcon,
+  // --- ADDED ICONS FOR NEW SECTIONS ---
+  CpuChipIcon,
+  CircleStackIcon,
+  WindowIcon
 } from "@heroicons/react/24/solid";
 import { Footer } from "@/widgets/layout";
 
@@ -372,6 +376,147 @@ const BentoGrid = () => {
   );
 };
 
+
+// --- ADDED: EXPLODING ARCHITECTURE (3D SCROLL PULL-APART) ---
+const ExplodingUI = () => {
+  const containerRef = useRef(null);
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start center", "end end"],
+  });
+
+  // Controls the 3D rotation based on scroll (Flattens out as you scroll down)
+  const rotateX = useSpring(useTransform(scrollYProgress, [0, 0.5], [50, 20]), { stiffness: 60, damping: 20 });
+  const rotateZ = useSpring(useTransform(scrollYProgress, [0, 0.5], [-30, -10]), { stiffness: 60, damping: 20 });
+  const scale = useSpring(useTransform(scrollYProgress, [0, 1], [0.8, 1]), { stiffness: 60, damping: 20 });
+
+  // Controls the separation of layers
+  const layer1Y = useSpring(useTransform(scrollYProgress, [0, 0.5], [0, -120]), { stiffness: 60, damping: 20 });
+  const layer3Y = useSpring(useTransform(scrollYProgress, [0, 0.5], [0, 120]), { stiffness: 60, damping: 20 });
+
+  const layerOpacity = useTransform(scrollYProgress, [0, 0.2], [0, 1]);
+
+  return (
+    <section ref={containerRef} className="h-[200vh] bg-[#050505] relative">
+      <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
+
+        {/* Background Radial */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.05),transparent_60%)] pointer-events-none" />
+
+        <div className="text-center mb-20 relative z-20">
+          <h2 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">The Anatomy of <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Speed</span></h2>
+          <p className="text-slate-400 text-lg">A 3-tier architecture designed to execute and analyze code in milliseconds.</p>
+        </div>
+
+        {/* 3D Container */}
+        <motion.div
+          style={{ rotateX, rotateZ, scale, opacity: layerOpacity }}
+          className="relative w-[400px] h-[300px] md:w-[600px] md:h-[400px] transform-style-3d"
+        >
+          {/* Layer 3: Database/Core (Bottom) */}
+          <motion.div
+            style={{ y: layer3Y }}
+            className="absolute inset-0 rounded-[2rem] bg-[#0f1115]/80 backdrop-blur-md border border-purple-500/30 shadow-[0_20px_50px_rgba(168,85,247,0.2)] flex items-center justify-center"
+          >
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#a855f71a_1px,transparent_1px),linear-gradient(to_bottom,#a855f71a_1px,transparent_1px)] bg-[size:20px_20px] rounded-[2rem]"></div>
+            <CircleStackIcon className="w-20 h-20 text-purple-500/50" />
+            <span className="absolute bottom-4 right-6 text-purple-400/80 font-mono font-bold tracking-widest">LAYER 3: DATA</span>
+          </motion.div>
+
+          {/* Layer 2: Neural Engine (Middle) */}
+          <motion.div
+            className="absolute inset-0 rounded-[2rem] bg-indigo-900/20 backdrop-blur-xl border border-indigo-500/50 shadow-[0_0_50px_rgba(99,102,241,0.2)] flex items-center justify-center"
+          >
+            <CpuChipIcon className="w-24 h-24 text-indigo-400" />
+            <span className="absolute bottom-4 right-6 text-indigo-400 font-mono font-bold tracking-widest">LAYER 2: NEURAL ENGINE</span>
+          </motion.div>
+
+          {/* Layer 1: UI / App (Top) */}
+          <motion.div
+            style={{ y: layer1Y }}
+            className="absolute inset-0 rounded-[2rem] bg-[#0a0a0c]/90 backdrop-blur-2xl border border-blue-500/60 shadow-[0_-20px_50px_rgba(59,130,246,0.2)] overflow-hidden flex flex-col"
+          >
+            <div className="h-10 bg-white/5 border-b border-white/10 flex items-center px-4 gap-2">
+              <div className="w-3 h-3 rounded-full bg-slate-600" /><div className="w-3 h-3 rounded-full bg-slate-600" />
+            </div>
+            <div className="flex-1 p-6 flex items-center justify-center">
+              <WindowIcon className="w-20 h-20 text-blue-400" />
+            </div>
+            <span className="absolute bottom-4 right-6 text-blue-400 font-mono font-bold tracking-widest drop-shadow-[0_0_8px_rgba(59,130,246,1)]">LAYER 1: INTERFACE</span>
+          </motion.div>
+        </motion.div>
+
+      </div>
+    </section>
+  );
+};
+
+// --- ADDED: SCROLL-FOCUS FEATURE CARDS (Aggressive Zoom) ---
+const FocusCard = ({ title, desc, number, color }) => {
+  const cardRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: cardRef,
+    offset: ["start end", "center center"]
+  });
+
+  // Scale from small to massive
+  const scale = useSpring(useTransform(scrollYProgress, [0, 1], [0.8, 1.05]), { stiffness: 100, damping: 20 });
+  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.3, 0.6, 1]);
+
+  // Dynamic border glow based on scroll
+  const borderColor = useTransform(scrollYProgress, [0, 1], ["rgba(255,255,255,0.05)", color]);
+
+  return (
+    <motion.div
+      ref={cardRef}
+      style={{ scale, opacity, borderColor, borderWidth: '1px' }}
+      className="w-full max-w-4xl mx-auto aspect-[21/9] bg-[#0a0a0c] rounded-[2.5rem] p-10 md:p-16 flex flex-col justify-center relative overflow-hidden shadow-2xl mb-32"
+    >
+      <div className="absolute top-0 right-0 w-96 h-96 bg-white opacity-5 blur-[120px] rounded-full pointer-events-none" style={{ backgroundColor: color }} />
+
+      <div className="text-[120px] md:text-[200px] font-black absolute -right-10 -bottom-10 opacity-5 pointer-events-none leading-none select-none">
+        {number}
+      </div>
+
+      <div className="relative z-10">
+        <h3 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">{title}</h3>
+        <p className="text-xl md:text-2xl text-slate-400 max-w-2xl leading-relaxed">{desc}</p>
+      </div>
+    </motion.div>
+  );
+};
+
+const ScrollFocusStack = () => {
+  return (
+    <section className="py-40 bg-[#050505] px-4 relative">
+      <div className="text-center mb-40">
+        <h2 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tight">The <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Ultimate</span> Workflow</h2>
+      </div>
+
+      <FocusCard
+        number="01"
+        color="rgba(59,130,246,0.6)" // Blue
+        title="Curated Study Plans."
+        desc="Stop guessing what to study. Tell us your goal, and we generate a day-by-day curriculum with embedded video tutorials and practice checkpoints."
+      />
+      <FocusCard
+        number="02"
+        color="rgba(168,85,247,0.6)" // Purple
+        title="Execute in Browser."
+        desc="No installations required. Write, compile, and run complex Java or Python programs instantly in a distraction-free, dark-mode optimized IDE."
+      />
+      <FocusCard
+        number="03"
+        color="rgba(245,158,11,0.6)" // Amber
+        title="Track & Dominate."
+        desc="Every keystroke builds your profile. Track accuracy, speed, earn XP, and climb the global leaderboard to prove your absolute mastery."
+      />
+    </section>
+  );
+};
+
+
 // 4. Final CTA (Glassmorphism + Neon)
 const BigCTA = () => {
   const navigate = useNavigate();
@@ -434,10 +579,16 @@ export function Landing() {
       {/* 3. Modern Bento Grid Features */}
       <BentoGrid />
 
-      {/* 4. Final CTA */}
+      {/* --- ADDED: 4. Exploding UI --- */}
+      <ExplodingUI />
+
+      {/* --- ADDED: 5. Focus Stack --- */}
+      <ScrollFocusStack />
+
+      {/* 6. Final CTA */}
       <BigCTA />
 
-      {/* 5. Footer */}
+      {/* 7. Footer */}
       <div className="relative z-10 bg-[#050505]">
         <Footer />
       </div>
