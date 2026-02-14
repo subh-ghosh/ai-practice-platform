@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import {
@@ -8,6 +8,7 @@ import {
     ClockIcon,
     BookOpenIcon,
     VideoCameraIcon,
+    TrashIcon,
 } from '@heroicons/react/24/solid';
 
 const StudyPlanBuilderPage = () => {
@@ -16,7 +17,25 @@ const StudyPlanBuilderPage = () => {
     const [durationDays, setDurationDays] = useState(7);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [history, setHistory] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(true);
     const navigate = useNavigate();
+
+    // Load study plan history on mount
+    useEffect(() => {
+        fetchHistory();
+    }, []);
+
+    const fetchHistory = async () => {
+        try {
+            const response = await api.get('/study-plans');
+            setHistory(response.data);
+        } catch (err) {
+            console.error("Failed to load history:", err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
 
     const handleGenerate = async (e) => {
         e.preventDefault();
@@ -54,6 +73,13 @@ const StudyPlanBuilderPage = () => {
         { value: 30, label: '1 Month — Mastery' },
     ];
 
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', {
+            month: 'short', day: 'numeric', year: 'numeric'
+        });
+    };
+
     return (
         <div className="max-w-4xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-2 flex items-center text-gray-800">
@@ -64,6 +90,7 @@ const StudyPlanBuilderPage = () => {
                 Enter a topic and we'll build a personalized study plan with YouTube videos and practice sessions.
             </p>
 
+            {/* ===== BUILDER FORM ===== */}
             <div className="bg-white shadow-lg rounded-xl p-8">
                 <form onSubmit={handleGenerate} className="space-y-6">
 
@@ -179,6 +206,76 @@ const StudyPlanBuilderPage = () => {
                         )}
                     </button>
                 </form>
+            </div>
+
+            {/* ===== STUDY PLAN HISTORY ===== */}
+            <div className="mt-10">
+                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <ClockIcon className="h-6 w-6 text-purple-600 mr-2" />
+                    Your Study Plans
+                </h2>
+
+                {historyLoading ? (
+                    <div className="flex justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
+                    </div>
+                ) : history.length === 0 ? (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+                        <AcademicCapIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No study plans yet. Create your first one above!</p>
+                    </div>
+                ) : (
+                    <div className="grid gap-4">
+                        {history.map((plan) => (
+                            <div
+                                key={plan.id}
+                                onClick={() => navigate(`/dashboard/study-plan/${plan.id}`)}
+                                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:shadow-md hover:border-purple-300 transition-all group"
+                            >
+                                <div className="flex items-start justify-between">
+                                    <div className="flex-grow">
+                                        <h3 className="font-semibold text-gray-800 group-hover:text-purple-700 transition-colors">
+                                            {plan.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 mt-1 line-clamp-1">
+                                            {plan.description}
+                                        </p>
+                                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
+                                                {plan.difficulty}
+                                            </span>
+                                            <span className="flex items-center">
+                                                <ClockIcon className="h-3 w-3 mr-1" />
+                                                {plan.durationDays} days
+                                            </span>
+                                            <span>{formatDate(plan.createdAt)}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress */}
+                                    <div className="flex-shrink-0 ml-4 text-right">
+                                        <span className={`text-lg font-bold ${plan.progress === 100 ? 'text-green-500' : 'text-purple-600'
+                                            }`}>
+                                            {plan.progress}%
+                                        </span>
+                                        <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1">
+                                            <div
+                                                className={`h-1.5 rounded-full transition-all ${plan.progress === 100
+                                                        ? 'bg-green-500'
+                                                        : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                                                    }`}
+                                                style={{ width: `${plan.progress}%` }}
+                                            ></div>
+                                        </div>
+                                        {plan.completed && (
+                                            <span className="text-xs text-green-500 font-medium">✓ Completed</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <div className="mt-8 text-center text-gray-500 text-sm">
