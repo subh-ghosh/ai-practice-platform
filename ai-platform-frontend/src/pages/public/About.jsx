@@ -33,42 +33,41 @@ const fadeInUp = {
 
 export function About() {
   return (
-    // FIX: Added -mt-24 to the OUTERMOST container. 
-    // This forces the entire page (and its background grid) to slide under the Navbar.
     <div className="relative w-full overflow-hidden bg-[#050505] min-h-screen flex flex-col font-sans selection:bg-blue-500/30 -mt-24">
 
-      {/* Background Gradients & Grid (Spans to the absolute top of the screen) */}
+      {/* Background Gradients & Grid */}
       <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0"></div>
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Main Content Section */}
-      {/* pt-40 adds padding inside so the card is pushed down and doesn't collide with the nav items */}
       <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-40 pb-16 min-h-screen">
-        <div className="container mx-auto px-4 max-w-3xl">
+        {/* Changed max-w-3xl to max-w-xl to make the card smaller */}
+        <div className="container mx-auto px-4 max-w-xl">
 
           <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
-            {/* The Compact Glass Card */}
-            <div className="rounded-[2.5rem] border border-white/5 bg-[#0a0a0c]/90 backdrop-blur-2xl shadow-2xl overflow-hidden p-10 md:p-14 relative flex flex-col items-center text-center">
+            {/* The Compact Glass Card - Reduced padding (p-8 md:p-10) */}
+            <div className="rounded-[2.5rem] border border-white/5 bg-[#0a0a0c]/90 backdrop-blur-2xl shadow-2xl overflow-hidden p-8 md:p-10 relative flex flex-col items-center text-center">
 
               {/* Internal subtle glow */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[250px] h-[250px] bg-blue-600/10 blur-[90px] rounded-full pointer-events-none" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] bg-blue-600/10 blur-[80px] rounded-full pointer-events-none" />
 
-              {/* Avatar with Spring Animation */}
+              {/* Avatar with Spring Animation - Slightly reduced size */}
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
-                className="relative mb-6"
+                className="relative mb-5"
               >
                 {/* Glowing ring behind avatar */}
                 <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-600 to-purple-600 blur-lg opacity-60" />
                 <img
                   src="https://avatars.githubusercontent.com/u/176177158?v=4"
                   alt="Subarta Ghosh"
-                  className="relative w-32 h-32 md:w-36 md:h-36 rounded-full border-[5px] border-[#0a0a0c] shadow-2xl object-cover hover:scale-105 transition-transform duration-300"
+                  // Reduced avatar size (w-24 md:w-28)
+                  className="relative w-24 h-24 md:w-28 md:h-28 rounded-full border-[4px] border-[#0a0a0c] shadow-2xl object-cover hover:scale-105 transition-transform duration-300"
                 />
                 {/* Online Status Dot */}
-                <div className="absolute bottom-3 right-3 w-5 h-5 bg-green-500 border-[4px] border-[#0a0a0c] rounded-full z-10" />
+                <div className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-[3px] border-[#0a0a0c] rounded-full z-10" />
               </motion.div>
 
               {/* Creator Badge */}
@@ -77,36 +76,36 @@ export function About() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-[11px] font-bold mb-4 tracking-wide uppercase">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-[10px] font-bold mb-3 tracking-wide uppercase">
                   <SparklesIcon className="w-3 h-3" /> Creator & Builder
                 </div>
               </motion.div>
 
-              {/* Name */}
+              {/* Name - Reduced font size slightly */}
               <motion.h1
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight"
+                className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight"
               >
                 Subarta Ghosh
               </motion.h1>
 
-              {/* Tags Grid */}
+              {/* Tags Grid - More compact gap */}
               <motion.div
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="flex flex-wrap justify-center gap-3 mb-10"
+                className="flex flex-wrap justify-center gap-2 mb-8"
               >
-                <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 font-bold text-sm">
-                  <CodeBracketIcon className="w-4 h-4" /> Full Stack Dev
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 font-bold text-[11px]">
+                  <CodeBracketIcon className="w-3.5 h-3.5" /> Full Stack Dev
                 </div>
-                <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold text-sm">
-                  <AcademicCapIcon className="w-4 h-4" /> CS Student
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold text-[11px]">
+                  <AcademicCapIcon className="w-3.5 h-3.5" /> CS Student
                 </div>
-                <div className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-slate-300 font-bold text-sm">
-                  <BuildingLibraryIcon className="w-4 h-4" /> VIT Vellore
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-slate-300 font-bold text-[11px]">
+                  <BuildingLibraryIcon className="w-3.5 h-3.5" /> VIT Vellore
                 </div>
               </motion.div>
 
@@ -115,7 +114,7 @@ export function About() {
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="text-base md:text-lg text-slate-400 max-w-xl mx-auto mb-10 leading-relaxed font-medium"
+                className="text-sm text-slate-400 max-w-sm mx-auto mb-8 leading-relaxed font-medium"
               >
                 Building smart tools that help students master concepts with ease.
                 Focused on creating neural-driven products, clean design, and steady growth.
@@ -126,17 +125,17 @@ export function About() {
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="flex flex-col sm:flex-row justify-center gap-4 w-full sm:w-auto"
+                className="flex flex-col sm:flex-row justify-center gap-3 w-full sm:w-auto"
               >
                 <a href="https://www.linkedin.com/in/subhh/" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-base hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300">
-                    <LinkedInIcon className="w-5 h-5" /> LinkedIn
+                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300">
+                    <LinkedInIcon className="w-4 h-4" /> LinkedIn
                   </button>
                 </a>
 
                 <a href="https://github.com/subh-ghosh" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-white/10 text-slate-300 font-bold text-base hover:bg-white/5 hover:text-white transition-colors duration-300">
-                    <GithubIcon className="w-5 h-5" /> GitHub
+                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-white/10 text-slate-300 font-bold text-sm hover:bg-white/5 hover:text-white transition-colors duration-300">
+                    <GithubIcon className="w-4 h-4" /> GitHub
                   </button>
                 </a>
               </motion.div>
