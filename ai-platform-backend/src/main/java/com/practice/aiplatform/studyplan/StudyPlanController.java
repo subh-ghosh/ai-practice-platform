@@ -1,0 +1,76 @@
+package com.practice.aiplatform.studyplan;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/study-plans")
+public class StudyPlanController {
+
+    private final StudyPlanService studyPlanService;
+
+    public StudyPlanController(StudyPlanService studyPlanService) {
+        this.studyPlanService = studyPlanService;
+    }
+
+    public record GenerateStudyPlanRequest(String topic, String difficulty, int durationDays) {
+    }
+
+    @PostMapping("/generate")
+    public ResponseEntity<?> generateStudyPlan(@RequestBody GenerateStudyPlanRequest request, Principal principal) {
+        String email = principal.getName();
+        System.out.println("🔔 StudyPlanController: /generate called by " + email + " for topic: " + request.topic());
+
+        if (request.topic() == null || request.topic().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Topic is required"));
+        }
+
+        int duration = request.durationDays() > 0 ? request.durationDays() : 7;
+
+        try {
+            var plan = studyPlanService.generateStudyPlan(
+                    email, request.topic(), request.difficulty(), duration).block();
+
+            return ResponseEntity.ok(plan);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Study plan generation failed: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<StudyPlan>> getMyStudyPlans(Principal principal) {
+        String email = principal.getName();
+        List<StudyPlan> plans = studyPlanService.getStudyPlans(email);
+        return ResponseEntity.ok(plans);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getStudyPlan(@PathVariable Long id) {
+        try {
+            StudyPlan plan = studyPlanService.getStudyPlan(id);
+            return ResponseEntity.ok(plan);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{planId}/items/{itemId}/complete")
+    public ResponseEntity<?> markItemComplete(@PathVariable Long planId, @PathVariable Long itemId) {
+        try {
+            StudyPlanItem item = studyPlanService.markItemComplete(planId, itemId);
+            return ResponseEntity.ok(item);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+}

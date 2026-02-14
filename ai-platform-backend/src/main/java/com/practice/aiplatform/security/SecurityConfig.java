@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/students/profile", "/api/students/password", "/api/students/account")
                         .authenticated()
                         .requestMatchers("/api/courses/**").authenticated()
+                        .requestMatchers("/api/study-plans/**").authenticated()
 
                         // All other requests require login
                         .anyRequest().authenticated())

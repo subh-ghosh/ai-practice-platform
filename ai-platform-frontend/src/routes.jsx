@@ -9,6 +9,7 @@ import {
   PencilIcon,
   CreditCardIcon,
   BookOpenIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/solid";
 
 // Import all dashboard pages from the main barrel file
@@ -20,6 +21,7 @@ import {
   Pricing,
 } from "@/pages/dashboard";
 import CourseGeneratorPage from "@/pages/dashboard/CourseGeneratorPage";
+import StudyPlanBuilderPage from "@/pages/dashboard/StudyPlanBuilderPage";
 
 import { SignIn, SignUp } from "@/pages/auth";
 
@@ -49,6 +51,12 @@ export const routes = [
         name: "AI Course Generator",
         path: "/course-generator",
         element: <CourseGeneratorPage />,
+      },
+      {
+        icon: <AcademicCapIcon {...icon} />,
+        name: "Study Plan Builder",
+        path: "/study-plan-builder",
+        element: <StudyPlanBuilderPage />,
       },
     ],
   },

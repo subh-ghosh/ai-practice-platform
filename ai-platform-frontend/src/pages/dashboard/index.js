@@ -4,3 +4,5 @@ export * from "./profile";
 export * from "./notifications";
 export * from "./pricing";
 export * from "./CourseGeneratorPage";
+export * from "./StudyPlanBuilderPage";
+export * from "./StudyPlanViewerPage";

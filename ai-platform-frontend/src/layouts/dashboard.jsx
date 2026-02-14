@@ -4,6 +4,7 @@ import routes from "@/routes";
 import { useMaterialTailwindController, setSidenavType } from "@/context";
 import { useTheme } from "@/context/ThemeContext";
 import React from "react";
+import StudyPlanViewerPage from "@/pages/dashboard/StudyPlanViewerPage";
 
 export function Dashboard() {
   const [controller, dispatch] = useMaterialTailwindController();
@@ -16,14 +17,14 @@ export function Dashboard() {
       setSidenavType(dispatch, "dark");
     } else {
       // Force 'transparent' instead of 'white' to allow the glass effect to work
-      setSidenavType(dispatch, "transparent"); 
+      setSidenavType(dispatch, "transparent");
     }
   }, [theme, dispatch]);
 
   return (
     // 1. MAIN WRAPPER: Relative positioning to hold the background blobs
     <div className="min-h-screen relative overflow-x-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-      
+
       {/* 2. AMBIENT BACKGROUND BLOBS (The "Glow" behind the Glass) */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Top Left Blob */}
@@ -40,7 +41,7 @@ export function Dashboard() {
             sidenavType === "dark" ? "/img/logo-ct.png" : "/img/logo-ct-dark.png"
           }
         />
-        
+
         <div className="p-4 xl:ml-80 dashboard-content">
           <DashboardNavbar />
 
@@ -54,9 +55,11 @@ export function Dashboard() {
                     <Route exact path={path} element={element} />
                   ))
               )}
+              {/* Hidden route for study plan viewer (dynamic :id) */}
+              <Route path="/study-plan/:id" element={<StudyPlanViewerPage />} />
             </Routes>
           </div>
-          
+
           <div className="text-blue-gray-600 mt-8">
             <Footer />
           </div>

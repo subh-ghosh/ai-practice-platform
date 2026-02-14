@@ -24,5 +24,15 @@ public class WebClientConfig {
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
     }
-}
 
+    /**
+     * Creates a pre-configured WebClient bean for the YouTube Data API v3.
+     */
+    @Bean("youtubeWebClient")
+    public WebClient youtubeWebClient() {
+        return WebClient.builder()
+                .baseUrl("https://www.googleapis.com/youtube/v3")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+    }
+}
