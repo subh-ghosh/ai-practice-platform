@@ -45,6 +45,8 @@ public class SecurityConfig {
                         // Public Endpoints
                         .requestMatchers("/health", "/actuator/health").permitAll()
                         .requestMatchers("/api/courses/ping").permitAll() // DEBUG ENDPOINT
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // ALLOW
+                                                                                                         // PREFLIGHT
                         .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**",
                                 "/api/payments/webhook", "/api/students/verify-email/**")
                         .permitAll()
