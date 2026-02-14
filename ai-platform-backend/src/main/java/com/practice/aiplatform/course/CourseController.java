@@ -31,6 +31,11 @@ public class CourseController {
     public record GenerateCourseRequest(String topic, String level) {
     }
 
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("Course Controller is ALIVE");
+    }
+
     @PostMapping("/generate")
     public Mono<Object> generateCourse(@RequestBody GenerateCourseRequest request, Principal principal) {
         String email = principal.getName();

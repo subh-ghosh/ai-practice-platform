@@ -31,9 +31,8 @@ public class SecurityConfig {
                 // 1. Enable CORS (Allow Frontend to talk to Backend)
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOrigins(
-                            List.of("https://ai-practice-platform.vercel.app", "http://localhost:5173"));
-                    // 👇 ADD "PATCH" HERE
+                    // Use patterns to allow all origins (including Vercel previews)
+                    config.setAllowedOriginPatterns(List.of("*"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
@@ -45,6 +44,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Public Endpoints
                         .requestMatchers("/health", "/actuator/health").permitAll()
+                        .requestMatchers("/api/courses/ping").permitAll() // DEBUG ENDPOINT
                         .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**",
                                 "/api/payments/webhook", "/api/students/verify-email/**")
                         .permitAll()
