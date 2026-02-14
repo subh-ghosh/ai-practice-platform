@@ -58,8 +58,8 @@ export function DashboardNavbar() {
     <Navbar
       color="transparent"
       className={`rounded-2xl transition-all ${fixedNavbar
-          ? "sticky top-4 z-40 py-3 shadow-lg shadow-blue-gray-500/10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/40 dark:border-white/10"
-          : "px-0 py-1 bg-transparent"
+        ? "sticky top-4 z-40 py-3 shadow-lg shadow-blue-gray-500/10 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-white/40 dark:border-white/10"
+        : "px-0 py-1 bg-transparent"
         }`}
       fullWidth
       blurred={false}
@@ -116,7 +116,7 @@ export function DashboardNavbar() {
           {/* Notifications Menu (Glass Style) */}
           <Menu placement="bottom-end">
             <MenuHandler>
-              <IconButton variant="text" color="blue-gray" className="relative rounded-full hover:bg-white/20 dark:hover:bg-white/10">
+              <IconButton variant="text" color="blue-gray" className="relative rounded-full hover:bg-white/20 dark:hover:bg-white/10 overflow-visible">
                 {unreadCount > 0 ? (
                   <Badge content={unreadCount} withBorder className="bg-red-500 min-w-[18px] min-h-[18px] text-[10px] border-white dark:border-gray-900">
                     <BellIcon className="h-5 w-5 text-blue-gray-500 dark:text-white" />
