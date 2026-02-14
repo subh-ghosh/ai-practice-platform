@@ -40,12 +40,12 @@ export function About() {
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Main Content Section */}
-      {/* MICRO-ADJUSTMENT: pt-32 and min-h-[102vh] */}
-      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-32 pb-16 min-h-[102vh]">
+      {/* ADJUSTED: pt-32 and min-h-[103vh] for a tight, high-end feel */}
+      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-32 pb-16 min-h-[103vh]">
         <div className="container mx-auto px-4 max-w-xl">
 
           <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
-            {/* The Compact Glass Card */}
+            {/* Compact Glass Card */}
             <div className="rounded-[2.5rem] border border-white/5 bg-[#0a0a0c]/90 backdrop-blur-2xl shadow-2xl overflow-hidden p-8 md:p-10 relative flex flex-col items-center text-center">
 
               {/* Internal subtle glow */}
@@ -125,13 +125,13 @@ export function About() {
                 className="flex flex-col sm:flex-row justify-center gap-3 w-full sm:w-auto"
               >
                 <a href="https://www.linkedin.com/in/subhh/" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300">
+                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm hover:scale-105 hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300">
                     <LinkedInIcon className="w-4 h-4" /> LinkedIn
                   </button>
                 </a>
 
                 <a href="https://github.com/subh-ghosh" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto">
-                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-white/10 text-slate-300 font-bold text-sm hover:bg-white/5 hover:text-white transition-colors duration-300">
+                  <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-white/10 text-slate-300 font-bold text-sm hover:bg-white/5 hover:text-white transition-colors duration-300">
                     <GithubIcon className="w-4 h-4" /> GitHub
                   </button>
                 </a>
