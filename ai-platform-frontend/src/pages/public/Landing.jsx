@@ -87,12 +87,14 @@ const HeroScrollDemo = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
+          {/* UPDATED BLUE BUTTON */}
           <button
             onClick={() => navigate("/auth/sign-up")}
-            className="px-8 py-4 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-lg hover:scale-105 transition-transform shadow-xl shadow-blue-500/20"
+            className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg hover:scale-105 hover:shadow-blue-500/40 transition-all shadow-xl shadow-blue-500/20"
           >
             Start Learning Free
           </button>
+
           <button
             onClick={() => navigate("/auth/sign-in")}
             className="px-8 py-4 rounded-full border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-medium text-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
@@ -116,9 +118,7 @@ const HeroScrollDemo = () => {
       >
         <div className="relative rounded-[2rem] p-2 bg-slate-900/5 dark:bg-white/10 ring-1 ring-slate-900/10 dark:ring-white/20 backdrop-blur-xl">
           <div className="rounded-[1.5rem] overflow-hidden shadow-2xl bg-slate-900 border border-slate-800">
-            {/* PLACEHOLDER: Replace src below with a screenshot of your actual dashboard.
-                For now, I'm creating a CSS-based mockup representation 
-            */}
+            {/* Mockup UI - You can replace this whole block with a high-res <img> of your real dashboard later */}
             <div className="w-full aspect-[16/9] bg-[#0f1117] flex relative overflow-hidden">
               {/* Mockup UI - Sidebar */}
               <div className="w-64 border-r border-white/5 hidden md:flex flex-col p-6 gap-4">
@@ -291,7 +291,7 @@ const BigCTA = () => {
 
           <button
             onClick={() => navigate("/auth/sign-up")}
-            className="group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-blue-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:bg-blue-700 hover:scale-105 shadow-xl shadow-blue-600/30"
+            className="group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 shadow-xl shadow-blue-600/30"
           >
             <span>Launch Study Plan</span>
             <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -301,7 +301,6 @@ const BigCTA = () => {
     </section>
   )
 }
-
 
 // --- MAIN PAGE COMPONENT ---
 
