@@ -20,6 +20,9 @@ public class Module {
     @Column(columnDefinition = "TEXT")
     private String content; // The lesson text/content
 
+    @Column(nullable = false)
+    private boolean isCompleted = false; // Match DB schema
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     @JsonBackReference // Prevent infinite recursion
