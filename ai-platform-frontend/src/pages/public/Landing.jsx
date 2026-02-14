@@ -87,7 +87,6 @@ const HeroScrollDemo = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          {/* UPDATED BLUE BUTTON */}
           <button
             onClick={() => navigate("/auth/sign-up")}
             className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg hover:scale-105 hover:shadow-blue-500/40 transition-all shadow-xl shadow-blue-500/20"
@@ -184,78 +183,176 @@ const SubjectMarquee = () => {
   );
 };
 
-// 3. Bento Grid Feature Section
+// 3. Ultra-Premium Bento Grid Feature Section
 const BentoGrid = () => {
-  const features = [
-    {
-      title: "Smart Code Evaluator",
-      description: "Our neural engine checks logic & OOP principles instantly.",
-      icon: <CodeBracketIcon className="w-6 h-6 text-white" />,
-      className: "md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 text-white",
-      darkText: false
-    },
-    {
-      title: "Global Leaderboard",
-      description: "Compete daily for XP and streaks.",
-      icon: <TrophyIcon className="w-6 h-6 text-amber-500" />,
-      className: "md:col-span-1 bg-slate-50 dark:bg-[#121215] border border-slate-200 dark:border-white/10",
-      darkText: true
-    },
-    {
-      title: "Deep Analytics",
-      description: "Visualize your mastery over time with interactive charts.",
-      icon: <ChartBarIcon className="w-6 h-6 text-purple-500" />,
-      className: "md:col-span-1 bg-slate-50 dark:bg-[#121215] border border-slate-200 dark:border-white/10",
-      darkText: true
-    },
-    {
-      title: "Infinite Question Bank",
-      description: "Never run out of practice. AI generates unique scenarios.",
-      icon: <BoltIcon className="w-6 h-6 text-yellow-400" />,
-      className: "md:col-span-2 bg-slate-900 dark:bg-white/5 border border-slate-800 dark:border-white/10 text-white",
-      darkText: false
-    },
-  ];
-
   return (
-    <section className="py-24 bg-white dark:bg-[#050505] px-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-16 text-center">
-          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
-            Everything you need to <span className="text-blue-600 dark:text-blue-400">excel</span>
+    <section className="py-32 bg-slate-50 dark:bg-[#050505] px-4 relative overflow-hidden z-10">
+      {/* Ambient Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/5 dark:bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto relative z-10">
+
+        {/* Section Header */}
+        <div className="mb-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-600 dark:text-blue-400 text-sm font-bold mb-6 tracking-wide uppercase"
+          >
+            <BoltIcon className="w-4 h-4" /> Power Your Growth
+          </motion.div>
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
+            An Ecosystem Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Excellence</span>
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            A comprehensive suite of tools designed to take you from beginner to professional developer.
+          <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
+            Stop jumping between tutorials and IDEs. We’ve unified the entire learning lifecycle into one seamless, intelligent platform.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:auto-rows-[300px]">
-          {features.map((feature, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className={`rounded-[2rem] p-8 flex flex-col justify-between hover:scale-[1.02] transition-transform duration-300 relative overflow-hidden group ${feature.className}`}
-            >
-              {/* Hover Glow Effect */}
-              <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+        {/* The Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:auto-rows-[340px]">
 
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${feature.darkText ? 'bg-slate-100 dark:bg-white/10' : 'bg-white/20'}`}>
-                {feature.icon}
+          {/* Card 1: Code Evaluator (Span 2) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="md:col-span-2 group relative rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-slate-800 p-8 md:p-10 hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-colors shadow-sm"
+          >
+            {/* Background Gradient & Glow */}
+            <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.05),transparent_50%)] dark:bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.15),transparent_50%)]" />
+
+            {/* Decorative Mockup Editor */}
+            <div className="absolute -bottom-12 -right-12 w-96 h-64 bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl overflow-hidden transform group-hover:-translate-y-4 group-hover:-translate-x-4 transition-transform duration-500">
+              <div className="h-8 bg-slate-800 border-b border-slate-700 flex items-center px-4 gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <div className="w-3 h-3 rounded-full bg-green-500/80" />
               </div>
+              <div className="p-4 font-mono text-sm text-blue-400/80">
+                <p><span className="text-purple-400">class</span> <span className="text-yellow-300">Solution</span> {'{'}</p>
+                <p className="pl-4"><span className="text-purple-400">public static</span> void main(String[] args) {'{'}</p>
+                <p className="pl-8 text-slate-400">// AI analyzing syntax...</p>
+                <p className="pl-8 text-green-400">System.out.println("Perfect!");</p>
+                <p className="pl-4">{'}'}</p>
+                <p>{'}'}</p>
+              </div>
+            </div>
 
+            <div className="relative z-10 h-full flex flex-col justify-between w-2/3">
+              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6">
+                <CodeBracketIcon className="w-7 h-7 text-blue-500 dark:text-blue-400" />
+              </div>
               <div>
-                <h3 className={`text-2xl font-bold mb-2 ${feature.darkText ? 'text-slate-900 dark:text-white' : 'text-white'}`}>
-                  {feature.title}
-                </h3>
-                <p className={`text-lg leading-relaxed ${feature.darkText ? 'text-slate-600 dark:text-slate-400' : 'text-blue-100'}`}>
-                  {feature.description}
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Smart Code Evaluator</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
+                  Write Java or Python directly in the browser. Our neural engine analyzes logic and OOP principles instantly, offering precise hints.
                 </p>
               </div>
-            </motion.div>
-          ))}
+            </div>
+          </motion.div>
+
+          {/* Card 2: Leaderboard (Span 1) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="md:col-span-1 group relative rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-slate-800 p-8 hover:border-amber-500/50 transition-colors shadow-sm"
+          >
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.05),transparent_60%)] dark:bg-[radial-gradient(circle_at_bottom_left,rgba(245,158,11,0.1),transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+            {/* Decorative Leaderboard Snippet */}
+            <div className="absolute top-8 right-8 flex flex-col gap-2 opacity-30 dark:opacity-20 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+              <div className="h-8 w-32 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center px-3 gap-2">
+                <span className="text-amber-500 text-xs font-bold">1</span>
+                <div className="h-2 w-16 bg-amber-500/40 rounded-full" />
+              </div>
+              <div className="h-8 w-28 bg-slate-500/10 border border-slate-500/20 rounded-lg flex items-center px-3 gap-2 ml-4">
+                <span className="text-slate-500 text-xs font-bold">2</span>
+                <div className="h-2 w-12 bg-slate-500/40 rounded-full" />
+              </div>
+            </div>
+
+            <div className="relative z-10 h-full flex flex-col justify-end mt-16">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6">
+                <TrophyIcon className="w-7 h-7 text-amber-500" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Global Rank</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Compete with peers, maintain your streak, and earn XP to climb to the top.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card 3: Deep Analytics (Span 1) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="md:col-span-1 group relative rounded-[2.5rem] overflow-hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-slate-800 p-8 hover:border-purple-500/50 transition-colors shadow-sm flex flex-col justify-between"
+          >
+            {/* Decorative Mini Chart */}
+            <div className="flex items-end gap-2 h-24 mt-4 opacity-50 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="w-1/4 bg-purple-500/20 rounded-t-md h-[40%] group-hover:h-[60%] transition-all duration-500 delay-75" />
+              <div className="w-1/4 bg-purple-500/40 rounded-t-md h-[70%] group-hover:h-[85%] transition-all duration-500 delay-100" />
+              <div className="w-1/4 bg-purple-500/60 rounded-t-md h-[30%] group-hover:h-[50%] transition-all duration-500 delay-150" />
+              <div className="w-1/4 bg-purple-600 rounded-t-md h-[90%] group-hover:h-[100%] transition-all duration-500 delay-200" />
+            </div>
+
+            <div className="relative z-10 mt-6">
+              <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-6">
+                <ChartBarIcon className="w-7 h-7 text-purple-500" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Deep Analytics</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Visualize your mastery over time with beautiful, interactive charts.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card 4: Infinite Question Bank (Span 2) */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="md:col-span-2 group relative rounded-[2.5rem] overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-8 md:p-10 hover:shadow-2xl hover:shadow-blue-500/20 transition-all"
+          >
+            {/* Abstract floating shapes for "Infinite/AI" vibe */}
+            <div className="absolute top-10 right-10 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-150 group-hover:bg-white/20 transition-all duration-700" />
+            <div className="absolute -bottom-10 right-32 w-48 h-48 bg-purple-500/30 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700 delay-100" />
+
+            {/* Decorative Question Cards */}
+            <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden md:block">
+              <div className="w-48 h-32 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 transform rotate-6 translate-x-4 translate-y-4 shadow-xl"></div>
+              <div className="absolute inset-0 w-48 h-32 bg-white/10 backdrop-blur-md rounded-xl border border-white/30 p-4 transform -rotate-3 group-hover:rotate-0 transition-transform duration-500 shadow-xl flex flex-col gap-3">
+                <div className="h-3 w-1/2 bg-white/40 rounded-full"></div>
+                <div className="h-2 w-full bg-white/20 rounded-full mt-2"></div>
+                <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
+              </div>
+            </div>
+
+            <div className="relative z-10 h-full flex flex-col justify-between md:w-1/2">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 border border-white/30 backdrop-blur-md flex items-center justify-center mb-6">
+                <SparklesIcon className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h3 className="text-3xl font-bold text-white mb-3">Infinite Practice</h3>
+                <p className="text-blue-100 text-lg leading-relaxed">
+                  Never run out of material. Our AI generates unique scenarios, challenges, and trivia on any topic, at your exact difficulty level.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
         </div>
       </div>
     </section>
@@ -314,7 +411,7 @@ export function Landing() {
       {/* 2. Infinite Marquee */}
       <SubjectMarquee />
 
-      {/* 3. Modern Bento Grid Features */}
+      {/* 3. Ultra-Premium Bento Grid Features */}
       <BentoGrid />
 
       {/* 4. Final CTA */}
