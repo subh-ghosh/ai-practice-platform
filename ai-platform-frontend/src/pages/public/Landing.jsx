@@ -14,7 +14,7 @@ import { Footer } from "@/widgets/layout";
 
 // --- COMPONENTS ---
 
-// 1. Hero Section (Neon-Stealth Update)
+// 1. Hero Section (Restored Checkered Glow)
 const HeroScrollDemo = () => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -34,11 +34,9 @@ const HeroScrollDemo = () => {
       ref={containerRef}
       className="relative flex flex-col items-center justify-start pt-20 md:pt-40 min-h-[120vh] bg-[#050505] overflow-hidden"
     >
-      {/* Deep Space Background Grid */}
-      <div className="absolute inset-0 w-full h-full bg-[#050505] bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-
-      {/* Top Ambient Light */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+      {/* RESTORED: Checkered Background & Overhead Glow */}
+      <div className="absolute inset-0 w-full h-full bg-[#050505] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+      <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Hero Content */}
       <div className="relative z-10 max-w-5xl mx-auto text-center px-4 mb-16">
@@ -101,7 +99,7 @@ const HeroScrollDemo = () => {
         style={{ rotateX, scale, y: translateY, opacity, perspective: 1200, transformStyle: "preserve-3d" }}
         className="relative z-20 mt-10 w-[95%] md:w-[85%] max-w-7xl mx-auto"
       >
-        <div className="relative rounded-[2rem] p-3 bg-white/5 ring-1 ring-white/10 backdrop-blur-2xl">
+        <div className="relative rounded-[2rem] p-3 bg-white/5 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
           <div className="rounded-[1.5rem] overflow-hidden shadow-2xl bg-[#0a0a0c] border border-white/5 relative">
 
             {/* Mockup Interface */}
