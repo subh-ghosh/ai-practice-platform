@@ -18,16 +18,16 @@ import {
   FireIcon,
 } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
-import { Footer } from "@/widgets/layout";
+import { Footer } from "@/widgets/layout"; 
 
 // --- Animation Variants ---
 const bounceIn = {
   hidden: { opacity: 0, y: 60, scale: 0.8 },
-  visible: {
-    opacity: 1,
-    y: 0,
+  visible: { 
+    opacity: 1, 
+    y: 0, 
     scale: 1,
-    transition: { type: "spring", bounce: 0.5, duration: 0.8 }
+    transition: { type: "spring", bounce: 0.5, duration: 0.8 } 
   }
 };
 
@@ -51,30 +51,30 @@ export function Landing() {
 
   return (
     <div className="overflow-x-hidden bg-slate-50 dark:bg-[#050505] text-slate-900 dark:text-slate-200 transition-colors duration-500 font-sans">
-
+      
       {/* ================= HERO SECTION ================= */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20 md:pt-0">
-
+        
         {/* Background Mesh Gradients - Darker & richer */}
         <div className="absolute inset-0 -z-20 h-full w-full bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(79,70,229,0.15),rgba(0,0,0,0))]" />
-
+        
         {/* Floating Glows (Blue/Purple) */}
-        <motion.div
+        <motion.div 
           animate={{ x: [0, 40, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[10%] left-[10%] h-[300px] w-[300px] rounded-full bg-blue-600/20 blur-[100px] -z-10 pointer-events-none"
+          className="absolute top-[10%] left-[10%] h-[300px] w-[300px] rounded-full bg-blue-600/20 blur-[100px] -z-10 pointer-events-none" 
         />
-        <motion.div
+        <motion.div 
           animate={{ x: [0, -40, 0], y: [0, 50, 0], scale: [1, 1.3, 1] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[20%] right-[10%] h-[400px] w-[400px] rounded-full bg-violet-600/20 blur-[120px] -z-10 pointer-events-none"
+          className="absolute bottom-[20%] right-[10%] h-[400px] w-[400px] rounded-full bg-violet-600/20 blur-[120px] -z-10 pointer-events-none" 
         />
 
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid items-center gap-16 md:grid-cols-12">
-
+            
             {/* Left Content */}
-            <motion.div
+            <motion.div 
               initial="hidden"
               animate="visible"
               variants={staggerContainer}
@@ -89,7 +89,7 @@ export function Landing() {
                   </span>
                 </div>
               </motion.div>
-
+              
               <motion.div variants={bounceIn}>
                 <Typography variant="h1" className="mb-6 font-black tracking-tight leading-[1.1] text-5xl md:text-6xl lg:text-7xl text-slate-900 dark:text-white">
                   Code. Execute. <br />
@@ -116,7 +116,7 @@ export function Landing() {
                   {/* Hover Glow Effect */}
                   <div className="absolute inset-0 -z-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 </button>
-
+                
                 {/* SECONDARY CTA: GHOST BUTTON */}
                 <button
                   className="rounded-full border border-slate-300 px-8 py-4 text-base font-bold text-slate-700 transition-all hover:bg-slate-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800/50 dark:hover:text-white w-full sm:w-auto"
@@ -128,7 +128,7 @@ export function Landing() {
             </motion.div>
 
             {/* Right Dashboard Mockup */}
-            <motion.div
+            <motion.div 
               initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
               transition={{ type: "spring", bounce: 0.6, duration: 1, delay: 0.2 }}
@@ -137,7 +137,7 @@ export function Landing() {
               <motion.div variants={floatAnimation} className="relative w-full max-w-md ml-auto">
                 {/* Gradient Glow Behind Card */}
                 <div className="absolute -inset-1 bg-gradient-to-br from-blue-600 to-purple-600 rounded-[2.5rem] blur-xl opacity-30 animate-pulse" />
-
+                
                 {/* Mockup Card */}
                 <Card className="relative bg-white/70 dark:bg-[#121215]/90 backdrop-blur-2xl border border-white/50 dark:border-indigo-500/20 shadow-2xl rounded-[2.5rem] p-6 overflow-hidden">
                   <div className="flex flex-col gap-4 relative z-10">
@@ -156,24 +156,24 @@ export function Landing() {
                     {/* Abstract Video Thumbnail */}
                     <div className="relative rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden aspect-video group cursor-pointer mt-2 border border-slate-700/50 shadow-inner">
                       <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500 via-transparent to-transparent" />
-
+                      
                       <div className="absolute inset-0 flex items-center justify-center">
                         <PlayCircleIcon className="h-16 w-16 text-white group-hover:scale-110 group-hover:text-blue-400 transition-all duration-300 drop-shadow-lg" />
                       </div>
-
+                      
                       <div className="absolute bottom-3 left-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
                         <Typography variant="small" className="text-white font-bold">Day 2: Lists & Tuples</Typography>
                       </div>
                     </div>
 
                     <div className="mt-4 bg-slate-50 dark:bg-white/5 p-4 rounded-2xl border border-slate-100 dark:border-white/5">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">XP Earned Today</span>
-                        <span className="text-sm font-black text-orange-500 flex items-center gap-1"><FireIcon className="h-4 w-4" /> 110 XP</span>
-                      </div>
-                      <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
-                        <div className="bg-gradient-to-r from-orange-400 to-red-500 h-2 rounded-full w-[45%]" />
-                      </div>
+                       <div className="flex justify-between items-center mb-2">
+                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">XP Earned Today</span>
+                         <span className="text-sm font-black text-orange-500 flex items-center gap-1"><FireIcon className="h-4 w-4"/> 110 XP</span>
+                       </div>
+                       <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                          <div className="bg-gradient-to-r from-orange-400 to-red-500 h-2 rounded-full w-[45%]" />
+                       </div>
                     </div>
                   </div>
                 </Card>
@@ -186,7 +186,7 @@ export function Landing() {
       {/* ================= FEATURES SECTION ================= */}
       <section className="relative py-24 bg-white dark:bg-[#0a0a0c]">
         <div className="container mx-auto px-4">
-          <motion.div
+          <motion.div 
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
@@ -211,7 +211,7 @@ export function Landing() {
               },
               {
                 title: "Curated Study Plans",
-                text: "Tell us what you want to learn (e.g., Machine Learning in 3 Days). We generate a day-by-day curriculum with embedded YouTube tutorials.",
+                text: "Tell us what you want to learn. We generate a day-by-day curriculum with embedded YouTube tutorials.",
                 icon: PlayCircleIcon,
                 color: "from-red-500 to-pink-500",
               },
@@ -229,7 +229,7 @@ export function Landing() {
               },
               {
                 title: "Infinite Question Bank",
-                text: "Never run out of practice. Generate unique questions on any topic (from Arrays to Advanced Algorithms) at any difficulty level.",
+                text: "Never run out of practice. Generate unique questions on any topic at any difficulty level.",
                 icon: SparklesIcon,
                 color: "from-emerald-400 to-teal-500",
               },
@@ -240,8 +240,8 @@ export function Landing() {
                 color: "from-slate-600 to-slate-800",
               },
             ].map(({ title, text, icon: Icon, color }, idx) => (
-              <motion.div
-                key={title}
+              <motion.div 
+                key={title} 
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
@@ -274,9 +274,9 @@ export function Landing() {
       {/* ================= SUBJECTS GRID ================= */}
       <section className="py-24 relative overflow-hidden bg-slate-50 dark:bg-[#050505]">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
-
+        
         <div className="container mx-auto px-4 text-center">
-          <motion.div
+          <motion.div 
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
@@ -293,8 +293,8 @@ export function Landing() {
 
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-5xl mx-auto">
             {[
-              "Python Basics", "Java OOP", "Machine Learning", "Data Structures",
-              "Algorithms", "Problem Solving", "Web Development", "Database Systems"
+              "Java OOP", "Python Automation", "Data Structures", "Algorithms",
+              "Full-Stack Web", "Database Systems", "PL/SQL", "Probability & Stats"
             ].map((subject, i) => (
               <motion.div
                 key={subject}
@@ -302,10 +302,10 @@ export function Landing() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.05, type: "spring", bounce: 0.6 }}
-                whileHover={{
-                  scale: 1.05,
+                whileHover={{ 
+                  scale: 1.05, 
                   y: -5,
-                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                  transition: { type: "spring", stiffness: 400, damping: 10 } 
                 }}
                 whileTap={{ scale: 0.95 }}
                 // SUBJECT CARD: DARK BACKGROUND + BRAND BORDER ON HOVER
@@ -321,7 +321,7 @@ export function Landing() {
       {/* ================= FINAL CTA ================= */}
       <section className="pb-24 pt-10 relative overflow-hidden bg-slate-50 dark:bg-[#050505]">
         <div className="container mx-auto px-4">
-          <motion.div
+          <motion.div 
             initial={{ opacity: 0, y: 50, scale: 0.95 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
@@ -330,45 +330,46 @@ export function Landing() {
           >
             {/* CTA Background Glow */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-[3rem] blur-2xl opacity-20 dark:opacity-40 translate-y-8" />
+            
+            {/* CTA Container (Fixed Light/Dark mode classes) */}
+            <div className="relative rounded-[3rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:via-[#0a0a0c] dark:to-black overflow-hidden shadow-2xl">
+              
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 dark:bg-blue-500/20 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-[100px] -ml-40 -mb-40 pointer-events-none" />
 
-            <Card className="relative rounded-[3rem] border border-white/20 dark:border-white/10 bg-gradient-to-br from-slate-900 via-[#0a0a0c] to-black overflow-hidden shadow-2xl">
-
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] -ml-40 -mb-40 pointer-events-none" />
-
-              <CardBody className="px-6 py-20 md:p-28 text-center relative z-10 flex flex-col items-center">
+              <div className="px-6 py-20 md:p-28 text-center relative z-10 flex flex-col items-center">
                 <motion.div
                   initial={{ rotate: -10, scale: 0.8 }}
                   whileInView={{ rotate: 0, scale: 1 }}
                   transition={{ type: "spring", bounce: 0.7, delay: 0.2 }}
                   viewport={{ once: true }}
-                  className="mb-6 p-4 rounded-full bg-white/5 backdrop-blur-md border border-white/10 inline-block"
+                  className="mb-6 p-4 rounded-full bg-slate-100 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 inline-block"
                 >
-                  <TrophyIcon className="h-12 w-12 text-yellow-400" />
+                  <TrophyIcon className="h-12 w-12 text-yellow-500 dark:text-yellow-400" />
                 </motion.div>
 
-                <Typography variant="h2" className="mb-6 text-4xl md:text-6xl font-black tracking-tight text-white drop-shadow-lg">
+                <Typography variant="h2" className="mb-6 text-4xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-lg">
                   Ready to climb the ranks?
                 </Typography>
-
-                <Typography className="text-blue-100/80 text-lg md:text-xl font-medium mb-10 max-w-2xl">
-                  Join the platform. Build your 7-day plan. Earn your first 100 XP. <br className="hidden md:block" />
+                
+                <Typography className="text-slate-600 dark:text-blue-100/80 text-lg md:text-xl font-medium mb-10 max-w-2xl">
+                  Join the platform. Build your 7-day plan. Earn your first 100 XP. <br className="hidden md:block"/> 
                   The ultimate AI tech-prep platform awaits.
                 </Typography>
-
-                {/* CTA BUTTON: VIBRANT GRADIENT */}
+                
+                {/* CTA BUTTON */}
                 <button
                   onClick={() => navigate("/auth/sign-up")}
-                  className="rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-xl shadow-blue-500/20 text-lg py-5 px-12 font-black transition-transform hover:scale-105 active:scale-95 border border-white/10 hover:border-white/20"
+                  className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/20 text-lg py-5 px-12 font-black transition-transform hover:scale-105 active:scale-95 border border-transparent dark:border-white/10 hover:dark:border-white/20"
                 >
                   Start Your Free Plan
                 </button>
-
-                <Typography variant="small" className="text-white/40 mt-6 font-bold tracking-wide uppercase">
+                
+                <Typography variant="small" className="text-slate-400 dark:text-white/40 mt-6 font-bold tracking-wide uppercase">
                   Basic Analytics & Free Generations Included
                 </Typography>
-              </CardBody>
-            </Card>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
