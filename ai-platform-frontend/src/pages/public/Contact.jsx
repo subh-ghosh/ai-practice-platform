@@ -1,9 +1,10 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { Typography } from "@material-tailwind/react";
 import { PhoneIcon, EnvelopeIcon, BugAntIcon, LightBulbIcon } from "@heroicons/react/24/solid";
+import { motion } from "framer-motion";
 import { Footer } from "@/widgets/layout";
 
-// --- ANIMATIONS ---
+// --- Animations ---
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: {
@@ -46,23 +47,23 @@ export function Contact() {
       icon: BugAntIcon,
       color: "red",
       content: "If the smart system malfunctions, let us know.",
-      action: "Open GitHub issue",
+      action: "Open a GitHub issue",
       href: "https://github.com/subh-ghosh/ai-practice-platform/issues",
     },
     {
       title: "Request a feature",
       icon: LightBulbIcon,
       color: "amber",
-      content: "Want new neural paths or features? Tell us.",
-      action: "Start discussion",
+      content: "Want a new subject, levels, or smart feature?",
+      action: "Start a discussion",
       href: "https://github.com/subh-ghosh/ai-practice-platform/discussions",
     },
   ];
 
   return (
-    <div className="relative w-full overflow-hidden bg-[#050505] flex flex-col min-h-screen font-sans selection:bg-blue-500/30 -mt-24">
+    <div className="relative w-full overflow-hidden bg-[#050505] min-h-screen flex flex-col font-sans selection:bg-blue-500/30 -mt-24">
 
-      {/* Background Gradients & Grid (Consistent with Landing/About) */}
+      {/* Background Gradients & Grid (Matches Landing/About) */}
       <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0"></div>
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
@@ -76,32 +77,26 @@ export function Contact() {
           >
             {/* Header */}
             <motion.div variants={fadeInUp} className="mb-12 text-center">
-              <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
-                Support <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">Center</span>
-              </h2>
-              <p className="text-lg md:text-xl text-slate-400 font-medium max-w-2xl mx-auto">
-                Questions, neural-engine ideas, or technical issues — I’d love to hear from you.
-              </p>
+              <Typography variant="h2" className="mb-4 text-white font-black text-4xl md:text-6xl tracking-tight">
+                Contact & <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-500">Support</span>
+              </Typography>
+              <Typography className="text-slate-400 font-medium text-lg md:text-xl max-w-2xl mx-auto">
+                Questions, ideas, or issues — I’d love to hear from you.
+              </Typography>
             </motion.div>
 
-            {/* Support Policy Panel */}
-            <motion.div variants={fadeInUp} className="max-w-3xl mx-auto mb-12">
-              <div className="rounded-[2rem] border border-white/5 bg-[#0a0a0c]/80 backdrop-blur-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden group">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <h3 className="text-xl font-bold text-white mb-4 relative z-10">Smart Support Policy</h3>
-                <ul className="space-y-3 text-slate-400 relative z-10">
-                  <li className="flex items-start gap-3 text-sm md:text-base leading-relaxed">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                    Neural-driven practice for students who want quick, clear growth.
-                  </li>
-                  <li className="flex items-start gap-3 text-sm md:text-base leading-relaxed">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                    Inquiries are usually analyzed within 48 hours (Mon–Fri, IST).
-                  </li>
-                  <li className="flex items-start gap-3 text-sm md:text-base leading-relaxed">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                    Please share steps to reproduce and screenshots for efficient solving.
-                  </li>
+            {/* Support policy - Glass Panel */}
+            <motion.div variants={fadeInUp}>
+              <div className="rounded-[2rem] border border-white/5 bg-[#0a0a0c]/80 backdrop-blur-2xl shadow-2xl p-6 md:p-8 mb-10 relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <Typography variant="h6" className="mb-4 text-white font-bold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
+                  Support Policy
+                </Typography>
+                <ul className="list-disc pl-5 space-y-2 text-slate-400 font-medium">
+                  <li>Designed for students who want quick, clear practice.</li>
+                  <li>Inquiries are typically addressed within 48 hours (Mon–Fri, IST).</li>
+                  <li>Please include steps to reproduce, expected results, and screenshots if applicable.</li>
                 </ul>
               </div>
             </motion.div>
@@ -112,28 +107,22 @@ export function Contact() {
               className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
             >
               {contactCards.map((item, index) => (
-                <motion.div
-                  key={index}
-                  variants={fadeInUp}
-                  whileHover={{ scale: 1.02 }}
-                  className="h-full"
-                >
-                  <div className="h-full rounded-[2rem] border border-white/5 bg-[#0a0a0c]/80 backdrop-blur-2xl p-6 flex flex-col shadow-xl hover:border-blue-500/30 transition-all duration-300 relative overflow-hidden group">
-                    {/* Neon Glow on Hover */}
-                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-blue-600/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                <motion.div key={index} variants={fadeInUp} whileHover={{ y: -5, scale: 1.02 }}>
+                  <div className="h-full rounded-2xl border border-white/5 bg-[#0a0a0c]/90 backdrop-blur-xl p-6 flex flex-col shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-300 relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                    <div className="flex items-center gap-4 mb-5 relative z-10">
-                      <div className="p-2.5 rounded-xl bg-slate-800/50 border border-white/10">
-                        <item.icon className="h-6 w-6 text-blue-400" />
+                    <div className="flex items-center gap-4 mb-4 relative z-10">
+                      <div className={`p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 group-hover:scale-110 transition-transform duration-300`}>
+                        <item.icon className={`h-6 w-6 text-blue-500`} />
                       </div>
-                      <h4 className="text-lg font-bold text-white tracking-tight">
+                      <Typography variant="h6" className="text-white font-bold">
                         {item.title}
-                      </h4>
+                      </Typography>
                     </div>
 
-                    <p className="text-sm text-slate-400 mb-8 leading-relaxed flex-grow relative z-10">
+                    <Typography className="text-sm text-slate-400 font-medium mb-6 flex-grow relative z-10 leading-relaxed">
                       {item.content}
-                    </p>
+                    </Typography>
 
                     <div className="relative z-10">
                       {item.href ? (
