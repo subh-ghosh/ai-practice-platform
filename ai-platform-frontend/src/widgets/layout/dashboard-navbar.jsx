@@ -116,15 +116,11 @@ export function DashboardNavbar() {
           {/* Notifications Menu (Glass Style) */}
           <Menu placement="bottom-end">
             <MenuHandler>
-              <IconButton variant="text" color="blue-gray" className="relative rounded-full hover:bg-white/20 dark:hover:bg-white/10 overflow-visible">
-                {unreadCount > 0 ? (
-                  <Badge content={unreadCount} withBorder className="bg-red-500 min-w-[18px] min-h-[18px] text-[10px] border-white dark:border-gray-900">
-                    <BellIcon className="h-5 w-5 text-blue-gray-500 dark:text-white" />
-                  </Badge>
-                ) : (
+              <Badge content={unreadCount > 0 ? unreadCount : null} invisible={unreadCount === 0} withBorder className="bg-red-500 min-w-[18px] min-h-[18px] text-[10px] border-white dark:border-gray-900">
+                <IconButton variant="text" color="blue-gray" className="rounded-full hover:bg-white/20 dark:hover:bg-white/10">
                   <BellIcon className="h-5 w-5 text-blue-gray-500 dark:text-white" />
-                )}
-              </IconButton>
+                </IconButton>
+              </Badge>
             </MenuHandler>
 
             <MenuList className="w-80 max-w-[90vw] border border-white/20 shadow-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-2xl rounded-xl overflow-hidden p-2">
