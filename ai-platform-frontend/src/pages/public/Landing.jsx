@@ -21,7 +21,7 @@ import { Footer } from "@/widgets/layout";
 
 // --- COMPONENTS ---
 
-// 1. Hero Section (FIXED: Content pulled higher up)
+// 1. Hero Section (FIXED: Content pulled higher up + Light Mode)
 const HeroScrollDemo = () => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -39,11 +39,11 @@ const HeroScrollDemo = () => {
   return (
     <div
       ref={containerRef}
-      // --- CHANGED LINE BELOW: Reduced pt-36 md:pt-52 to pt-28 md:pt-40 to pull content up ---
-      className="relative flex flex-col items-center justify-start -mt-16 pt-28 md:pt-40 min-h-[125vh] bg-[#050505] overflow-hidden"
+      // Light mode bg added, Dark mode bg preserved
+      className="relative flex flex-col items-center justify-start -mt-16 pt-28 md:pt-40 min-h-[125vh] bg-slate-50 dark:bg-[#050505] overflow-hidden"
     >
-      {/* Checkered Background & Overhead Glow */}
-      <div className="absolute inset-0 w-full h-full bg-[#050505] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+      {/* Checkered Background & Overhead Glow - Updated for Light/Dark Grid */}
+      <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,theme(colors.slate.200)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.slate.200)_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Hero Content */}
@@ -52,7 +52,8 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-sm font-medium mb-8"
+          // Light mode text/border optimized
+          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:border-blue-500/20 dark:bg-blue-500/5 dark:text-blue-400 text-sm font-medium mb-8"
         >
           <SparklesIcon className="w-4 h-4" />
           <span>The Intelligent Way to Code</span>
@@ -62,7 +63,8 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-5xl md:text-8xl font-black tracking-tight text-white mb-8"
+          // Light mode text color added
+          className="text-5xl md:text-8xl font-black tracking-tight text-slate-900 dark:text-white mb-8"
         >
           Master Tech with <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500">
@@ -74,7 +76,8 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
+          // Light mode secondary text added
+          className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
         >
           Not just an editor. A complete ecosystem to generate challenges,
           track mastery, and visualize your growth in real-time.
@@ -88,6 +91,7 @@ const HeroScrollDemo = () => {
         >
           <button
             onClick={() => navigate("/auth/sign-up")}
+            // Text white is fine here as it's on a dark gradient
             className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg hover:scale-105 hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300"
           >
             Start Learning Free
@@ -95,7 +99,8 @@ const HeroScrollDemo = () => {
 
           <button
             onClick={() => navigate("/auth/sign-in")}
-            className="px-8 py-4 rounded-full border border-white/10 text-slate-300 font-medium text-lg hover:bg-white/5 hover:text-white transition-colors"
+            // Full inversion for light mode secondary button
+            className="px-8 py-4 rounded-full border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:text-slate-300 font-medium text-lg dark:hover:bg-white/5 dark:hover:text-white transition-colors"
           >
             View Dashboard
           </button>
@@ -107,25 +112,27 @@ const HeroScrollDemo = () => {
         style={{ rotateX, scale, y: translateY, opacity, perspective: 1200, transformStyle: "preserve-3d" }}
         className="relative z-20 mt-10 w-[95%] md:w-[85%] max-w-7xl mx-auto"
       >
-        <div className="relative rounded-[2rem] p-3 bg-white/5 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
-          <div className="rounded-[1.5rem] overflow-hidden shadow-2xl bg-[#0a0a0c] border border-white/5 relative">
+        {/* Outer container: Light mode uses white with slate ring */}
+        <div className="relative rounded-[2rem] p-3 bg-white ring-1 ring-slate-200 dark:bg-white/5 dark:ring-white/10 backdrop-blur-2xl shadow-2xl">
+          {/* Inner container: Keep dark for terminal feel */}
+          <div className="rounded-[1.5rem] overflow-hidden shadow-2xl bg-slate-900 dark:bg-[#0a0a0c] border border-slate-800 dark:border-white/5 relative">
 
             {/* Mockup Interface */}
-            <div className="w-full aspect-[16/9] bg-[#0a0a0c] flex relative overflow-hidden">
+            <div className="w-full aspect-[16/9] bg-slate-900 dark:bg-[#0a0a0c] flex relative overflow-hidden">
               {/* Sidebar Mockup */}
-              <div className="w-72 border-r border-white/5 hidden md:flex flex-col p-6 gap-6 bg-[#0a0a0c]">
+              <div className="w-72 border-r border-slate-800 dark:border-white/5 hidden md:flex flex-col p-6 gap-6 bg-slate-900 dark:bg-[#0a0a0c]">
                 <div className="h-8 w-32 bg-blue-500/20 rounded-lg animate-pulse"></div>
                 <div className="space-y-4 mt-4">
-                  <div className="h-4 w-full bg-white/5 rounded"></div>
-                  <div className="h-4 w-3/4 bg-white/5 rounded"></div>
-                  <div className="h-4 w-1/2 bg-white/5 rounded"></div>
+                  <div className="h-4 w-full bg-white/10 dark:bg-white/5 rounded"></div>
+                  <div className="h-4 w-3/4 bg-white/10 dark:bg-white/5 rounded"></div>
+                  <div className="h-4 w-1/2 bg-white/10 dark:bg-white/5 rounded"></div>
                 </div>
               </div>
 
               {/* Main Content Mockup */}
-              <div className="flex-1 p-8 bg-[#0f1115]">
+              <div className="flex-1 p-8 bg-slate-950 dark:bg-[#0f1115]">
                 <div className="flex justify-between items-center mb-10">
-                  <div className="h-10 w-64 bg-white/5 rounded-lg"></div>
+                  <div className="h-10 w-64 bg-white/10 dark:bg-white/5 rounded-lg"></div>
                   <div className="flex gap-3">
                     <div className="h-10 w-10 rounded-full bg-blue-500/20 border border-blue-500/30"></div>
                     <div className="h-10 w-10 rounded-full bg-purple-500/20 border border-purple-500/30"></div>
@@ -134,25 +141,25 @@ const HeroScrollDemo = () => {
 
                 <div className="grid grid-cols-3 gap-6">
                   {/* Big Card */}
-                  <div className="col-span-2 h-72 bg-gradient-to-br from-blue-900/10 to-transparent rounded-2xl border border-blue-500/20 p-8 relative overflow-hidden group">
+                  <div className="col-span-2 h-72 bg-gradient-to-br from-blue-900/20 to-transparent rounded-2xl border border-blue-500/20 p-8 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] group-hover:bg-blue-600/20 transition-all"></div>
-                    <div className="relative z-10 text-blue-400/60 text-sm font-mono tracking-widest uppercase mb-2">Active Module</div>
+                    <div className="relative z-10 text-blue-400/80 text-sm font-mono tracking-widest uppercase mb-2">Active Module</div>
                     <div className="relative z-10 text-white text-4xl font-bold">Python Mastery</div>
-                    <div className="mt-6 h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="mt-6 h-2 w-full bg-white/10 dark:bg-white/5 rounded-full overflow-hidden">
                       <div className="h-full w-2/3 bg-blue-500 rounded-full"></div>
                     </div>
                   </div>
 
                   {/* Side Cards */}
-                  <div className="col-span-1 h-72 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden">
+                  <div className="col-span-1 h-72 bg-white/5 rounded-2xl border border-white/10 relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent"></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Reflection Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
+            {/* Reflection Overlay - Adjusted for light mode visibility */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 dark:from-white/5 to-transparent pointer-events-none" />
           </div>
         </div>
 
@@ -163,7 +170,7 @@ const HeroScrollDemo = () => {
   );
 };
 
-// 2. Infinite Marquee (Gradient Fade)
+// 2. Infinite Marquee (Gradient Fade + Light Mode)
 const SubjectMarquee = () => {
   const subjects = [
     "Python Automation", "Java OOP", "Data Structures", "React Hooks",
@@ -172,10 +179,11 @@ const SubjectMarquee = () => {
   ];
 
   return (
-    <div className="py-12 bg-[#050505] border-y border-white/5 overflow-hidden flex relative z-10">
-      {/* Side Fade Masks */}
-      <div className="absolute top-0 left-0 h-full w-32 bg-gradient-to-r from-[#050505] to-transparent z-10" />
-      <div className="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-[#050505] to-transparent z-10" />
+    // Light mode BG and border
+    <div className="py-12 bg-slate-50 dark:bg-[#050505] border-y border-slate-200 dark:border-white/5 overflow-hidden flex relative z-10">
+      {/* Side Fade Masks - Updated to match light bg */}
+      <div className="absolute top-0 left-0 h-full w-32 bg-gradient-to-r from-slate-50 dark:from-[#050505] to-transparent z-10" />
+      <div className="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-slate-50 dark:from-[#050505] to-transparent z-10" />
 
       <motion.div
         className="flex gap-12 whitespace-nowrap"
@@ -183,7 +191,8 @@ const SubjectMarquee = () => {
         transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
       >
         {[...subjects, ...subjects, ...subjects].map((tech, i) => (
-          <div key={i} className="flex items-center gap-3 text-lg font-bold text-slate-500 select-none">
+          // Light mode text color
+          <div key={i} className="flex items-center gap-3 text-lg font-bold text-slate-600 dark:text-slate-500 select-none">
             <span className="w-2 h-2 rounded-full bg-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></span>
             {tech}
           </div>
@@ -193,10 +202,11 @@ const SubjectMarquee = () => {
   );
 };
 
-// 3. Ultra-Premium Bento Grid (Neon Edition)
+// 3. Ultra-Premium Bento Grid (Neon Edition + Light Mode)
 const BentoGrid = () => {
   return (
-    <section className="py-32 bg-[#050505] px-4 relative overflow-hidden z-10">
+    // Light mode BG
+    <section className="py-32 bg-slate-50 dark:bg-[#050505] px-4 relative overflow-hidden z-10">
 
       {/* Background Ambient Glow (Global) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
@@ -209,14 +219,17 @@ const BentoGrid = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-sm font-bold mb-6 tracking-wide uppercase"
+            // Light mode badge
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:border-blue-500/20 dark:bg-blue-500/5 dark:text-blue-400 text-sm font-bold mb-6 tracking-wide uppercase"
           >
             <BoltIcon className="w-4 h-4" /> Power Your Growth
           </motion.div>
-          <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
+          {/* Light mode H2 */}
+          <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
             An Ecosystem Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Excellence</span>
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          {/* Light mode P */}
+          <p className="text-slate-600 dark:text-slate-400 text-lg max-w-2xl mx-auto">
             Stop jumping between tutorials and IDEs. We’ve unified the entire learning lifecycle into one seamless, intelligent platform.
           </p>
         </div>
@@ -231,14 +244,15 @@ const BentoGrid = () => {
             whileHover={{ scale: 1.02 }}
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 md:p-10 hover:border-blue-500/30 transition-all duration-500 shadow-lg"
+            // Light mode card BG, border, and shadow
+            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 p-8 md:p-10 hover:border-blue-500/30 transition-all duration-500 shadow-xl dark:shadow-lg"
           >
             {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-transparent to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/20 blur-[80px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
+            <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 dark:bg-blue-500/20 blur-[80px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
 
-            {/* Decorative Mockup Editor */}
-            <div className="absolute -bottom-12 -right-12 w-96 h-64 bg-[#0f1117] rounded-xl border border-white/10 shadow-2xl overflow-hidden transform group-hover:-translate-y-6 group-hover:-translate-x-6 transition-transform duration-500 z-10">
+            {/* Decorative Mockup Editor - Keep Dark for Contrast */}
+            <div className="absolute -bottom-12 -right-12 w-96 h-64 bg-slate-900 dark:bg-[#0f1117] rounded-xl border border-slate-800 dark:border-white/10 shadow-2xl overflow-hidden transform group-hover:-translate-y-6 group-hover:-translate-x-6 transition-transform duration-500 z-10">
               <div className="h-8 bg-white/5 border-b border-white/5 flex items-center px-4 gap-2">
                 <div className="w-3 h-3 rounded-full bg-red-500/80" />
                 <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
@@ -254,12 +268,14 @@ const BentoGrid = () => {
             </div>
 
             <div className="relative z-20 h-full flex flex-col justify-between w-full md:w-2/3">
-              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center mb-6 text-blue-500 group-hover:scale-110 transition-transform duration-300">
+              {/* Light mode icon box */}
+              <div className="w-14 h-14 rounded-2xl bg-blue-100 border border-blue-200 dark:bg-blue-500/10 dark:border-blue-500/20 flex items-center justify-center mb-6 text-blue-500 group-hover:scale-110 transition-transform duration-300">
                 <CodeBracketIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-3xl font-bold text-white mb-3 drop-shadow-md">Smart Code Evaluator</h3>
-                <p className="text-slate-400 text-lg leading-relaxed">
+                {/* Light mode title & text */}
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-3 drop-shadow-sm dark:drop-shadow-md">Smart Code Evaluator</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
                   Write Java or Python directly in the browser. Our neural engine analyzes logic and OOP principles instantly.
                 </p>
               </div>
@@ -273,31 +289,34 @@ const BentoGrid = () => {
             whileHover={{ scale: 1.02 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 hover:border-amber-500/30 transition-all duration-500 shadow-lg"
+            // Light mode card BG, border, and shadow
+            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 p-8 hover:border-amber-500/30 transition-all duration-500 shadow-xl dark:shadow-lg"
           >
             {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-bl from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute -top-20 -right-20 w-48 h-48 bg-amber-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
+            <div className="absolute -top-20 -right-20 w-48 h-48 bg-amber-500/10 dark:bg-amber-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
 
-            {/* Decorative Leaderboard Snippet */}
-            <div className="absolute top-8 right-8 flex flex-col gap-2 opacity-20 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-              <div className="h-8 w-24 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center px-3 gap-2 backdrop-blur-sm">
-                <span className="text-amber-500 text-xs font-bold">#1</span>
+            {/* Decorative Leaderboard Snippet - Light mode updates */}
+            <div className="absolute top-8 right-8 flex flex-col gap-2 opacity-40 dark:opacity-20 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+              <div className="h-8 w-24 bg-amber-100 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 rounded-lg flex items-center px-3 gap-2 backdrop-blur-sm">
+                <span className="text-amber-600 dark:text-amber-500 text-xs font-bold">#1</span>
                 <div className="h-1.5 w-12 bg-amber-500/40 rounded-full" />
               </div>
-              <div className="h-8 w-20 bg-slate-500/10 border border-slate-500/20 rounded-lg flex items-center px-3 gap-2 ml-4 backdrop-blur-sm">
-                <span className="text-slate-500 text-xs font-bold">#2</span>
+              <div className="h-8 w-20 bg-slate-100 border border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/20 rounded-lg flex items-center px-3 gap-2 ml-4 backdrop-blur-sm">
+                <span className="text-slate-600 dark:text-slate-500 text-xs font-bold">#2</span>
                 <div className="h-1.5 w-8 bg-slate-500/40 rounded-full" />
               </div>
             </div>
 
             <div className="relative z-20 h-full flex flex-col justify-end mt-10">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 text-amber-500 group-hover:scale-110 transition-transform duration-300">
+              {/* Light mode icon box */}
+              <div className="w-14 h-14 rounded-2xl bg-amber-100 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20 flex items-center justify-center mb-6 text-amber-500 group-hover:scale-110 transition-transform duration-300">
                 <TrophyIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-3">Global Rank</h3>
-                <p className="text-slate-400 leading-relaxed text-sm">
+                {/* Light mode title & text */}
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Global Rank</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
                   Compete with peers, maintain your streak, and climb the ranks.
                 </p>
               </div>
@@ -311,11 +330,12 @@ const BentoGrid = () => {
             whileHover={{ scale: 1.02 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 hover:border-purple-500/30 transition-all duration-500 shadow-lg flex flex-col justify-between"
+            // Light mode card BG, border, and shadow
+            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 p-8 hover:border-purple-500/30 transition-all duration-500 shadow-xl dark:shadow-lg flex flex-col justify-between"
           >
             {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-t from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-purple-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-purple-500/10 dark:bg-purple-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
 
             {/* Decorative Mini Chart */}
             <div className="flex items-end gap-2 h-24 mt-4 opacity-40 group-hover:opacity-100 transition-opacity duration-500">
@@ -326,12 +346,14 @@ const BentoGrid = () => {
             </div>
 
             <div className="relative z-20 mt-6">
-              <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-6 text-purple-500 group-hover:scale-110 transition-transform duration-300">
+              {/* Light mode icon box */}
+              <div className="w-14 h-14 rounded-2xl bg-purple-100 border border-purple-200 dark:bg-purple-500/10 dark:border-purple-500/20 flex items-center justify-center mb-6 text-purple-500 group-hover:scale-110 transition-transform duration-300">
                 <ChartBarIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-3">Analytics</h3>
-                <p className="text-slate-400 leading-relaxed text-sm">
+                {/* Light mode title & text */}
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">Analytics</h3>
+                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
                   Visualize your mastery with interactive charts.
                 </p>
               </div>
@@ -345,29 +367,32 @@ const BentoGrid = () => {
             whileHover={{ scale: 1.02 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 md:p-10 hover:border-indigo-500/30 transition-all duration-500 shadow-lg"
+            // Light mode card BG, border, and shadow
+            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 p-8 md:p-10 hover:border-indigo-500/30 transition-all duration-500 shadow-xl dark:shadow-lg"
           >
             {/* NEON GLOW EFFECT */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/20 blur-[100px] rounded-full group-hover:bg-indigo-600/30 transition-colors duration-700" />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 opacity-30 dark:opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/10 dark:bg-indigo-600/20 blur-[100px] rounded-full group-hover:bg-indigo-600/20 dark:group-hover:bg-indigo-600/30 transition-colors duration-700" />
 
-            {/* Decorative Question Cards */}
+            {/* Decorative Question Cards - Light Mode */}
             <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden md:block">
-              <div className="w-48 h-32 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 transform rotate-6 translate-x-4 translate-y-4 shadow-xl"></div>
-              <div className="absolute inset-0 w-48 h-32 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 transform -rotate-3 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500 shadow-2xl flex flex-col gap-3">
-                <div className="h-3 w-1/2 bg-white/40 rounded-full"></div>
-                <div className="h-2 w-full bg-white/20 rounded-full mt-2"></div>
-                <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
+              <div className="w-48 h-32 bg-white dark:bg-white/5 backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 p-4 transform rotate-6 translate-x-4 translate-y-4 shadow-xl"></div>
+              <div className="absolute inset-0 w-48 h-32 bg-slate-50 dark:bg-white/10 backdrop-blur-md rounded-xl border border-slate-300 dark:border-white/20 p-4 transform -rotate-3 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500 shadow-2xl flex flex-col gap-3">
+                <div className="h-3 w-1/2 bg-slate-200 dark:bg-white/40 rounded-full"></div>
+                <div className="h-2 w-full bg-slate-200 dark:bg-white/20 rounded-full mt-2"></div>
+                <div className="h-2 w-3/4 bg-slate-200 dark:bg-white/20 rounded-full"></div>
               </div>
             </div>
 
             <div className="relative z-20 h-full flex flex-col justify-between md:w-1/2">
-              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-6 text-indigo-400 group-hover:scale-110 transition-transform duration-300">
+              {/* Light mode icon box */}
+              <div className="w-14 h-14 rounded-2xl bg-indigo-100 border border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/20 flex items-center justify-center mb-6 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform duration-300">
                 <SparklesIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-3xl font-bold text-white mb-3">Infinite Practice</h3>
-                <p className="text-slate-400 text-lg leading-relaxed group-hover:text-slate-300 transition-colors">
+                {/* Light mode title & text */}
+                <h3 className="text-3xl font-bold text-slate-900 dark:text-white mb-3">Infinite Practice</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed group-hover:text-slate-800 dark:group-hover:text-slate-300 transition-colors">
                   Never run out of material. Our AI generates unique scenarios on any topic, tailored to your skill level.
                 </p>
               </div>
@@ -380,7 +405,7 @@ const BentoGrid = () => {
   );
 };
 
-// --- 4. PARALLAX RESOURCE FOCUS ---
+// --- 4. PARALLAX RESOURCE FOCUS (Light Mode) ---
 const ResourceParallax = () => {
   const containerRef = useRef(null);
 
@@ -395,45 +420,49 @@ const ResourceParallax = () => {
   const opacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
 
   return (
-    <section ref={containerRef} className="py-32 min-h-[90vh] bg-[#050505] relative overflow-hidden flex items-center justify-center">
+    // Light mode BG
+    <section ref={containerRef} className="py-32 min-h-[90vh] bg-slate-50 dark:bg-[#050505] relative overflow-hidden flex items-center justify-center">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_70%)]" />
 
       <div className="relative z-10 text-center max-w-5xl px-4">
         <motion.div style={{ scale, opacity }} className="mb-12">
-          <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-6">
+          {/* Light mode texts */}
+          <h2 className="text-5xl md:text-8xl font-black text-slate-900 dark:text-white tracking-tighter mb-6">
             More Than Just Code.
           </h2>
-          <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto">
+          <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto">
             A complete study sanctuary. Plan your week, watch curated tutorials, take smart notes, and verify your knowledge.
           </p>
         </motion.div>
 
         <div className="relative h-[400px] w-full mt-20 perspective-[1000px]">
+          {/* Center Card - Light Mode */}
           <motion.div
             initial={{ rotateX: 20 }}
             whileInView={{ rotateX: 0 }}
             transition={{ duration: 1 }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-80 bg-[#0a0a0c] border border-white/10 rounded-3xl z-20 shadow-2xl flex flex-col items-center justify-center gap-4"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-80 bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 rounded-3xl z-20 shadow-2xl shadow-slate-200/50 dark:shadow-black/50 flex flex-col items-center justify-center gap-4"
           >
-            <div className="w-20 h-20 rounded-full bg-blue-600/20 flex items-center justify-center animate-pulse">
+            <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-600/20 flex items-center justify-center animate-pulse">
               <AcademicCapIcon className="w-10 h-10 text-blue-500" />
             </div>
-            <div className="text-white font-bold text-xl">Study Plan</div>
+            <div className="text-slate-900 dark:text-white font-bold text-xl">Study Plan</div>
           </motion.div>
 
-          <motion.div style={{ y: y1, x: -200 }} className="absolute left-1/2 top-1/2 w-24 h-24 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
+          {/* Floating Icons (Parallax) - Light Mode */}
+          <motion.div style={{ y: y1, x: -200 }} className="absolute left-1/2 top-1/2 w-24 h-24 bg-white dark:bg-[#121215] border border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-center shadow-lg dark:shadow-xl z-10">
             <BookOpenIcon className="w-10 h-10 text-purple-500" />
           </motion.div>
 
-          <motion.div style={{ y: y2, x: 200 }} className="absolute left-1/2 top-1/2 w-28 h-28 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
+          <motion.div style={{ y: y2, x: 200 }} className="absolute left-1/2 top-1/2 w-28 h-28 bg-white dark:bg-[#121215] border border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-center shadow-lg dark:shadow-xl z-10">
             <VideoCameraIcon className="w-12 h-12 text-red-500" />
           </motion.div>
 
-          <motion.div style={{ y: y1, x: 150 }} className="absolute left-1/2 top-[80%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-30">
+          <motion.div style={{ y: y1, x: 150 }} className="absolute left-1/2 top-[80%] w-20 h-20 bg-white dark:bg-[#121215] border border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-center shadow-lg dark:shadow-xl z-30">
             <ClockIcon className="w-8 h-8 text-amber-500" />
           </motion.div>
 
-          <motion.div style={{ y: y2, x: -180 }} className="absolute left-1/2 top-[20%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-0">
+          <motion.div style={{ y: y2, x: -180 }} className="absolute left-1/2 top-[20%] w-20 h-20 bg-white dark:bg-[#121215] border border-slate-200 dark:border-white/5 rounded-2xl flex items-center justify-center shadow-lg dark:shadow-xl z-0">
             <DocumentTextIcon className="w-8 h-8 text-green-500" />
           </motion.div>
         </div>
@@ -442,29 +471,32 @@ const ResourceParallax = () => {
   );
 };
 
-// --- 5. NEW: MODULAR STUDY JOURNEY (Replaces Sticky Scroll) ---
+// --- 5. NEW: MODULAR STUDY JOURNEY (Light Mode) ---
 const ModularStudyJourney = () => {
   return (
-    <section className="bg-[#050505] relative overflow-hidden">
+    // Light mode BG
+    <section className="bg-slate-50 dark:bg-[#050505] relative overflow-hidden">
 
       {/* STEP 1: PLAN (Blue Theme) */}
-      <div className="py-32 px-4 relative border-t border-white/5">
+      <div className="py-32 px-4 relative border-t border-slate-200 dark:border-white/5">
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-bold mb-6 tracking-wide uppercase">
+            {/* Light mode badge/text */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-sm font-bold mb-6 tracking-wide uppercase">
               <CalendarDaysIcon className="w-4 h-4" /> Step 01: Plan
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">AI-Generated <br /><span className="text-blue-500">Curriculum</span></h2>
-            <p className="text-lg text-slate-400 leading-relaxed max-w-xl">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">AI-Generated <br /><span className="text-blue-500">Curriculum</span></h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
               Stop searching for "what to learn". Enter your goal, and our AI builds a structured week-by-week plan with the best YouTube videos and docs pre-selected for you.
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative">
-            <div className="aspect-square rounded-[3rem] bg-[#0a0a0c] border border-blue-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(37,99,235,0.15)] group">
+            {/* Light mode card container */}
+            <div className="aspect-square rounded-[3rem] bg-white dark:bg-[#0a0a0c] border border-blue-200 dark:border-blue-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(37,99,235,0.15)] group">
               <div className="absolute inset-0 bg-[linear-gradient(to_br,rgba(37,99,235,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              {/* Abstract Calendar Mockup */}
-              <div className="w-full h-full bg-[#0f1115] rounded-2xl border border-white/5 p-6 flex flex-col gap-4 relative z-10">
+              {/* Abstract Calendar Mockup - Keep dark for contrast */}
+              <div className="w-full h-full bg-slate-900 dark:bg-[#0f1115] rounded-2xl border border-slate-800 dark:border-white/5 p-6 flex flex-col gap-4 relative z-10">
                 <div className="h-8 w-1/2 bg-blue-500/20 rounded-lg animate-pulse mb-4" />
                 <div className="grid grid-cols-7 gap-2 flex-1">
                   {[...Array(28)].map((_, i) => (
@@ -478,18 +510,19 @@ const ModularStudyJourney = () => {
       </div>
 
       {/* STEP 2: ABSORB (Purple Theme) - Layout Flipped */}
-      <div className="py-32 px-4 relative border-t border-white/5">
+      <div className="py-32 px-4 relative border-t border-slate-200 dark:border-white/5">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative order-2 md:order-1">
-            <div className="aspect-square rounded-[3rem] bg-[#0a0a0c] border border-purple-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(168,85,247,0.15)] group">
+            {/* Light mode card container */}
+            <div className="aspect-square rounded-[3rem] bg-white dark:bg-[#0a0a0c] border border-purple-200 dark:border-purple-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(168,85,247,0.15)] group">
               <div className="absolute inset-0 bg-[linear-gradient(to_bl,rgba(168,85,247,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              {/* Split Screen Mockup */}
+              {/* Split Screen Mockup - Keep dark */}
               <div className="w-full h-full flex gap-4 relative z-10">
-                <div className="flex-1 bg-[#0f1115] rounded-2xl border border-white/5 flex items-center justify-center">
+                <div className="flex-1 bg-slate-900 dark:bg-[#0f1115] rounded-2xl border border-slate-800 dark:border-white/5 flex items-center justify-center">
                   <VideoCameraIcon className="w-16 h-16 text-purple-500/40" />
                 </div>
-                <div className="w-1/3 bg-[#0f1115] rounded-2xl border border-white/5 p-4 flex flex-col gap-2">
+                <div className="w-1/3 bg-slate-900 dark:bg-[#0f1115] rounded-2xl border border-slate-800 dark:border-white/5 p-4 flex flex-col gap-2">
                   <div className="h-2 w-full bg-white/20 rounded-full" />
                   <div className="h-2 w-3/4 bg-white/20 rounded-full" />
                   <div className="h-2 w-full bg-white/20 rounded-full" />
@@ -499,11 +532,12 @@ const ModularStudyJourney = () => {
             </div>
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="order-1 md:order-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-400 text-sm font-bold mb-6 tracking-wide uppercase">
+            {/* Light mode badge/text */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-600 dark:text-purple-400 text-sm font-bold mb-6 tracking-wide uppercase">
               <ViewColumnsIcon className="w-4 h-4" /> Step 02: Absorb
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Deep Focus <br /><span className="text-purple-500">Interface</span></h2>
-            <p className="text-lg text-slate-400 leading-relaxed max-w-xl">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">Deep Focus <br /><span className="text-purple-500">Interface</span></h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
               Watch tutorials and take notes side-by-side in a unified, distraction-free environment. No alt-tabbing. Just pure flow state as you absorb complex concepts.
             </p>
           </motion.div>
@@ -511,25 +545,28 @@ const ModularStudyJourney = () => {
       </div>
 
       {/* STEP 3: RETAIN (Green Theme) */}
-      <div className="py-32 px-4 relative border-t border-white/5">
+      <div className="py-32 px-4 relative border-t border-slate-200 dark:border-white/5">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-sm font-bold mb-6 tracking-wide uppercase">
+            {/* Light mode badge/text */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-600 dark:text-green-400 text-sm font-bold mb-6 tracking-wide uppercase">
               <CheckCircleIcon className="w-4 h-4" /> Step 03: Retain
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Verify & <br /><span className="text-green-500">Master</span></h2>
-            <p className="text-lg text-slate-400 leading-relaxed max-w-xl">
+            <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">Verify & <br /><span className="text-green-500">Master</span></h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
               We don't just show you content; we ensure you remember it. Smart quizzes and spaced repetition checkpoints verify your knowledge before moving forward.
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative">
-            <div className="aspect-square rounded-[3rem] bg-[#0a0a0c] border border-green-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(34,197,94,0.15)] group">
+            {/* Light mode card container */}
+            <div className="aspect-square rounded-[3rem] bg-white dark:bg-[#0a0a0c] border border-green-200 dark:border-green-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(34,197,94,0.15)] group">
               <div className="absolute inset-0 bg-[linear-gradient(to_tr,rgba(34,197,94,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               {/* Trophy/Mastery Mockup */}
               <div className="relative z-10 flex flex-col items-center">
                 <TrophyIcon className="w-40 h-40 text-green-500 drop-shadow-[0_0_30px_rgba(34,197,94,0.5)] mb-6" />
-                <div className="px-6 py-2 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 font-bold tracking-widest uppercase">Concept Mastered</div>
+                {/* Light mode badge */}
+                <div className="px-6 py-2 rounded-full bg-green-100 border border-green-200 text-green-600 dark:bg-green-500/10 dark:border-green-500/30 dark:text-green-400 font-bold tracking-widest uppercase">Concept Mastered</div>
               </div>
             </div>
           </motion.div>
@@ -541,12 +578,13 @@ const ModularStudyJourney = () => {
 };
 
 
-// 6. Final CTA (Glassmorphism + Neon)
+// 6. Final CTA (Glassmorphism + Neon + Light Mode)
 const BigCTA = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 bg-[#050505] px-4 overflow-hidden relative border-t border-white/5">
+    // Light mode BG and border
+    <section className="py-24 bg-slate-50 dark:bg-[#050505] px-4 overflow-hidden relative border-t border-slate-200 dark:border-white/5">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="max-w-4xl mx-auto relative z-10 text-center">
@@ -555,7 +593,8 @@ const BigCTA = () => {
           whileInView={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true }}
-          className="bg-[#0a0a0c]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-12 md:p-20 shadow-2xl relative overflow-hidden group"
+          // Light mode glassmorphism card
+          className="bg-white/80 dark:bg-[#0a0a0c]/80 backdrop-blur-3xl border border-slate-200 dark:border-white/10 rounded-[3rem] p-12 md:p-20 shadow-2xl relative overflow-hidden group"
         >
           {/* Inner Glow on Hover */}
           <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
@@ -563,19 +602,21 @@ const BigCTA = () => {
           <div className="relative z-10">
             <AcademicCapIcon className="w-16 h-16 text-blue-500 mx-auto mb-8 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
 
-            <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
+            {/* Light mode texts */}
+            <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
               Start your <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
                 7-Day Streak
               </span>
             </h2>
 
-            <p className="text-xl text-slate-400 mb-10 max-w-xl mx-auto">
+            <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-xl mx-auto">
               Join thousands of developers mastering Data Structures and Algorithms with our intelligent platform.
             </p>
 
             <button
               onClick={() => navigate("/auth/sign-up")}
+              // Text white is fine on gradient
               className="group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(37,99,235,0.4)]"
             >
               <span>Launch Study Plan</span>
@@ -592,7 +633,8 @@ const BigCTA = () => {
 
 export function Landing() {
   return (
-    <div className="min-h-screen bg-[#050505] text-slate-200 font-sans selection:bg-blue-500/30">
+    // Light mode BG and text base
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050505] text-slate-900 dark:text-slate-200 font-sans selection:bg-blue-500/30">
 
       {/* 1. Hero with Scroll Zoom Effect */}
       <HeroScrollDemo />
@@ -613,7 +655,7 @@ export function Landing() {
       <BigCTA />
 
       {/* 7. Footer */}
-      <div className="relative z-10 bg-[#050505]">
+      <div className="relative z-10 bg-slate-50 dark:bg-[#050505]">
         <Footer />
       </div>
 
