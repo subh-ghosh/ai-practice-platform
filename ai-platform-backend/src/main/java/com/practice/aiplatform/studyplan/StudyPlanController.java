@@ -63,13 +63,58 @@ public class StudyPlanController {
         }
     }
 
+    // ===== MARK VIDEO ITEM COMPLETE =====
+
     @PatchMapping("/{planId}/items/{itemId}/complete")
     public ResponseEntity<?> markItemComplete(@PathVariable Long planId, @PathVariable Long itemId) {
         try {
             StudyPlanItem item = studyPlanService.markItemComplete(planId, itemId);
             return ResponseEntity.ok(item);
         } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ===== QUIZ ENDPOINTS =====
+
+    @GetMapping("/{planId}/items/{itemId}/quiz")
+    public ResponseEntity<?> getQuizQuestions(@PathVariable Long planId, @PathVariable Long itemId) {
+        try {
+            List<QuizQuestion> questions = studyPlanService.getQuizQuestions(planId, itemId);
+            return ResponseEntity.ok(questions);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    public record QuizSubmission(Map<Long, String> answers) {
+    }
+
+    @PostMapping("/{planId}/items/{itemId}/quiz/submit")
+    public ResponseEntity<?> submitQuiz(
+            @PathVariable Long planId,
+            @PathVariable Long itemId,
+            @RequestBody QuizSubmission submission) {
+        try {
+            var result = studyPlanService.submitQuizAnswers(planId, itemId, submission.answers());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // ===== STATS =====
+
+    @GetMapping("/stats")
+    public ResponseEntity<?> getStats(Principal principal) {
+        try {
+            var stats = studyPlanService.getStats(principal.getName());
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
         }
     }

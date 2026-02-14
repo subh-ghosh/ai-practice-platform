@@ -9,27 +9,33 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class StudyPlanService {
 
+    private static final int VIDEO_XP = 10;
+    private static final int PRACTICE_XP = 50;
+    private static final int QUESTIONS_PER_PRACTICE = 5;
+
     private final GeminiService geminiService;
     private final YouTubeService youTubeService;
     private final StudyPlanRepository studyPlanRepository;
+    private final QuizQuestionRepository quizQuestionRepository;
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
 
     public StudyPlanService(GeminiService geminiService,
             YouTubeService youTubeService,
             StudyPlanRepository studyPlanRepository,
+            QuizQuestionRepository quizQuestionRepository,
             StudentRepository studentRepository,
             ObjectMapper objectMapper) {
         this.geminiService = geminiService;
         this.youTubeService = youTubeService;
         this.studyPlanRepository = studyPlanRepository;
+        this.quizQuestionRepository = quizQuestionRepository;
         this.studentRepository = studentRepository;
         this.objectMapper = objectMapper;
     }
@@ -40,27 +46,268 @@ public class StudyPlanService {
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
             // Step 1: Search YouTube for relevant videos
-            int maxVideos = Math.min(durationDays * 3, 25); // ~3 videos/day, max 25
+            int maxVideos = Math.min(durationDays * 3, 25);
             List<Map<String, String>> videos = youTubeService.searchVideos(
                     topic + " " + difficulty + " tutorial", maxVideos);
 
             if (videos.isEmpty()) {
-                throw new RuntimeException("No YouTube videos found for the topic: " + topic);
+                throw new RuntimeException("No videos found for the topic: " + topic);
             }
 
             // Step 2: Build AI prompt with video data
             String prompt = createPrompt(topic, difficulty, durationDays, videos);
 
-            // Step 3: Call Gemini to curate and organize
+            // Step 3: Call AI to curate and organize
             String aiResponse = geminiService.generateRawContent(prompt).block();
 
-            // Step 4: Parse and save
-            return parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
+            // Step 4: Parse and save the plan structure
+            StudyPlan plan = parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
+
+            // Step 5: Generate quiz questions for each PRACTICE item
+            generateQuizQuestionsForPlan(plan, topic, difficulty);
+
+            return plan;
         });
     }
 
+    /**
+     * Generate 5 MCQ quiz questions for each PRACTICE item in the plan.
+     */
+    private void generateQuizQuestionsForPlan(StudyPlan plan, String topic, String difficulty) {
+        for (StudyPlanItem item : plan.getItems()) {
+            if ("PRACTICE".equals(item.getItemType())) {
+                try {
+                    String quizPrompt = createQuizPrompt(
+                            item.getPracticeSubject() != null ? item.getPracticeSubject() : topic,
+                            item.getPracticeTopic() != null ? item.getPracticeTopic() : topic,
+                            item.getPracticeDifficulty() != null ? item.getPracticeDifficulty() : difficulty);
+
+                    String quizResponse = geminiService.generateRawContent(quizPrompt).block();
+                    List<QuizQuestion> questions = parseQuizQuestions(quizResponse, item);
+
+                    quizQuestionRepository.saveAll(questions);
+                    item.getQuizQuestions().addAll(questions);
+
+                } catch (Exception e) {
+                    System.err.println("Failed to generate quiz for item " + item.getId() + ": " + e.getMessage());
+                    // Don't fail the whole plan if one quiz fails
+                }
+            }
+        }
+    }
+
+    private String createQuizPrompt(String subject, String practiceTopic, String difficulty) {
+        return String.format(
+                """
+                        Generate exactly 5 multiple choice questions for a %s level student on the subject of %s, specifically on the topic: %s.
+
+                        Return ONLY valid JSON with this exact structure:
+                        {
+                          "questions": [
+                            {
+                              "question": "The question text",
+                              "optionA": "First option",
+                              "optionB": "Second option",
+                              "optionC": "Third option",
+                              "optionD": "Fourth option",
+                              "correctOption": "A"
+                            }
+                          ]
+                        }
+
+                        Rules:
+                        - Generate exactly 5 questions
+                        - Each question must have exactly 4 options (A, B, C, D)
+                        - correctOption must be one of: "A", "B", "C", "D"
+                        - Questions should test understanding, not just memorization
+                        - Make wrong answers plausible but clearly wrong to a student who studied
+                        - Do not include Markdown formatting (like ```json), just the raw JSON
+                        """,
+                difficulty, subject, practiceTopic);
+    }
+
+    private List<QuizQuestion> parseQuizQuestions(String jsonResponse, StudyPlanItem item) {
+        List<QuizQuestion> questions = new ArrayList<>();
+        try {
+            String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
+            JsonNode root = objectMapper.readTree(cleanJson);
+            JsonNode questionsNode = root.path("questions");
+
+            if (questionsNode.isArray()) {
+                for (JsonNode qNode : questionsNode) {
+                    QuizQuestion q = new QuizQuestion();
+                    q.setQuestionText(qNode.path("question").asText(""));
+                    q.setOptionA(qNode.path("optionA").asText(""));
+                    q.setOptionB(qNode.path("optionB").asText(""));
+                    q.setOptionC(qNode.path("optionC").asText(""));
+                    q.setOptionD(qNode.path("optionD").asText(""));
+                    q.setCorrectOption(qNode.path("correctOption").asText("A").toUpperCase());
+                    q.setStudyPlanItem(item);
+                    questions.add(q);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Quiz parsing error: " + e.getMessage());
+        }
+        return questions;
+    }
+
+    // ===== QUIZ SUBMISSION =====
+
+    public record QuizResult(int totalQuestions, int correctCount, int xpEarned, boolean passed,
+            List<QuestionResult> results) {
+    }
+
+    public record QuestionResult(Long questionId, String correctOption, boolean isCorrect) {
+    }
+
+    /**
+     * Submit quiz answers for a PRACTICE item.
+     * Returns results with XP earned.
+     * Item is marked complete only when all questions are correct.
+     */
+    public QuizResult submitQuizAnswers(Long planId, Long itemId, Map<Long, String> answers) {
+        StudyPlan plan = studyPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+
+        StudyPlanItem item = plan.getItems().stream()
+                .filter(i -> i.getId().equals(itemId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
+
+        if (!"PRACTICE".equals(item.getItemType())) {
+            throw new RuntimeException("This item is not a practice checkpoint");
+        }
+
+        List<QuizQuestion> questions = quizQuestionRepository.findByStudyPlanItemId(itemId);
+        List<QuestionResult> results = new ArrayList<>();
+        int correctCount = 0;
+
+        for (QuizQuestion q : questions) {
+            String submittedAnswer = answers.getOrDefault(q.getId(), "").toUpperCase();
+            boolean isCorrect = q.getCorrectOption().equalsIgnoreCase(submittedAnswer);
+            if (isCorrect)
+                correctCount++;
+            results.add(new QuestionResult(q.getId(), q.getCorrectOption(), isCorrect));
+        }
+
+        int xpEarned = 0;
+        boolean passed = correctCount == questions.size();
+
+        if (passed && !item.isCompleted()) {
+            // Mark item complete and award XP
+            item.setCompleted(true);
+            xpEarned = PRACTICE_XP;
+
+            // Award XP to student
+            Student student = plan.getStudent();
+            student.setTotalXp(student.getTotalXp() + xpEarned);
+            studentRepository.save(student);
+
+            // Recalculate plan progress
+            recalculateProgress(plan);
+            studyPlanRepository.save(plan);
+        }
+
+        return new QuizResult(questions.size(), correctCount, xpEarned, passed, results);
+    }
+
+    /**
+     * Get quiz questions for an item (without correct answers —
+     * they're @JsonIgnore).
+     */
+    public List<QuizQuestion> getQuizQuestions(Long planId, Long itemId) {
+        // Verify item belongs to plan
+        StudyPlan plan = studyPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+
+        plan.getItems().stream()
+                .filter(i -> i.getId().equals(itemId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
+
+        return quizQuestionRepository.findByStudyPlanItemId(itemId);
+    }
+
+    // ===== MARK VIDEO COMPLETE =====
+
+    public StudyPlanItem markItemComplete(Long planId, Long itemId) {
+        StudyPlan plan = studyPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+
+        StudyPlanItem item = plan.getItems().stream()
+                .filter(i -> i.getId().equals(itemId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
+
+        // Only allow marking VIDEO items via this endpoint
+        if ("PRACTICE".equals(item.getItemType())) {
+            throw new RuntimeException("Practice items must be completed through quizzes");
+        }
+
+        if (!item.isCompleted()) {
+            item.setCompleted(true);
+
+            // Award XP
+            Student student = plan.getStudent();
+            student.setTotalXp(student.getTotalXp() + VIDEO_XP);
+            studentRepository.save(student);
+
+            recalculateProgress(plan);
+            studyPlanRepository.save(plan);
+        }
+
+        return item;
+    }
+
+    // ===== STATS =====
+
+    public record StudyPlanStats(int activePlans, int completedPlans, int totalXp, int totalItemsCompleted) {
+    }
+
+    public StudyPlanStats getStats(String userEmail) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+
+        int active = 0, completed = 0, itemsCompleted = 0;
+        for (StudyPlan plan : plans) {
+            if (plan.isCompleted()) {
+                completed++;
+            } else {
+                active++;
+            }
+            itemsCompleted += plan.getItems().stream().filter(StudyPlanItem::isCompleted).count();
+        }
+
+        return new StudyPlanStats(active, completed, student.getTotalXp(), itemsCompleted);
+    }
+
+    // ===== HELPERS =====
+
+    private void recalculateProgress(StudyPlan plan) {
+        long totalItems = plan.getItems().size();
+        long completedItems = plan.getItems().stream().filter(StudyPlanItem::isCompleted).count();
+        int progress = totalItems > 0 ? (int) ((completedItems * 100) / totalItems) : 0;
+        plan.setProgress(progress);
+        plan.setCompleted(progress == 100);
+    }
+
+    public List<StudyPlan> getStudyPlans(String userEmail) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+    }
+
+    public StudyPlan getStudyPlan(Long id) {
+        return studyPlanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+    }
+
+    // ===== PLAN GENERATION HELPERS (unchanged) =====
+
     private String createPrompt(String topic, String difficulty, int durationDays, List<Map<String, String>> videos) {
-        // Build video list for the prompt
         StringBuilder videoList = new StringBuilder();
         for (int i = 0; i < videos.size(); i++) {
             Map<String, String> v = videos.get(i);
@@ -73,7 +320,7 @@ public class StudyPlanService {
                 """
                         You are an expert curriculum designer. Create a structured study plan for a "%s" level student learning "%s" over %d days.
 
-                        Here are YouTube videos available for this topic:
+                        Here are videos available for this topic:
                         %s
 
                         Your task:
@@ -126,7 +373,6 @@ public class StudyPlanService {
             String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
             JsonNode root = objectMapper.readTree(cleanJson);
 
-            // Build a lookup map: videoId -> video metadata
             Map<String, Map<String, String>> videoMap = videos.stream()
                     .collect(Collectors.toMap(v -> v.get("videoId"), v -> v));
 
@@ -167,15 +413,17 @@ public class StudyPlanService {
                                     item.setChannelName(videoData.get("channelTitle"));
                                     item.setVideoDuration(videoData.get("duration"));
                                 } else {
-                                    // AI returned a videoId we don't have — skip
                                     System.err.println("Warning: Unknown videoId from AI: " + videoId);
                                     continue;
                                 }
+                                item.setXpReward(VIDEO_XP);
                             } else if ("PRACTICE".equals(type)) {
-                                item.setTitle("Practice: " + itemNode.path("practiceTopic").asText(topic));
+                                item.setTitle("Checkpoint: " + itemNode.path("practiceTopic").asText(topic));
                                 item.setPracticeSubject(itemNode.path("practiceSubject").asText(topic));
                                 item.setPracticeTopic(itemNode.path("practiceTopic").asText(topic));
-                                item.setPracticeDifficulty(itemNode.path("practiceDifficulty").asText(difficulty));
+                                item.setPracticeDifficulty(
+                                        itemNode.path("practiceDifficulty").asText(difficulty));
+                                item.setXpReward(PRACTICE_XP);
                             }
 
                             plan.addItem(item);
@@ -189,40 +437,7 @@ public class StudyPlanService {
         } catch (Exception e) {
             System.err.println("Study Plan Parsing Error: " + e.getMessage());
             System.err.println("Raw Response: " + jsonResponse);
-            throw new RuntimeException("Failed to parse AI study plan response: " + e.getMessage());
+            throw new RuntimeException("Failed to parse study plan response: " + e.getMessage());
         }
-    }
-
-    public List<StudyPlan> getStudyPlans(String userEmail) {
-        Student student = studentRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-        return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
-    }
-
-    public StudyPlan getStudyPlan(Long id) {
-        return studyPlanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Study plan not found"));
-    }
-
-    public StudyPlanItem markItemComplete(Long planId, Long itemId) {
-        StudyPlan plan = studyPlanRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Study plan not found"));
-
-        StudyPlanItem item = plan.getItems().stream()
-                .filter(i -> i.getId().equals(itemId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
-
-        item.setCompleted(true);
-
-        // Recalculate progress
-        long totalItems = plan.getItems().size();
-        long completedItems = plan.getItems().stream().filter(StudyPlanItem::isCompleted).count();
-        int progress = (int) ((completedItems * 100) / totalItems);
-        plan.setProgress(progress);
-        plan.setCompleted(progress == 100);
-
-        studyPlanRepository.save(plan);
-        return item;
     }
 }

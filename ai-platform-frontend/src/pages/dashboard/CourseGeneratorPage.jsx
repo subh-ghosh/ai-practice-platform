@@ -115,7 +115,7 @@ const CourseGeneratorPage = () => {
             </div>
 
             <div className="mt-8 text-center text-gray-500 text-sm">
-                <p>Powered by Google Gemini AI</p>
+                <p>Powered by Smart Learning Engine</p>
             </div>
         </div>
     );

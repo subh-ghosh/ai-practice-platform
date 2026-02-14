@@ -9,7 +9,10 @@ import {
     ClockIcon,
     ArrowLeftIcon,
     SparklesIcon,
-    VideoCameraIcon,
+    LockClosedIcon,
+    TrophyIcon,
+    XCircleIcon,
+    StarIcon,
 } from '@heroicons/react/24/solid';
 
 // Helper: convert ISO 8601 duration to readable string
@@ -31,6 +34,13 @@ const StudyPlanViewerPage = () => {
     const [error, setError] = useState(null);
     const [activeVideo, setActiveVideo] = useState(null);
 
+    // Quiz state
+    const [activeQuiz, setActiveQuiz] = useState(null); // { itemId, questions }
+    const [quizAnswers, setQuizAnswers] = useState({});
+    const [quizResult, setQuizResult] = useState(null);
+    const [quizLoading, setQuizLoading] = useState(false);
+    const [xpAnimation, setXpAnimation] = useState(null);
+
     useEffect(() => {
         fetchPlan();
     }, [id]);
@@ -49,20 +59,69 @@ const StudyPlanViewerPage = () => {
     const handleMarkComplete = async (itemId) => {
         try {
             await api.patch(`/study-plans/${id}/items/${itemId}/complete`);
-            fetchPlan(); // Refresh to get updated progress
+            // Show XP animation
+            setXpAnimation({ amount: 10, x: 0, y: 0 });
+            setTimeout(() => setXpAnimation(null), 2000);
+            fetchPlan();
         } catch (err) {
             console.error("Failed to mark item complete:", err);
         }
     };
 
-    const handleStartPractice = (item) => {
-        // Navigate to practice page with pre-filled params via URL search params
-        const params = new URLSearchParams({
-            subject: item.practiceSubject || '',
-            topic: item.practiceTopic || '',
-            difficulty: item.practiceDifficulty || 'Beginner',
-        });
-        navigate(`/dashboard/practice?${params.toString()}`);
+    // ===== QUIZ FUNCTIONS =====
+    const handleStartQuiz = async (item) => {
+        setQuizLoading(true);
+        setQuizResult(null);
+        setQuizAnswers({});
+        try {
+            const response = await api.get(`/study-plans/${id}/items/${item.id}/quiz`);
+            setActiveQuiz({ itemId: item.id, questions: response.data, item });
+        } catch (err) {
+            console.error("Failed to load quiz:", err);
+            alert("Failed to load quiz questions. Please try again.");
+        } finally {
+            setQuizLoading(false);
+        }
+    };
+
+    const handleSubmitQuiz = async () => {
+        if (!activeQuiz) return;
+        setQuizLoading(true);
+        try {
+            const response = await api.post(
+                `/study-plans/${id}/items/${activeQuiz.itemId}/quiz/submit`,
+                { answers: quizAnswers }
+            );
+            setQuizResult(response.data);
+            if (response.data.passed && response.data.xpEarned > 0) {
+                setXpAnimation({ amount: response.data.xpEarned });
+                setTimeout(() => setXpAnimation(null), 3000);
+            }
+            fetchPlan();
+        } catch (err) {
+            console.error("Quiz submission failed:", err);
+        } finally {
+            setQuizLoading(false);
+        }
+    };
+
+    const closeQuiz = () => {
+        setActiveQuiz(null);
+        setQuizResult(null);
+        setQuizAnswers({});
+    };
+
+    // Check if an item is locked (items after incomplete PRACTICE checkpoints)
+    const isItemLocked = (item) => {
+        if (!plan?.items) return false;
+        const sorted = [...plan.items].sort((a, b) => a.orderIndex - b.orderIndex);
+        for (const prev of sorted) {
+            if (prev.orderIndex >= item.orderIndex) break;
+            if (prev.itemType === 'PRACTICE' && !prev.completed) {
+                return true;
+            }
+        }
+        return false;
     };
 
     if (loading) {
@@ -93,8 +152,25 @@ const StudyPlanViewerPage = () => {
 
     const dayNumbers = Object.keys(dayGroups).map(Number).sort((a, b) => a - b);
 
+    // Calculate total XP in plan
+    const totalXpInPlan = plan.items?.reduce((sum, item) => sum + (item.xpReward || 0), 0) || 0;
+    const earnedXpInPlan = plan.items?.filter(i => i.completed).reduce((sum, item) => sum + (item.xpReward || 0), 0) || 0;
+
     return (
-        <div className="max-w-5xl mx-auto p-6">
+        <div className="max-w-5xl mx-auto p-6 relative">
+
+            {/* XP Animation Overlay */}
+            {xpAnimation && (
+                <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
+                    <div className="animate-bounce text-center">
+                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-full text-xl font-bold shadow-2xl flex items-center gap-2">
+                            <StarIcon className="h-6 w-6" />
+                            +{xpAnimation.amount} XP
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header */}
             <button
                 onClick={() => navigate('/dashboard/study-plan-builder')}
@@ -125,6 +201,12 @@ const StudyPlanViewerPage = () => {
                             </span>
                         </div>
                     </div>
+                    {/* XP Badge */}
+                    <div className="flex flex-col items-center bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl px-4 py-3">
+                        <TrophyIcon className="h-6 w-6 text-yellow-500 mb-1" />
+                        <span className="text-lg font-bold text-yellow-700">{earnedXpInPlan}</span>
+                        <span className="text-xs text-yellow-600">/ {totalXpInPlan} XP</span>
+                    </div>
                 </div>
 
                 {/* Progress Bar */}
@@ -135,7 +217,10 @@ const StudyPlanViewerPage = () => {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                         <div
-                            className="bg-gradient-to-r from-purple-500 to-indigo-500 h-3 rounded-full transition-all duration-500"
+                            className={`h-3 rounded-full transition-all duration-500 ${plan.progress === 100
+                                    ? 'bg-gradient-to-r from-green-400 to-emerald-500'
+                                    : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                                }`}
                             style={{ width: `${plan.progress}%` }}
                         ></div>
                     </div>
@@ -149,7 +234,7 @@ const StudyPlanViewerPage = () => {
                         <iframe
                             className="absolute inset-0 w-full h-full"
                             src={`https://www.youtube.com/embed/${activeVideo}`}
-                            title="YouTube Player"
+                            title="Video Player"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                         ></iframe>
@@ -160,6 +245,146 @@ const StudyPlanViewerPage = () => {
                     >
                         Close Player
                     </button>
+                </div>
+            )}
+
+            {/* ===== QUIZ MODAL ===== */}
+            {activeQuiz && (
+                <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="text-lg font-bold text-gray-800 flex items-center">
+                                        <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
+                                        Knowledge Check
+                                    </h2>
+                                    <p className="text-sm text-gray-500 mt-0.5">
+                                        Answer all questions correctly to earn <span className="font-semibold text-yellow-600">{activeQuiz.item.xpReward} XP</span>
+                                    </p>
+                                </div>
+                                <button onClick={closeQuiz} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 space-y-6">
+                            {!quizResult ? (
+                                <>
+                                    {activeQuiz.questions.map((q, idx) => (
+                                        <div key={q.id} className="bg-gray-50 rounded-xl p-4">
+                                            <p className="font-medium text-gray-800 mb-3">
+                                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs font-bold mr-2">
+                                                    {idx + 1}
+                                                </span>
+                                                {q.questionText}
+                                            </p>
+                                            <div className="space-y-2">
+                                                {['A', 'B', 'C', 'D'].map((opt) => (
+                                                    <label
+                                                        key={opt}
+                                                        className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${quizAnswers[q.id] === opt
+                                                                ? 'border-purple-500 bg-purple-50 shadow-sm'
+                                                                : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/30'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name={`q-${q.id}`}
+                                                            value={opt}
+                                                            checked={quizAnswers[q.id] === opt}
+                                                            onChange={() => setQuizAnswers(prev => ({ ...prev, [q.id]: opt }))}
+                                                            className="sr-only"
+                                                        />
+                                                        <span className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold mr-3 ${quizAnswers[q.id] === opt
+                                                                ? 'border-purple-500 bg-purple-500 text-white'
+                                                                : 'border-gray-300 text-gray-500'
+                                                            }`}>
+                                                            {opt}
+                                                        </span>
+                                                        <span className="text-sm text-gray-700">
+                                                            {q[`option${opt}`]}
+                                                        </span>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <button
+                                        onClick={handleSubmitQuiz}
+                                        disabled={quizLoading || Object.keys(quizAnswers).length < activeQuiz.questions.length}
+                                        className={`w-full py-3 rounded-xl text-white font-bold text-lg transition-all ${quizLoading || Object.keys(quizAnswers).length < activeQuiz.questions.length
+                                                ? 'bg-gray-300 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
+                                            }`}
+                                    >
+                                        {quizLoading ? 'Checking...' : `Submit Answers (${Object.keys(quizAnswers).length}/${activeQuiz.questions.length})`}
+                                    </button>
+                                </>
+                            ) : (
+                                /* ===== QUIZ RESULTS ===== */
+                                <div className="text-center">
+                                    <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${quizResult.passed ? 'bg-green-100' : 'bg-red-100'
+                                        }`}>
+                                        {quizResult.passed ? (
+                                            <TrophyIcon className="h-10 w-10 text-green-500" />
+                                        ) : (
+                                            <XCircleIcon className="h-10 w-10 text-red-500" />
+                                        )}
+                                    </div>
+                                    <h3 className={`text-2xl font-bold mb-2 ${quizResult.passed ? 'text-green-700' : 'text-red-700'}`}>
+                                        {quizResult.passed ? 'Perfect Score!' : 'Keep Trying!'}
+                                    </h3>
+                                    <p className="text-gray-600 mb-4">
+                                        You got <span className="font-bold">{quizResult.correctCount}/{quizResult.totalQuestions}</span> correct
+                                    </p>
+
+                                    {quizResult.xpEarned > 0 && (
+                                        <div className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full font-bold mb-4">
+                                            <StarIcon className="h-5 w-5 mr-1" />
+                                            +{quizResult.xpEarned} XP earned!
+                                        </div>
+                                    )}
+
+                                    {/* Question Results */}
+                                    <div className="mt-4 space-y-2 text-left">
+                                        {quizResult.results.map((r, idx) => (
+                                            <div key={r.questionId} className={`flex items-center p-3 rounded-lg ${r.isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                                                }`}>
+                                                {r.isCorrect ? (
+                                                    <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                                                ) : (
+                                                    <XCircleIcon className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                                                )}
+                                                <span className="text-sm text-gray-700">
+                                                    Question {idx + 1}: {r.isCorrect ? 'Correct' : `Incorrect — Answer was ${r.correctOption}`}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-6 flex gap-3 justify-center">
+                                        {!quizResult.passed && (
+                                            <button
+                                                onClick={() => {
+                                                    setQuizResult(null);
+                                                    setQuizAnswers({});
+                                                }}
+                                                className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
+                                            >
+                                                Try Again
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={closeQuiz}
+                                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                                        >
+                                            {quizResult.passed ? 'Continue' : 'Close'}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -179,23 +404,25 @@ const StudyPlanViewerPage = () => {
                     <div className="ml-5 border-l-2 border-purple-200 pl-6 space-y-4">
                         {dayGroups[dayNum]
                             .sort((a, b) => a.orderIndex - b.orderIndex)
-                            .map((item) => (
-                                item.itemType === 'VIDEO' ? (
+                            .map((item) => {
+                                const locked = isItemLocked(item);
+                                return item.itemType === 'VIDEO' ? (
                                     <VideoCard
                                         key={item.id}
                                         item={item}
-                                        onPlay={() => setActiveVideo(item.videoId)}
-                                        onComplete={() => handleMarkComplete(item.id)}
+                                        locked={locked}
+                                        onPlay={() => !locked && setActiveVideo(item.videoId)}
+                                        onComplete={() => !locked && handleMarkComplete(item.id)}
                                     />
                                 ) : (
                                     <PracticeCard
                                         key={item.id}
                                         item={item}
-                                        onStartPractice={() => handleStartPractice(item)}
-                                        onComplete={() => handleMarkComplete(item.id)}
+                                        locked={locked}
+                                        onStartQuiz={() => !locked && handleStartQuiz(item)}
                                     />
-                                )
-                            ))
+                                );
+                            })
                         }
                     </div>
                 </div>
@@ -205,20 +432,28 @@ const StudyPlanViewerPage = () => {
 };
 
 // --- Video Card Component ---
-const VideoCard = ({ item, onPlay, onComplete }) => (
-    <div className={`bg-white rounded-lg shadow-sm border transition-all hover:shadow-md ${item.completed ? 'border-green-200 bg-green-50/30' : 'border-gray-200'
+const VideoCard = ({ item, locked, onPlay, onComplete }) => (
+    <div className={`bg-white rounded-lg shadow-sm border transition-all ${locked ? 'opacity-50 border-gray-200' :
+            item.completed ? 'border-green-200 bg-green-50/30 hover:shadow-md' :
+                'border-gray-200 hover:shadow-md'
         }`}>
         <div className="flex flex-col sm:flex-row">
             {/* Thumbnail */}
-            <div className="relative sm:w-48 flex-shrink-0 cursor-pointer group" onClick={onPlay}>
+            <div className={`relative sm:w-48 flex-shrink-0 ${locked ? 'cursor-not-allowed' : 'cursor-pointer'} group`} onClick={onPlay}>
                 <img
                     src={item.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
                     alt={item.title}
                     className="w-full sm:w-48 h-28 object-cover rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none"
                 />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none">
-                    <PlayIcon className="h-10 w-10 text-white drop-shadow-lg" />
-                </div>
+                {locked ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none">
+                        <LockClosedIcon className="h-8 w-8 text-white" />
+                    </div>
+                ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none">
+                        <PlayIcon className="h-10 w-10 text-white drop-shadow-lg" />
+                    </div>
+                )}
                 {item.videoDuration && (
                     <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
                         {formatDuration(item.videoDuration)}
@@ -233,86 +468,99 @@ const VideoCard = ({ item, onPlay, onComplete }) => (
                         <h3 className="font-semibold text-gray-800 text-sm leading-tight line-clamp-2">
                             {item.title}
                         </h3>
-                        {item.completed && (
-                            <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0 ml-2" />
-                        )}
+                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                            {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
+                            <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+                                {item.xpReward} XP
+                            </span>
+                        </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{item.channelName}</p>
                     {item.description && (
                         <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.description}</p>
                     )}
                 </div>
-                <div className="flex items-center gap-2 mt-3">
-                    <button
-                        onClick={onPlay}
-                        className="flex items-center text-xs px-3 py-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors font-medium"
-                    >
-                        <PlayIcon className="h-3 w-3 mr-1" />
-                        Watch
-                    </button>
-                    {!item.completed && (
+                {!locked && (
+                    <div className="flex items-center gap-2 mt-3">
                         <button
-                            onClick={onComplete}
-                            className="flex items-center text-xs px-3 py-1.5 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors font-medium"
+                            onClick={onPlay}
+                            className="flex items-center text-xs px-3 py-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors font-medium"
                         >
-                            <CheckCircleIcon className="h-3 w-3 mr-1" />
-                            Mark Done
+                            <PlayIcon className="h-3 w-3 mr-1" />
+                            Watch
                         </button>
-                    )}
-                </div>
+                        {!item.completed && (
+                            <button
+                                onClick={onComplete}
+                                className="flex items-center text-xs px-3 py-1.5 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors font-medium"
+                            >
+                                <CheckCircleIcon className="h-3 w-3 mr-1" />
+                                Mark Done
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     </div>
 );
 
 // --- Practice Card Component ---
-const PracticeCard = ({ item, onStartPractice, onComplete }) => (
-    <div className={`bg-white rounded-lg shadow-sm border-2 transition-all hover:shadow-md ${item.completed
-            ? 'border-green-300 bg-green-50/30'
-            : 'border-dashed border-purple-300 bg-purple-50/20'
+const PracticeCard = ({ item, locked, onStartQuiz }) => (
+    <div className={`bg-white rounded-lg shadow-sm border-2 transition-all ${locked ? 'opacity-50 border-gray-300' :
+            item.completed ? 'border-green-300 bg-green-50/30 hover:shadow-md' :
+                'border-dashed border-purple-300 bg-purple-50/20 hover:shadow-md'
         }`}>
         <div className="p-4">
             <div className="flex items-start justify-between">
                 <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.completed ? 'bg-green-100' : 'bg-purple-100'
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${locked ? 'bg-gray-100' :
+                            item.completed ? 'bg-green-100' : 'bg-purple-100'
                         }`}>
-                        <BookOpenIcon className={`h-4 w-4 ${item.completed ? 'text-green-600' : 'text-purple-600'
-                            }`} />
+                        {locked ? (
+                            <LockClosedIcon className="h-4 w-4 text-gray-400" />
+                        ) : item.completed ? (
+                            <CheckCircleIcon className="h-4 w-4 text-green-600" />
+                        ) : (
+                            <BookOpenIcon className="h-4 w-4 text-purple-600" />
+                        )}
                     </div>
                     <div className="ml-3">
                         <h3 className="font-semibold text-sm text-gray-800">
                             {item.title}
                         </h3>
                         <p className="text-xs text-gray-500 mt-0.5">
-                            {item.practiceSubject} • {item.practiceDifficulty}
+                            {item.practiceSubject} • {item.practiceDifficulty} • 5 Questions
                         </p>
                     </div>
                 </div>
-                {item.completed && (
-                    <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                )}
+                <div className="flex items-center gap-1">
+                    {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
+                    <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+                        {item.xpReward} XP
+                    </span>
+                </div>
             </div>
             {item.description && (
                 <p className="text-xs text-gray-600 mt-2 ml-11">{item.description}</p>
             )}
-            <div className="flex items-center gap-2 mt-3 ml-11">
-                <button
-                    onClick={onStartPractice}
-                    className="flex items-center text-xs px-3 py-1.5 bg-purple-100 text-purple-700 rounded-md hover:bg-purple-200 transition-colors font-medium"
-                >
-                    <SparklesIcon className="h-3 w-3 mr-1" />
-                    Start Practice
-                </button>
-                {!item.completed && (
+            {!locked && !item.completed && (
+                <div className="flex items-center gap-2 mt-3 ml-11">
                     <button
-                        onClick={onComplete}
-                        className="flex items-center text-xs px-3 py-1.5 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors font-medium"
+                        onClick={onStartQuiz}
+                        className="flex items-center text-xs px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all font-medium shadow-sm"
                     >
-                        <CheckCircleIcon className="h-3 w-3 mr-1" />
-                        Mark Done
+                        <SparklesIcon className="h-3.5 w-3.5 mr-1.5" />
+                        Take Quiz to Unlock
                     </button>
-                )}
-            </div>
+                </div>
+            )}
+            {locked && (
+                <div className="flex items-center gap-2 mt-3 ml-11 text-xs text-gray-400">
+                    <LockClosedIcon className="h-3 w-3" />
+                    Complete previous checkpoint to unlock
+                </div>
+            )}
         </div>
     </div>
 );

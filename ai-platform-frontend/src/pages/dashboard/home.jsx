@@ -22,10 +22,14 @@ import {
   CheckIcon,
   XMarkIcon,
   PencilIcon,
+  AcademicCapIcon,
+  StarIcon,
+  TrophyIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/solid";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { motion } from "framer-motion"; // Import Animation Library
+import { motion } from "framer-motion";
 
 /* ---------- helpers ---------- */
 
@@ -105,8 +109,8 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
+  visible: {
+    y: 0,
     opacity: 1,
     transition: { type: "spring", stiffness: 260, damping: 20 }
   }
@@ -127,6 +131,7 @@ export function Home() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [timeSeriesData, setTimeSeriesData] = useState(null);
+  const [studyPlanStats, setStudyPlanStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -137,25 +142,28 @@ export function Home() {
         setError(null);
         setStats(null);
         setTimeSeriesData(null);
+        setStudyPlanStats(null);
 
         const token = localStorage.getItem("token");
-        
+
         const config = {
           headers: {
-            "Authorization": `Bearer ${token}` 
+            "Authorization": `Bearer ${token}`
           }
         };
 
         const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
-        const [summaryRes, timeSeriesRes] = await Promise.all([
+        const [summaryRes, timeSeriesRes, spStatsRes] = await Promise.all([
           axios.get(`${BASE_URL}/api/stats/summary`, config),
           axios.get(`${BASE_URL}/api/stats/timeseries`, config),
+          axios.get(`${BASE_URL}/api/study-plans/stats`, config).catch(() => ({ data: null })),
         ]);
 
         if (summaryRes.data && timeSeriesRes.data) {
           setStats(summaryRes.data);
           setTimeSeriesData(timeSeriesRes.data);
+          if (spStatsRes.data) setStudyPlanStats(spStatsRes.data);
         } else {
           throw new Error("Received empty or invalid data from API");
         }
@@ -283,23 +291,23 @@ export function Home() {
 
   return (
     <div className="relative isolate -mx-4 md:-mx-4 lg:-mx-6 px-4 md:px-6 lg:px-8 pb-8 min-h-[calc(100vh-4rem)] overflow-hidden">
-      
+
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-50 via-sky-100 to-blue-100 dark:from-gray-900 dark:via-blue-950 dark:to-gray-900 transition-all duration-700" />
-        <motion.div 
+        <motion.div
           animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
           transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]" 
+          className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-400/5 blur-[100px]"
         />
-        <motion.div 
+        <motion.div
           animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]" 
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-400/5 blur-[100px]"
         />
       </div>
 
-      <motion.div 
+      <motion.div
         className="mt-6 has-fixed-navbar page w-full flex flex-col relative z-10"
         variants={containerVariants}
         initial="hidden"
@@ -326,8 +334,8 @@ export function Home() {
         </motion.div>
 
         {/* Row 1: Stat cards - Staggered */}
-        <motion.div 
-          variants={itemVariants} 
+        <motion.div
+          variants={itemVariants}
           className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
         >
           {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
@@ -346,11 +354,43 @@ export function Home() {
           ))}
         </motion.div>
 
+        {/* Row 1.5: Study Plan Stats */}
+        {studyPlanStats && (
+          <motion.div variants={itemVariants} className="mb-12">
+            <Typography variant="h6" color="blue-gray" className="mb-4 font-semibold flex items-center">
+              <AcademicCapIcon className="h-5 w-5 mr-2 text-purple-500" />
+              Study Plan Progress
+            </Typography>
+            <div className="grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                { title: "Active Plans", icon: BookOpenIcon, color: "purple", value: studyPlanStats.activePlans, label: "in progress" },
+                { title: "Completed Plans", icon: CheckCircleIcon, color: "green", value: studyPlanStats.completedPlans, label: "finished" },
+                { title: "XP Earned", icon: StarIcon, color: "amber", value: studyPlanStats.totalXp, label: "total experience" },
+                { title: "Items Completed", icon: TrophyIcon, color: "blue", value: studyPlanStats.totalItemsCompleted, label: "videos & quizzes" },
+              ].map(({ icon, title, color, value, label }) => (
+                <motion.div
+                  key={title}
+                  whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                  className="rounded-2xl border border-purple-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
+                >
+                  <StatisticsCard
+                    color={color}
+                    title={title}
+                    value={String(value)}
+                    icon={React.createElement(icon, { className: "w-6 h-6 text-white" })}
+                    footer={<Typography className="font-normal text-blue-gray-600">{label}</Typography>}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Row 2: Charts */}
         <motion.div variants={itemVariants} className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
-          <motion.div 
-             whileHover={{ y: -3, transition: { duration: 0.2 } }}
-             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+          <motion.div
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
           >
             <StatisticsChart
               key="accuracy-chart"
@@ -367,9 +407,9 @@ export function Home() {
             />
           </motion.div>
 
-          <motion.div 
-             whileHover={{ y: -3, transition: { duration: 0.2 } }}
-             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+          <motion.div
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
           >
             <StatisticsChart
               key="speed-chart"
@@ -386,9 +426,9 @@ export function Home() {
             />
           </motion.div>
 
-          <motion.div 
-             whileHover={{ y: -3, transition: { duration: 0.2 } }}
-             className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
+          <motion.div
+            whileHover={{ y: -3, transition: { duration: 0.2 } }}
+            className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm hover:shadow-md transition-shadow duration-300"
           >
             <StatisticsChart
               key="breakdown-chart"
@@ -446,8 +486,8 @@ export function Home() {
                     const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
                     const uniqueKey = `${item.questionId}-${item.submittedAt}`;
                     return (
-                      <motion.tr 
-                        key={uniqueKey} 
+                      <motion.tr
+                        key={uniqueKey}
                         custom={key}
                         variants={tableRowVariants}
                         initial="hidden"
@@ -471,10 +511,10 @@ export function Home() {
                               item.evaluationStatus === "CORRECT"
                                 ? "green"
                                 : item.evaluationStatus === "REVEALED"
-                                ? "blue"
-                                : item.evaluationStatus === "CLOSE"
-                                ? "orange"
-                                : "red"
+                                  ? "blue"
+                                  : item.evaluationStatus === "CLOSE"
+                                    ? "orange"
+                                    : "red"
                             }
                             value={item.evaluationStatus.toLowerCase()}
                             className="py-0.5 px-2 text-[11px] font-medium w-fit"
@@ -507,17 +547,16 @@ export function Home() {
                 const { Icon, color } = getOverviewIcon(item.evaluationStatus);
                 const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
                 return (
-                  <motion.div 
-                    key={uniqueKey} 
+                  <motion.div
+                    key={uniqueKey}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 + (key * 0.1), type: "spring", stiffness: 100 }}
                     className="flex items-start gap-4 py-3"
                   >
                     <div
-                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${
-                        key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
-                      }`}
+                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
+                        }`}
                     >
                       <Icon className={`!w-5 !h-5 ${color}`} />
                     </div>

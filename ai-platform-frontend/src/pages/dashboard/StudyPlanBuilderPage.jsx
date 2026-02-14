@@ -84,10 +84,10 @@ const StudyPlanBuilderPage = () => {
         <div className="max-w-4xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-2 flex items-center text-gray-800">
                 <AcademicCapIcon className="h-8 w-8 text-purple-600 mr-2" />
-                AI Study Plan Builder
+                Study Plan Builder
             </h1>
             <p className="text-gray-500 mb-8">
-                Enter a topic and we'll build a personalized study plan with YouTube videos and practice sessions.
+                Enter a topic and we'll build a personalized study plan with curated video lessons and practice sessions.
             </p>
 
             {/* ===== BUILDER FORM ===== */}
@@ -142,8 +142,8 @@ const StudyPlanBuilderPage = () => {
                                     onClick={() => setDurationDays(opt.value)}
                                     disabled={loading}
                                     className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${durationDays === opt.value
-                                            ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
-                                            : 'border-gray-200 text-gray-600 hover:border-purple-300 hover:bg-purple-50/50'
+                                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
+                                        : 'border-gray-200 text-gray-600 hover:border-purple-300 hover:bg-purple-50/50'
                                         }`}
                                 >
                                     {opt.label}
@@ -158,7 +158,7 @@ const StudyPlanBuilderPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-purple-700">
                             <div className="flex items-center">
                                 <VideoCameraIcon className="h-4 w-4 mr-2 text-purple-500" />
-                                Curated YouTube videos
+                                Curated video lessons
                             </div>
                             <div className="flex items-center">
                                 <BookOpenIcon className="h-4 w-4 mr-2 text-purple-500" />
@@ -261,8 +261,8 @@ const StudyPlanBuilderPage = () => {
                                         <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1">
                                             <div
                                                 className={`h-1.5 rounded-full transition-all ${plan.progress === 100
-                                                        ? 'bg-green-500'
-                                                        : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                                                    ? 'bg-green-500'
+                                                    : 'bg-gradient-to-r from-purple-500 to-indigo-500'
                                                     }`}
                                                 style={{ width: `${plan.progress}%` }}
                                             ></div>
@@ -279,7 +279,7 @@ const StudyPlanBuilderPage = () => {
             </div>
 
             <div className="mt-8 text-center text-gray-500 text-sm">
-                <p>Powered by YouTube Data API & Google Gemini AI</p>
+                <p>Powered by Smart Learning Engine</p>
             </div>
         </div>
     );

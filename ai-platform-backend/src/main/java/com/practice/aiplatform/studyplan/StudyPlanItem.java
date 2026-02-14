@@ -1,9 +1,13 @@
 package com.practice.aiplatform.studyplan;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -44,6 +48,16 @@ public class StudyPlanItem {
 
     @Column(nullable = false)
     private boolean isCompleted = false;
+
+    // --- Gamification ---
+    @Column(name = "xp_reward", nullable = false)
+    private int xpReward = 0; // VIDEO=10, PRACTICE=50
+
+    // --- Quiz Questions (only for PRACTICE items) ---
+    @OneToMany(mappedBy = "studyPlanItem", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("item-questions")
+    @OrderBy("id ASC")
+    private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "study_plan_id")
