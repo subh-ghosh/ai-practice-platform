@@ -1,12 +1,12 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { 
-  SparklesIcon, 
-  BoltIcon, 
-  ChartBarIcon, 
-  TrophyIcon, 
-  CodeBracketIcon, 
+import {
+  SparklesIcon,
+  BoltIcon,
+  ChartBarIcon,
+  TrophyIcon,
+  CodeBracketIcon,
   AcademicCapIcon,
   ArrowRightIcon,
   BookOpenIcon,
@@ -22,7 +22,7 @@ import { Footer } from "@/widgets/layout";
 const HeroScrollDemo = () => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
-  
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
@@ -34,8 +34,8 @@ const HeroScrollDemo = () => {
   const opacity = useTransform(scrollYProgress, [0, 0.2], [0.8, 1]);
 
   return (
-    <div 
-      ref={containerRef} 
+    <div
+      ref={containerRef}
       className="relative flex flex-col items-center justify-start pt-20 md:pt-40 min-h-[120vh] bg-[#050505] overflow-hidden"
     >
       {/* RESTORED: Checkered Background & Overhead Glow */}
@@ -53,8 +53,8 @@ const HeroScrollDemo = () => {
           <SparklesIcon className="w-4 h-4" />
           <span>The Intelligent Way to Code</span>
         </motion.div>
-        
-        <motion.h1 
+
+        <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -66,30 +66,30 @@ const HeroScrollDemo = () => {
           </span>
         </motion.h1>
 
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          Not just an editor. A complete ecosystem to generate challenges, 
+          Not just an editor. A complete ecosystem to generate challenges,
           track mastery, and visualize your growth in real-time.
         </motion.p>
 
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-col sm:flex-row gap-5 justify-center"
         >
-          <button 
+          <button
             onClick={() => navigate("/auth/sign-up")}
             className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg hover:scale-105 hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300"
           >
             Start Learning Free
           </button>
-          
-           <button 
+
+          <button
             onClick={() => navigate("/auth/sign-in")}
             className="px-8 py-4 rounded-full border border-white/10 text-slate-300 font-medium text-lg hover:bg-white/5 hover:text-white transition-colors"
           >
@@ -105,53 +105,53 @@ const HeroScrollDemo = () => {
       >
         <div className="relative rounded-[2rem] p-3 bg-white/5 ring-1 ring-white/10 backdrop-blur-2xl shadow-2xl">
           <div className="rounded-[1.5rem] overflow-hidden shadow-2xl bg-[#0a0a0c] border border-white/5 relative">
-            
+
             {/* Mockup Interface */}
             <div className="w-full aspect-[16/9] bg-[#0a0a0c] flex relative overflow-hidden">
-                {/* Sidebar Mockup */}
-                <div className="w-72 border-r border-white/5 hidden md:flex flex-col p-6 gap-6 bg-[#0a0a0c]">
-                    <div className="h-8 w-32 bg-blue-500/20 rounded-lg animate-pulse"></div>
-                    <div className="space-y-4 mt-4">
-                        <div className="h-4 w-full bg-white/5 rounded"></div>
-                        <div className="h-4 w-3/4 bg-white/5 rounded"></div>
-                        <div className="h-4 w-1/2 bg-white/5 rounded"></div>
-                    </div>
+              {/* Sidebar Mockup */}
+              <div className="w-72 border-r border-white/5 hidden md:flex flex-col p-6 gap-6 bg-[#0a0a0c]">
+                <div className="h-8 w-32 bg-blue-500/20 rounded-lg animate-pulse"></div>
+                <div className="space-y-4 mt-4">
+                  <div className="h-4 w-full bg-white/5 rounded"></div>
+                  <div className="h-4 w-3/4 bg-white/5 rounded"></div>
+                  <div className="h-4 w-1/2 bg-white/5 rounded"></div>
+                </div>
+              </div>
+
+              {/* Main Content Mockup */}
+              <div className="flex-1 p-8 bg-[#0f1115]">
+                <div className="flex justify-between items-center mb-10">
+                  <div className="h-10 w-64 bg-white/5 rounded-lg"></div>
+                  <div className="flex gap-3">
+                    <div className="h-10 w-10 rounded-full bg-blue-500/20 border border-blue-500/30"></div>
+                    <div className="h-10 w-10 rounded-full bg-purple-500/20 border border-purple-500/30"></div>
+                  </div>
                 </div>
 
-                {/* Main Content Mockup */}
-                <div className="flex-1 p-8 bg-[#0f1115]">
-                    <div className="flex justify-between items-center mb-10">
-                        <div className="h-10 w-64 bg-white/5 rounded-lg"></div>
-                        <div className="flex gap-3">
-                             <div className="h-10 w-10 rounded-full bg-blue-500/20 border border-blue-500/30"></div>
-                             <div className="h-10 w-10 rounded-full bg-purple-500/20 border border-purple-500/30"></div>
-                        </div>
+                <div className="grid grid-cols-3 gap-6">
+                  {/* Big Card */}
+                  <div className="col-span-2 h-72 bg-gradient-to-br from-blue-900/10 to-transparent rounded-2xl border border-blue-500/20 p-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] group-hover:bg-blue-600/20 transition-all"></div>
+                    <div className="relative z-10 text-blue-400/60 text-sm font-mono tracking-widest uppercase mb-2">Active Module</div>
+                    <div className="relative z-10 text-white text-4xl font-bold">Python Mastery</div>
+                    <div className="mt-6 h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full w-2/3 bg-blue-500 rounded-full"></div>
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-6">
-                        {/* Big Card */}
-                        <div className="col-span-2 h-72 bg-gradient-to-br from-blue-900/10 to-transparent rounded-2xl border border-blue-500/20 p-8 relative overflow-hidden group">
-                             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 blur-[80px] group-hover:bg-blue-600/20 transition-all"></div>
-                             <div className="relative z-10 text-blue-400/60 text-sm font-mono tracking-widest uppercase mb-2">Active Module</div>
-                             <div className="relative z-10 text-white text-4xl font-bold">Python Mastery</div>
-                             <div className="mt-6 h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div className="h-full w-2/3 bg-blue-500 rounded-full"></div>
-                             </div>
-                        </div>
+                  </div>
 
-                        {/* Side Cards */}
-                        <div className="col-span-1 h-72 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden">
-                             <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent"></div>
-                        </div>
-                    </div>
+                  {/* Side Cards */}
+                  <div className="col-span-1 h-72 bg-white/5 rounded-2xl border border-white/5 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-purple-500/10 to-transparent"></div>
+                  </div>
                 </div>
+              </div>
             </div>
 
             {/* Reflection Overlay */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
           </div>
         </div>
-        
+
         {/* Glow Under Dashboard */}
         <div className="absolute -inset-10 bg-blue-600/20 blur-[100px] -z-10 rounded-[3rem]" />
       </motion.div>
@@ -162,7 +162,7 @@ const HeroScrollDemo = () => {
 // 2. Infinite Marquee (Gradient Fade)
 const SubjectMarquee = () => {
   const subjects = [
-    "Python Automation", "Java OOP", "Data Structures", "React Hooks", 
+    "Python Automation", "Java OOP", "Data Structures", "React Hooks",
     "System Design", "SQL & Databases", "Algorithms", "Machine Learning Basics",
     "REST APIs", "Docker", "Next.js", "TypeScript"
   ];
@@ -173,7 +173,7 @@ const SubjectMarquee = () => {
       <div className="absolute top-0 left-0 h-full w-32 bg-gradient-to-r from-[#050505] to-transparent z-10" />
       <div className="absolute top-0 right-0 h-full w-32 bg-gradient-to-l from-[#050505] to-transparent z-10" />
 
-      <motion.div 
+      <motion.div
         className="flex gap-12 whitespace-nowrap"
         animate={{ x: [0, -1000] }}
         transition={{ repeat: Infinity, duration: 40, ease: "linear" }}
@@ -193,12 +193,12 @@ const SubjectMarquee = () => {
 const BentoGrid = () => {
   return (
     <section className="py-32 bg-[#050505] px-4 relative overflow-hidden z-10">
-      
+
       {/* Background Ambient Glow (Global) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-6xl mx-auto relative z-10">
-        
+
         {/* Section Header */}
         <div className="mb-20 text-center">
           <motion.div
@@ -219,7 +219,7 @@ const BentoGrid = () => {
 
         {/* The Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:auto-rows-[340px]">
-          
+
           {/* Card 1: Code Evaluator (Span 2) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -271,23 +271,23 @@ const BentoGrid = () => {
             transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
             className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 hover:border-amber-500/30 transition-all duration-500 shadow-lg"
           >
-             {/* NEON GLOW EFFECT */}
-             <div className="absolute inset-0 bg-gradient-to-bl from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-             <div className="absolute -top-20 -right-20 w-48 h-48 bg-amber-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
-             
-             {/* Decorative Leaderboard Snippet */}
-             <div className="absolute top-8 right-8 flex flex-col gap-2 opacity-20 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                <div className="h-8 w-24 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center px-3 gap-2 backdrop-blur-sm">
-                    <span className="text-amber-500 text-xs font-bold">#1</span>
-                    <div className="h-1.5 w-12 bg-amber-500/40 rounded-full" />
-                </div>
-                <div className="h-8 w-20 bg-slate-500/10 border border-slate-500/20 rounded-lg flex items-center px-3 gap-2 ml-4 backdrop-blur-sm">
-                    <span className="text-slate-500 text-xs font-bold">#2</span>
-                    <div className="h-1.5 w-8 bg-slate-500/40 rounded-full" />
-                </div>
-             </div>
+            {/* NEON GLOW EFFECT */}
+            <div className="absolute inset-0 bg-gradient-to-bl from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute -top-20 -right-20 w-48 h-48 bg-amber-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
 
-             <div className="relative z-20 h-full flex flex-col justify-end mt-10">
+            {/* Decorative Leaderboard Snippet */}
+            <div className="absolute top-8 right-8 flex flex-col gap-2 opacity-20 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
+              <div className="h-8 w-24 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center px-3 gap-2 backdrop-blur-sm">
+                <span className="text-amber-500 text-xs font-bold">#1</span>
+                <div className="h-1.5 w-12 bg-amber-500/40 rounded-full" />
+              </div>
+              <div className="h-8 w-20 bg-slate-500/10 border border-slate-500/20 rounded-lg flex items-center px-3 gap-2 ml-4 backdrop-blur-sm">
+                <span className="text-slate-500 text-xs font-bold">#2</span>
+                <div className="h-1.5 w-8 bg-slate-500/40 rounded-full" />
+              </div>
+            </div>
+
+            <div className="relative z-20 h-full flex flex-col justify-end mt-10">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 text-amber-500 group-hover:scale-110 transition-transform duration-300">
                 <TrophyIcon className="w-7 h-7" />
               </div>
@@ -301,7 +301,7 @@ const BentoGrid = () => {
           </motion.div>
 
           {/* Card 3: Deep Analytics (Span 1) */}
-           <motion.div
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.02 }}
@@ -309,19 +309,19 @@ const BentoGrid = () => {
             transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
             className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 hover:border-purple-500/30 transition-all duration-500 shadow-lg flex flex-col justify-between"
           >
-             {/* NEON GLOW EFFECT */}
-             <div className="absolute inset-0 bg-gradient-to-t from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-             <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-purple-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
+            {/* NEON GLOW EFFECT */}
+            <div className="absolute inset-0 bg-gradient-to-t from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-32 bg-purple-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-all duration-700" />
 
-             {/* Decorative Mini Chart */}
-             <div className="flex items-end gap-2 h-24 mt-4 opacity-40 group-hover:opacity-100 transition-opacity duration-500">
-                <div className="w-1/4 bg-purple-500/20 rounded-t-md h-[40%] group-hover:h-[60%] transition-all duration-500 delay-75" />
-                <div className="w-1/4 bg-purple-500/40 rounded-t-md h-[70%] group-hover:h-[85%] transition-all duration-500 delay-100" />
-                <div className="w-1/4 bg-purple-500/60 rounded-t-md h-[30%] group-hover:h-[50%] transition-all duration-500 delay-150" />
-                <div className="w-1/4 bg-purple-600 rounded-t-md h-[90%] group-hover:h-[100%] transition-all duration-500 delay-200 shadow-[0_0_15px_rgba(147,51,234,0.5)]" />
-             </div>
-             
-             <div className="relative z-20 mt-6">
+            {/* Decorative Mini Chart */}
+            <div className="flex items-end gap-2 h-24 mt-4 opacity-40 group-hover:opacity-100 transition-opacity duration-500">
+              <div className="w-1/4 bg-purple-500/20 rounded-t-md h-[40%] group-hover:h-[60%] transition-all duration-500 delay-75" />
+              <div className="w-1/4 bg-purple-500/40 rounded-t-md h-[70%] group-hover:h-[85%] transition-all duration-500 delay-100" />
+              <div className="w-1/4 bg-purple-500/60 rounded-t-md h-[30%] group-hover:h-[50%] transition-all duration-500 delay-150" />
+              <div className="w-1/4 bg-purple-600 rounded-t-md h-[90%] group-hover:h-[100%] transition-all duration-500 delay-200 shadow-[0_0_15px_rgba(147,51,234,0.5)]" />
+            </div>
+
+            <div className="relative z-20 mt-6">
               <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center mb-6 text-purple-500 group-hover:scale-110 transition-transform duration-300">
                 <ChartBarIcon className="w-7 h-7" />
               </div>
@@ -335,7 +335,7 @@ const BentoGrid = () => {
           </motion.div>
 
           {/* Card 4: Infinite Question Bank (Span 2) */}
-           <motion.div
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.02 }}
@@ -343,18 +343,18 @@ const BentoGrid = () => {
             transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
             className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 md:p-10 hover:border-indigo-500/30 transition-all duration-500 shadow-lg"
           >
-             {/* NEON GLOW EFFECT */}
+            {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/20 blur-[100px] rounded-full group-hover:bg-indigo-600/30 transition-colors duration-700" />
-            
+
             {/* Decorative Question Cards */}
             <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden md:block">
-                <div className="w-48 h-32 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 transform rotate-6 translate-x-4 translate-y-4 shadow-xl"></div>
-                <div className="absolute inset-0 w-48 h-32 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 transform -rotate-3 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500 shadow-2xl flex flex-col gap-3">
-                    <div className="h-3 w-1/2 bg-white/40 rounded-full"></div>
-                    <div className="h-2 w-full bg-white/20 rounded-full mt-2"></div>
-                    <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
-                </div>
+              <div className="w-48 h-32 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 transform rotate-6 translate-x-4 translate-y-4 shadow-xl"></div>
+              <div className="absolute inset-0 w-48 h-32 bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-4 transform -rotate-3 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500 shadow-2xl flex flex-col gap-3">
+                <div className="h-3 w-1/2 bg-white/40 rounded-full"></div>
+                <div className="h-2 w-full bg-white/20 rounded-full mt-2"></div>
+                <div className="h-2 w-3/4 bg-white/20 rounded-full"></div>
+              </div>
             </div>
 
             <div className="relative z-20 h-full flex flex-col justify-between md:w-1/2">
@@ -379,7 +379,7 @@ const BentoGrid = () => {
 // --- 4. NEW: PARALLAX RESOURCE FOCUS (The "Flying Through" Effect) ---
 const ResourceParallax = () => {
   const containerRef = useRef(null);
-  
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
@@ -393,129 +393,145 @@ const ResourceParallax = () => {
 
   return (
     <section ref={containerRef} className="py-32 min-h-[100vh] bg-[#050505] relative overflow-hidden flex items-center justify-center">
-        {/* Massive Background Glow */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_70%)]" />
+      {/* Massive Background Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_70%)]" />
 
-        <div className="relative z-10 text-center max-w-5xl px-4">
-             <motion.div style={{ scale, opacity }} className="mb-12">
-                 <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-6">
-                    More Than Just Code.
-                 </h2>
-                 <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto">
-                    A complete study sanctuary. Plan your week, watch curated tutorials, take smart notes, and verify your knowledge.
-                 </p>
-             </motion.div>
+      <div className="relative z-10 text-center max-w-5xl px-4">
+        <motion.div style={{ scale, opacity }} className="mb-12">
+          <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-6">
+            More Than Just Code.
+          </h2>
+          <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto">
+            A complete study sanctuary. Plan your week, watch curated tutorials, take smart notes, and verify your knowledge.
+          </p>
+        </motion.div>
 
-             {/* Floating 3D Elements */}
-             <div className="relative h-[400px] w-full mt-20 perspective-[1000px]">
-                 
-                 {/* Center Card */}
-                 <motion.div 
-                    initial={{ rotateX: 20 }}
-                    whileInView={{ rotateX: 0 }}
-                    transition={{ duration: 1 }}
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-80 bg-[#0a0a0c] border border-white/10 rounded-3xl z-20 shadow-2xl flex flex-col items-center justify-center gap-4"
-                 >
-                     <div className="w-20 h-20 rounded-full bg-blue-600/20 flex items-center justify-center animate-pulse">
-                        <AcademicCapIcon className="w-10 h-10 text-blue-500" />
-                     </div>
-                     <div className="text-white font-bold text-xl">Study Plan</div>
-                 </motion.div>
+        {/* Floating 3D Elements */}
+        <div className="relative h-[400px] w-full mt-20 perspective-[1000px]">
 
-                 {/* Floating Icons (Parallax) */}
-                 <motion.div style={{ y: y1, x: -200 }} className="absolute left-1/2 top-1/2 w-24 h-24 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
-                    <BookOpenIcon className="w-10 h-10 text-purple-500" />
-                 </motion.div>
+          {/* Center Card */}
+          <motion.div
+            initial={{ rotateX: 20 }}
+            whileInView={{ rotateX: 0 }}
+            transition={{ duration: 1 }}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-80 bg-[#0a0a0c] border border-white/10 rounded-3xl z-20 shadow-2xl flex flex-col items-center justify-center gap-4"
+          >
+            <div className="w-20 h-20 rounded-full bg-blue-600/20 flex items-center justify-center animate-pulse">
+              <AcademicCapIcon className="w-10 h-10 text-blue-500" />
+            </div>
+            <div className="text-white font-bold text-xl">Study Plan</div>
+          </motion.div>
 
-                 <motion.div style={{ y: y2, x: 200 }} className="absolute left-1/2 top-1/2 w-28 h-28 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
-                    <VideoCameraIcon className="w-12 h-12 text-red-500" />
-                 </motion.div>
-                 
-                 <motion.div style={{ y: y1, x: 150 }} className="absolute left-1/2 top-[80%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-30">
-                    <ClockIcon className="w-8 h-8 text-amber-500" />
-                 </motion.div>
+          {/* Floating Icons (Parallax) */}
+          <motion.div style={{ y: y1, x: -200 }} className="absolute left-1/2 top-1/2 w-24 h-24 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
+            <BookOpenIcon className="w-10 h-10 text-purple-500" />
+          </motion.div>
 
-                 <motion.div style={{ y: y2, x: -180 }} className="absolute left-1/2 top-[20%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-0">
-                    <DocumentTextIcon className="w-8 h-8 text-green-500" />
-                 </motion.div>
-             </div>
+          <motion.div style={{ y: y2, x: 200 }} className="absolute left-1/2 top-1/2 w-28 h-28 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
+            <VideoCameraIcon className="w-12 h-12 text-red-500" />
+          </motion.div>
+
+          <motion.div style={{ y: y1, x: 150 }} className="absolute left-1/2 top-[80%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-30">
+            <ClockIcon className="w-8 h-8 text-amber-500" />
+          </motion.div>
+
+          <motion.div style={{ y: y2, x: -180 }} className="absolute left-1/2 top-[20%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-0">
+            <DocumentTextIcon className="w-8 h-8 text-green-500" />
+          </motion.div>
         </div>
+      </div>
     </section>
   );
 };
 
-// --- 5. NEW: MASTERY PIPELINE (Sticky Scroll Journey) ---
+// --- 5. NEW: MASTERY PIPELINE (Sticky Scroll Journey) - FIXED OVERLAPS ---
 const StudyWorkflow = () => {
   const containerRef = useRef(null);
-  
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"],
   });
 
-  const step1Opacity = useTransform(scrollYProgress, [0, 0.3, 0.4], [1, 1, 0.2]);
-  const step2Opacity = useTransform(scrollYProgress, [0.4, 0.5, 0.6, 0.7], [0.2, 1, 1, 0.2]);
-  const step3Opacity = useTransform(scrollYProgress, [0.7, 0.8, 1], [0.2, 1, 1]);
+  // FIXED OPACITY: Ensures previous steps completely fade to 0 before the next appears
+  const step1Opacity = useTransform(scrollYProgress, [0, 0.25, 0.35], [1, 1, 0]);
+  const step2Opacity = useTransform(scrollYProgress, [0.3, 0.4, 0.6, 0.7], [0, 1, 1, 0]);
+  const step3Opacity = useTransform(scrollYProgress, [0.65, 0.75, 1], [0, 1, 1]);
+
+  // ADDED VERTICAL SLIDE: Makes the text zoom/scroll up into focus
+  const step1Y = useTransform(scrollYProgress, [0, 0.25, 0.35], [0, 0, -50]);
+  const step2Y = useTransform(scrollYProgress, [0.3, 0.4, 0.6, 0.7], [50, 0, 0, -50]);
+  const step3Y = useTransform(scrollYProgress, [0.65, 0.75, 1], [50, 0, 0]);
+
+  // ADDED IMAGE SCALE: The icons on the right will now slightly zoom as they transition
+  const step1Scale = useTransform(scrollYProgress, [0, 0.25, 0.35], [1, 1, 0.9]);
+  const step2Scale = useTransform(scrollYProgress, [0.3, 0.4, 0.6, 0.7], [0.9, 1, 1, 0.9]);
+  const step3Scale = useTransform(scrollYProgress, [0.65, 0.75, 1], [0.9, 1, 1]);
 
   return (
     <div ref={containerRef} className="relative h-[300vh] bg-[#050505]">
       <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(30,27,75,0.1),transparent_70%)]" />
 
-        <div className="max-w-7xl mx-auto px-4 w-full grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
-          
-          {/* Left: Narrative */}
-          <div className="flex flex-col justify-center h-full">
-             <motion.div style={{ opacity: step1Opacity }} className="absolute">
-                 <h3 className="text-blue-500 font-bold tracking-widest uppercase mb-4">Step 01</h3>
-                 <h2 className="text-5xl font-black text-white mb-6">AI-Generated Curriculum</h2>
-                 <p className="text-xl text-slate-400 leading-relaxed">
-                    Stop searching for "what to learn". Enter your goal, and our AI builds a structured week-by-week plan with the best YouTube videos and docs pre-selected for you.
-                 </p>
-             </motion.div>
+        <div className="max-w-7xl mx-auto px-4 w-full grid grid-cols-1 md:grid-cols-2 gap-20 items-center h-full">
 
-             <motion.div style={{ opacity: step2Opacity }} className="absolute">
-                 <h3 className="text-purple-500 font-bold tracking-widest uppercase mb-4">Step 02</h3>
-                 <h2 className="text-5xl font-black text-white mb-6">Deep Focus Mode</h2>
-                 <p className="text-xl text-slate-400 leading-relaxed">
-                    Watch tutorials and take notes side-by-side in a unified interface. No alt-tabbing. Just pure flow state as you absorb complex concepts.
-                 </p>
-             </motion.div>
+          {/* Left: Narrative (Now cleanly isolated) */}
+          <div className="relative h-[300px] w-full flex items-center">
 
-             <motion.div style={{ opacity: step3Opacity }} className="absolute">
-                 <h3 className="text-green-500 font-bold tracking-widest uppercase mb-4">Step 03</h3>
-                 <h2 className="text-5xl font-black text-white mb-6">Retention & Mastery</h2>
-                 <p className="text-xl text-slate-400 leading-relaxed">
-                    We don't just show you content; we ensure you remember it. Smart quizzes and spaced repetition checkpoints verify your knowledge before moving forward.
-                 </p>
-             </motion.div>
+            <motion.div style={{ opacity: step1Opacity, y: step1Y }} className="absolute w-full pointer-events-none">
+              <h3 className="text-blue-500 font-bold tracking-widest uppercase mb-4">Step 01</h3>
+              <h2 className="text-4xl md:text-5xl font-black text-white mb-6">AI-Generated Curriculum</h2>
+              <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
+                Stop searching for "what to learn". Enter your goal, and our AI builds a structured week-by-week plan with the best YouTube videos and docs pre-selected for you.
+              </p>
+            </motion.div>
+
+            <motion.div style={{ opacity: step2Opacity, y: step2Y }} className="absolute w-full pointer-events-none">
+              <h3 className="text-purple-500 font-bold tracking-widest uppercase mb-4">Step 02</h3>
+              <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Deep Focus Mode</h2>
+              <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
+                Watch tutorials and take notes side-by-side in a unified interface. No alt-tabbing. Just pure flow state as you absorb complex concepts.
+              </p>
+            </motion.div>
+
+            <motion.div style={{ opacity: step3Opacity, y: step3Y }} className="absolute w-full pointer-events-none">
+              <h3 className="text-green-500 font-bold tracking-widest uppercase mb-4">Step 03</h3>
+              <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Retention & Mastery</h2>
+              <p className="text-lg md:text-xl text-slate-400 leading-relaxed">
+                We don't just show you content; we ensure you remember it. Smart quizzes and spaced repetition checkpoints verify your knowledge before moving forward.
+              </p>
+            </motion.div>
+
           </div>
 
           {/* Right: Dynamic Visuals */}
           <div className="hidden md:flex items-center justify-center h-full">
-              <div className="relative w-full aspect-square bg-[#0a0a0c] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex items-center justify-center p-12">
-                   {/* Background Grid */}
-                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
+            <div className="relative w-full max-w-[500px] aspect-square bg-[#0a0a0c] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden flex items-center justify-center p-12">
+              {/* Background Grid */}
+              <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
 
-                   <motion.div style={{ opacity: step1Opacity }} className="absolute inset-0 flex flex-col items-center justify-center">
-                       <div className="w-32 h-32 bg-blue-600/20 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(37,99,235,0.3)]">
-                           <SparklesIcon className="w-16 h-16 text-blue-500" />
-                       </div>
-                       <div className="h-4 w-48 bg-white/10 rounded-full mb-3" />
-                       <div className="h-4 w-32 bg-white/10 rounded-full" />
-                   </motion.div>
+              {/* Icon Step 1 */}
+              <motion.div style={{ opacity: step1Opacity, scale: step1Scale }} className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <div className="w-32 h-32 bg-blue-600/20 rounded-full flex items-center justify-center mb-8 shadow-[0_0_50px_rgba(37,99,235,0.3)]">
+                  <SparklesIcon className="w-16 h-16 text-blue-500" />
+                </div>
+                <div className="h-4 w-48 bg-white/10 rounded-full mb-3" />
+                <div className="h-4 w-32 bg-white/10 rounded-full" />
+              </motion.div>
 
-                   <motion.div style={{ opacity: step2Opacity }} className="absolute inset-0 flex flex-col items-center justify-center">
-                       <div className="w-full h-full p-8 flex gap-4">
-                           <div className="flex-1 bg-white/5 rounded-2xl border border-white/10 animate-pulse" />
-                           <div className="w-1/3 bg-white/5 rounded-2xl border border-white/10" />
-                       </div>
-                   </motion.div>
+              {/* Mockup Step 2 */}
+              <motion.div style={{ opacity: step2Opacity, scale: step2Scale }} className="absolute inset-0 flex flex-col items-center justify-center p-10 pointer-events-none">
+                <div className="w-full h-full flex gap-4">
+                  <div className="flex-1 bg-white/5 rounded-2xl border border-white/10 animate-pulse" />
+                  <div className="w-1/3 bg-white/5 rounded-2xl border border-white/10" />
+                </div>
+              </motion.div>
 
-                   <motion.div style={{ opacity: step3Opacity }} className="absolute inset-0 flex flex-col items-center justify-center">
-                       <TrophyIcon className="w-40 h-40 text-green-500 drop-shadow-[0_0_30px_rgba(34,197,94,0.4)]" />
-                   </motion.div>
-              </div>
+              {/* Icon Step 3 */}
+              <motion.div style={{ opacity: step3Opacity, scale: step3Scale }} className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <TrophyIcon className="w-40 h-40 text-green-500 drop-shadow-[0_0_30px_rgba(34,197,94,0.4)]" />
+              </motion.div>
+            </div>
           </div>
 
         </div>
@@ -589,7 +605,7 @@ export function Landing() {
       {/* 4. NEW: Parallax Resources */}
       <ResourceParallax />
 
-      {/* 5. NEW: Sticky Workflow Journey */}
+      {/* 5. NEW: Sticky Workflow Journey (Overlaps Fixed) */}
       <StudyWorkflow />
 
       {/* 6. Final CTA */}
