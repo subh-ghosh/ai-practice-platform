@@ -1,9 +1,9 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef } from "react";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { Footer } from "@/widgets/layout";
-import {
-  CodeBracketIcon,
-  AcademicCapIcon,
+import { 
+  CodeBracketIcon, 
+  AcademicCapIcon, 
   BuildingLibraryIcon,
   SparklesIcon
 } from "@heroicons/react/24/solid";
@@ -34,20 +34,20 @@ const fadeInUp = {
 export function About() {
   return (
     <div className="relative w-full overflow-hidden bg-[#050505] min-h-screen flex flex-col font-sans selection:bg-blue-500/30">
-
+      
       {/* Background Gradients & Grid (Matches Landing Page) */}
       <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0"></div>
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Main Content Section */}
-      {/* -mt-16 to pull it seamlessly under the transparent navbar */}
-      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-32 pb-16 -mt-16">
+      {/* UPDATED: Increased min-h to 120vh and adjusted padding to pull content higher under nav */}
+      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-28 md:pt-40 -mt-16 min-h-[120vh]">
         <div className="container mx-auto px-4 max-w-2xl">
-
+          
           <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
             {/* The Compact Glass Card */}
             <div className="rounded-[2.5rem] border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-2xl shadow-2xl overflow-hidden p-8 md:p-12 relative flex flex-col items-center text-center">
-
+              
               {/* Internal subtle glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[200px] bg-blue-600/10 blur-[80px] rounded-full pointer-events-none" />
 
@@ -81,7 +81,7 @@ export function About() {
               </motion.div>
 
               {/* Name */}
-              <motion.h1
+              <motion.h1 
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
@@ -91,7 +91,7 @@ export function About() {
               </motion.h1>
 
               {/* Tags Grid */}
-              <motion.div
+              <motion.div 
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
@@ -109,18 +109,18 @@ export function About() {
               </motion.div>
 
               {/* Bio Text */}
-              <motion.p
+              <motion.p 
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
                 className="text-sm md:text-base text-slate-400 max-w-md mx-auto mb-8 leading-relaxed font-medium"
               >
-                Building smart tools that help students master concepts with ease.
+                Building smart tools that help students master concepts with ease. 
                 Focused on creating neural-driven products, clean design, and steady growth.
               </motion.p>
 
               {/* Social Actions */}
-              <motion.div
+              <motion.div 
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.7 }}
@@ -131,7 +131,7 @@ export function About() {
                     <LinkedInIcon className="w-4 h-4" /> LinkedIn
                   </button>
                 </a>
-
+                
                 <a href="https://github.com/subh-ghosh" target="_blank" rel="noopener noreferrer" className="flex-1 sm:flex-none">
                   <button className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-white/10 text-slate-300 font-bold text-sm hover:bg-white/5 hover:text-white transition-colors duration-300">
                     <GithubIcon className="w-4 h-4" /> GitHub
@@ -144,7 +144,7 @@ export function About() {
 
         </div>
       </section>
-
+      
       {/* Footer remains at the bottom of the page */}
       <div className="relative z-20">
         <Footer />
