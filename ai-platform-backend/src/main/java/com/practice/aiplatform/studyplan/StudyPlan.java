@@ -1,5 +1,6 @@
 package com.practice.aiplatform.studyplan;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.practice.aiplatform.user.Student;
 import jakarta.persistence.*;
@@ -30,14 +31,16 @@ public class StudyPlan {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "integer default 0")
     private int progress = 0;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isCompleted = false;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "student_id", nullable = false)
+    @JsonIgnoreProperties({ "password", "questions", "email", "paymentCustomerId", "subscriptionEndsAt",
+            "freeActionsUsed" })
     private Student student;
 
     @OneToMany(mappedBy = "studyPlan", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -240,17 +240,22 @@ public class StudyPlanService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
 
-        // Only allow marking VIDEO items via this endpoint
+        // PRACTICE items with quiz questions must be completed through quizzes
         if ("PRACTICE".equals(item.getItemType())) {
-            throw new RuntimeException("Practice items must be completed through quizzes");
+            List<QuizQuestion> questions = quizQuestionRepository.findByStudyPlanItemId(itemId);
+            if (!questions.isEmpty()) {
+                throw new RuntimeException("Practice items with quizzes must be completed through the quiz");
+            }
+            // Legacy PRACTICE items without quiz questions can be marked complete manually
         }
 
         if (!item.isCompleted()) {
             item.setCompleted(true);
 
             // Award XP
+            int xp = item.getXpReward() > 0 ? item.getXpReward() : VIDEO_XP;
             Student student = plan.getStudent();
-            student.setTotalXp(student.getTotalXp() + VIDEO_XP);
+            student.setTotalXp(student.getTotalXp() + xp);
             studentRepository.save(student);
 
             recalculateProgress(plan);
