@@ -94,14 +94,14 @@ export function Landing() {
                 <Typography variant="h1" className="mb-6 font-black tracking-tight leading-[1.1] text-5xl md:text-6xl lg:text-7xl text-slate-900 dark:text-white">
                   Code. Execute. <br />
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 drop-shadow-sm">
-                    Level Up with AI.
+                    Level Up with Intelligence.
                   </span>
                 </Typography>
               </motion.div>
 
               <motion.div variants={bounceIn}>
                 <Typography className="mb-10 text-lg md:text-xl font-medium text-slate-600 dark:text-slate-400 max-w-2xl mx-auto md:mx-0 leading-relaxed">
-                  Generate unlimited coding challenges, get your syntax instantly evaluated by AI, and follow customized video study plans pulling the best content from YouTube.
+                  Generate unlimited coding challenges, get your syntax instantly evaluated by our algorithmic engine, and follow customized video study plans pulling the best content from YouTube.
                 </Typography>
               </motion.div>
 
@@ -196,8 +196,8 @@ export function Landing() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                title: "AI Code Evaluator",
-                text: "Submit your Java or Python code. Our AI instantly checks syntax, logic, and OOP principles, giving you precise hints and corrections.",
+                title: "Smart Code Evaluator",
+                text: "Submit your Java or Python code. Our neural engine instantly checks syntax, logic, and OOP principles, giving you precise hints and corrections.",
                 icon: CodeBracketIcon,
                 color: "from-blue-500 to-cyan-500",
               },
@@ -355,7 +355,7 @@ export function Landing() {
 
                 <Typography className="text-slate-600 dark:text-blue-100/80 text-lg md:text-xl font-medium mb-10 max-w-2xl">
                   Join the platform. Build your 7-day plan. Earn your first 100 XP. <br className="hidden md:block" />
-                  The ultimate AI tech-prep platform awaits.
+                  The ultimate intelligent tech-prep platform awaits.
                 </Typography>
 
                 <button
