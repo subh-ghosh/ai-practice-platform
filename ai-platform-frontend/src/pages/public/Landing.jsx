@@ -9,335 +9,179 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLongRightIcon,
-  CheckCircleIcon,
   SparklesIcon,
   AcademicCapIcon,
   ChartBarIcon,
+  FireIcon,
 } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
-import { Footer } from "@/widgets/layout"; // 👈 IMPORT FOOTER
-
-// --- Animation Variants ---
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
-  }
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2
-    }
-  }
-};
+import { Footer } from "@/widgets/layout";
 
 export function Landing() {
   const navigate = useNavigate();
 
   return (
-    <div className="overflow-x-hidden">
-      
-      {/* ================= HERO SECTION ================= */}
-      <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden pt-10 md:pt-0">
-        
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 -z-10 bg-gray-50 dark:bg-gray-900 transition-colors duration-500" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/20" />
-        
-        {/* Mobile: Smaller blobs */}
-        <motion.div 
-          animate={{ x: [0, 20, 0], y: [0, -20, 0], scale: [1, 1.05, 1] }}
-          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute top-[-5%] right-[-10%] h-[250px] w-[250px] md:h-[500px] md:w-[500px] rounded-full bg-blue-400/20 blur-[80px] md:blur-[120px] pointer-events-none" 
-        />
-        <motion.div 
-          animate={{ x: [0, -20, 0], y: [0, 20, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute bottom-[10%] left-[-10%] h-[250px] w-[250px] md:h-[500px] md:w-[500px] rounded-full bg-purple-400/20 blur-[80px] md:blur-[120px] pointer-events-none" 
-        />
+    <div className="overflow-x-hidden bg-[#0b0f1a] text-white">
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="grid items-center gap-12 md:grid-cols-12">
-            
-            {/* Left Content */}
-            <motion.div 
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={staggerContainer}
-              className="md:col-span-7 text-center md:text-left"
-            >
-              <motion.div variants={fadeInUp}>
-                 <Chip 
-                   value="New: AI Feedback" 
-                   className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 mb-6 inline-block rounded-full px-4"
-                 />
-              </motion.div>
-              
-              <motion.div variants={fadeInUp}>
-                {/* Mobile: Text-4xl, Desktop: Text-6xl */}
-                <Typography variant="h1" className="mb-4 md:mb-6 font-black leading-tight text-4xl md:text-6xl text-gray-900 dark:text-white">
-                  Practice smarter.<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                    Learn faster.
-                  </span>
-                </Typography>
-              </motion.div>
+      {/* ================= GLOBAL AURORA BACKGROUND ================= */}
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute w-[800px] h-[800px] bg-cyan-500/20 rounded-full blur-[180px] top-[-20%] left-[-10%]" />
+        <div className="absolute w-[700px] h-[700px] bg-fuchsia-600/20 rounded-full blur-[160px] bottom-[-20%] right-[-10%]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.05),transparent_40%)]" />
+      </div>
 
-              <motion.div variants={fadeInUp}>
-                <Typography variant="lead" className="mb-8 opacity-80 max-w-xl mx-auto md:mx-0 text-gray-700 dark:text-gray-300 text-base md:text-lg">
-                  Get fresh questions, write your answer, and see clear tips right away.
-                  No noise — just steady progress built for students.
-                </Typography>
-              </motion.div>
+      {/* ================= HERO ================= */}
+      <section className="min-h-[90vh] flex items-center">
 
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Button
-                  variant="gradient"
-                  color="blue"
-                  size="lg"
-                  className="flex items-center justify-center gap-2 rounded-full shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all w-full sm:w-auto"
-                  onClick={() => navigate("/auth/sign-in")}
-                >
-                  Start practicing
-                  <ArrowLongRightIcon className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="text"
-                  size="lg"
-                  className="rounded-full text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 w-full sm:w-auto"
-                  onClick={() => navigate("/auth/sign-up")}
-                >
-                  Create account
-                </Button>
-              </motion.div>
-            </motion.div>
+        <div className="container mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
 
-            {/* Right Glass Card (Hidden on Mobile for cleaner look, Visible on MD+) */}
-            <motion.div 
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="md:col-span-5 hidden md:block"
-            >
-              <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20 animate-pulse"></div>
-                  
-                  <Card className="backdrop-blur-xl bg-white/70 dark:bg-gray-900/60 border border-white/40 dark:border-white/10 shadow-2xl rounded-3xl p-8 relative">
-                    <div className="flex flex-col items-center text-center gap-6">
-                      <div className="p-4 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 shadow-lg shadow-blue-500/30">
-                        <SparklesIcon className="h-10 w-10 text-white" />
-                      </div>
-                      <div>
-                        <Typography variant="h4" color="blue-gray" className="dark:text-white font-bold mb-2">
-                          Instant AI Feedback
-                        </Typography>
-                        <Typography className="text-gray-600 dark:text-gray-400">
-                          "Your answer is correct, but try using a loop for better efficiency."
-                        </Typography>
-                      </div>
-                      
-                      <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5 mt-2 overflow-hidden">
-                        <motion.div 
-                          initial={{ width: "0%" }}
-                          whileInView={{ width: "75%" }}
-                          transition={{ duration: 1.5, delay: 0.5 }}
-                          className="bg-blue-600 h-2.5 rounded-full" 
-                        />
-                      </div>
-                      <Typography variant="small" className="text-gray-500 font-medium">
-                        75% Mastery
-                      </Typography>
-                    </div>
-                  </Card>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= HOW IT WORKS ================= */}
-      <section className="relative py-16 md:py-24 bg-white dark:bg-gray-900/50">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            variants={fadeInUp}
-            className="text-center mb-10 md:mb-16"
+          {/* LEFT */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: .8 }}
           >
-            <Typography variant="h2" className="mb-4 text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              How it works
+            <Chip
+              value="⚡ AI-Powered Learning"
+              className="bg-white/10 text-cyan-400 border border-white/20 rounded-full mb-6"
+            />
+
+            <Typography className="text-5xl md:text-7xl font-black leading-tight mb-6">
+              Practice smarter.
+              <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 bg-clip-text text-transparent">
+                {" "}Dominate faster.
+              </span>
             </Typography>
-            <Typography className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-2">
-              A simple loop: try a question → write your answer → get tips → improve.
+
+            <Typography className="text-lg text-gray-400 max-w-xl mb-8">
+              An AI-powered training ground where students sharpen
+              problem-solving with instant feedback and real progress tracking.
             </Typography>
+
+            <div className="flex gap-4">
+              <Button
+                onClick={() => navigate("/auth/sign-up")}
+                size="lg"
+                className="rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/30 hover:scale-105 transition"
+              >
+                Start Free
+              </Button>
+
+              <Button
+                onClick={() => navigate("/auth/sign-in")}
+                variant="outlined"
+                size="lg"
+                className="rounded-full border-white/30 text-white"
+              >
+                Login
+              </Button>
+            </div>
           </motion.div>
 
-          <motion.div 
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-4"
+          {/* RIGHT — FLOATING GLASS CARD */}
+          <motion.div
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: .8 }}
           >
-            {[
-              {
-                title: "Pick a subject",
-                text: "Choose what you want to practice and the level that feels right.",
-                icon: AcademicCapIcon,
-                color: "blue",
-              },
-              {
-                title: "Get a question",
-                text: "You’ll see a clear, single question with no distractions.",
-                icon: SparklesIcon,
-                color: "purple",
-              },
-              {
-                title: "Submit answer",
-                text: "You’ll be told if it’s right, close, or needs work — with a short tip.",
-                icon: CheckCircleIcon,
-                color: "green",
-              },
-              {
-                title: "See progress",
-                text: "Watch your scores and trends so you know what to focus on.",
-                icon: ChartBarIcon,
-                color: "orange",
-              },
-            ].map(({ title, text, icon: Icon, color }) => (
-              <motion.div key={title} variants={fadeInUp}>
-                <Card
-                  className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm hover:shadow-xl transition-shadow duration-300"
-                >
-                  <CardBody className="p-6 text-center">
-                    <motion.div 
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      className={`mb-4 md:mb-6 mx-auto grid h-14 w-14 md:h-16 md:w-16 place-items-center rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 text-${color}-500 shadow-lg shadow-${color}-500/10`}
-                    >
-                      <Icon className="h-7 w-7 md:h-8 md:w-8" />
-                    </motion.div>
-                    <Typography variant="h5" className="mb-2 md:mb-3 text-lg md:text-xl text-gray-900 dark:text-white font-bold">
-                      {title}
-                    </Typography>
-                    <Typography className="text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {text}
-                    </Typography>
-                  </CardBody>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
+            <Card className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl">
+              <CardBody className="p-10 text-center">
 
-      {/* ================= SUBJECTS & LEVELS ================= */}
-      <section className="py-16 md:py-20 relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[800px] h-[300px] md:h-[400px] bg-indigo-500/5 blur-[100px] rounded-full -z-10" />
-
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-          >
-            <Card className="rounded-2xl md:rounded-3xl border border-white/20 dark:border-gray-700 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl overflow-hidden">
-              <CardBody className="p-6 md:p-12">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 mb-8 md:mb-10 text-center md:text-left">
-                  <div>
-                    <Typography variant="h3" className="text-2xl md:text-3xl text-gray-900 dark:text-white font-bold mb-2">
-                      Subjects & levels
-                    </Typography>
-                    <Typography className="text-base md:text-lg text-gray-600 dark:text-gray-400">
-                      Start easy, move up when you’re ready.
-                    </Typography>
-                  </div>
-                  {/* Chips wrap nicely on mobile now */}
-                  <div className="flex flex-wrap justify-center md:justify-end gap-2 md:gap-3">
-                    <Chip value="Beginner" className="bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-300 rounded-full border-0 px-3 py-1 text-xs md:text-xs" />
-                    <Chip value="Medium" className="bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 rounded-full border-0 px-3 py-1 text-xs md:text-xs" />
-                    <Chip value="Tough" className="bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-300 rounded-full border-0 px-3 py-1 text-xs md:text-xs" />
-                  </div>
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-fuchsia-500 w-fit mx-auto mb-6">
+                  <SparklesIcon className="h-10 w-10 text-white" />
                 </div>
 
-                <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {[
-                    "Programming Basics",
-                    "Problem Solving",
-                    "Logic & Puzzles",
-                    "Math Practice",
-                    "Study Skills",
-                    "Quick Quizzes",
-                    "Data Structures",
-                    "Algorithms"
-                  ].map((s, i) => (
-                    <motion.div
-                      key={s}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      whileHover={{ scale: 1.03, backgroundColor: "rgba(59, 130, 246, 0.1)" }}
-                      className="cursor-default rounded-xl border border-gray-200 dark:border-gray-700 p-3 md:p-4 text-center text-sm md:text-base font-semibold text-gray-700 dark:text-gray-200 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm transition-colors"
-                    >
-                      {s}
-                    </motion.div>
-                  ))}
+                <Typography variant="h4" className="mb-4">
+                  Real-Time AI Feedback
+                </Typography>
+
+                <Typography className="text-gray-400 mb-6">
+                  “Great logic! Try reducing time complexity using a hashmap.”
+                </Typography>
+
+                <div className="bg-white/10 h-3 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: "82%" }}
+                    transition={{ duration: 1.5 }}
+                    className="h-full bg-gradient-to-r from-cyan-400 to-blue-600"
+                  />
                 </div>
+
+                <p className="mt-3 text-cyan-400 font-semibold">
+                  82% Mastery
+                </p>
+
               </CardBody>
             </Card>
           </motion.div>
+
         </div>
       </section>
 
-      {/* ================= CTA SECTION ================= */}
-      <section className="pb-12 md:pb-24 pt-6 md:pt-10">
-        <div className="container mx-auto px-4">
-          <motion.div 
-             initial={{ opacity: 0, y: 30 }}
-             whileInView={{ opacity: 1, y: 0 }}
-             viewport={{ once: true }}
-             className="relative"
-          >
-            {/* CTA Glass Card */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur-lg opacity-30 transform translate-y-4"></div>
-            <Card className="relative rounded-3xl border border-white/20 dark:border-white/10 bg-gradient-to-br from-blue-900 to-gray-900 text-white overflow-hidden">
-              
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
+      {/* ================= FEATURES ================= */}
+      <section className="py-24 container mx-auto px-6">
 
-              <CardBody className="p-8 md:p-16 text-center">
-                <Typography variant="h2" className="mb-3 md:mb-4 text-2xl md:text-4xl font-bold tracking-tight">
-                  Ready to practice smarter?
-                </Typography>
-                <Typography className="text-blue-100 text-base md:text-lg mb-6 md:mb-8 max-w-xl mx-auto">
-                  Join thousands of students improving their skills every day. Create an account and try your first question now.
-                </Typography>
-                <Button
-                  onClick={() => navigate("/auth/sign-up")}
-                  size="lg"
-                  color="white"
-                  className="rounded-full text-blue-900 hover:scale-105 transition-transform w-full sm:w-auto"
-                >
-                  Sign up for free
-                </Button>
-              </CardBody>
-            </Card>
-          </motion.div>
+        <Typography className="text-center text-4xl font-bold mb-16">
+          How it works
+        </Typography>
+
+        <div className="grid md:grid-cols-4 gap-8">
+
+          {[
+            { icon: AcademicCapIcon, title: "Pick Topic" },
+            { icon: SparklesIcon, title: "Get Question" },
+            { icon: FireIcon, title: "Solve & Submit" },
+            { icon: ChartBarIcon, title: "Track Growth" },
+          ].map(({ icon: Icon, title }) => (
+            <motion.div whileHover={{ y: -8 }}>
+              <Card className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl">
+                <CardBody className="p-8 text-center">
+
+                  <div className="p-4 bg-white/10 rounded-xl w-fit mx-auto mb-4">
+                    <Icon className="h-8 w-8 text-cyan-400" />
+                  </div>
+
+                  <Typography variant="h6">{title}</Typography>
+
+                </CardBody>
+              </Card>
+            </motion.div>
+          ))}
+
         </div>
       </section>
 
-      {/* ================= FOOTER ================= */}
+      {/* ================= CTA ================= */}
+      <section className="py-20 text-center">
+
+        <motion.div whileHover={{ scale: 1.02 }}>
+          <Card className="max-w-4xl mx-auto bg-gradient-to-r from-cyan-600/30 to-fuchsia-600/30 border border-white/20 backdrop-blur-2xl rounded-3xl">
+            <CardBody className="p-16">
+
+              <Typography className="text-4xl font-bold mb-4">
+                Ready to level up?
+              </Typography>
+
+              <Typography className="text-gray-300 mb-8">
+                Join thousands already training smarter with AI.
+              </Typography>
+
+              <Button
+                onClick={() => navigate("/auth/sign-up")}
+                size="lg"
+                className="rounded-full bg-white text-black"
+              >
+                Create Free Account
+              </Button>
+
+            </CardBody>
+          </Card>
+        </motion.div>
+
+      </section>
+
       <Footer />
-      
     </div>
   );
 }
