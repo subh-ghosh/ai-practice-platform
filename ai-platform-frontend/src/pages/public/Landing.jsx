@@ -21,7 +21,7 @@ import { Footer } from "@/widgets/layout";
 
 // --- COMPONENTS ---
 
-// 1. Hero Section (FIXED: seamless navbar overlap)
+// 1. Hero Section (FIXED: Content pulled higher up)
 const HeroScrollDemo = () => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -39,8 +39,8 @@ const HeroScrollDemo = () => {
   return (
     <div
       ref={containerRef}
-      // --- CHANGED LINE BELOW: Added -mt-16 to pull up, changed pt to push content down ---
-      className="relative flex flex-col items-center justify-start -mt-16 pt-36 md:pt-52 min-h-[125vh] bg-[#050505] overflow-hidden"
+      // --- CHANGED LINE BELOW: Reduced pt-36 md:pt-52 to pt-28 md:pt-40 to pull content up ---
+      className="relative flex flex-col items-center justify-start -mt-16 pt-28 md:pt-40 min-h-[125vh] bg-[#050505] overflow-hidden"
     >
       {/* Checkered Background & Overhead Glow */}
       <div className="absolute inset-0 w-full h-full bg-[#050505] bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
