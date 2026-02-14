@@ -11,29 +11,33 @@
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
   }
-  
+
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300;
-    
+    /* Hardcoded to pure dark mode */
+    @apply bg-[#050505] text-slate-200;
+
     /* THE GLASS BACKDROP: Subtle radial gradients that stay fixed behind the content */
-    background-image: 
-      radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.15), transparent 25%), 
-      radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.15), transparent 25%);
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.10), transparent 25%),
+      radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.10), transparent 25%);
     background-attachment: fixed;
   }
 
   ::selection {
-    background: rgba(var(--primary) / 0.18);
+    background: rgba(59, 130, 246, 0.3);
+    /* Blue tinted selection */
+    color: white;
   }
 }
 
 /* Layout helpers & Glass Utilities */
 @layer components {
+
   /* --- NEW GLASS UTILITIES --- */
   .glass-panel {
-    @apply bg-white/70 dark:bg-gray-900/60 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-xl shadow-blue-gray-900/5;
+    @apply bg-[#0a0a0c]/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50;
   }
-  
+
   .glass-btn {
     @apply bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/30 transition-all active:scale-95;
   }
@@ -42,49 +46,59 @@
   .page {
     @apply container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
+
   .page-title {
-    @apply text-2xl md:text-3xl font-semibold tracking-tight;
+    @apply text-2xl md:text-3xl font-bold tracking-tight text-white;
   }
+
   .subtle {
-    @apply text-muted-foreground;
+    @apply text-slate-400;
   }
+
   .card {
-    /* Updated to use glass effect by default if you want, or keep solid */
-    @apply bg-card border border-border rounded-2xl shadow-soft;
+    @apply bg-[#0a0a0c] border border-white/10 rounded-2xl shadow-xl shadow-black/20;
   }
+
   .btn-base {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl h-10 px-4 text-sm font-medium transition
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl h-10 px-4 text-sm font-bold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50;
   }
+
   .btn-primary {
-    @apply btn-base bg-primary text-primary-foreground hover:opacity-90 active:opacity-100;
+    @apply btn-base bg-blue-600 text-white hover:bg-blue-500 active:scale-95;
   }
+
   .btn-outline {
-    @apply btn-base border border-border bg-transparent hover:bg-muted;
+    @apply btn-base border border-white/10 bg-transparent text-slate-300 hover:bg-white/5 hover:text-white;
   }
+
   .btn-ghost {
-    @apply btn-base hover:bg-muted;
+    @apply btn-base text-slate-300 hover:bg-white/5 hover:text-white;
   }
+
   .input {
-    @apply h-11 w-full rounded-xl border border-border bg-background px-3 text-sm
-           placeholder:text-muted-foreground/80
-           focus:outline-none focus:ring-2 focus:ring-ring/40;
+    @apply h-11 w-full rounded-xl border border-white/10 bg-[#0f1115] px-3 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/40 transition-all;
   }
+
   .skeleton {
-    @apply animate-pulse bg-muted rounded-xl;
+    @apply animate-pulse bg-white/5 rounded-xl;
   }
 }
 
 /* Fix for fixed navbar offset */
 .has-fixed-navbar {
-  padding-top: 4.5rem; 
+  padding-top: 4.5rem;
 }
+
 .hide-scrollbar {
-  -ms-overflow-style: none;     /* IE/Edge */
-  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;
+  /* IE/Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
+
 .hide-scrollbar::-webkit-scrollbar {
-  height: 0;                    /* Chrome/Safari */
+  height: 0;
+  /* Chrome/Safari */
 }
 
 /* =========================================
@@ -94,10 +108,8 @@
 @layer utilities {
   .custom-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-  }
-  .dark .custom-scroll {
-    scrollbar-color: #374151 #111827; /* Dark Slate Thumb / Dark Navy Track */
+    scrollbar-color: #374151 #050505;
+    /* Dark Slate Thumb / Deep Dark Track */
   }
 
   /* Webkit Specifics */
@@ -105,33 +117,29 @@
     width: 8px;
     height: 8px;
   }
+
   .custom-scroll::-webkit-scrollbar-track {
-    background: transparent;
+    background: #050505;
   }
-  .dark .custom-scroll::-webkit-scrollbar-track {
-    background: #111827; /* Matches Dark Modal BG */
-  }
+
   .custom-scroll::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
+    background-color: #374151;
+    /* Dark Gray */
     border-radius: 99px;
-    border: 2px solid transparent;
+    border: 2px solid #050505;
+    /* Creates padding effect against track */
     background-clip: content-box;
   }
-  .dark .custom-scroll::-webkit-scrollbar-thumb {
-    background-color: #374151; /* Dark Gray */
-    border: 2px solid #111827; /* Creates padding effect */
-  }
+
   .custom-scroll::-webkit-scrollbar-thumb:hover {
-    background-color: #94a3b8;
-  }
-  .dark .custom-scroll::-webkit-scrollbar-thumb:hover {
     background-color: #4b5563;
+    /* Lighter Gray on hover */
   }
 }
 
 /* =========================================
    GLOBAL SCROLLBAR DEFAULTS
-   (Fallbacks for the rest of the app)
+   (Hardcoded to Dark Mode)
    ========================================= */
 
 /* 1. Standard Webkit (Chrome, Edge, Safari) */
@@ -140,36 +148,25 @@
   height: 8px;
 }
 
-/* Light Mode Defaults */
 ::-webkit-scrollbar-track {
-  background: transparent; 
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1; /* Gray-300 */
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8; /* Gray-400 */
+  background: #050505;
+  /* Deep background */
 }
 
-/* Dark Mode Overrides (.dark class must be on html/body) */
-.dark ::-webkit-scrollbar-track {
-  background: #111827; /* Gray-900 */
-}
-.dark ::-webkit-scrollbar-thumb {
-  background: #374151; /* Gray-700 */
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  /* Gray-700 */
   border-radius: 4px;
-  border: 1px solid #111827; 
+  border: 1px solid #050505;
 }
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563; /* Gray-600 */
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+  /* Gray-600 */
 }
 
 /* 2. Firefox Support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
-}
-.dark * {
-  scrollbar-color: #374151 #111827;
+  scrollbar-color: #374151 #050505;
 }
