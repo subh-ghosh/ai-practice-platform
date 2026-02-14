@@ -150,12 +150,14 @@ export function DashboardNavbar() {
                   <div className="py-6 text-center text-gray-500 text-sm">No new notifications</div>
                 ) : (
                   finalList.map((n) => (
-                    <MenuItem
+                    <div
                       key={n.id}
-                      className={`flex items-start gap-3 p-2 rounded-lg transition-colors outline-none
+                      role="menuitem"
+                      tabIndex={0}
+                      className={`flex items-start gap-3 p-2 rounded-lg transition-colors outline-none cursor-default
                             ${!n.readFlag
                           ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30"
-                          : "hover:bg-gray-50 dark:hover:bg-white/5 active:bg-gray-100 dark:active:bg-white/10"}
+                          : "hover:bg-gray-50 dark:hover:bg-white/5"}
                           `}
                     >
                       <div className={`mt-1 p-1 rounded-full shrink-0 ${!n.readFlag ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-500"}`}>
@@ -184,7 +186,7 @@ export function DashboardNavbar() {
                           </Tooltip>
                         </div>
                       )}
-                    </MenuItem>
+                    </div>
                   ))
                 )}
               </div>
