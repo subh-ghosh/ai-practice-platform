@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api';
+import axios from 'axios';
 import { BookOpenIcon, SparklesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
+
+// Matching Practice.jsx pattern exactly
+const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
 const CourseGeneratorPage = () => {
     const [topic, setTopic] = useState('');
@@ -9,6 +12,11 @@ const CourseGeneratorPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    const getAuthHeaders = () => {
+        const token = localStorage.getItem("token");
+        return { headers: { "Authorization": `Bearer ${token}` } };
+    };
 
     const handleGenerate = async (e) => {
         e.preventDefault();
@@ -23,13 +31,15 @@ const CourseGeneratorPage = () => {
 
         try {
             console.log("🚀 Sending generation request...", { topic, level });
-            const response = await api.post('/courses/generate', {
-                topic,
-                level
-            });
+            console.log("📍 URL:", `${BASE_URL}/api/courses/generate`);
+
+            const response = await axios.post(
+                `${BASE_URL}/api/courses/generate`,
+                { topic, level },
+                getAuthHeaders()
+            );
 
             console.log("✅ Generation successful:", response.data);
-            // Navigate to My Courses or display the course (for now, just alert)
             alert("Course Generated Successfully!");
             navigate('/dashboard/my-courses');
 
@@ -98,8 +108,8 @@ const CourseGeneratorPage = () => {
                         type="submit"
                         disabled={loading}
                         className={`w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-md transition-all transform hover:-translate-y-1 ${loading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg'
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-lg'
                             }`}
                     >
                         {loading ? (
