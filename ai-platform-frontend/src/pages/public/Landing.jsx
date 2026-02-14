@@ -13,17 +13,21 @@ import {
   SparklesIcon,
   AcademicCapIcon,
   ChartBarIcon,
+  CodeBracketIcon,
+  LightBulbIcon,
+  PuzzlePieceIcon,
+  CalculatorIcon,
 } from "@heroicons/react/24/solid";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Footer } from "@/widgets/layout"; // 👈 IMPORT FOOTER
 
 // --- Animation Variants ---
 const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 40 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
+    transition: { duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }
   }
 };
 
@@ -32,151 +36,184 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2
+      staggerChildren: 0.15,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const floatAnimation = {
+  animate: {
+    y: [0, -15, 0],
+    transition: {
+      duration: 4,
+      repeat: Infinity,
+      ease: "easeInOut"
     }
   }
 };
 
 export function Landing() {
   const navigate = useNavigate();
+  const { scrollYProgress } = useScroll();
+  const yBg = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
 
   return (
-    <div className="overflow-x-hidden">
+    <div className="overflow-x-hidden bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-slate-50 transition-colors duration-500">
 
       {/* ================= HERO SECTION ================= */}
-      <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-center justify-center overflow-hidden pt-10 md:pt-0">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20 md:pt-0">
 
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 -z-10 bg-gray-50 dark:bg-gray-900 transition-colors duration-500" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50/50 to-transparent dark:from-blue-900/20" />
+        {/* Next-Level Background System */}
+        <div className="absolute inset-0 -z-20 h-full w-full bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(56,189,248,0.15),rgba(255,255,255,0))]" />
 
-        {/* Mobile: Smaller blobs */}
+        {/* Animated Glow Orbs */}
         <motion.div
-          animate={{ x: [0, 20, 0], y: [0, -20, 0], scale: [1, 1.05, 1] }}
-          transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute top-[-5%] right-[-10%] h-[250px] w-[250px] md:h-[500px] md:w-[500px] rounded-full bg-blue-400/20 blur-[80px] md:blur-[120px] pointer-events-none"
+          animate={{ x: [0, 30, 0], y: [0, -40, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 12, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+          className="absolute top-[10%] left-[15%] h-[300px] w-[300px] rounded-full bg-blue-500/20 dark:bg-blue-600/20 blur-[100px] -z-10 pointer-events-none"
         />
         <motion.div
-          animate={{ x: [0, -20, 0], y: [0, 20, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
-          className="absolute bottom-[10%] left-[-10%] h-[250px] w-[250px] md:h-[500px] md:w-[500px] rounded-full bg-purple-400/20 blur-[80px] md:blur-[120px] pointer-events-none"
+          animate={{ x: [0, -30, 0], y: [0, 40, 0], scale: [1, 1.3, 1] }}
+          transition={{ duration: 15, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+          className="absolute bottom-[20%] right-[10%] h-[400px] w-[400px] rounded-full bg-purple-500/20 dark:bg-violet-600/20 blur-[120px] -z-10 pointer-events-none"
         />
 
         <div className="container mx-auto px-4 relative z-10">
-          <div className="grid items-center gap-12 md:grid-cols-12">
+          <div className="grid items-center gap-16 md:grid-cols-12">
 
             {/* Left Content */}
             <motion.div
               initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
+              animate="visible"
               variants={staggerContainer}
-              className="md:col-span-7 text-center md:text-left"
+              className="md:col-span-7 text-center md:text-left pt-10 md:pt-0"
             >
-              <motion.div variants={fadeInUp}>
-                <Chip
-                  value="New: AI Feedback"
-                  className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 mb-6 inline-block rounded-full px-4"
-                />
+              <motion.div variants={fadeInUp} className="flex justify-center md:justify-start">
+                <div className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 dark:bg-white/5 border border-blue-200 dark:border-blue-500/20 backdrop-blur-md mb-8 shadow-sm">
+                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 animate-pulse" />
+                  <SparklesIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
+                    AI-Powered Feedback Engine
+                  </span>
+                </div>
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                {/* Mobile: Text-4xl, Desktop: Text-6xl */}
-                <Typography variant="h1" className="mb-4 md:mb-6 font-black leading-tight text-4xl md:text-6xl text-gray-900 dark:text-white">
-                  Practice smarter.<br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                <Typography variant="h1" className="mb-6 font-black tracking-tight leading-[1.1] text-5xl md:text-7xl lg:text-8xl">
+                  Practice <span className="italic font-light">smarter.</span><br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-600 dark:from-blue-400 dark:via-indigo-400 dark:to-violet-400 drop-shadow-sm">
                     Learn faster.
                   </span>
                 </Typography>
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <Typography variant="lead" className="mb-8 opacity-80 max-w-xl mx-auto md:mx-0 text-gray-700 dark:text-gray-300 text-base md:text-lg">
-                  Get fresh questions, write your answer, and see clear tips right away.
-                  No noise — just steady progress built for students.
+                <Typography className="mb-10 text-lg md:text-xl font-medium text-slate-600 dark:text-slate-400 max-w-2xl mx-auto md:mx-0 leading-relaxed">
+                  Get fresh questions, write your answer, and receive pinpoint AI insights instantly. Cut the noise and build your mastery loop.
                 </Typography>
               </motion.div>
 
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                 <Button
-                  variant="gradient"
-                  color="blue"
                   size="lg"
-                  className="flex items-center justify-center gap-2 rounded-full shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all w-full sm:w-auto"
+                  className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 transition-all duration-300 shadow-xl shadow-slate-900/20 dark:shadow-white/10 w-full sm:w-auto"
                   onClick={() => navigate("/auth/sign-in")}
                 >
-                  Start practicing
-                  <ArrowLongRightIcon className="h-5 w-5" />
+                  <span className="relative z-10 text-base font-semibold">Start Practicing</span>
+                  <ArrowLongRightIcon className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 dark:group-hover:opacity-0 transition-opacity duration-300 -z-0" />
                 </Button>
+
                 <Button
-                  variant="text"
+                  variant="outlined"
                   size="lg"
-                  className="rounded-full text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 w-full sm:w-auto"
+                  className="rounded-full border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors w-full sm:w-auto text-base"
                   onClick={() => navigate("/auth/sign-up")}
                 >
-                  Create account
+                  Create Account
                 </Button>
               </motion.div>
             </motion.div>
 
-            {/* Right Glass Card (Hidden on Mobile for cleaner look, Visible on MD+) */}
+            {/* Right Holographic AI Card */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="md:col-span-5 hidden md:block"
+              initial={{ opacity: 0, scale: 0.9, rotateY: 15 }}
+              animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+              transition={{ duration: 1, delay: 0.3, type: "spring", bounce: 0.4 }}
+              className="md:col-span-5 hidden md:block perspective-[1000px]"
             >
-              <div className="relative">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl blur opacity-20 animate-pulse"></div>
+              <motion.div variants={floatAnimation} className="relative w-full max-w-md ml-auto">
+                {/* Glowing Backdrops */}
+                <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500 to-purple-600 rounded-[2.5rem] blur-2xl opacity-40 animate-pulse" />
 
-                <Card className="backdrop-blur-xl bg-white/70 dark:bg-gray-900/60 border border-white/40 dark:border-white/10 shadow-2xl rounded-3xl p-8 relative">
-                  <div className="flex flex-col items-center text-center gap-6">
-                    <div className="p-4 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-500 shadow-lg shadow-blue-500/30">
-                      <SparklesIcon className="h-10 w-10 text-white" />
+                <Card className="relative bg-white/60 dark:bg-[#18181b]/80 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-2xl rounded-[2.5rem] p-8 overflow-hidden">
+
+                  {/* Inner scanning line effect */}
+                  <motion.div
+                    animate={{ top: ["-10%", "110%"] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                    className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-blue-400/50 to-transparent z-20"
+                  />
+
+                  <div className="flex flex-col gap-6 relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/25">
+                          <CodeBracketIcon className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <Typography variant="h6" className="text-slate-900 dark:text-white font-bold leading-none">
+                            Algorithm Challenge
+                          </Typography>
+                          <Typography variant="small" className="text-slate-500 dark:text-slate-400 mt-1">
+                            Submitted 2 mins ago
+                          </Typography>
+                        </div>
+                      </div>
+                      <Chip value="92/100" className="bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 rounded-full" />
                     </div>
-                    <div>
-                      <Typography variant="h4" color="blue-gray" className="dark:text-white font-bold mb-2">
-                        Instant AI Feedback
-                      </Typography>
-                      <Typography className="text-gray-600 dark:text-gray-400">
-                        "Your answer is correct, but try using a loop for better efficiency."
+
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                      <Typography className="text-sm text-slate-600 dark:text-slate-300 font-mono">
+                        <span className="text-purple-500">function</span> <span className="text-blue-500">solve</span>(arr) {'{\n'}
+                        {'  '}return arr.reduce((a, b) =&gt; a + b, 0);<br />
+                        {'}'}
                       </Typography>
                     </div>
 
-                    <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-2.5 mt-2 overflow-hidden">
-                      <motion.div
-                        initial={{ width: "0%" }}
-                        whileInView={{ width: "75%" }}
-                        transition={{ duration: 1.5, delay: 0.5 }}
-                        className="bg-blue-600 h-2.5 rounded-full"
-                      />
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-medium text-sm">
+                        <SparklesIcon className="h-4 w-4" /> AI Insight
+                      </div>
+                      <Typography className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed bg-blue-50/50 dark:bg-blue-900/10 p-3 rounded-xl border border-blue-100 dark:border-blue-800/30">
+                        Excellent approach! Using <code className="bg-white dark:bg-black/50 px-1 rounded text-xs">reduce</code> is optimal here. To make it bulletproof, consider adding a check for empty arrays.
+                      </Typography>
                     </div>
-                    <Typography variant="small" className="text-gray-500 font-medium">
-                      75% Mastery
-                    </Typography>
                   </div>
                 </Card>
-              </div>
+              </motion.div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      {/* ================= HOW IT WORKS ================= */}
-      <section className="relative py-16 md:py-24 bg-white dark:bg-gray-900/50">
+      {/* ================= HOW IT WORKS (Bento Style) ================= */}
+      <section className="relative py-24 bg-white/50 dark:bg-[#09090b] border-y border-slate-200 dark:border-white/5">
         <div className="container mx-auto px-4">
           <motion.div
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true, margin: "-100px" }}
             variants={fadeInUp}
-            className="text-center mb-10 md:mb-16"
+            className="text-center mb-16 md:mb-20"
           >
-            <Typography variant="h2" className="mb-4 text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              How it works
+            <Typography variant="h2" className="mb-4 text-3xl md:text-5xl font-extrabold tracking-tight">
+              The Mastery <span className="text-blue-600 dark:text-blue-500">Loop</span>
             </Typography>
-            <Typography className="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto px-2">
-              A simple loop: try a question → write your answer → get tips → improve.
+            <Typography className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto px-2">
+              A frictionless system designed to keep you in the flow state.
             </Typography>
           </motion.div>
 
@@ -184,50 +221,52 @@ export function Landing() {
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="grid gap-6 md:gap-8 grid-cols-1 sm:grid-cols-2 md:grid-cols-4"
+            viewport={{ once: true, margin: "-100px" }}
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"
           >
             {[
               {
-                title: "Pick a subject",
-                text: "Choose what you want to practice and the level that feels right.",
+                title: "1. Select Domain",
+                text: "Target specific weaknesses by choosing exactly what and how hard you want to practice.",
                 icon: AcademicCapIcon,
-                color: "blue",
+                color: "from-blue-500 to-cyan-500",
+                shadow: "shadow-cyan-500/20"
               },
               {
-                title: "Get a question",
-                text: "You’ll see a clear, single question with no distractions.",
-                icon: SparklesIcon,
-                color: "purple",
+                title: "2. Deep Focus",
+                text: "Immerse yourself in a distraction-free environment with high-quality, targeted questions.",
+                icon: LightBulbIcon,
+                color: "from-purple-500 to-indigo-500",
+                shadow: "shadow-indigo-500/20"
               },
               {
-                title: "Submit answer",
-                text: "You’ll be told if it’s right, close, or needs work — with a short tip.",
+                title: "3. Instant Feedback",
+                text: "Submit your code or answer and watch the AI dissect it in seconds, offering exact fixes.",
                 icon: CheckCircleIcon,
-                color: "green",
+                color: "from-emerald-400 to-teal-500",
+                shadow: "shadow-teal-500/20"
               },
               {
-                title: "See progress",
-                text: "Watch your scores and trends so you know what to focus on.",
+                title: "4. Track Growth",
+                text: "Visualize your improvement over time with detailed mastery analytics and trend graphs.",
                 icon: ChartBarIcon,
-                color: "orange",
+                color: "from-orange-400 to-pink-500",
+                shadow: "shadow-orange-500/20"
               },
-            ].map(({ title, text, icon: Icon, color }) => (
-              <motion.div key={title} variants={fadeInUp}>
+            ].map(({ title, text, icon: Icon, color, shadow }, idx) => (
+              <motion.div key={title} variants={fadeInUp} className="group h-full">
                 <Card
-                  className="h-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-800/40 backdrop-blur-sm hover:shadow-xl transition-shadow duration-300"
+                  className="h-full rounded-3xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-[#18181b]/80 backdrop-blur-xl hover:-translate-y-2 transition-transform duration-300 ease-out overflow-hidden"
                 >
-                  <CardBody className="p-6 text-center">
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      className={`mb-4 md:mb-6 mx-auto grid h-14 w-14 md:h-16 md:w-16 place-items-center rounded-2xl bg-${color}-50 dark:bg-${color}-900/20 text-${color}-500 shadow-lg shadow-${color}-500/10`}
-                    >
-                      <Icon className="h-7 w-7 md:h-8 md:w-8" />
-                    </motion.div>
-                    <Typography variant="h5" className="mb-2 md:mb-3 text-lg md:text-xl text-gray-900 dark:text-white font-bold">
+                  <div className="absolute inset-x-0 -top-px h-px w-full bg-gradient-to-r from-transparent via-white dark:via-white/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <CardBody className="p-8">
+                    <div className={`mb-6 inline-flex p-3 rounded-2xl bg-gradient-to-br ${color} ${shadow} shadow-lg text-white`}>
+                      <Icon className="h-7 w-7" />
+                    </div>
+                    <Typography variant="h5" className="mb-3 text-xl font-bold text-slate-900 dark:text-white">
                       {title}
                     </Typography>
-                    <Typography className="text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
+                    <Typography className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                       {text}
                     </Typography>
                   </CardBody>
@@ -239,56 +278,70 @@ export function Landing() {
       </section>
 
       {/* ================= SUBJECTS & LEVELS ================= */}
-      <section className="py-16 md:py-20 relative overflow-hidden">
-        {/* Background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] md:w-[800px] h-[300px] md:h-[400px] bg-indigo-500/5 blur-[100px] rounded-full -z-10" />
+      <section className="py-24 relative overflow-hidden">
+        {/* Abstract Background Elements */}
+        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-[600px] h-[600px] bg-blue-500/10 dark:bg-blue-600/10 blur-[120px] rounded-full -z-10" />
+        <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/3 w-[600px] h-[600px] bg-purple-500/10 dark:bg-purple-600/10 blur-[120px] rounded-full -z-10" />
 
         <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, type: "spring" }}
+            viewport={{ once: true, margin: "-100px" }}
           >
-            <Card className="rounded-2xl md:rounded-3xl border border-white/20 dark:border-gray-700 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl shadow-2xl overflow-hidden">
-              <CardBody className="p-6 md:p-12">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8 mb-8 md:mb-10 text-center md:text-left">
-                  <div>
-                    <Typography variant="h3" className="text-2xl md:text-3xl text-gray-900 dark:text-white font-bold mb-2">
-                      Subjects & levels
+            <Card className="rounded-[2.5rem] border border-slate-200/60 dark:border-white/10 bg-white/40 dark:bg-black/40 backdrop-blur-2xl shadow-2xl overflow-hidden relative">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500" />
+
+              <CardBody className="p-8 md:p-14">
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-12">
+                  <div className="max-w-xl">
+                    <Typography variant="h3" className="text-3xl md:text-4xl font-extrabold mb-4 text-slate-900 dark:text-white">
+                      Curriculum built for <span className="text-blue-600 dark:text-blue-400">scale.</span>
                     </Typography>
-                    <Typography className="text-base md:text-lg text-gray-600 dark:text-gray-400">
-                      Start easy, move up when you’re ready.
+                    <Typography className="text-lg text-slate-600 dark:text-slate-400 font-medium">
+                      Start with the basics, conquer the complex. Dynamic difficulty adapts to your performance.
                     </Typography>
                   </div>
-                  {/* Chips wrap nicely on mobile now */}
-                  <div className="flex flex-wrap justify-center md:justify-end gap-2 md:gap-3">
-                    <Chip value="Beginner" className="bg-green-100 text-green-900 dark:bg-green-900/30 dark:text-green-300 rounded-full border-0 px-3 py-1 text-xs md:text-xs" />
-                    <Chip value="Medium" className="bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300 rounded-full border-0 px-3 py-1 text-xs md:text-xs" />
-                    <Chip value="Tough" className="bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-300 rounded-full border-0 px-3 py-1 text-xs md:text-xs" />
+
+                  <div className="flex flex-wrap gap-3 bg-slate-100 dark:bg-white/5 p-2 rounded-2xl border border-slate-200 dark:border-white/10 w-fit">
+                    {["Beginner", "Intermediate", "Advanced"].map((level, i) => (
+                      <Chip
+                        key={level}
+                        value={level}
+                        className={`capitalize px-4 py-2 text-sm font-semibold rounded-xl border-0 ${i === 0 ? "bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-300" :
+                            i === 1 ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300" :
+                              "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300"
+                          }`}
+                      />
+                    ))}
                   </div>
                 </div>
 
-                <div className="grid gap-3 md:gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                   {[
-                    "Programming Basics",
-                    "Problem Solving",
-                    "Logic & Puzzles",
-                    "Math Practice",
-                    "Study Skills",
-                    "Quick Quizzes",
-                    "Data Structures",
-                    "Algorithms"
-                  ].map((s, i) => (
+                    { name: "Programming Basics", icon: CodeBracketIcon },
+                    { name: "Problem Solving", icon: PuzzlePieceIcon },
+                    { name: "Logic & Puzzles", icon: LightBulbIcon },
+                    { name: "Math Practice", icon: CalculatorIcon },
+                    { name: "Study Skills", icon: AcademicCapIcon },
+                    { name: "Quick Quizzes", icon: SparklesIcon },
+                    { name: "Data Structures", icon: ChartBarIcon },
+                    { name: "Algorithms", icon: CodeBracketIcon }
+                  ].map(({ name, icon: Icon }, i) => (
                     <motion.div
-                      key={s}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      whileHover={{ scale: 1.03, backgroundColor: "rgba(59, 130, 246, 0.1)" }}
-                      className="cursor-default rounded-xl border border-gray-200 dark:border-gray-700 p-3 md:p-4 text-center text-sm md:text-base font-semibold text-gray-700 dark:text-gray-200 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm transition-colors"
+                      key={name}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.05, duration: 0.4 }}
+                      viewport={{ once: true }}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      className="group cursor-pointer rounded-2xl border border-slate-200 dark:border-white/10 p-5 flex items-center gap-4 text-slate-800 dark:text-slate-200 bg-white/60 dark:bg-[#18181b]/60 backdrop-blur-md hover:bg-slate-50 dark:hover:bg-white/5 hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all shadow-sm"
                     >
-                      {s}
+                      <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="font-semibold">{name}</span>
                     </motion.div>
                   ))}
                 </div>
@@ -299,36 +352,40 @@ export function Landing() {
       </section>
 
       {/* ================= CTA SECTION ================= */}
-      <section className="pb-12 md:pb-24 pt-6 md:pt-10">
+      <section className="pb-24 pt-10 relative">
         <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
             viewport={{ once: true }}
             className="relative"
           >
-            {/* CTA Glass Card */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur-lg opacity-30 transform translate-y-4"></div>
-            <Card className="relative rounded-3xl border border-white/20 dark:border-white/10 bg-gradient-to-br from-blue-900 to-gray-900 text-white overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-[3rem] blur-2xl opacity-20 dark:opacity-40 translate-y-4" />
 
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -ml-16 -mb-16 pointer-events-none"></div>
+            <Card className="relative rounded-[3rem] border border-white/20 dark:border-white/10 bg-gradient-to-br from-blue-900 via-[#1e1b4b] to-black overflow-hidden shadow-2xl">
 
-              <CardBody className="p-8 md:p-16 text-center">
-                <Typography variant="h2" className="mb-3 md:mb-4 text-2xl md:text-4xl font-bold tracking-tight">
-                  Ready to practice smarter?
+              {/* Ethereal light effects inside CTA */}
+              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/20 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[100px] -ml-40 -mb-40 pointer-events-none" />
+
+              <CardBody className="px-6 py-20 md:p-24 text-center relative z-10 flex flex-col items-center">
+                <Typography variant="h2" className="mb-6 text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white drop-shadow-md">
+                  Ready to upgrade your mind?
                 </Typography>
-                <Typography className="text-blue-100 text-base md:text-lg mb-6 md:mb-8 max-w-xl mx-auto">
-                  Join thousands of students improving their skills every day. Create an account and try your first question now.
+                <Typography className="text-blue-100/80 text-lg md:text-xl font-medium mb-10 max-w-2xl">
+                  Join a community of forward-thinkers. Set up your learning profile in seconds and execute your first perfect rep today.
                 </Typography>
                 <Button
                   onClick={() => navigate("/auth/sign-up")}
                   size="lg"
-                  color="white"
-                  className="rounded-full text-blue-900 hover:scale-105 transition-transform w-full sm:w-auto"
+                  className="rounded-full bg-white text-blue-950 hover:bg-slate-100 hover:scale-105 transition-all duration-300 shadow-xl shadow-white/10 text-lg py-4 px-10 border border-white/50"
                 >
-                  Sign up for free
+                  Create Your Free Account
                 </Button>
+                <Typography variant="small" className="text-white/40 mt-6 font-medium tracking-wide uppercase">
+                  No credit card required
+                </Typography>
               </CardBody>
             </Card>
           </motion.div>
