@@ -50,7 +50,7 @@ public class StudyPlanItem {
     private boolean isCompleted = false;
 
     // --- Gamification ---
-    @Column(name = "xp_reward", nullable = false)
+    @Column(name = "xp_reward", nullable = false, columnDefinition = "integer default 0")
     private int xpReward = 0; // VIDEO=10, PRACTICE=50
 
     // --- Quiz Questions (only for PRACTICE items) ---

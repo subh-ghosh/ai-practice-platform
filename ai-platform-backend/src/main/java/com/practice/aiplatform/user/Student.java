@@ -48,7 +48,7 @@ public class Student {
     private LocalDate subscriptionEndsAt; // To know when a subscription expires
 
     // --- Gamification ---
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "integer default 0")
     private int totalXp = 0;
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
