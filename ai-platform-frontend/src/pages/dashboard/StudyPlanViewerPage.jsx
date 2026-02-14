@@ -506,9 +506,11 @@ const VideoCard = ({ item, locked, onPlay, onComplete }) => (
                         </h3>
                         <div className="flex items-center gap-1 flex-shrink-0 ml-2">
                             {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
-                            <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
-                                {item.xpReward} XP
-                            </span>
+                            {item.xpReward > 0 && (
+                                <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+                                    {item.xpReward} XP
+                                </span>
+                            )}
                         </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-1">{item.channelName}</p>
@@ -572,9 +574,11 @@ const PracticeCard = ({ item, locked, onStartQuiz }) => (
                 </div>
                 <div className="flex items-center gap-1">
                     {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
-                    <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
-                        {item.xpReward} XP
-                    </span>
+                    {item.xpReward > 0 && (
+                        <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+                            {item.xpReward} XP
+                        </span>
+                    )}
                 </div>
             </div>
             {item.description && (
@@ -587,7 +591,7 @@ const PracticeCard = ({ item, locked, onStartQuiz }) => (
                         className="flex items-center text-xs px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all font-medium shadow-sm"
                     >
                         <SparklesIcon className="h-3.5 w-3.5 mr-1.5" />
-                        Take Quiz to Unlock
+                        {(item.quizQuestions?.length || 0) > 0 ? 'Take Quiz to Unlock' : 'Open Checkpoint'}
                     </button>
                 </div>
             )}

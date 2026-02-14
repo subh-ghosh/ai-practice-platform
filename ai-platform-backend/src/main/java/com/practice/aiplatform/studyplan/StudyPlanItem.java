@@ -46,7 +46,7 @@ public class StudyPlanItem {
     @Column(name = "order_index", nullable = false)
     private int orderIndex;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isCompleted = false;
 
     // --- Gamification ---
