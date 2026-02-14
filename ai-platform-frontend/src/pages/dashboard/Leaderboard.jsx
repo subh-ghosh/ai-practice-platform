@@ -46,33 +46,47 @@ const Leaderboard = () => {
     };
 
     return (
-        <div className="relative min-h-screen p-4 md:p-6">
-            {/* Background */}
-            <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-                <div className={`absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse ${isDark ? 'bg-yellow-800' : 'bg-yellow-200'}`} />
-                <div className={`absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse ${isDark ? 'bg-purple-800' : 'bg-purple-200'}`} style={{ animationDelay: '2s' }} />
-            </div>
+        <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
+            {/* Styles & Animations */}
+            <style>{`
+            /* Animations */
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes slideUpFade { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes scaleIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+            @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+            
+            .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
+            .animate-slide-up { animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            .animate-pop-in { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+            .animate-pulse-soft { animation: pulseSoft 2s infinite ease-in-out; }
+            .delay-100 { animation-delay: 100ms; }
+          `}</style>
 
-            <div className="max-w-3xl mx-auto">
+            {/* Background Layer */}
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-yellow-50 via-orange-50 to-yellow-100 dark:from-gray-900 dark:via-yellow-950 dark:to-gray-900 transition-colors duration-700" />
+            <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-yellow-300/30 dark:bg-yellow-600/30 blur-3xl animate-pulse-soft" />
+            <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-orange-300/25 dark:bg-orange-700/25 blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
+
+            <div className="mt-6 page has-fixed-navbar space-y-8 max-w-4xl mx-auto">
                 {/* Header */}
-                <div className="mb-8 text-center">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100 dark:bg-yellow-900/30 mb-4">
-                        <TrophyIcon className="h-5 w-5 text-yellow-600" />
-                        <Typography variant="small" className="font-bold text-yellow-700 dark:text-yellow-400">
-                            TOP LEARNERS
+                <div className="text-center mb-10 animate-slide-up relative z-10">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100/80 backdrop-blur-sm border border-yellow-200 dark:bg-yellow-900/30 dark:border-yellow-800 mb-4 shadow-sm">
+                        <TrophyIcon className="h-5 w-5 text-yellow-600 dark:text-yellow-500" />
+                        <Typography variant="small" className="font-bold text-yellow-800 dark:text-yellow-400 uppercase tracking-widest text-[10px]">
+                            Top Learners
                         </Typography>
                     </div>
-                    <Typography variant="h3" className={`font-bold ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                    <Typography variant="h2" className={`font-black tracking-tight mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>
                         Leaderboard
                     </Typography>
-                    <Typography className={`mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Climb the ranks by earning XP through quizzes and practice sessions.
+                    <Typography className={`max-w-md mx-auto font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Climb the ranks, earn XP, and become a master.
                     </Typography>
                 </div>
 
                 {loading ? (
                     <div className="flex justify-center py-12">
-                        <Spinner className="h-10 w-10 text-purple-500" />
+                        <Spinner className="h-10 w-10 text-yellow-500" />
                     </div>
                 ) : leaders.length === 0 ? (
                     <Card className={`backdrop-blur-xl border ${isDark ? 'bg-gray-900/50 border-gray-700/50' : 'bg-white/70 border-gray-200/50'}`}>
@@ -84,7 +98,7 @@ const Leaderboard = () => {
                         </CardBody>
                     </Card>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4 relative z-10">
                         {leaders.map((student, index) => {
                             const rank = getRankStyle(index);
                             const isCurrentUser = user?.email === student.email;
@@ -92,51 +106,55 @@ const Leaderboard = () => {
                             return (
                                 <Card
                                     key={student.id}
-                                    className={`backdrop-blur-xl border-2 transition-all duration-300 hover:scale-[1.01] ${rank.bg} ${rank.border} ${isCurrentUser ? 'ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-gray-900' : ''
-                                        } ${isDark && !rank.bg ? 'bg-gray-900/50 border-gray-700/50' : !rank.bg ? 'bg-white/70' : ''}`}
+                                    className={`backdrop-blur-md border transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-lg ${rank.bg ? rank.bg : 'bg-white/80 dark:bg-gray-900/80'} ${rank.border} ${isCurrentUser ? 'ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-gray-900' : ''
+                                        } animate-slide-up`}
+                                    style={{ animationDelay: `${index * 50}ms` }}
                                 >
-                                    <CardBody className="p-4">
-                                        <div className="flex items-center gap-4">
+                                    <CardBody className="p-4 md:p-5">
+                                        <div className="flex items-center gap-4 md:gap-6">
                                             {/* Rank */}
-                                            <div className="flex-shrink-0 w-10 text-center">
-                                                <span className="text-2xl">{rank.medal}</span>
+                                            <div className="flex-shrink-0 w-12 text-center flex flex-col items-center justify-center">
+                                                <span className="text-3xl filter drop-shadow-sm">{rank.medal}</span>
                                             </div>
 
                                             {/* Avatar */}
                                             <Avatar
-                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(student.firstName || 'U')}&background=7c3aed&color=fff&bold=true`}
+                                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(student.firstName || 'U')}&background=random&color=fff&bold=true`}
                                                 alt={student.firstName}
-                                                size="sm"
-                                                className="border-2 border-purple-200 dark:border-purple-700"
+                                                size="md"
+                                                className="border-2 border-white dark:border-gray-700 shadow-md"
                                             />
 
                                             {/* Name */}
-                                            <div className="flex-grow">
-                                                <Typography variant="h6" className={`font-semibold ${isDark ? 'text-white' : 'text-gray-800'}`}>
-                                                    {student.firstName} {student.lastName ? student.lastName.charAt(0) + '.' : ''}
+                                            <div className="flex-grow min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <Typography variant="h6" className={`font-bold truncate ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                                                        {student.firstName} {student.lastName ? student.lastName : ''}
+                                                    </Typography>
                                                     {isCurrentUser && (
-                                                        <Chip size="sm" value="You" className="ml-2 bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 normal-case inline-block" />
+                                                        <Chip size="sm" value="YOU" className="bg-purple-500 text-white border-none py-0.5 px-2 rounded-md text-[10px]" />
                                                     )}
-                                                </Typography>
+                                                </div>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    {student.streakDays > 0 && (
+                                                        <div className={`flex items-center gap-1 text-xs font-bold ${isDark ? 'text-orange-400' : 'text-orange-600'}`}>
+                                                            <FireIcon className="h-3 w-3" />
+                                                            {student.streakDays} Day Streak
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            {/* Streak */}
-                                            {student.streakDays > 0 && (
-                                                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${isDark ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
-                                                    🔥 {student.streakDays}
-                                                </div>
-                                            )}
-
                                             {/* XP */}
-                                            <div className="flex-shrink-0 text-right">
-                                                <div className="flex items-center gap-1">
-                                                    <StarIcon className="h-4 w-4 text-yellow-500" />
-                                                    <Typography variant="h6" className={`font-bold ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                                            <div className="flex-shrink-0 text-right pl-2">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Typography variant="h5" className={`font-black ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`}>
                                                         {student.totalXp?.toLocaleString() || 0}
                                                     </Typography>
+                                                    <StarIcon className="h-5 w-5 text-yellow-500" />
                                                 </div>
-                                                <Typography variant="small" className={isDark ? 'text-gray-500' : 'text-gray-400'}>
-                                                    XP
+                                                <Typography variant="small" className={`font-medium ${isDark ? 'text-gray-500' : 'text-gray-400'} text-xs uppercase tracking-wide`}>
+                                                    Total XP
                                                 </Typography>
                                             </div>
                                         </div>
@@ -147,7 +165,7 @@ const Leaderboard = () => {
                     </div>
                 )}
             </div>
-        </div>
+        </section>
     );
 };
 
