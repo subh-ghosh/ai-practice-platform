@@ -44,25 +44,29 @@ public class CourseController {
         return ResponseEntity.ok("Authenticated as: " + principal.getName());
     }
 
+    @CrossOrigin // Added back to match AiController exactly
     @PostMapping("/generate")
-    public Mono<Object> generateCourse(@RequestBody GenerateCourseRequest request, Principal principal) {
+    public ResponseEntity<?> generateCourse(@RequestBody GenerateCourseRequest request, Principal principal) {
         String email = principal.getName();
         System.out.println("🔔 CourseController: /generate called by " + email + " for topic: " + request.topic());
 
         if (request.topic() == null || request.topic().trim().isEmpty()) {
-            return Mono.just(ResponseEntity.badRequest().body(Map.of("error", "Topic is required")));
+            return ResponseEntity.badRequest().body(Map.of("error", "Topic is required"));
         }
 
-        return courseGeneratorService.generateCourse(email, request.topic(), request.level())
-                .map(course -> {
-                    return ResponseEntity.ok(course);
-                })
-                .map(response -> (Object) response)
-                .onErrorResume(e -> {
-                    e.printStackTrace();
-                    return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(Map.of("error", "Generation failed: " + e.getMessage())));
-                });
+        try {
+            // BLOCKING CALL to match AiController's working pattern
+            // This ensures SecurityContext is preserved on the servlet thread
+            var course = courseGeneratorService.generateCourse(email, request.topic(), request.level())
+                    .block();
+
+            return ResponseEntity.ok(course);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Generation failed: " + e.getMessage()));
+        }
     }
 
     @GetMapping
