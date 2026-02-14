@@ -1,12 +1,13 @@
 package com.practice.aiplatform.user;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.practice.aiplatform.practice.Question;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDate; // 👈 --- ADD THIS IMPORT
+import java.time.LocalDate;
 import java.util.Set;
 
 @Getter
@@ -33,25 +34,32 @@ public class Student {
     @Column
     private String gender;
 
-    // --- 👇 NEW FIELDS FOR PAYMENT & USAGE ---
+    // --- Payment & Usage ---
 
     @Column(nullable = false)
-    private int freeActionsUsed = 0; // Default to 0 for new users
+    private int freeActionsUsed = 0;
 
     @Column(nullable = false)
-    private String subscriptionStatus = "FREE"; // Default to "FREE"
+    private String subscriptionStatus = "FREE";
 
     @Column
-    private String paymentCustomerId; // For Stripe/Razorpay customer ID
+    private String paymentCustomerId;
 
     @Column
-    private LocalDate subscriptionEndsAt; // To know when a subscription expires
+    private LocalDate subscriptionEndsAt;
 
     // --- Gamification ---
     @Column(nullable = false, columnDefinition = "integer default 0")
     private int totalXp = 0;
 
+    @Column(nullable = false, columnDefinition = "integer default 1")
+    private int streakDays = 1;
+
+    @Column
+    private LocalDate lastLoginDate;
+
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Question> questions;
 
     public Student(String email, String password, String firstName, String lastName) {
@@ -59,7 +67,7 @@ public class Student {
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
-        String subscriptionStatus;
-        int freeActionsUsed;
+        this.subscriptionStatus = "FREE";
+        this.freeActionsUsed = 0;
     }
 }

@@ -6,3 +6,4 @@ export * from "./pricing";
 export * from "./CourseGeneratorPage";
 export * from "./StudyPlanBuilderPage";
 export * from "./StudyPlanViewerPage";
+export * from "./Leaderboard";

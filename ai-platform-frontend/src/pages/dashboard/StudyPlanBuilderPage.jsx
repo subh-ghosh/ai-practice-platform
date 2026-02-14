@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 import {
+    Typography,
+    Card,
+    CardBody,
+    Input,
+    Button,
+    Chip,
+    Spinner,
+    Alert,
+    Select,
+    Option,
+} from "@material-tailwind/react";
+import {
     AcademicCapIcon,
     SparklesIcon,
     ExclamationTriangleIcon,
@@ -9,7 +21,9 @@ import {
     BookOpenIcon,
     VideoCameraIcon,
     TrashIcon,
+    CheckCircleIcon,
 } from '@heroicons/react/24/solid';
+import { useTheme } from "@/context/ThemeContext.jsx";
 
 const StudyPlanBuilderPage = () => {
     const [topic, setTopic] = useState('');
@@ -20,8 +34,9 @@ const StudyPlanBuilderPage = () => {
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(true);
     const navigate = useNavigate();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
 
-    // Load study plan history on mount
     useEffect(() => {
         fetchHistory();
     }, []);
@@ -54,12 +69,8 @@ const StudyPlanBuilderPage = () => {
                 difficulty,
                 durationDays,
             });
-
-            console.log("✅ Study plan generated:", response.data);
             navigate(`/dashboard/study-plan/${response.data.id}`);
-
         } catch (err) {
-            console.error("❌ Generation failed:", err);
             setError(err.response?.data?.error || "Failed to generate study plan. Please try again.");
         } finally {
             setLoading(false);
@@ -67,10 +78,10 @@ const StudyPlanBuilderPage = () => {
     };
 
     const durationOptions = [
-        { value: 3, label: '3 Days — Quick Sprint' },
-        { value: 7, label: '1 Week — Standard' },
-        { value: 14, label: '2 Weeks — Deep Dive' },
-        { value: 30, label: '1 Month — Mastery' },
+        { value: 3, label: '3 Days', sub: 'Quick Sprint' },
+        { value: 7, label: '1 Week', sub: 'Standard' },
+        { value: 14, label: '2 Weeks', sub: 'Deep Dive' },
+        { value: 30, label: '1 Month', sub: 'Mastery' },
     ];
 
     const formatDate = (dateStr) => {
@@ -81,205 +92,238 @@ const StudyPlanBuilderPage = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            <h1 className="text-3xl font-bold mb-2 flex items-center text-gray-800">
-                <AcademicCapIcon className="h-8 w-8 text-purple-600 mr-2" />
-                Study Plan Builder
-            </h1>
-            <p className="text-gray-500 mb-8">
-                Enter a topic and we'll build a personalized study plan with curated video lessons and practice sessions.
-            </p>
-
-            {/* ===== BUILDER FORM ===== */}
-            <div className="bg-white shadow-lg rounded-xl p-8">
-                <form onSubmit={handleGenerate} className="space-y-6">
-
-                    {/* Topic Input */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                            <BookOpenIcon className="h-4 w-4 text-purple-500 mr-1" />
-                            What do you want to learn?
-                        </label>
-                        <input
-                            type="text"
-                            value={topic}
-                            onChange={(e) => setTopic(e.target.value)}
-                            placeholder="e.g., React Hooks, Machine Learning, Data Structures"
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
-                            disabled={loading}
-                        />
-                    </div>
-
-                    {/* Difficulty */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                            <SparklesIcon className="h-4 w-4 text-purple-500 mr-1" />
-                            Difficulty Level
-                        </label>
-                        <select
-                            value={difficulty}
-                            onChange={(e) => setDifficulty(e.target.value)}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-                            disabled={loading}
-                        >
-                            <option value="Beginner">Beginner</option>
-                            <option value="Intermediate">Intermediate</option>
-                            <option value="Advanced">Advanced</option>
-                        </select>
-                    </div>
-
-                    {/* Duration */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                            <ClockIcon className="h-4 w-4 text-purple-500 mr-1" />
-                            Study Duration
-                        </label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {durationOptions.map((opt) => (
-                                <button
-                                    key={opt.value}
-                                    type="button"
-                                    onClick={() => setDurationDays(opt.value)}
-                                    disabled={loading}
-                                    className={`p-3 rounded-lg border-2 text-sm font-medium transition-all ${durationDays === opt.value
-                                        ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm'
-                                        : 'border-gray-200 text-gray-600 hover:border-purple-300 hover:bg-purple-50/50'
-                                        }`}
-                                >
-                                    {opt.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Feature Preview */}
-                    <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-100">
-                        <h3 className="text-sm font-semibold text-purple-800 mb-2">Your study plan will include:</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-purple-700">
-                            <div className="flex items-center">
-                                <VideoCameraIcon className="h-4 w-4 mr-2 text-purple-500" />
-                                Curated video lessons
-                            </div>
-                            <div className="flex items-center">
-                                <BookOpenIcon className="h-4 w-4 mr-2 text-purple-500" />
-                                Practice checkpoints
-                            </div>
-                            <div className="flex items-center">
-                                <ClockIcon className="h-4 w-4 mr-2 text-purple-500" />
-                                Day-by-day schedule
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Error Message */}
-                    {error && (
-                        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r">
-                            <div className="flex">
-                                <ExclamationTriangleIcon className="h-5 w-5 text-red-500 mr-2" />
-                                <p className="text-red-700">{error}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Submit Button */}
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className={`w-full py-4 px-6 rounded-lg text-white font-bold text-lg shadow-md transition-all transform hover:-translate-y-1 ${loading
-                            ? 'bg-gray-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 hover:shadow-lg'
-                            }`}
-                    >
-                        {loading ? (
-                            <span className="flex items-center justify-center">
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Building Your Study Plan... (This may take a moment)
-                            </span>
-                        ) : (
-                            <span className="flex items-center justify-center">
-                                <SparklesIcon className="h-5 w-5 mr-2" />
-                                Build My Study Plan
-                            </span>
-                        )}
-                    </button>
-                </form>
+        <div className="relative min-h-screen p-4 md:p-6">
+            {/* Animated Background Blobs */}
+            <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+                <div className={`absolute -top-40 -right-40 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse ${isDark ? 'bg-purple-800' : 'bg-purple-300'}`} />
+                <div className={`absolute -bottom-40 -left-40 w-96 h-96 rounded-full blur-3xl opacity-20 animate-pulse ${isDark ? 'bg-indigo-800' : 'bg-indigo-300'}`} style={{ animationDelay: '2s' }} />
             </div>
 
-            {/* ===== STUDY PLAN HISTORY ===== */}
-            <div className="mt-10">
-                <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                    <ClockIcon className="h-6 w-6 text-purple-600 mr-2" />
-                    Your Study Plans
-                </h2>
+            <div className="max-w-4xl mx-auto">
+                {/* Header */}
+                <div className="mb-8">
+                    <Typography variant="h3" className={`font-bold flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                        <AcademicCapIcon className="h-8 w-8 text-purple-500" />
+                        Study Plan Builder
+                    </Typography>
+                    <Typography className={`mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Enter a topic and we'll build a personalized study plan with curated video lessons and practice sessions.
+                    </Typography>
+                </div>
 
-                {historyLoading ? (
-                    <div className="flex justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
-                    </div>
-                ) : history.length === 0 ? (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-                        <AcademicCapIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                        <p className="text-gray-500">No study plans yet. Create your first one above!</p>
-                    </div>
-                ) : (
-                    <div className="grid gap-4">
-                        {history.map((plan) => (
-                            <div
-                                key={plan.id}
-                                onClick={() => navigate(`/dashboard/study-plan/${plan.id}`)}
-                                className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 cursor-pointer hover:shadow-md hover:border-purple-300 transition-all group"
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-grow">
-                                        <h3 className="font-semibold text-gray-800 group-hover:text-purple-700 transition-colors">
-                                            {plan.title}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 mt-1 line-clamp-1">
-                                            {plan.description}
-                                        </p>
-                                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
-                                                {plan.difficulty}
-                                            </span>
-                                            <span className="flex items-center">
-                                                <ClockIcon className="h-3 w-3 mr-1" />
-                                                {plan.durationDays} days
-                                            </span>
-                                            <span>{formatDate(plan.createdAt)}</span>
-                                        </div>
-                                    </div>
+                {/* ===== BUILDER FORM ===== */}
+                <Card className={`backdrop-blur-xl border shadow-xl ${isDark ? 'bg-gray-900/70 border-gray-700/50' : 'bg-white/80 border-gray-200/50'}`}>
+                    <CardBody className="p-6 md:p-8">
+                        <form onSubmit={handleGenerate} className="space-y-6">
 
-                                    {/* Progress */}
-                                    <div className="flex-shrink-0 ml-4 text-right">
-                                        <span className={`text-lg font-bold ${plan.progress === 100 ? 'text-green-500' : 'text-purple-600'
-                                            }`}>
-                                            {plan.progress}%
-                                        </span>
-                                        <div className="w-20 bg-gray-200 rounded-full h-1.5 mt-1">
-                                            <div
-                                                className={`h-1.5 rounded-full transition-all ${plan.progress === 100
-                                                    ? 'bg-green-500'
-                                                    : 'bg-gradient-to-r from-purple-500 to-indigo-500'
-                                                    }`}
-                                                style={{ width: `${plan.progress}%` }}
-                                            ></div>
-                                        </div>
-                                        {plan.completed && (
-                                            <span className="text-xs text-green-500 font-medium">✓ Completed</span>
-                                        )}
-                                    </div>
+                            {/* Topic Input */}
+                            <div>
+                                <Typography variant="small" className={`font-semibold mb-2 flex items-center gap-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <BookOpenIcon className="h-4 w-4 text-purple-500" />
+                                    What do you want to learn?
+                                </Typography>
+                                <Input
+                                    size="lg"
+                                    placeholder="e.g., React Hooks, Machine Learning, Data Structures"
+                                    value={topic}
+                                    onChange={(e) => setTopic(e.target.value)}
+                                    disabled={loading}
+                                    className={`!border-gray-300 focus:!border-purple-500 ${isDark ? '!border-gray-600 text-white' : ''}`}
+                                    labelProps={{ className: "hidden" }}
+                                    containerProps={{ className: "min-w-0" }}
+                                />
+                            </div>
+
+                            {/* Difficulty */}
+                            <div>
+                                <Typography variant="small" className={`font-semibold mb-2 flex items-center gap-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <SparklesIcon className="h-4 w-4 text-purple-500" />
+                                    Difficulty Level
+                                </Typography>
+                                <div className="flex gap-3">
+                                    {['Beginner', 'Intermediate', 'Advanced'].map((level) => (
+                                        <button
+                                            key={level}
+                                            type="button"
+                                            onClick={() => setDifficulty(level)}
+                                            disabled={loading}
+                                            className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all duration-200 ${difficulty === level
+                                                    ? 'border-purple-500 bg-purple-50 text-purple-700 shadow-sm dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-400'
+                                                    : `border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 ${isDark ? 'border-gray-600 text-gray-300 hover:border-purple-600 hover:bg-purple-900/20' : 'text-gray-600'}`
+                                                }`}
+                                        >
+                                            {level}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
 
-            <div className="mt-8 text-center text-gray-500 text-sm">
-                <p>Powered by Smart Learning Engine</p>
+                            {/* Duration */}
+                            <div>
+                                <Typography variant="small" className={`font-semibold mb-2 flex items-center gap-1 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                                    <ClockIcon className="h-4 w-4 text-purple-500" />
+                                    Study Duration
+                                </Typography>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    {durationOptions.map((opt) => (
+                                        <button
+                                            key={opt.value}
+                                            type="button"
+                                            onClick={() => setDurationDays(opt.value)}
+                                            disabled={loading}
+                                            className={`p-3 rounded-lg border-2 text-center transition-all duration-200 ${durationDays === opt.value
+                                                    ? 'border-purple-500 bg-purple-50 shadow-sm dark:bg-purple-900/30 dark:border-purple-400'
+                                                    : `border-gray-200 hover:border-purple-300 hover:bg-purple-50/50 ${isDark ? 'border-gray-600 hover:border-purple-600 hover:bg-purple-900/20' : ''}`
+                                                }`}
+                                        >
+                                            <span className={`block text-sm font-bold ${durationDays === opt.value ? 'text-purple-700 dark:text-purple-300' : isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                                                {opt.label}
+                                            </span>
+                                            <span className={`block text-xs ${durationDays === opt.value ? 'text-purple-500 dark:text-purple-400' : isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                {opt.sub}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Feature Preview */}
+                            <div className={`rounded-xl p-4 border ${isDark ? 'bg-purple-900/20 border-purple-800/50' : 'bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-100'}`}>
+                                <Typography variant="small" className={`font-semibold mb-2 ${isDark ? 'text-purple-300' : 'text-purple-800'}`}>
+                                    Your study plan will include:
+                                </Typography>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    {[
+                                        { icon: VideoCameraIcon, text: 'Curated video lessons' },
+                                        { icon: BookOpenIcon, text: 'Practice checkpoints' },
+                                        { icon: ClockIcon, text: 'Day-by-day schedule' },
+                                    ].map(({ icon: Icon, text }) => (
+                                        <div key={text} className={`flex items-center text-sm ${isDark ? 'text-purple-300' : 'text-purple-700'}`}>
+                                            <Icon className={`h-4 w-4 mr-2 ${isDark ? 'text-purple-400' : 'text-purple-500'}`} />
+                                            {text}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Error Message */}
+                            {error && (
+                                <Alert color="red" variant="ghost" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
+                                    {error}
+                                </Alert>
+                            )}
+
+                            {/* Submit Button */}
+                            <Button
+                                type="submit"
+                                disabled={loading}
+                                fullWidth
+                                size="lg"
+                                className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-purple-500/25 transition-all duration-300 normal-case text-base"
+                            >
+                                {loading ? (
+                                    <>
+                                        <Spinner className="h-5 w-5" />
+                                        Building Your Study Plan... (This may take a moment)
+                                    </>
+                                ) : (
+                                    <>
+                                        <SparklesIcon className="h-5 w-5" />
+                                        Build My Study Plan
+                                    </>
+                                )}
+                            </Button>
+                        </form>
+                    </CardBody>
+                </Card>
+
+                {/* ===== STUDY PLAN HISTORY ===== */}
+                <div className="mt-10">
+                    <Typography variant="h5" className={`font-bold mb-4 flex items-center gap-2 ${isDark ? 'text-white' : 'text-gray-800'}`}>
+                        <ClockIcon className="h-6 w-6 text-purple-500" />
+                        Your Study Plans
+                    </Typography>
+
+                    {historyLoading ? (
+                        <div className="flex justify-center py-8">
+                            <Spinner className="h-8 w-8 text-purple-500" />
+                        </div>
+                    ) : history.length === 0 ? (
+                        <Card className={`backdrop-blur-xl border ${isDark ? 'bg-gray-900/50 border-gray-700/50' : 'bg-white/70 border-gray-200/50'}`}>
+                            <CardBody className="text-center py-8">
+                                <AcademicCapIcon className={`h-12 w-12 mx-auto mb-3 ${isDark ? 'text-gray-600' : 'text-gray-300'}`} />
+                                <Typography className={isDark ? 'text-gray-400' : 'text-gray-500'}>
+                                    No study plans yet. Create your first one above!
+                                </Typography>
+                            </CardBody>
+                        </Card>
+                    ) : (
+                        <div className="grid gap-4">
+                            {history.map((plan) => (
+                                <Card
+                                    key={plan.id}
+                                    onClick={() => navigate(`/dashboard/study-plan/${plan.id}`)}
+                                    className={`backdrop-blur-xl border cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:shadow-lg group ${isDark ? 'bg-gray-900/50 border-gray-700/50 hover:border-purple-600/50' : 'bg-white/70 border-gray-200/50 hover:border-purple-300'}`}
+                                >
+                                    <CardBody className="p-5">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-grow">
+                                                <Typography variant="h6" className={`font-semibold transition-colors ${isDark ? 'text-white group-hover:text-purple-300' : 'text-gray-800 group-hover:text-purple-700'}`}>
+                                                    {plan.title}
+                                                </Typography>
+                                                <Typography variant="small" className={`mt-1 line-clamp-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                    {plan.description}
+                                                </Typography>
+                                                <div className="flex items-center gap-3 mt-2">
+                                                    <Chip
+                                                        size="sm"
+                                                        value={plan.difficulty}
+                                                        className="bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 normal-case"
+                                                    />
+                                                    <Typography variant="small" className={`flex items-center gap-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                        <ClockIcon className="h-3 w-3" />
+                                                        {plan.durationDays} days
+                                                    </Typography>
+                                                    <Typography variant="small" className={isDark ? 'text-gray-500' : 'text-gray-400'}>
+                                                        {formatDate(plan.createdAt)}
+                                                    </Typography>
+                                                </div>
+                                            </div>
+
+                                            {/* Progress */}
+                                            <div className="flex-shrink-0 ml-4 text-right">
+                                                <Typography variant="h6" className={`font-bold ${plan.progress === 100 ? 'text-green-500' : 'text-purple-500'}`}>
+                                                    {plan.progress}%
+                                                </Typography>
+                                                <div className={`w-20 rounded-full h-1.5 mt-1 ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                                                    <div
+                                                        className={`h-1.5 rounded-full transition-all ${plan.progress === 100
+                                                            ? 'bg-green-500'
+                                                            : 'bg-gradient-to-r from-purple-500 to-indigo-500'
+                                                            }`}
+                                                        style={{ width: `${plan.progress}%` }}
+                                                    />
+                                                </div>
+                                                {plan.completed && (
+                                                    <div className="flex items-center gap-1 mt-1 justify-end">
+                                                        <CheckCircleIcon className="h-3 w-3 text-green-500" />
+                                                        <Typography variant="small" className="text-green-500 font-medium text-xs">
+                                                            Completed
+                                                        </Typography>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </CardBody>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className={`mt-8 text-center text-sm ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <p>Powered by Smart Learning Engine</p>
+                </div>
             </div>
         </div>
     );

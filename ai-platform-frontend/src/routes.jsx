@@ -9,6 +9,7 @@ import {
   PencilIcon,
   CreditCardIcon,
   AcademicCapIcon,
+  TrophyIcon,
 } from "@heroicons/react/24/solid";
 
 // Import all dashboard pages from the main barrel file
@@ -18,6 +19,7 @@ import {
   Profile,
   Notifications,
   Pricing,
+  Leaderboard,
 } from "@/pages/dashboard";
 import StudyPlanBuilderPage from "@/pages/dashboard/StudyPlanBuilderPage";
 
@@ -71,11 +73,16 @@ export const routes = [
       },
     ],
   },
-  // --- 👇 ADD THIS ENTIRE NEW SECTION --- 👇
   {
     layout: "dashboard",
     title: "Upgrade",
     pages: [
+      {
+        icon: <TrophyIcon {...icon} />,
+        name: "Leaderboard",
+        path: "/leaderboard",
+        element: <Leaderboard />,
+      },
       {
         icon: <CreditCardIcon {...icon} />,
         name: "Pricing",
@@ -84,7 +91,6 @@ export const routes = [
       },
     ],
   },
-  // --- 👆 END OF NEW SECTION --- 👆
   {
     title: "auth pages",
     layout: "auth",

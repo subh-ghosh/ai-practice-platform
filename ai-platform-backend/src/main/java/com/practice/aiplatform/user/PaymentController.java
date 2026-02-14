@@ -36,7 +36,7 @@ public class PaymentController {
     // A simple map to define your plans
     private static final Map<String, Integer> PLANS = Map.of(
             "premium_monthly", 19900, // ₹199.00 in paise
-            "premium_yearly", 199900  // ₹1999.00 in paise
+            "premium_yearly", 199900 // ₹1999.00 in paise
     );
 
     @PostMapping("/create-order")
@@ -71,8 +71,7 @@ public class PaymentController {
                     amount.toString(),
                     "INR",
                     student.getFirstName(),
-                    student.getEmail()
-            );
+                    student.getEmail());
 
             return ResponseEntity.ok(response);
 
@@ -83,7 +82,12 @@ public class PaymentController {
     }
 
     @PostMapping("/verify-payment")
-    public ResponseEntity<?> verifyPayment(@RequestBody VerifyPaymentRequest request, Principal principal) { // 👈 --- Return type changed to ResponseEntity<?>
+    public ResponseEntity<?> verifyPayment(@RequestBody VerifyPaymentRequest request, Principal principal) { // 👈 ---
+                                                                                                             // Return
+                                                                                                             // type
+                                                                                                             // changed
+                                                                                                             // to
+                                                                                                             // ResponseEntity<?>
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -113,13 +117,15 @@ public class PaymentController {
                         savedStudent.getGender(),
                         token,
                         savedStudent.getSubscriptionStatus(),
-                        savedStudent.getFreeActionsUsed()
-                );
+                        savedStudent.getFreeActionsUsed(),
+                        savedStudent.getTotalXp(),
+                        savedStudent.getStreakDays());
 
                 return ResponseEntity.ok(updatedDto); // 👈 --- RETURN THE NEW DTO
             } else {
                 // --- Payment Verification Failed ---
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status", "error", "message", "Invalid payment signature."));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("status", "error", "message", "Invalid payment signature."));
             }
 
         } catch (Exception e) {

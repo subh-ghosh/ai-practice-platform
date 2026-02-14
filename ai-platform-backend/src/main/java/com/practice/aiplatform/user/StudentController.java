@@ -7,9 +7,13 @@ import org.springframework.web.bind.annotation.*;
 import com.practice.aiplatform.notifications.NotificationService;
 
 import java.security.Principal;
+import java.util.List;
 
-record ProfileUpdateRequest(String firstName, String lastName, String gender) {}
-record ChangePasswordRequest(String oldPassword, String newPassword) {}
+record ProfileUpdateRequest(String firstName, String lastName, String gender) {
+}
+
+record ChangePasswordRequest(String oldPassword, String newPassword) {
+}
 
 @RestController
 @RequestMapping("/api/students")
@@ -22,8 +26,7 @@ public class StudentController {
     public StudentController(
             StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
-            NotificationService notificationService
-    ) {
+            NotificationService notificationService) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
@@ -32,44 +35,47 @@ public class StudentController {
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(
             Principal principal,
-            @RequestHeader(value = "Authorization", required = false) String auth
-    ) {
-        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            @RequestHeader(value = "Authorization", required = false) String auth) {
+        if (principal == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         String token = extractBearer(auth);
-        return ResponseEntity.ok(toDto(student, token)); // This now calls the updated toDto
+        return ResponseEntity.ok(toDto(student, token));
     }
 
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(
             @RequestBody ProfileUpdateRequest req,
             Principal principal,
-            @RequestHeader(value = "Authorization", required = false) String auth
-    ) {
-        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            @RequestHeader(value = "Authorization", required = false) String auth) {
+        if (principal == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        if (req.firstName() != null) student.setFirstName(req.firstName().trim());
-        if (req.lastName() != null)  student.setLastName(req.lastName().trim());
-        if (req.gender() != null)    student.setGender(req.gender().trim().toLowerCase());
+        if (req.firstName() != null)
+            student.setFirstName(req.firstName().trim());
+        if (req.lastName() != null)
+            student.setLastName(req.lastName().trim());
+        if (req.gender() != null)
+            student.setGender(req.gender().trim().toLowerCase());
 
         studentRepository.save(student);
 
-        // 🔔 notify on profile update
+        // notify on profile update
         notificationService.notify(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
 
         String token = extractBearer(auth);
-        return ResponseEntity.ok(toDto(student, token)); // This also calls the updated toDto
+        return ResponseEntity.ok(toDto(student, token));
     }
 
     @PutMapping("/password")
     public ResponseEntity<String> changePassword(
             @RequestBody ChangePasswordRequest req,
-            Principal principal
-    ) {
-        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+            Principal principal) {
+        if (principal == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
 
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -95,14 +101,24 @@ public class StudentController {
 
     @DeleteMapping("/account")
     public ResponseEntity<?> deleteAccount(Principal principal) {
-        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        if (principal == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         studentRepository.delete(student);
         return ResponseEntity.noContent().build();
     }
 
-    // --- 👇 THIS METHOD IS UPDATED ---
+    // --- Leaderboard Endpoint ---
+    @GetMapping("/leaderboard")
+    public ResponseEntity<List<StudentDto>> getLeaderboard() {
+        List<Student> topStudents = studentRepository.findTop10ByOrderByTotalXpDesc();
+        List<StudentDto> dtos = topStudents.stream()
+                .map(s -> toDto(s, null))
+                .toList();
+        return ResponseEntity.ok(dtos);
+    }
+
     private static StudentDto toDto(Student s, String token) {
         return new StudentDto(
                 s.getId(),
@@ -112,13 +128,14 @@ public class StudentController {
                 s.getGender(),
                 token,
                 s.getSubscriptionStatus(),
-                s.getFreeActionsUsed()
-        );
+                s.getFreeActionsUsed(),
+                s.getTotalXp(),
+                s.getStreakDays());
     }
-    // --- 👆 END OF UPDATE ---
 
     private static String extractBearer(String header) {
-        if (header != null && header.startsWith("Bearer ")) return header.substring(7);
+        if (header != null && header.startsWith("Bearer "))
+            return header.substring(7);
         return null;
     }
 }

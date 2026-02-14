@@ -260,8 +260,8 @@ const StudyPlanViewerPage = () => {
 
             {/* ===== QUIZ MODAL ===== */}
             {activeQuiz && (
-                <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto pt-10 pb-10 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
                         <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl">
                             <div className="flex items-center justify-between">
                                 <div>
