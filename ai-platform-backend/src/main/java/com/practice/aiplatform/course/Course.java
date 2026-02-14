@@ -24,6 +24,9 @@ public class Course {
     private String topic;
     private String difficultyInfo; // e.g., "Beginner", "Intermediate"
 
+    @Column(nullable = false)
+    private boolean isCompleted = false; // Fix: Initialize to false to satisfy DB not-null constraint
+
     @Column(columnDefinition = "TEXT")
     private String description; // Optional: Brief summary
 
