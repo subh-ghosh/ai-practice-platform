@@ -3,3 +3,4 @@ export * from "./practice";
 export * from "./profile";
 export * from "./notifications";
 export * from "./pricing";
+export * from "./CourseGeneratorPage";

@@ -1,31 +1,19 @@
 import axios from 'axios';
+import { API_BASE_URL } from './config';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8081/api",
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// --- THIS IS THE UPDATED INTERCEPTOR ---
+// Add a request interceptor to include the JWT token
 api.interceptors.request.use(
   (config) => {
-    // Don't send a token for public login or register routes
-    if (
-      config.url === '/api/students/login' ||
-      config.url === '/api/students/register'
-    ) {
-      return config;
-    }
-
-    // 1. Get the 'user' string from localStorage
-    const userString = localStorage.getItem('user');
-
-    if (userString) {
-      // 2. Parse the 'user' object
-      const user = JSON.parse(userString);
-
-      // 3. If the user object has a token, add it to the header
-      if (user && user.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
-      }
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -33,6 +21,18 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-// --- END OF UPDATED INTERCEPTOR ---
+
+// Add a response interceptor to handle errors (like 401)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Optional: Redirect to login or clear token
+      // localStorage.removeItem('token');
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

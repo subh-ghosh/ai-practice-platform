@@ -9,10 +9,12 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jdk-alpine
 WORKDIR /app
 # Copy the JAR file from the build stage
-COPY --from=build /app/target/*.jar app.jar
+# Copy the JAR file from the build stage
+COPY --from=build /app/target/ai-platform-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose port 8080 (Standard for Cloud)
 EXPOSE 8080
 
-# Run the app, binding to Render's assigned PORT
-ENTRYPOINT ["java", "-jar", "app.jar", "--server.port=${PORT:8080}"]
+# Run the app
+# Note: server.port=${PORT:8080} in application.properties handles the port binding automatically.
+ENTRYPOINT ["java", "-jar", "app.jar"]

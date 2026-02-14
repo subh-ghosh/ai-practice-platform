@@ -18,9 +18,18 @@ public class GeminiService {
     private final String apiKey;
 
     public GeminiService(@Qualifier("geminiWebClient") WebClient webClient,
-                         @Value("${gemini.api.key}") String apiKey) {
+            @Value("${gemini.api.key}") String apiKey) {
         this.webClient = webClient;
         this.apiKey = apiKey;
+    }
+
+    /**
+     * Generates raw content from the Gemini API.
+     * Added for CourseGeneratorService.
+     */
+    public Mono<String> generateRawContent(String prompt) {
+        return callGeminiApi(prompt)
+                .map(this::extractTextFromResponse);
     }
 
     /**
@@ -30,10 +39,10 @@ public class GeminiService {
     public Mono<String> generateQuestion(String subject, String difficulty, String topic) {
 
         String prompt = String.format(
-                "Generate one practice question for a %s level student on the subject of %s, focusing specifically on the topic of %s. " +
+                "Generate one practice question for a %s level student on the subject of %s, focusing specifically on the topic of %s. "
+                        +
                         "Only return the question text, with no other formatting or introductory phrases.",
-                difficulty, subject, topic
-        );
+                difficulty, subject, topic);
 
         return callGeminiApi(prompt)
                 .map(this::extractTextFromResponse);
@@ -50,7 +59,8 @@ public class GeminiService {
      * @return A Mono<String> containing the AI's feedback.
      */
     // --- UPDATED SIGNATURE ---
-    public Mono<String> evaluateAnswer(String questionText, String answerText, String subject, String topic, String difficulty) {
+    public Mono<String> evaluateAnswer(String questionText, String answerText, String subject, String topic,
+            String difficulty) {
 
         // --- UPDATED PROMPT ---
         String prompt = String.format(
@@ -59,11 +69,11 @@ public class GeminiService {
                         "The student provided this answer: \"%s\"\n\n" +
                         "Your task is to evaluate this answer line by line based on the subject and topic.\n" +
                         "1. On the very first line, write ONLY the single word 'CORRECT', 'INCORRECT', or 'CLOSE'.\n" +
-                        "   - Use 'CLOSE' if the student's answer is on the right track but has a key flaw or is partially correct.\n" +
+                        "   - Use 'CLOSE' if the student's answer is on the right track but has a key flaw or is partially correct.\n"
+                        +
                         "2. On the next line, begin your detailed, constructive feedback.\n" +
                         "3. If the answer is 'INCORRECT' or 'CLOSE', add a new line at the very end starting with the exact text '[HINT]' followed by a detailed and informative hint to guide the student.",
-                subject, topic, difficulty, questionText, answerText
-        );
+                subject, topic, difficulty, questionText, answerText);
 
         return callGeminiApi(prompt)
                 .map(this::extractTextFromResponse);
@@ -83,12 +93,13 @@ public class GeminiService {
 
         // --- UPDATED PROMPT ---
         String prompt = String.format(
-                "You are a helpful teaching assistant. A student is stuck on the following question for the subject '%s' (topic: '%s', difficulty: '%s'):\n" +
+                "You are a helpful teaching assistant. A student is stuck on the following question for the subject '%s' (topic: '%s', difficulty: '%s'):\n"
+                        +
                         "\"%s\"\n\n" +
-                        "Your task is to provide a single, concise, and helpful hint to guide them toward the solution. " +
+                        "Your task is to provide a single, concise, and helpful hint to guide them toward the solution. "
+                        +
                         "Do NOT provide the full answer. Only return the hint text.",
-                subject, topic, difficulty, questionText
-        );
+                subject, topic, difficulty, questionText);
 
         return callGeminiApi(prompt)
                 .map(this::extractTextFromResponse);
@@ -108,48 +119,43 @@ public class GeminiService {
 
         // --- UPDATED PROMPT ---
         String prompt = String.format(
-                "You are an expert in this subject. A student has asked for the correct answer to the following '%s' level question about '%s' (subject: '%s'):\n" +
+                "You are an expert in this subject. A student has asked for the correct answer to the following '%s' level question about '%s' (subject: '%s'):\n"
+                        +
                         "\"%s\"\n\n" +
                         "Your task is to provide a correct, well-explained answer. " +
                         "Start by providing the direct answer, then provide a step-by-step explanation.",
-                difficulty, topic, subject, questionText
-        );
+                difficulty, topic, subject, questionText);
 
         return callGeminiApi(prompt)
                 .map(this::extractTextFromResponse);
     }
 
-
     private Mono<GeminiResponse> callGeminiApi(String prompt) {
-    Map<String, Object> requestBody = Map.of(
-        "contents", List.of(
-            Map.of("parts", List.of(
-                Map.of("text", prompt)
-            ))
-        )
-    );
+        Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(
+                                Map.of("text", prompt)))));
 
-    return this.webClient.post()
-        .uri(uriBuilder -> uriBuilder
-            .path("/v1beta/models/gemini-2.0-flash-001:generateContent")
-            // Note: The endpoint may differ based on your specific Gemini model and API version. Check Google's documentation for the correct path.
-            .queryParam("key", this.apiKey)
-            .build())
-        .bodyValue(requestBody)
-        .retrieve()
-        .onStatus(
-            status -> status.is4xxClientError() || status.is5xxServerError(),
-            clientResponse -> clientResponse.bodyToMono(String.class)
-                .flatMap(errorBody -> {
-                    // This prints the REAL error from Google to your terminal
-                    System.err.println("GOOGLE API ERROR: " + errorBody);
-                    return Mono.error(new RuntimeException("Gemini API Error: " + errorBody));
-                })
-        )
-        .bodyToMono(GeminiResponse.class)
-        .doOnError(e -> System.err.println("CRITICAL ERROR: " + e.getMessage()));
-}
-
+        return this.webClient.post()
+                .uri(uriBuilder -> uriBuilder
+                        .path("/v1beta/models/gemini-2.0-flash-001:generateContent")
+                        // Note: The endpoint may differ based on your specific Gemini model and API
+                        // version. Check Google's documentation for the correct path.
+                        .queryParam("key", this.apiKey)
+                        .build())
+                .bodyValue(requestBody)
+                .retrieve()
+                .onStatus(
+                        status -> status.is4xxClientError() || status.is5xxServerError(),
+                        clientResponse -> clientResponse.bodyToMono(String.class)
+                                .flatMap(errorBody -> {
+                                    // This prints the REAL error from Google to your terminal
+                                    System.err.println("GOOGLE API ERROR: " + errorBody);
+                                    return Mono.error(new RuntimeException("Gemini API Error: " + errorBody));
+                                }))
+                .bodyToMono(GeminiResponse.class)
+                .doOnError(e -> System.err.println("CRITICAL ERROR: " + e.getMessage()));
+    }
 
     private String extractTextFromResponse(GeminiResponse response) {
         // ... (this method remains unchanged)

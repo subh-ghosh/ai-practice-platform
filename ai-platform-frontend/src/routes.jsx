@@ -7,7 +7,8 @@ import {
   RectangleStackIcon,
   ChartPieIcon,
   PencilIcon,
-  CreditCardIcon, // 👈 --- ADD THIS IMPORT
+  CreditCardIcon,
+  BookOpenIcon,
 } from "@heroicons/react/24/solid";
 
 // Import all dashboard pages from the main barrel file
@@ -16,8 +17,9 @@ import {
   Practice,
   Profile,
   Notifications,
-  Pricing, // 👈 --- ADD THIS IMPORT
+  Pricing,
 } from "@/pages/dashboard";
+import CourseGeneratorPage from "@/pages/dashboard/CourseGeneratorPage";
 
 import { SignIn, SignUp } from "@/pages/auth";
 
@@ -41,6 +43,12 @@ export const routes = [
         name: "Practice",
         path: "/practice",
         element: <Practice />,
+      },
+      {
+        icon: <BookOpenIcon {...icon} />,
+        name: "AI Course Generator",
+        path: "/course-generator",
+        element: <CourseGeneratorPage />,
       },
     ],
   },
