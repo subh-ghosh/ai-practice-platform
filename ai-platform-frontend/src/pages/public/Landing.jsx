@@ -22,12 +22,12 @@ import { Footer } from "@/widgets/layout";
 
 // --- Animation Variants ---
 const bounceIn = {
-  hidden: { opacity: 0, y: 60, scale: 0.8 },
+  hidden: { opacity: 0, y: 60, scale: 0.9 },
   visible: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { type: "spring", bounce: 0.5, duration: 0.8 }
+    transition: { type: "spring", bounce: 0.4, duration: 0.8 }
   }
 };
 
@@ -35,14 +35,14 @@ const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.1 }
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 }
   }
 };
 
 const floatAnimation = {
   animate: {
-    y: [0, -15, 0],
-    transition: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+    y: [0, -10, 0],
+    transition: { duration: 5, repeat: Infinity, ease: "easeInOut" }
   }
 };
 
@@ -55,19 +55,19 @@ export function Landing() {
       {/* ================= HERO SECTION ================= */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20 md:pt-0">
 
-        {/* Background Mesh Gradients */}
-        <div className="absolute inset-0 -z-20 h-full w-full bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.15),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(79,70,229,0.15),rgba(0,0,0,0))]" />
+        {/* Cleaner Background - Very subtle atmospherics */}
+        <div className="absolute inset-0 -z-20 h-full w-full bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))] dark:bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(79,70,229,0.08),rgba(0,0,0,0))]" />
 
-        {/* Floating Glows */}
+        {/* Very Subtle Floating Orbs (Dialed back significantly) */}
         <motion.div
-          animate={{ x: [0, 40, 0], y: [0, -50, 0], scale: [1, 1.2, 1] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[10%] left-[10%] h-[300px] w-[300px] rounded-full bg-blue-600/20 blur-[100px] -z-10 pointer-events-none"
+          animate={{ x: [0, 40, 0], y: [0, -50, 0], scale: [1, 1.1, 1] }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[10%] left-[10%] h-[300px] w-[300px] rounded-full bg-blue-600/10 blur-[120px] -z-10 pointer-events-none"
         />
         <motion.div
-          animate={{ x: [0, -40, 0], y: [0, 50, 0], scale: [1, 1.3, 1] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[20%] right-[10%] h-[400px] w-[400px] rounded-full bg-violet-600/20 blur-[120px] -z-10 pointer-events-none"
+          animate={{ x: [0, -40, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-[20%] right-[10%] h-[400px] w-[400px] rounded-full bg-violet-600/10 blur-[150px] -z-10 pointer-events-none"
         />
 
         <div className="container mx-auto px-4 relative z-10">
@@ -81,11 +81,10 @@ export function Landing() {
               className="md:col-span-7 text-center md:text-left pt-10 md:pt-0"
             >
               <motion.div variants={bounceIn} className="flex justify-center md:justify-start">
-                <div className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 dark:bg-white/5 border border-blue-200 dark:border-blue-500/30 backdrop-blur-md mb-8 shadow-sm hover:scale-105 transition-transform cursor-default group">
-                  <span className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600/20 to-purple-600/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/10 backdrop-blur-md mb-8 shadow-sm cursor-default">
                   <FireIcon className="h-4 w-4 text-orange-500" />
-                  <span className="text-sm font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                    Your Personal Tech Mentor
+                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                    Neural-Powered Tech Prep
                   </span>
                 </div>
               </motion.div>
@@ -93,28 +92,29 @@ export function Landing() {
               <motion.div variants={bounceIn}>
                 <Typography variant="h1" className="mb-6 font-black tracking-tight leading-[1.1] text-5xl md:text-6xl lg:text-7xl text-slate-900 dark:text-white">
                   Code. Execute. <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500 drop-shadow-sm">
-                    Level Up with AI.
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">
+                    Level Up faster.
                   </span>
                 </Typography>
               </motion.div>
 
               <motion.div variants={bounceIn}>
                 <Typography className="mb-10 text-lg md:text-xl font-medium text-slate-600 dark:text-slate-400 max-w-2xl mx-auto md:mx-0 leading-relaxed">
-                  Generate unlimited coding challenges, get your syntax instantly evaluated by AI, and follow customized video study plans pulling the best content from YouTube.
+                  Generate unlimited coding challenges, get instant algorithmic evaluations on your syntax & logic, and follow curated video study plans.
                 </Typography>
               </motion.div>
 
               <motion.div variants={bounceIn} className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                {/* PRIMARY CTA: Hover Glow Only */}
                 <button
-                  className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/30 active:scale-95 w-full sm:w-auto"
+                  className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full bg-slate-900 dark:bg-white px-8 py-4 text-base font-bold text-white dark:text-slate-900 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 w-full sm:w-auto"
                   onClick={() => navigate("/auth/sign-up")}
                 >
                   <span className="relative z-10">Start Coding Free</span>
                   <ArrowLongRightIcon className="h-5 w-5 relative z-10 transition-transform duration-300 group-hover:translate-x-1" />
-                  <div className="absolute inset-0 -z-0 bg-gradient-to-r from-indigo-600 to-blue-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 </button>
 
+                {/* SECONDARY CTA */}
                 <button
                   className="rounded-full border border-slate-300 px-8 py-4 text-base font-bold text-slate-700 transition-all hover:bg-slate-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800/50 dark:hover:text-white w-full sm:w-auto"
                   onClick={() => navigate("/auth/sign-in")}
@@ -124,17 +124,17 @@ export function Landing() {
               </motion.div>
             </motion.div>
 
-            {/* Right Dashboard Mockup */}
+            {/* Right Dashboard Mockup - CLEAN DEFAULT, GLOW ON HOVER */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
+              initial={{ opacity: 0, scale: 0.5, rotate: -5 }}
               animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              transition={{ type: "spring", bounce: 0.6, duration: 1, delay: 0.2 }}
-              className="md:col-span-5 hidden md:block perspective-[1000px]"
+              transition={{ type: "spring", bounce: 0.5, duration: 1, delay: 0.2 }}
+              className="md:col-span-5 hidden md:block perspective-[1000px] group"
             >
               <motion.div variants={floatAnimation} className="relative w-full max-w-md ml-auto">
-                <div className="absolute -inset-1 bg-gradient-to-br from-blue-600 to-purple-600 rounded-[2.5rem] blur-xl opacity-30 animate-pulse" />
 
-                <Card className="relative bg-white/70 dark:bg-[#121215]/90 backdrop-blur-2xl border border-white/50 dark:border-indigo-500/20 shadow-2xl rounded-[2.5rem] p-6 overflow-hidden">
+                {/* Mockup Card - Added hover transition for shadow/border glow */}
+                <Card className="relative bg-white/70 dark:bg-[#121215]/90 backdrop-blur-2xl border border-white/50 dark:border-white/10 shadow-2xl rounded-[2.5rem] p-6 overflow-hidden transition-all duration-500 group-hover:shadow-blue-500/20 dark:group-hover:shadow-blue-900/30 dark:group-hover:border-blue-500/30">
                   <div className="flex flex-col gap-4 relative z-10">
                     <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/5">
                       <div>
@@ -145,14 +145,17 @@ export function Landing() {
                           7-Day Python Bootcamp
                         </Typography>
                       </div>
-                      <Chip value="23% Done" className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-full border-0 shadow-lg shadow-blue-500/20" />
+                      <Chip value="23% Done" className="bg-blue-600 text-white rounded-full border-0" />
                     </div>
 
-                    <div className="relative rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden aspect-video group cursor-pointer mt-2 border border-slate-700/50 shadow-inner">
-                      <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500 via-transparent to-transparent" />
+                    {/* Video Thumbnail - Clean by default */}
+                    <div className="relative rounded-2xl bg-slate-800 overflow-hidden aspect-video group/video cursor-pointer mt-2 border border-slate-700/50">
+                      <div className="absolute inset-0 opacity-20 bg-gradient-to-br from-blue-500/20 to-purple-500/20 transition-opacity group-hover/video:opacity-40" />
+
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <PlayCircleIcon className="h-16 w-16 text-white group-hover:scale-110 group-hover:text-blue-400 transition-all duration-300 drop-shadow-lg" />
+                        <PlayCircleIcon className="h-16 w-16 text-white/80 transition-all duration-300 group-hover/video:scale-110 group-hover/video:text-white" />
                       </div>
+
                       <div className="absolute bottom-3 left-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
                         <Typography variant="small" className="text-white font-bold">Day 2: Lists & Tuples</Typography>
                       </div>
@@ -175,7 +178,7 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ================= FEATURES SECTION ================= */}
+      {/* ================= FEATURES SECTION (Clean Cards, Glow on Hover) ================= */}
       <section className="relative py-24 bg-white dark:bg-[#0a0a0c]">
         <div className="container mx-auto px-4">
           <motion.div
@@ -186,7 +189,7 @@ export function Landing() {
             className="text-center mb-16 md:mb-20"
           >
             <Typography variant="h2" className="mb-4 text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              A Complete <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-violet-500">Learning Ecosystem</span>
+              A Complete <span className="text-blue-600 dark:text-blue-500">Learning Ecosystem</span>
             </Typography>
             <Typography className="text-lg md:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto px-2">
               Everything you need to go from beginner to pro, housed in one beautiful dashboard.
@@ -196,56 +199,64 @@ export function Landing() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                title: "AI Code Evaluator",
-                text: "Submit your Java or Python code. Our AI instantly checks syntax, logic, and OOP principles, giving you precise hints and corrections.",
+                title: "Automated Code Analysis",
+                text: "Submit your code. Our smart engine instantly checks syntax, logic, and OOP principles, giving precise hints.",
                 icon: CodeBracketIcon,
                 color: "from-blue-500 to-cyan-500",
+                hoverBorder: "group-hover:border-blue-500/30"
               },
               {
                 title: "Curated Study Plans",
                 text: "Tell us what you want to learn. We generate a day-by-day curriculum with embedded YouTube tutorials.",
                 icon: PlayCircleIcon,
                 color: "from-red-500 to-pink-500",
+                hoverBorder: "group-hover:border-red-500/30"
               },
               {
                 title: "Deep Analytics",
-                text: "Track your accuracy, average answer speed, and completion rates with beautiful charts to visualize your mastery over time.",
+                text: "Track your accuracy, speed, and completion rates with beautiful charts to visualize mastery.",
                 icon: ChartBarIcon,
                 color: "from-purple-500 to-indigo-500",
+                hoverBorder: "group-hover:border-purple-500/30"
               },
               {
                 title: "Global Leaderboard",
-                text: "Compete with friends and other learners. Maintain your daily streak, earn XP for correct answers, and climb the ranks.",
+                text: "Compete with others. Maintain your daily streak, earn XP for correct answers, and climb the ranks.",
                 icon: TrophyIcon,
                 color: "from-amber-400 to-orange-500",
+                hoverBorder: "group-hover:border-amber-500/30"
               },
               {
                 title: "Infinite Question Bank",
                 text: "Never run out of practice. Generate unique questions on any topic at any difficulty level.",
                 icon: SparklesIcon,
                 color: "from-emerald-400 to-teal-500",
+                hoverBorder: "group-hover:border-emerald-500/30"
               },
               {
                 title: "Frictionless UI",
-                text: "Dark mode optimized, distraction-free interface built for deep work. Less time configuring, more time coding.",
+                text: "Dark mode optimized, distraction-free interface built for deep work. Less time configuring.",
                 icon: CheckCircleIcon,
                 color: "from-slate-600 to-slate-800",
+                hoverBorder: "group-hover:border-slate-500/30"
               },
-            ].map(({ title, text, icon: Icon, color }, idx) => (
+            ].map(({ title, text, icon: Icon, color, hoverBorder }, idx) => (
               <motion.div
                 key={title}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
                 variants={{
-                  hidden: { opacity: 0, scale: 0.8 },
-                  visible: { opacity: 1, scale: 1, transition: { type: "spring", bounce: 0.4, delay: idx * 0.1 } }
+                  hidden: { opacity: 0, scale: 0.9 },
+                  visible: { opacity: 1, scale: 1, transition: { type: "spring", bounce: 0.3, delay: idx * 0.1 } }
                 }}
                 className="group h-full"
               >
-                <Card className="h-full rounded-[2rem] border border-slate-200 dark:border-indigo-500/10 bg-slate-50/50 dark:bg-[#121215] hover:-translate-y-3 transition-transform duration-300 overflow-hidden shadow-none hover:shadow-2xl hover:shadow-blue-500/10 group-hover:border-blue-500/30">
+                {/* Clean card by default, colored border appears on hover */}
+                <Card className={`h-full rounded-[2rem] border border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-[#121215] hover:-translate-y-2 transition-all duration-300 overflow-hidden shadow-none hover:shadow-xl dark:hover:shadow-black/30 ${hoverBorder}`}>
                   <CardBody className="p-8">
-                    <div className={`mb-6 inline-flex p-4 rounded-2xl bg-gradient-to-br ${color} shadow-lg text-white transform group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>
+                    {/* Icon only glows on hover */}
+                    <div className={`mb-6 inline-flex p-4 rounded-2xl bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-white/70 group-hover:bg-gradient-to-br ${color} group-hover:text-white group-hover:shadow-lg transition-all duration-300`}>
                       <Icon className="h-8 w-8" />
                     </div>
                     <Typography variant="h4" className="mb-3 text-xl font-bold text-slate-900 dark:text-white">
@@ -262,9 +273,8 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ================= SUBJECTS GRID ================= */}
+      {/* ================= SUBJECTS GRID (Clean, hover for color) ================= */}
       <section className="py-24 relative overflow-hidden bg-slate-50 dark:bg-[#050505]">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="container mx-auto px-4 text-center">
           <motion.div
@@ -275,98 +285,89 @@ export function Landing() {
             className="mb-12"
           >
             <Typography variant="h2" className="text-3xl md:text-4xl font-extrabold mb-4 text-slate-900 dark:text-white">
-              Master the Most In-Demand Skills
+              Master In-Demand Skills
             </Typography>
             <Typography className="text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-              Select your path and let our Smart Learning Engine customize your difficulty.
+              Select your path. Our engine adapts to your performance.
             </Typography>
           </motion.div>
 
-          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-5xl mx-auto">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 max-w-4xl mx-auto">
             {[
-              "Java OOP", "Python Automation", "Data Structures", "Algorithms",
-              "Full-Stack Web", "Database Systems", "PL/SQL", "Probability & Stats"
+              "Java OOP", "Python Basics", "Data Structures", "Algorithms",
+              "Full-Stack Web", "Database Systems", "SQL Practice", "System Design"
             ].map((subject, i) => (
               <motion.div
                 key={subject}
-                initial={{ opacity: 0, scale: 0.5 }}
+                initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.05, type: "spring", bounce: 0.6 }}
+                transition={{ delay: i * 0.05, type: "spring", bounce: 0.5 }}
                 whileHover={{
                   scale: 1.05,
-                  y: -5,
-                  transition: { type: "spring", stiffness: 400, damping: 10 }
+                  y: -2,
+                  transition: { type: "spring", stiffness: 300 }
                 }}
                 whileTap={{ scale: 0.95 }}
-                className="cursor-pointer rounded-2xl border border-slate-200 dark:border-white/5 p-4 md:p-6 text-center text-slate-800 dark:text-slate-300 bg-white dark:bg-[#121215] shadow-sm hover:shadow-xl hover:shadow-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 transition-all duration-300"
+                // Clean default state, colored border/text on hover
+                className="cursor-pointer rounded-2xl border border-slate-200 dark:border-white/5 p-4 md:p-5 text-center text-slate-800 dark:text-slate-300 bg-white dark:bg-[#121215] shadow-sm hover:shadow-md hover:border-blue-500/30 dark:hover:border-blue-500/50 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 font-bold text-sm md:text-base"
               >
-                <span className="font-bold text-sm md:text-base">{subject}</span>
+                {subject}
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ================= FINAL CTA (FIXED LAYERING) ================= */}
+      {/* ================= FINAL CTA ================= */}
       <section className="pb-24 pt-10 relative overflow-hidden bg-slate-50 dark:bg-[#050505]">
         <div className="container mx-auto px-4">
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
-            viewport={{ once: true, amount: 0.3 }}
-            className="relative mx-auto max-w-6xl"
+            transition={{ duration: 0.6, type: "spring", bounce: 0.3 }}
+            viewport={{ once: true }}
+            className="relative mx-auto max-w-5xl"
           >
-            {/* CTA Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-[3rem] blur-2xl opacity-20 dark:opacity-40 translate-y-8" />
 
-            {/* BULLETPROOF BACKGROUND LAYERING:
-                We separate the Light Mode BG and Dark Mode BG into absolute separate divs.
-                This ensures no CSS overrides happen. 
-            */}
-            <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10">
+            <div className="relative rounded-[3rem] overflow-hidden shadow-2xl border border-slate-200 dark:border-white/10 group">
 
-              {/* LAYER 1: LIGHT MODE BACKGROUND (White) - Hidden in Dark Mode */}
+              {/* LAYER 1: LIGHT MODE BG */}
               <div className="absolute inset-0 bg-white dark:hidden z-0" />
 
-              {/* LAYER 2: DARK MODE BACKGROUND (Gradient) - Hidden in Light Mode */}
-              <div className="absolute inset-0 hidden dark:block bg-gradient-to-br from-slate-900 via-[#0a0a0c] to-black z-0" />
+              {/* LAYER 2: DARK MODE BG (Clean deep gradient) */}
+              <div className="absolute inset-0 hidden dark:block bg-gradient-to-b from-slate-900 to-black z-0" />
 
-              {/* LAYER 3: INNER GLOWS */}
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 dark:bg-blue-500/20 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none z-0" />
-              <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-[100px] -ml-40 -mb-40 pointer-events-none z-0" />
-
-              {/* CONTENT LAYER (Relative Z-10) */}
-              <div className="relative z-10 px-6 py-20 md:p-28 text-center flex flex-col items-center">
+              {/* CONTENT LAYER */}
+              <div className="relative z-10 px-6 py-16 md:p-24 text-center flex flex-col items-center">
                 <motion.div
-                  initial={{ rotate: -10, scale: 0.8 }}
-                  whileInView={{ rotate: 0, scale: 1 }}
-                  transition={{ type: "spring", bounce: 0.7, delay: 0.2 }}
+                  initial={{ scale: 0.8 }}
+                  whileInView={{ scale: 1 }}
+                  transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}
                   viewport={{ once: true }}
                   className="mb-6 p-4 rounded-full bg-slate-100 dark:bg-white/5 backdrop-blur-md border border-slate-200 dark:border-white/10 inline-block"
                 >
-                  <TrophyIcon className="h-12 w-12 text-yellow-500 dark:text-yellow-400" />
+                  <TrophyIcon className="h-10 w-10 text-yellow-500" />
                 </motion.div>
 
-                <Typography variant="h2" className="mb-6 text-4xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white drop-shadow-lg">
-                  Ready to climb the ranks?
+                <Typography variant="h2" className="mb-4 text-3xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+                  Ready to climb ranks?
                 </Typography>
 
-                <Typography className="text-slate-600 dark:text-blue-100/80 text-lg md:text-xl font-medium mb-10 max-w-2xl">
-                  Join the platform. Build your 7-day plan. Earn your first 100 XP. <br className="hidden md:block" />
-                  The ultimate AI tech-prep platform awaits.
+                <Typography className="text-slate-600 dark:text-slate-300 text-lg font-medium mb-8 max-w-lg">
+                  Build your plan. Earn XP. Master the craft. The ultimate intelligent tech-prep platform awaits.
                 </Typography>
 
+                {/* CTA BUTTON */}
                 <button
                   onClick={() => navigate("/auth/sign-up")}
-                  className="rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl shadow-blue-500/20 text-lg py-5 px-12 font-black transition-transform hover:scale-105 active:scale-95 border border-transparent dark:border-white/10 hover:dark:border-white/20"
+                  className="rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-xl shadow-blue-500/10 hover:shadow-blue-500/40 text-lg py-4 px-10 font-bold transition-all hover:scale-105 active:scale-95"
                 >
-                  Start Your Free Plan
+                  Start Free Plan
                 </button>
 
-                <Typography variant="small" className="text-slate-400 dark:text-white/40 mt-6 font-bold tracking-wide uppercase">
-                  Basic Analytics & Free Generations Included
+                <Typography variant="small" className="text-slate-400 dark:text-white/30 mt-6 font-semibold tracking-wide uppercase text-xs">
+                  No credit card required
                 </Typography>
               </div>
             </div>
