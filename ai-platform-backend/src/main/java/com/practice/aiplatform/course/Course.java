@@ -27,6 +27,9 @@ public class Course {
     @Column(nullable = false)
     private boolean isCompleted = false; // Fix: Initialize to false to satisfy DB not-null constraint
 
+    @Column(nullable = false)
+    private int progress = 0; // Fix: Initialize to 0 to satisfy DB not-null constraint
+
     @Column(columnDefinition = "TEXT")
     private String description; // Optional: Brief summary
 
