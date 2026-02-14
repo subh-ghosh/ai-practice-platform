@@ -152,11 +152,9 @@ export function DashboardNavbar() {
                   finalList.map((n) => (
                     <div
                       key={n.id}
-                      role="menuitem"
-                      tabIndex={0}
-                      className={`flex items-start gap-3 p-2 rounded-lg transition-colors outline-none cursor-default
+                      className={`flex items-start gap-3 p-2 rounded-lg transition-colors outline-none
                             ${!n.readFlag
-                          ? "bg-blue-50/50 dark:bg-blue-900/20 hover:bg-blue-100/50 dark:hover:bg-blue-900/30"
+                          ? "bg-blue-50/50 dark:bg-blue-900/20"
                           : "hover:bg-gray-50 dark:hover:bg-white/5"}
                           `}
                     >
