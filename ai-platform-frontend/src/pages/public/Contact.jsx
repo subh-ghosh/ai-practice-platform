@@ -1,12 +1,12 @@
 import React from "react";
-import { Card, CardBody, Typography, Button } from "@material-tailwind/react";
+import { Typography, Button } from "@material-tailwind/react";
 import { PhoneIcon, EnvelopeIcon, BugAntIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { motion } from "framer-motion";
 import { Footer } from "@/widgets/layout";
 
 // --- Animations ---
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
@@ -61,26 +61,14 @@ export function Contact() {
   ];
 
   return (
-    // ✨ FIX: Main Wrapper holding everything (Content + Footer)
-    <div className="relative w-full overflow-hidden flex flex-col min-h-screen">
+    <div className="relative w-full overflow-hidden bg-[#050505] min-h-screen flex flex-col font-sans selection:bg-blue-500/30 -mt-24">
 
-      {/* === Animated Background (Now covers everything) === */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900 transition-colors duration-500" />
-
-      <motion.div
-        animate={{ x: [0, 30, 0], y: [0, -30, 0], scale: [1, 1.1, 1] }}
-        transition={{ duration: 15, repeat: Infinity, repeatType: "reverse" }}
-        className="absolute top-[-10%] right-[-10%] h-[400px] w-[400px] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none"
-      />
-      <motion.div
-        animate={{ x: [0, -30, 0], y: [0, 30, 0], scale: [1, 1.2, 1] }}
-        transition={{ duration: 18, repeat: Infinity, repeatType: "reverse" }}
-        className="absolute bottom-[-10%] left-[-10%] h-[400px] w-[400px] rounded-full bg-indigo-600/20 blur-[120px] pointer-events-none"
-      />
-      <div className="absolute top-1/3 left-[28%] h-52 w-52 rounded-full bg-fuchsia-500/15 blur-[90px] pointer-events-none" />
+      {/* Background Gradients & Grid (Matches Landing/About) */}
+      <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0"></div>
+      <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Main Content Section */}
-      <section className="flex-1 w-full flex items-start md:items-center py-8">
+      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-40 pb-16 min-h-[103vh]">
         <div className="container mx-auto max-w-6xl px-4">
           <motion.div
             initial="hidden"
@@ -88,73 +76,85 @@ export function Contact() {
             variants={staggerContainer}
           >
             {/* Header */}
-            <motion.div variants={fadeInUp} className="mb-8 md:mb-10 text-center">
-              <Typography variant="h2" className="mb-3 text-gray-900 dark:text-gray-100 font-bold text-2xl md:text-4xl">
+            <motion.div variants={fadeInUp} className="mb-12 text-center">
+              <Typography variant="h2" className="mb-4 text-white font-black text-4xl md:text-6xl tracking-tight">
                 Contact & Support
               </Typography>
-              <Typography variant="lead" className="text-blue-gray-700 dark:text-gray-300 font-normal text-base md:text-xl">
-                Questions, ideas, or issues — I’d love to hear from you.
+              <Typography className="text-slate-400 font-medium text-lg md:text-xl max-w-2xl mx-auto">
+                Questions, ideas, or technical issues — I’d love to hear from you.
               </Typography>
             </motion.div>
 
-            {/* Support policy */}
+            {/* Support policy Glass Card */}
             <motion.div variants={fadeInUp}>
-              <Card className="rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl mb-6 md:mb-8">
-                <CardBody className="px-5 py-4 md:px-6 md:py-5">
-                  <Typography variant="h6" className="mb-2 text-gray-900 dark:text-gray-100 font-bold">
-                    Support policy
+              <div className="rounded-[2rem] border border-white/10 bg-[#0a0a0c]/80 backdrop-blur-2xl shadow-2xl mb-10 overflow-hidden relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="p-6 md:p-8 relative z-10">
+                  <Typography variant="h5" className="mb-4 text-white font-bold flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+                    Support Policy
                   </Typography>
-                  <ul className="list-disc pl-5 space-y-1.5 text-sm text-blue-gray-700 dark:text-gray-300">
-                    <li>Made for students who want quick, clear practice.</li>
-                    <li>We usually reply within 48 hours (Mon–Fri, IST).</li>
-                    <li>Please share what you tried, what you saw, and a screenshot if you can.</li>
+                  <ul className="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-400">
+                    <li className="flex gap-3">
+                      <span className="text-blue-500 font-bold">01</span>
+                      <span>Designed for students who want fast, intelligent practice.</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="text-blue-500 font-bold">02</span>
+                      <span>Average response time within 48 hours (Mon–Fri, IST).</span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="text-blue-500 font-bold">03</span>
+                      <span>Include logs or screenshots for complex technical issues.</span>
+                    </li>
                   </ul>
-                </CardBody>
-              </Card>
+                </div>
+              </div>
             </motion.div>
 
             {/* Cards Grid */}
             <motion.div
               variants={staggerContainer}
-              className="grid gap-4 md:gap-5 md:grid-cols-2 lg:grid-cols-4"
+              className="grid gap-5 md:grid-cols-2 lg:grid-cols-4"
             >
               {contactCards.map((item, index) => (
-                <motion.div key={index} variants={fadeInUp} whileHover={{ y: -5 }}>
-                  <Card className="h-full rounded-2xl border border-white/40 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-xl shadow-xl hover:shadow-2xl transition-all duration-300">
-                    <CardBody className="p-5 md:p-6 flex flex-col h-full">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`p-2 rounded-lg bg-${item.color}-50 dark:bg-${item.color}-900/20`}>
-                          <item.icon className={`h-5 w-5 text-${item.color}-500`} />
-                        </div>
-                        <Typography variant="h6" className="text-gray-900 dark:text-gray-100">
-                          {item.title}
-                        </Typography>
+                <motion.div key={index} variants={fadeInUp} whileHover={{ y: -8 }}>
+                  <div className="h-full rounded-[2rem] border border-white/5 bg-[#0a0a0c]/90 backdrop-blur-2xl p-6 md:p-8 flex flex-col shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/20 transition-all duration-300">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`p-3 rounded-2xl bg-${item.color === 'blue' ? 'blue' : item.color === 'red' ? 'red' : 'amber'}-500/10 border border-${item.color === 'blue' ? 'blue' : item.color === 'red' ? 'red' : 'amber'}-500/20`}>
+                        <item.icon className={`h-6 w-6 text-${item.color === 'blue' ? 'blue' : item.color === 'red' ? 'red' : 'amber'}-500`} />
                       </div>
-                      <Typography className="text-sm text-blue-gray-600 dark:text-gray-400 mb-4 flex-grow">
-                        {item.content}
+                      <Typography variant="h6" className="text-white font-bold">
+                        {item.title}
                       </Typography>
+                    </div>
 
-                      {item.href ? (
-                        <a
-                          href={item.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`inline-block text-${item.color === 'red' || item.color === 'amber' ? 'blue' : item.color}-600 dark:text-blue-400 font-medium text-sm hover:underline`}
-                        >
-                          {item.action}
-                        </a>
-                      ) : (
-                        <Button
-                          variant="text"
-                          onClick={item.onClick}
-                          className={`p-0 text-${item.color}-600 dark:text-blue-400 font-medium text-sm normal-case hover:bg-transparent justify-start`}
-                          ripple={false}
-                        >
-                          <span className="hover:underline">{item.action}</span>
-                        </Button>
-                      )}
-                    </CardBody>
-                  </Card>
+                    <Typography className="text-sm text-slate-400 mb-6 flex-grow leading-relaxed font-medium">
+                      {item.content}
+                    </Typography>
+
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-blue-400 font-bold text-sm hover:text-blue-300 transition-colors group"
+                      >
+                        {item.action}
+                        <ArrowRightIcon className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                      </a>
+                    ) : (
+                      <Button
+                        variant="text"
+                        onClick={item.onClick}
+                        className="p-0 text-blue-400 font-bold text-sm normal-case hover:bg-transparent justify-start flex items-center gap-2 group"
+                        ripple={false}
+                      >
+                        {item.action}
+                        <ArrowRightIcon className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                      </Button>
+                    )}
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
@@ -162,8 +162,10 @@ export function Contact() {
         </div>
       </section>
 
-      {/* Footer is now INSIDE the wrapper */}
-      <Footer />
+      {/* Footer stays at the bottom */}
+      <div className="relative z-20 mt-auto">
+        <Footer />
+      </div>
     </div>
   );
 }
