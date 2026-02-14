@@ -1,6 +1,5 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
-  Button,
   Typography,
   Card,
   CardBody,
@@ -18,7 +17,7 @@ import {
   PlayCircleIcon,
   FireIcon,
 } from "@heroicons/react/24/solid";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { Footer } from "@/widgets/layout"; // 👈 IMPORT FOOTER
 
 // --- Bouncy & Snappy Animation Variants ---
@@ -49,17 +48,6 @@ const floatAnimation = {
 
 export function Landing() {
   const navigate = useNavigate();
-
-  // For the Scroll Zoom effect on the CTA
-  const ctaRef = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ctaRef,
-    offset: ["start end", "end start"]
-  });
-
-  // Maps scroll progress to scale and opacity for a zoom-in effect
-  const scaleCTA = useTransform(scrollYProgress, [0, 0.5], [0.8, 1]);
-  const opacityCTA = useTransform(scrollYProgress, [0, 0.4], [0, 1]);
 
   return (
     <div className="overflow-x-hidden bg-slate-50 dark:bg-[#09090b] text-slate-900 dark:text-slate-50 transition-colors duration-500 font-sans">
@@ -112,30 +100,28 @@ export function Landing() {
               </motion.div>
 
               <motion.div variants={bounceIn}>
-                <Typography className="mb-10 text-lg md:text-xl font-medium text-slate-600 dark:text-slate-400 max-w-2xl mx-auto md:mx-0 leading-relaxed">
+                <Typography className="mb-10 text-lg md:text-xl font-medium text-slate-600 dark:text-slate-300 max-w-2xl mx-auto md:mx-0 leading-relaxed">
                   Generate unlimited coding challenges, get your syntax instantly evaluated by AI, and follow customized video study plans pulling the best content from YouTube.
                 </Typography>
               </motion.div>
 
               <motion.div variants={bounceIn} className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                <Button
-                  size="lg"
-                  className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 active:scale-95 transition-all duration-300 shadow-xl shadow-slate-900/20 dark:shadow-white/10 w-full sm:w-auto"
+                {/* FIX: Replaced MT Button with heavily controlled native button to avoid text color conflicts */}
+                <button
+                  className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full bg-slate-900 px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:scale-105 active:scale-95 dark:bg-white dark:text-slate-900 shadow-xl shadow-slate-900/20 dark:shadow-white/10 w-full sm:w-auto"
                   onClick={() => navigate("/auth/sign-up")}
                 >
-                  <span className="relative z-10 text-base font-bold">Start Coding Free</span>
-                  <ArrowLongRightIcon className="h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-0" />
-                </Button>
+                  <span className="relative z-10 transition-colors duration-300 group-hover:text-white">Start Coding Free</span>
+                  <ArrowLongRightIcon className="h-5 w-5 relative z-10 transition-all duration-300 group-hover:translate-x-1 group-hover:text-white" />
+                  <div className="absolute inset-0 -z-0 bg-gradient-to-r from-blue-600 to-violet-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                </button>
 
-                <Button
-                  variant="outlined"
-                  size="lg"
-                  className="rounded-full border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 active:scale-95 transition-all w-full sm:w-auto text-base font-bold"
+                <button
+                  className="rounded-full border-2 border-slate-300 px-8 py-4 text-base font-bold text-slate-700 transition-all hover:bg-slate-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 w-full sm:w-auto"
                   onClick={() => navigate("/auth/sign-in")}
                 >
                   View Dashboard
-                </Button>
+                </button>
               </motion.div>
             </motion.div>
 
@@ -164,13 +150,15 @@ export function Landing() {
                       <Chip value="23% Done" className="bg-blue-500 text-white rounded-full border-0" />
                     </div>
 
-                    {/* Simulated YouTube Video Block */}
-                    <div className="relative rounded-2xl bg-slate-900 overflow-hidden aspect-video group cursor-pointer mt-2">
-                      <img src="https://images.unsplash.com/photo-1526379095098-d400fd0bfce8?w=800&q=80" alt="Code" className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity" />
+                    {/* FIX: Replaced broken external image with a beautiful abstract gradient block */}
+                    <div className="relative rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 overflow-hidden aspect-video group cursor-pointer mt-2 border border-slate-700/50 shadow-inner">
+                      <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500 via-transparent to-transparent" />
+
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <PlayCircleIcon className="h-14 w-14 text-white group-hover:scale-110 transition-transform" />
+                        <PlayCircleIcon className="h-16 w-16 text-white group-hover:scale-110 group-hover:text-blue-400 transition-all duration-300 drop-shadow-lg" />
                       </div>
-                      <div className="absolute bottom-3 left-3">
+
+                      <div className="absolute bottom-3 left-3 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10">
                         <Typography variant="small" className="text-white font-bold">Day 2: Lists & Tuples</Typography>
                       </div>
                     </div>
@@ -325,13 +313,17 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ================= SCROLL ZOOM CTA SECTION ================= */}
+      {/* ================= FIX: FINAL CTA SECTION ================= */}
       <section className="pb-24 pt-10 relative overflow-hidden bg-slate-50 dark:bg-[#09090b]">
-        <div className="container mx-auto px-4" ref={ctaRef}>
-          {/* Using motion.div hooked to useTransform for the scroll zoom effect */}
+        <div className="container mx-auto px-4">
+
+          {/* FIX: Removed useScroll completely. Changed to whileInView so it reliably triggers when scrolled into view */}
           <motion.div
-            style={{ scale: scaleCTA, opacity: opacityCTA }}
-            className="relative mx-auto max-w-6xl origin-bottom"
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, type: "spring", bounce: 0.4 }}
+            viewport={{ once: true, amount: 0.3 }}
+            className="relative mx-auto max-w-6xl"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-[3rem] blur-2xl opacity-30 translate-y-8" />
 
@@ -346,6 +338,7 @@ export function Landing() {
                   initial={{ rotate: -10, scale: 0.8 }}
                   whileInView={{ rotate: 0, scale: 1 }}
                   transition={{ type: "spring", bounce: 0.7, delay: 0.2 }}
+                  viewport={{ once: true }}
                   className="mb-6 p-4 rounded-full bg-white/10 backdrop-blur-md border border-white/20 inline-block"
                 >
                   <TrophyIcon className="h-12 w-12 text-yellow-400" />
@@ -360,18 +353,13 @@ export function Landing() {
                   The ultimate AI tech-prep platform awaits.
                 </Typography>
 
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                {/* FIX: Native button applied here as well for absolute styling control */}
+                <button
+                  onClick={() => navigate("/auth/sign-up")}
+                  className="rounded-full bg-white text-blue-950 hover:bg-slate-100 shadow-xl shadow-white/10 text-lg py-5 px-12 font-black transition-transform hover:scale-105 active:scale-95"
                 >
-                  <Button
-                    onClick={() => navigate("/auth/sign-up")}
-                    size="lg"
-                    className="rounded-full bg-white text-blue-950 hover:bg-slate-100 shadow-xl shadow-white/10 text-lg py-5 px-12 border border-white/50 font-black"
-                  >
-                    Start Your Free Plan
-                  </Button>
-                </motion.div>
+                  Start Your Free Plan
+                </button>
 
                 <Typography variant="small" className="text-white/50 mt-6 font-bold tracking-wide uppercase">
                   Basic Analytics & Free Generations Included
