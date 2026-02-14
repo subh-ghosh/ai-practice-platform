@@ -20,6 +20,9 @@ public class Module {
     @Column(columnDefinition = "TEXT")
     private String content; // The lesson text/content
 
+    @Column(name = "order_index", nullable = false)
+    private int orderIndex = 0;
+
     @Column(nullable = false)
     private boolean isCompleted = false; // Match DB schema
 

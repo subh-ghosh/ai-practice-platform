@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import { BookOpenIcon, SparklesIcon, ExclamationTriangleIcon } from '@heroicons/react/24/solid';
-
-// Matching Practice.jsx pattern exactly
-const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
 
 const CourseGeneratorPage = () => {
     const [topic, setTopic] = useState('');
@@ -12,11 +9,6 @@ const CourseGeneratorPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-
-    const getAuthHeaders = () => {
-        const token = localStorage.getItem("token");
-        return { headers: { "Authorization": `Bearer ${token}` } };
-    };
 
     const handleGenerate = async (e) => {
         e.preventDefault();
@@ -31,17 +23,12 @@ const CourseGeneratorPage = () => {
 
         try {
             console.log("🚀 Sending generation request...", { topic, level });
-            console.log("📍 URL:", `${BASE_URL}/api/courses/generate`);
 
-            const response = await axios.post(
-                `${BASE_URL}/api/courses/generate`,
-                { topic, level },
-                getAuthHeaders()
-            );
+            const response = await api.post('/courses/generate', { topic, level });
 
             console.log("✅ Generation successful:", response.data);
             alert("Course Generated Successfully!");
-            navigate('/dashboard/my-courses');
+            navigate('/dashboard/home');
 
         } catch (err) {
             console.error("❌ Generation failed:", err);

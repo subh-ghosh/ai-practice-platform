@@ -74,10 +74,12 @@ public class CourseGeneratorService {
 
             JsonNode modulesNode = root.path("modules");
             if (modulesNode.isArray()) {
+                int index = 1;
                 for (JsonNode moduleNode : modulesNode) {
                     Module module = new Module();
                     module.setTitle(moduleNode.path("title").asText("New Module"));
                     module.setContent(moduleNode.path("content").asText(""));
+                    module.setOrderIndex(index++);
                     course.addModule(module);
                 }
             }

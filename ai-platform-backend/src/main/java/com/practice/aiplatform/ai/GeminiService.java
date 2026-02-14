@@ -9,8 +9,6 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-
 @Service
 public class GeminiService {
 
