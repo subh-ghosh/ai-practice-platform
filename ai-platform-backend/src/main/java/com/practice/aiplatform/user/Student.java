@@ -71,6 +71,10 @@ public class Student {
     @JsonIgnore
     private Set<Question> questions;
 
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private Set<com.practice.aiplatform.gamification.UserBadge> badges;
+
     public Student(String email, String password, String firstName, String lastName) {
         this.email = email;
         this.password = password;

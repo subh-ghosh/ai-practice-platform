@@ -30,6 +30,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeProvider.jsx";
+import BadgesSection from "../../components/gamification/BadgesSection";
 
 /* ============================ Config ============================ */
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
@@ -602,6 +603,9 @@ export function Profile() {
                 <StatCard icon={FireIcon} title="Streak" value={`${user?.streakDays || 0} Days`} color="orange" />
                 <StatCard icon={CheckCircleIcon} title="Actions" value={user?.freeActionsUsed || 0} color="green" />
               </div>
+
+              {/* Achievements Section */}
+              <BadgesSection />
 
               <div className="bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 rounded-2xl p-6 shadow-sm">
                 <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold mb-4">
