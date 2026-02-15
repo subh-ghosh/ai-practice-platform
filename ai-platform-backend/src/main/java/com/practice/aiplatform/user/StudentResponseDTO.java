@@ -14,6 +14,7 @@ public class StudentResponseDTO {
     private String email;
     private String firstName;
     private String lastName;
+    private String gender; // Added for avatar fallback
     private String subscriptionStatus;
     private String bio;
     private String headline;
@@ -33,6 +34,7 @@ public class StudentResponseDTO {
                 student.getEmail(),
                 student.getFirstName(),
                 student.getLastName(),
+                student.getGender(),
                 student.getSubscriptionStatus(),
                 student.getBio(),
                 student.getHeadline(),

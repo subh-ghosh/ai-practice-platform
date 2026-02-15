@@ -91,11 +91,9 @@ public class CourseController {
         Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found"));
 
-        // Verify ownership
-        // In a real app, you should check if the course belongs to the student
-        // For now, we'll assume it's fine if the student is authenticated
-        // ideally: if (!course.getStudent().getId().equals(student.getId())) return
-        // forbidden...
+        if (!course.getStudent().getId().equals(student.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You do not own this course"));
+        }
 
         courseRepository.delete(course);
         return ResponseEntity.ok(Map.of("message", "Course deleted successfully"));
