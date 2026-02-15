@@ -34,6 +34,15 @@ public class Student {
     @Column
     private String gender;
 
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    private String headline;
+    private String avatarUrl;
+    private String githubUrl;
+    private String linkedinUrl;
+    private String websiteUrl;
+
     // --- Payment & Usage ---
 
     @Column(nullable = false)

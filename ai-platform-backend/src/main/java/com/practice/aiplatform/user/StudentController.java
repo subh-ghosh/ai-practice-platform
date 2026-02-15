@@ -9,7 +9,16 @@ import com.practice.aiplatform.notifications.NotificationService;
 import java.security.Principal;
 import java.util.List;
 
-record ProfileUpdateRequest(String firstName, String lastName, String gender) {
+record ProfileUpdateRequest(
+        String firstName,
+        String lastName,
+        String gender,
+        String bio,
+        String headline,
+        String avatarUrl,
+        String githubUrl,
+        String linkedinUrl,
+        String websiteUrl) {
 }
 
 record ChangePasswordRequest(String oldPassword, String newPassword) {
@@ -56,6 +65,19 @@ public class StudentController {
             student.setLastName(req.lastName().trim());
         if (req.gender() != null)
             student.setGender(req.gender().trim().toLowerCase());
+
+        if (req.bio() != null)
+            student.setBio(req.bio().trim());
+        if (req.headline() != null)
+            student.setHeadline(req.headline().trim());
+        if (req.avatarUrl() != null)
+            student.setAvatarUrl(req.avatarUrl().trim());
+        if (req.githubUrl() != null)
+            student.setGithubUrl(req.githubUrl().trim());
+        if (req.linkedinUrl() != null)
+            student.setLinkedinUrl(req.linkedinUrl().trim());
+        if (req.websiteUrl() != null)
+            student.setWebsiteUrl(req.websiteUrl().trim());
 
         studentRepository.save(student);
 

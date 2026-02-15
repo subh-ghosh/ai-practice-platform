@@ -15,6 +15,12 @@ public class StudentResponseDTO {
     private String firstName;
     private String lastName;
     private String subscriptionStatus;
+    private String bio;
+    private String headline;
+    private String avatarUrl;
+    private String githubUrl;
+    private String linkedinUrl;
+    private String websiteUrl;
     private int totalXp;
     private int streakDays;
     private int freeActionsUsed;
@@ -28,6 +34,12 @@ public class StudentResponseDTO {
                 student.getFirstName(),
                 student.getLastName(),
                 student.getSubscriptionStatus(),
+                student.getBio(),
+                student.getHeadline(),
+                student.getAvatarUrl(),
+                student.getGithubUrl(),
+                student.getLinkedinUrl(),
+                student.getWebsiteUrl(),
                 student.getTotalXp(),
                 student.getStreakDays(),
                 student.getFreeActionsUsed(),
