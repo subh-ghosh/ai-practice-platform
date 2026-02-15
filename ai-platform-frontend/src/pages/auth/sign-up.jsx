@@ -114,7 +114,7 @@ export function SignUp() {
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden bg-[#050505]">
+    <section className="relative min-h-screen flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden bg-[#050505] -mt-24 pt-32">
 
       {/* === Autofill Fix Style Block === */}
       <style>{`
