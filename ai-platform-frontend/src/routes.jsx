@@ -41,16 +41,22 @@ export const routes = [
         element: <Home />,
       },
       {
+        icon: <AcademicCapIcon {...icon} />,
+        name: "Study Plan Builder",
+        path: "/study-plan-builder",
+        element: <StudyPlanBuilderPage />,
+      },
+      {
         icon: <PencilIcon {...icon} />,
         name: "Practice",
         path: "/practice",
         element: <Practice />,
       },
       {
-        icon: <AcademicCapIcon {...icon} />,
-        name: "Study Plan Builder",
-        path: "/study-plan-builder",
-        element: <StudyPlanBuilderPage />,
+        icon: <TrophyIcon {...icon} />,
+        name: "Leaderboard",
+        path: "/leaderboard",
+        element: <Leaderboard />,
       },
     ],
   },
@@ -77,12 +83,6 @@ export const routes = [
     layout: "dashboard",
     title: "Upgrade",
     pages: [
-      {
-        icon: <TrophyIcon {...icon} />,
-        name: "Leaderboard",
-        path: "/leaderboard",
-        element: <Leaderboard />,
-      },
       {
         icon: <CreditCardIcon {...icon} />,
         name: "Pricing",
