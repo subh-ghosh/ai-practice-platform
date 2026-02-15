@@ -3,28 +3,19 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 const ThemeCtx = createContext(undefined);
 
 export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState(() => {
-    try {
-      const saved = localStorage.getItem("theme");
-      if (saved === "dark" || saved === "light") return saved;
-      if (typeof window !== "undefined" && window.matchMedia) {
-        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-      }
-    } catch (_) {}
-    return "light";
-  });
+  // Force dark mode
+  const [theme] = useState("dark");
 
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
-    try { localStorage.setItem("theme", theme); } catch (_) {}
-  }, [theme]);
+    root.classList.add("dark");
+    localStorage.setItem("theme", "dark");
+  }, []);
 
   const value = useMemo(() => ({
     theme,
-    setTheme: (t) => setThemeState(t === "dark" ? "dark" : "light"),
-    toggleTheme: () => setThemeState((t) => (t === "dark" ? "light" : "dark")),
+    setTheme: () => { }, // No-op
+    toggleTheme: () => { }, // No-op
   }), [theme]);
 
   return <ThemeCtx.Provider value={value}>{children}</ThemeCtx.Provider>;

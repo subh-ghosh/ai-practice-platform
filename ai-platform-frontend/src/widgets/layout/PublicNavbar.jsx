@@ -9,7 +9,7 @@ import {
 } from "@material-tailwind/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "@/context/ThemeContext";
-import { ThemeToggle } from "./ThemeToggle";
+// import { ThemeToggle } from "./ThemeToggle";
 
 export function PublicNavbar() {
   const [openNav, setOpenNav] = React.useState(false);
@@ -64,11 +64,11 @@ export function PublicNavbar() {
         <Link to="/" className="flex items-center gap-3 group">
           {/* Logo with subtle hover glow */}
           <div className="relative transition-transform duration-300 group-hover:scale-105">
-             <img
-                src={theme === 'dark' ? "/img/logo-ct.png" : "/img/logo-ct-dark.png"}
-                alt="Logo"
-                className="h-8 w-8"
-              />
+            <img
+              src={theme === 'dark' ? "/img/logo-ct.png" : "/img/logo-ct-dark.png"}
+              alt="Logo"
+              className="h-8 w-8"
+            />
           </div>
           <Typography
             variant="h6"
@@ -79,7 +79,7 @@ export function PublicNavbar() {
         </Link>
 
         <div className="hidden lg:block">{navList}</div>
-        
+
         <div className="flex items-center gap-4">
           <div className="hidden lg:flex gap-2">
             <Button
@@ -101,7 +101,7 @@ export function PublicNavbar() {
               Sign Up
             </Button>
 
-            <ThemeToggle />
+            {/* ThemeToggle removed */}
           </div>
 
           <IconButton
@@ -118,12 +118,12 @@ export function PublicNavbar() {
           </IconButton>
 
           <div className="lg:hidden">
-            <ThemeToggle />
+            {/* ThemeToggle removed */}
           </div>
 
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
       <Collapse open={openNav}>
         <div className="container mx-auto mt-3 border-t border-gray-200 dark:border-gray-800 pt-4">

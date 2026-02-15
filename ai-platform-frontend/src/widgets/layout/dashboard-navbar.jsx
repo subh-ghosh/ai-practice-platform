@@ -21,7 +21,7 @@ import {
 import { useMaterialTailwindController, setOpenSidenav } from "@/context";
 import { useAuth } from "@/context/AuthContext";
 import { useNotifications } from "@/context/NotificationContext";
-import { ThemeToggle } from "./ThemeToggle"; // Make sure this path is correct
+// import { ThemeToggle } from "./ThemeToggle";
 
 // Helper for relative time
 function timeAgo(dateString) {
@@ -111,7 +111,7 @@ export function DashboardNavbar() {
           )}
 
           {/* Theme Toggle */}
-          <ThemeToggle />
+          {/* ThemeToggle removed */}
 
           {/* Notifications Menu (Glass Style) */}
           <Menu placement="bottom-end">
