@@ -68,8 +68,8 @@ export function Contact() {
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Main Content Section */}
-      {/* ADJUSTED: pt-32 and min-h-[103vh] for a tight, high-end feel */}
-      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-32 pb-16 min-h-[103vh]">
+      {/* ADJUSTED: pt-24 (was pt-32) and keep min-h-[103vh] for hero feel */}
+      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-24 pb-12 min-h-[103vh]">
         <div className="container mx-auto px-4 max-w-6xl">
           <motion.div
             initial="hidden"
@@ -77,13 +77,13 @@ export function Contact() {
             variants={staggerContainer}
           >
             {/* Header */}
-            <motion.div variants={fadeInUp} className="mb-12 md:mb-16 text-center max-w-2xl mx-auto">
+            <motion.div variants={fadeInUp} className="mb-8 md:mb-10 text-center max-w-2xl mx-auto">
               {/* Pill Badge */}
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-[10px] font-bold mb-6 tracking-wide uppercase">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-[10px] font-bold mb-4 tracking-wide uppercase">
                 <EnvelopeIcon className="w-3 h-3" /> Get in Touch
               </div>
 
-              <h1 className="text-3xl md:text-5xl font-black text-white mb-6 tracking-tight">
+              <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
                 Contact & Support
               </h1>
               <p className="text-sm md:text-base text-slate-400 leading-relaxed font-medium">
@@ -92,16 +92,16 @@ export function Contact() {
             </motion.div>
 
             {/* Support policy */}
-            <motion.div variants={fadeInUp} className="max-w-3xl mx-auto mb-12">
+            <motion.div variants={fadeInUp} className="max-w-3xl mx-auto mb-8">
               <Card className="rounded-[2rem] border border-white/5 bg-[#0a0a0c]/80 backdrop-blur-2xl shadow-2xl overflow-hidden">
-                <CardBody className="p-8 md:p-10 text-center">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
-                    <LightBulbIcon className="w-6 h-6 text-blue-400" />
+                <CardBody className="p-6 md:p-8 text-center">
+                  <div className="mx-auto w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center mb-3">
+                    <LightBulbIcon className="w-5 h-5 text-blue-400" />
                   </div>
-                  <Typography variant="h5" className="mb-3 text-white font-bold">
+                  <Typography variant="h5" className="mb-2 text-white font-bold">
                     Support Policy
                   </Typography>
-                  <div className="space-y-2 text-sm text-slate-400 font-medium">
+                  <div className="space-y-1 text-sm text-slate-400 font-medium">
                     <p>Made for students who want quick, clear practice.</p>
                     <p>We usually reply within 48 hours (Mon–Fri, IST).</p>
                     <p>Please share what you tried, what you saw, and a screenshot if you can.</p>
@@ -113,19 +113,19 @@ export function Contact() {
             {/* Cards Grid */}
             <motion.div
               variants={staggerContainer}
-              className="grid gap-5 md:grid-cols-2 lg:grid-cols-4"
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
             >
               {contactCards.map((item, index) => (
                 <motion.div key={index} variants={fadeInUp} whileHover={{ y: -5 }}>
                   <Card className="h-full rounded-[2rem] border border-white/5 bg-[#0a0a0c]/60 backdrop-blur-xl hover:bg-[#0a0a0c]/80 transition-all duration-300">
-                    <CardBody className="p-6 flex flex-col h-full items-center text-center">
-                      <div className={`mb-4 p-3 rounded-2xl bg-${item.color}-500/10 border border-${item.color}-500/20`}>
-                        <item.icon className={`h-6 w-6 text-${item.color}-400`} />
+                    <CardBody className="p-5 flex flex-col h-full items-center text-center">
+                      <div className={`mb-3 p-2.5 rounded-2xl bg-${item.color}-500/10 border border-${item.color}-500/20`}>
+                        <item.icon className={`h-5 w-5 text-${item.color}-400`} />
                       </div>
-                      <Typography variant="h6" className="text-white mb-2 font-bold">
+                      <Typography variant="h6" className="text-white mb-1.5 font-bold">
                         {item.title}
                       </Typography>
-                      <Typography className="text-xs text-slate-400 mb-6 flex-grow font-medium leading-relaxed">
+                      <Typography className="text-xs text-slate-400 mb-4 flex-grow font-medium leading-relaxed">
                         {item.content}
                       </Typography>
 
