@@ -25,20 +25,22 @@ public class StudentAuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final NotificationService notificationService;
-
     private final GoogleAuthService googleAuthService;
+    private final com.practice.aiplatform.security.RefreshTokenService refreshTokenService;
 
     @Autowired
     public StudentAuthController(StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
             NotificationService notificationService,
-            GoogleAuthService googleAuthService) {
+            GoogleAuthService googleAuthService,
+            com.practice.aiplatform.security.RefreshTokenService refreshTokenService) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.notificationService = notificationService;
         this.googleAuthService = googleAuthService;
+        this.refreshTokenService = refreshTokenService;
     }
 
     // --- 1. REGISTER ---
@@ -98,6 +100,13 @@ public class StudentAuthController {
                 // Generate Token
                 String token = jwtUtil.generateToken(student);
 
+                // Generate Refresh Token
+                // Delete existing refresh token first to ensure rotation/single active token
+                // policy
+                refreshTokenService.deleteByUserId(student.getId());
+                com.practice.aiplatform.security.RefreshToken refreshToken = refreshTokenService
+                        .createRefreshToken(student.getId());
+
                 // Notify
                 try {
                     notificationService.notify(student.getId(), "LOGIN", "New login detected.");
@@ -116,10 +125,12 @@ public class StudentAuthController {
                         student.getSubscriptionStatus(),
                         student.getFreeActionsUsed(),
                         student.getTotalXp(),
-                        student.getStreakDays());
+                        student.getStreakDays(),
+                        refreshToken.getToken());
 
                 Map<String, Object> response = new HashMap<>();
                 response.put("token", token);
+                response.put("refreshToken", refreshToken.getToken());
                 response.put("student", dto);
                 response.put("message", "Login successful");
 
@@ -180,6 +191,11 @@ public class StudentAuthController {
 
             String jwt = jwtUtil.generateToken(student);
 
+            // Refresh Token
+            refreshTokenService.deleteByUserId(student.getId());
+            com.practice.aiplatform.security.RefreshToken refreshToken = refreshTokenService
+                    .createRefreshToken(student.getId());
+
             // Return DTO instead of raw entity
             StudentDto dto = new StudentDto(
                     student.getId(),
@@ -191,11 +207,13 @@ public class StudentAuthController {
                     student.getSubscriptionStatus(),
                     student.getFreeActionsUsed(),
                     student.getTotalXp(),
-                    student.getStreakDays());
+                    student.getStreakDays(),
+                    refreshToken.getToken());
 
             Map<String, Object> response = new HashMap<>();
             response.put("status", "LOGIN_SUCCESS");
             response.put("token", jwt);
+            response.put("refreshToken", refreshToken.getToken());
             response.put("student", dto);
 
             return ResponseEntity.ok(response);
@@ -204,6 +222,22 @@ public class StudentAuthController {
             e.printStackTrace();
             return ResponseEntity.status(500).body("Google Auth Failed");
         }
+    }
+
+    // --- 4. REFRESH TOKEN ---
+    @PostMapping("/refresh-token")
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
+        String requestRefreshToken = request.refreshToken;
+
+        return refreshTokenService.findByToken(requestRefreshToken)
+                .map(refreshTokenService::verifyExpiration)
+                .map(com.practice.aiplatform.security.RefreshToken::getStudent)
+                .map(student -> {
+                    String token = jwtUtil.generateToken(student);
+                    return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
+                })
+                .orElseThrow(() -> new com.practice.aiplatform.security.TokenRefreshException(requestRefreshToken,
+                        "Refresh token is not in database!"));
     }
 
     // --- INNER CLASSES (DTOs) ---
@@ -218,5 +252,20 @@ public class StudentAuthController {
     static class LoginRequest {
         public String email;
         public String password;
+    }
+
+    static class RefreshTokenRequest {
+        public String refreshToken;
+    }
+
+    static class TokenRefreshResponse {
+        public String accessToken;
+        public String refreshToken;
+        public String tokenType = "Bearer";
+
+        public TokenRefreshResponse(String accessToken, String refreshToken) {
+            this.accessToken = accessToken;
+            this.refreshToken = refreshToken;
+        }
     }
 }

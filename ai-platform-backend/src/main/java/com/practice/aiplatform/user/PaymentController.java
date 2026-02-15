@@ -119,7 +119,8 @@ public class PaymentController {
                         savedStudent.getSubscriptionStatus(),
                         savedStudent.getFreeActionsUsed(),
                         savedStudent.getTotalXp(),
-                        savedStudent.getStreakDays());
+                        savedStudent.getStreakDays(),
+                        null);
 
                 return ResponseEntity.ok(updatedDto); // 👈 --- RETURN THE NEW DTO
             } else {

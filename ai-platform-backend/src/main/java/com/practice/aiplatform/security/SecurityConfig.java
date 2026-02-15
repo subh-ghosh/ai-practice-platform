@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll() // ALLOW
                                                                                                          // PREFLIGHT
                         .requestMatchers("/api/students/login", "/api/students/register", "/api/students/oauth/**",
-                                "/api/payments/webhook", "/api/students/verify-email/**")
+                                "/api/payments/webhook", "/api/students/verify-email/**", "/api/students/refresh-token")
                         .permitAll()
                         .requestMatchers("/api/students/oauth/google").permitAll()
 
