@@ -33,22 +33,18 @@ public class StudentController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<?> getProfile(
-            Principal principal,
-            @RequestHeader(value = "Authorization", required = false) String auth) {
+    public ResponseEntity<?> getProfile(Principal principal) {
         if (principal == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
-        String token = extractBearer(auth);
-        return ResponseEntity.ok(toDto(student, token));
+        return ResponseEntity.ok(StudentResponseDTO.fromEntity(student));
     }
 
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(
             @RequestBody ProfileUpdateRequest req,
-            Principal principal,
-            @RequestHeader(value = "Authorization", required = false) String auth) {
+            Principal principal) {
         if (principal == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         Student student = studentRepository.findByEmail(principal.getName())
@@ -66,8 +62,7 @@ public class StudentController {
         // notify on profile update
         notificationService.notify(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
 
-        String token = extractBearer(auth);
-        return ResponseEntity.ok(toDto(student, token));
+        return ResponseEntity.ok(StudentResponseDTO.fromEntity(student));
     }
 
     @PutMapping("/password")
@@ -85,11 +80,6 @@ public class StudentController {
         }
 
         boolean matches = passwordEncoder.matches(req.oldPassword(), student.getPassword());
-        // legacy plaintext migration
-        if (!matches && req.oldPassword().equals(student.getPassword())) {
-            matches = true;
-        }
-
         if (!matches) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Old password is incorrect.");
         }
@@ -111,31 +101,11 @@ public class StudentController {
 
     // --- Leaderboard Endpoint ---
     @GetMapping("/leaderboard")
-    public ResponseEntity<List<StudentDto>> getLeaderboard() {
+    public ResponseEntity<List<StudentResponseDTO>> getLeaderboard() {
         List<Student> topStudents = studentRepository.findTop10ByOrderByTotalXpDesc();
-        List<StudentDto> dtos = topStudents.stream()
-                .map(s -> toDto(s, null))
+        List<StudentResponseDTO> dtos = topStudents.stream()
+                .map(StudentResponseDTO::fromEntity)
                 .toList();
         return ResponseEntity.ok(dtos);
-    }
-
-    private static StudentDto toDto(Student s, String token) {
-        return new StudentDto(
-                s.getId(),
-                s.getEmail(),
-                s.getFirstName(),
-                s.getLastName(),
-                s.getGender(),
-                token,
-                s.getSubscriptionStatus(),
-                s.getFreeActionsUsed(),
-                s.getTotalXp(),
-                s.getStreakDays());
-    }
-
-    private static String extractBearer(String header) {
-        if (header != null && header.startsWith("Bearer "))
-            return header.substring(7);
-        return null;
     }
 }

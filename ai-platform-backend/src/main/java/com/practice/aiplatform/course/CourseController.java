@@ -70,13 +70,16 @@ public class CourseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Course>> getMyCourses(Principal principal) {
+    public ResponseEntity<List<CourseResponseDTO>> getMyCourses(Principal principal) {
         String email = principal.getName();
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         List<Course> courses = courseRepository.findByStudentId(student.getId());
-        return ResponseEntity.ok(courses);
+        List<CourseResponseDTO> dtos = courses.stream()
+                .map(CourseResponseDTO::fromEntity)
+                .toList();
+        return ResponseEntity.ok(dtos);
     }
 
     @DeleteMapping("/{id}")

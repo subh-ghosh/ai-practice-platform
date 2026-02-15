@@ -20,9 +20,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
+    private final RateLimitFilter rateLimitFilter;
 
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter, RateLimitFilter rateLimitFilter) {
         this.jwtRequestFilter = jwtRequestFilter;
+        this.rateLimitFilter = rateLimitFilter;
     }
 
     @Bean
@@ -68,7 +70,9 @@ public class SecurityConfig {
                 // 4. No Sessions
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 5. Add JWT Filter
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                // 6. Add Rate Limit Filter (After JWT so we have Principal)
+                .addFilterAfter(rateLimitFilter, JwtRequestFilter.class);
 
         return http.build();
     }
