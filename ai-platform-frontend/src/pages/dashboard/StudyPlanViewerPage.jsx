@@ -219,8 +219,12 @@ const StudyPlanViewerPage = () => {
                                 size="sm"
                                 variant="ghost"
                                 value={plan.difficulty}
-                                color={plan.difficulty === 'Advanced' ? 'red' : plan.difficulty === 'Intermediate' ? 'amber' : 'green'}
-                                className="rounded-full"
+                                className={`rounded-full ${plan.difficulty === 'Advanced'
+                                        ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+                                        : plan.difficulty === 'Intermediate'
+                                            ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
+                                            : 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                                    }`}
                             />
                             <Chip size="sm" variant="ghost" value={`${plan.items?.length || 0} items`} icon={<BookOpenIcon />} className="rounded-full dark:text-gray-300" />
                         </div>
