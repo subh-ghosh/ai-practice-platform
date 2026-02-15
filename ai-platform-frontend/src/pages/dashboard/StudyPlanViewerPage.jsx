@@ -198,7 +198,7 @@ const StudyPlanViewerPage = () => {
                 <Button
                     variant="text"
                     color="blue-gray"
-                    className="flex items-center gap-2 pl-0 hover:bg-transparent mb-2"
+                    className="flex items-center gap-2 pl-0 hover:bg-transparent mb-2 dark:text-gray-300 dark:hover:text-white"
                     onClick={() => navigate('/dashboard/study-plan-builder')}
                 >
                     <ArrowLeftIcon className="h-4 w-4" />
@@ -207,14 +207,14 @@ const StudyPlanViewerPage = () => {
 
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div>
-                        <Typography variant="h4" color="blue-gray" className="mb-1 flex items-center gap-2">
+                        <Typography variant="h4" color="blue-gray" className="mb-1 flex items-center gap-2 dark:text-white">
                             {plan.title}
                         </Typography>
-                        <Typography variant="paragraph" className="font-normal text-blue-gray-600 max-w-2xl">
+                        <Typography variant="paragraph" className="font-normal text-blue-gray-600 dark:text-gray-400 max-w-2xl">
                             {plan.description}
                         </Typography>
                         <div className="flex flex-wrap items-center gap-3 mt-3">
-                            <Chip size="sm" variant="ghost" value={`${plan.durationDays} days`} icon={<ClockIcon />} className="rounded-full" />
+                            <Chip size="sm" variant="ghost" value={`${plan.durationDays} days`} icon={<ClockIcon />} className="rounded-full dark:text-gray-300" />
                             <Chip
                                 size="sm"
                                 variant="ghost"
@@ -222,19 +222,19 @@ const StudyPlanViewerPage = () => {
                                 color={plan.difficulty === 'Advanced' ? 'red' : plan.difficulty === 'Intermediate' ? 'amber' : 'green'}
                                 className="rounded-full"
                             />
-                            <Chip size="sm" variant="ghost" value={`${plan.items?.length || 0} items`} icon={<BookOpenIcon />} className="rounded-full" />
+                            <Chip size="sm" variant="ghost" value={`${plan.items?.length || 0} items`} icon={<BookOpenIcon />} className="rounded-full dark:text-gray-300" />
                         </div>
                     </div>
 
-                    <Card className="border border-amber-100 bg-amber-50/50 shadow-none w-fit min-w-[140px]">
+                    <Card className="border border-amber-100 bg-amber-50/50 dark:bg-amber-900/20 dark:border-amber-900/50 shadow-none w-fit min-w-[140px]">
                         <CardBody className="p-3 text-center">
-                            <Typography variant="small" className="font-bold text-amber-700 uppercase text-[10px] mb-1">
+                            <Typography variant="small" className="font-bold text-amber-700 dark:text-amber-500 uppercase text-[10px] mb-1">
                                 Total XP
                             </Typography>
-                            <div className="flex items-center justify-center gap-1 text-amber-900">
+                            <div className="flex items-center justify-center gap-1 text-amber-900 dark:text-amber-400">
                                 <TrophyIcon className="h-5 w-5 text-amber-500" />
                                 <span className="text-xl font-black">{earnedXpInPlan}</span>
-                                <span className="text-xs text-amber-700 font-medium">/ {totalXpInPlan}</span>
+                                <span className="text-xs text-amber-700 dark:text-amber-500 font-medium">/ {totalXpInPlan}</span>
                             </div>
                         </CardBody>
                     </Card>
@@ -242,17 +242,17 @@ const StudyPlanViewerPage = () => {
             </div>
 
             {/* Progress */}
-            <Card className="mb-8 border border-blue-gray-100 shadow-sm">
+            <Card className="mb-8 border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900/50 backdrop-blur-md">
                 <CardBody className="p-4">
                     <div className="flex items-center justify-between mb-2">
-                        <Typography variant="small" className="font-bold text-blue-gray-700">
+                        <Typography variant="small" className="font-bold text-blue-gray-700 dark:text-gray-300">
                             Overall Progress
                         </Typography>
                         <Typography variant="small" className="font-bold text-blue-500">
                             {plan.progress}%
                         </Typography>
                     </div>
-                    <Progress value={plan.progress} size="lg" color="blue" className="bg-blue-gray-50 h-2.5" />
+                    <Progress value={plan.progress} size="lg" color="blue" className="bg-blue-gray-50 dark:bg-gray-800 h-2.5" />
                 </CardBody>
             </Card>
 
@@ -284,13 +284,13 @@ const StudyPlanViewerPage = () => {
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white font-bold shadow-md shadow-blue-500/20">
                                 {dayNum}
                             </div>
-                            <Typography variant="h6" color="blue-gray">
+                            <Typography variant="h6" color="blue-gray" className="dark:text-white">
                                 Day {dayNum}
                             </Typography>
-                            <div className="h-px flex-grow bg-blue-gray-50"></div>
+                            <div className="h-px flex-grow bg-blue-gray-50 dark:bg-gray-800"></div>
                         </div>
 
-                        <div className="ml-5 border-l-2 border-blue-gray-50 pl-6 space-y-4">
+                        <div className="ml-5 border-l-2 border-blue-gray-50 dark:border-gray-800 pl-6 space-y-4">
                             {dayGroups[dayNum]
                                 .sort((a, b) => a.orderIndex - b.orderIndex)
                                 .map((item) => {
@@ -319,15 +319,15 @@ const StudyPlanViewerPage = () => {
             </div>
 
             {/* Quiz Dialog */}
-            <Dialog open={!!activeQuiz} handler={closeQuiz} size="lg">
-                <DialogHeader className="flex justify-between items-center border-b border-blue-gray-50">
+            <Dialog open={!!activeQuiz} handler={closeQuiz} size="lg" className="dark:bg-gray-900 border dark:border-gray-800">
+                <DialogHeader className="flex justify-between items-center border-b border-blue-gray-50 dark:border-gray-800">
                     <div className="flex items-center gap-2">
                         <SparklesIcon className="h-5 w-5 text-purple-500" />
-                        <Typography variant="h5" color="blue-gray">
+                        <Typography variant="h5" color="blue-gray" className="dark:text-white">
                             Knowledge Check
                         </Typography>
                     </div>
-                    <Button variant="text" color="blue-gray" onClick={closeQuiz} size="sm" className="!px-2">
+                    <Button variant="text" color="blue-gray" onClick={closeQuiz} size="sm" className="!px-2 dark:text-gray-400 dark:hover:text-white">
                         x
                     </Button>
                 </DialogHeader>
@@ -336,11 +336,11 @@ const StudyPlanViewerPage = () => {
                         <>
                             {activeQuiz.noQuestions ? (
                                 <div className="text-center py-8">
-                                    <BookOpenIcon className="h-16 w-16 text-blue-gray-200 mx-auto mb-4" />
-                                    <Typography variant="h6" color="blue-gray" className="mb-2">
+                                    <BookOpenIcon className="h-16 w-16 text-blue-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                                    <Typography variant="h6" color="blue-gray" className="mb-2 dark:text-white">
                                         No Quiz Available
                                     </Typography>
-                                    <Typography className="mb-6 font-normal text-blue-gray-500">
+                                    <Typography className="mb-6 font-normal text-blue-gray-500 dark:text-gray-400">
                                         This checkpoint was created before quizzes were available. You can mark it as complete manually.
                                     </Typography>
                                     <Button
@@ -364,13 +364,13 @@ const StudyPlanViewerPage = () => {
                                 </div>
                             ) : !quizResult ? (
                                 <div className="space-y-6">
-                                    <Typography variant="small" className="text-blue-gray-500 font-normal">
-                                        Answer all questions correctly to earn <span className="font-bold text-amber-600">{activeQuiz.item.xpReward} XP</span>.
+                                    <Typography variant="small" className="text-blue-gray-500 dark:text-gray-400 font-normal">
+                                        Answer all questions correctly to earn <span className="font-bold text-amber-600 dark:text-amber-500">{activeQuiz.item.xpReward} XP</span>.
                                     </Typography>
                                     {activeQuiz.questions.map((q, idx) => (
-                                        <div key={q.id} className="bg-gray-50 rounded-xl p-4 border border-blue-gray-50">
-                                            <Typography variant="h6" color="blue-gray" className="mb-3 flex gap-2">
-                                                <span className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-xs text-blue-900">
+                                        <div key={q.id} className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-blue-gray-50 dark:border-gray-700">
+                                            <Typography variant="h6" color="blue-gray" className="mb-3 flex gap-2 dark:text-white">
+                                                <span className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-xs text-blue-900 dark:bg-blue-900 dark:text-blue-100">
                                                     {idx + 1}
                                                 </span>
                                                 {q.questionText}
@@ -380,8 +380,8 @@ const StudyPlanViewerPage = () => {
                                                     <label
                                                         key={opt}
                                                         className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${quizAnswers[q.id] === opt
-                                                            ? 'border-blue-500 bg-blue-50'
-                                                            : 'border-gray-200 hover:bg-white hover:border-blue-200'
+                                                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400'
+                                                            : 'border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700 hover:border-blue-200'
                                                             }`}
                                                     >
                                                         <input
@@ -394,11 +394,11 @@ const StudyPlanViewerPage = () => {
                                                         />
                                                         <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold mr-3 ${quizAnswers[q.id] === opt
                                                             ? 'border-blue-500 bg-blue-500 text-white'
-                                                            : 'border-blue-gray-200 text-blue-gray-400'
+                                                            : 'border-blue-gray-200 dark:border-gray-600 text-blue-gray-400 dark:text-gray-400'
                                                             }`}>
                                                             {opt}
                                                         </div>
-                                                        <Typography className="text-sm font-medium text-blue-gray-700">
+                                                        <Typography className="text-sm font-medium text-blue-gray-700 dark:text-gray-300">
                                                             {q[`option${opt}`]}
                                                         </Typography>
                                                     </label>
@@ -418,7 +418,7 @@ const StudyPlanViewerPage = () => {
                                 </div>
                             ) : (
                                 <div className="text-center py-4">
-                                    <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full ${quizResult.passed ? 'bg-green-100' : 'bg-red-100'}`}>
+                                    <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full ${quizResult.passed ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
                                         {quizResult.passed ? (
                                             <TrophyIcon className="h-10 w-10 text-green-500" />
                                         ) : (
@@ -428,14 +428,14 @@ const StudyPlanViewerPage = () => {
                                     <Typography variant="h4" color={quizResult.passed ? "green" : "red"} className="mb-2">
                                         {quizResult.passed ? 'Perfect Score!' : 'Keep Trying!'}
                                     </Typography>
-                                    <Typography className="mb-6 font-normal text-blue-gray-500">
-                                        You got <span className="font-bold text-blue-gray-900">{quizResult.correctCount}/{quizResult.totalQuestions}</span> correct
+                                    <Typography className="mb-6 font-normal text-blue-gray-500 dark:text-gray-400">
+                                        You got <span className="font-bold text-blue-gray-900 dark:text-white">{quizResult.correctCount}/{quizResult.totalQuestions}</span> correct
                                     </Typography>
 
                                     {/* Question Breakdown */}
-                                    <div className="mb-6 space-y-2 text-left bg-gray-50 p-4 rounded-lg">
+                                    <div className="mb-6 space-y-2 text-left bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                                         {quizResult.results.map((r, idx) => (
-                                            <div key={r.questionId} className="flex items-start gap-2 text-sm">
+                                            <div key={r.questionId} className="flex items-start gap-2 text-sm dark:text-gray-300">
                                                 {r.isCorrect ? (
                                                     <CheckCircleIcon className="h-5 w-5 text-green-500 shrink-0" />
                                                 ) : (
@@ -450,7 +450,7 @@ const StudyPlanViewerPage = () => {
 
                                     <div className="flex gap-2 justify-center">
                                         {!quizResult.passed && (
-                                            <Button onClick={() => { setQuizResult(null); setQuizAnswers({}); }} variant="outlined" color="blue-gray">
+                                            <Button onClick={() => { setQuizResult(null); setQuizAnswers({}); }} variant="outlined" color="blue-gray" className="dark:text-white dark:border-gray-600">
                                                 Try Again
                                             </Button>
                                         )}
@@ -470,11 +470,11 @@ const StudyPlanViewerPage = () => {
 
 // --- Video Card Component ---
 const VideoCard = ({ item, locked, onPlay, onComplete }) => (
-    <Card className={`border shadow-sm transition-all ${locked ? 'opacity-50 grayscale border-gray-200' : 'hover:shadow-md border-blue-gray-100'}`}>
+    <Card className={`border shadow-sm transition-all bg-white dark:bg-gray-900/50 backdrop-blur-md ${locked ? 'opacity-50 grayscale border-gray-200 dark:border-gray-800' : 'hover:shadow-md border-blue-gray-100 dark:border-gray-800'}`}>
         <CardBody className="p-0 flex flex-col sm:flex-row">
             {/* Thumbnail */}
             <div className="relative sm:w-48 shrink-0 cursor-pointer group" onClick={onPlay}>
-                {locked && <div className="absolute inset-0 z-10 bg-white/50" />}
+                {locked && <div className="absolute inset-0 z-10 bg-white/50 dark:bg-black/50" />}
                 <img
                     src={item.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
                     alt={item.title}
@@ -496,19 +496,19 @@ const VideoCard = ({ item, locked, onPlay, onComplete }) => (
             <div className="flex flex-col justify-between p-4 grow">
                 <div>
                     <div className="flex items-start justify-between gap-2">
-                        <Typography variant="h6" color="blue-gray" className="text-sm leading-tight line-clamp-2">
+                        <Typography variant="h6" color="blue-gray" className="text-sm leading-tight line-clamp-2 dark:text-white">
                             {item.title}
                         </Typography>
                         {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500 shrink-0" />}
                     </div>
-                    <Typography variant="small" className="mt-1 font-normal text-blue-gray-500">
+                    <Typography variant="small" className="mt-1 font-normal text-blue-gray-500 dark:text-gray-400">
                         {item.channelName}
                     </Typography>
                 </div>
 
                 {!locked && (
                     <div className="mt-3 flex items-center gap-2">
-                        <Button size="sm" variant="outlined" className="flex items-center gap-1 py-1 px-2 border-red-100 text-red-500 hover:border-red-500" onClick={onPlay}>
+                        <Button size="sm" variant="outlined" className="flex items-center gap-1 py-1 px-2 border-red-100 text-red-500 hover:border-red-500 dark:border-red-900/50 dark:text-red-400" onClick={onPlay}>
                             <PlayIcon className="h-3 w-3" /> Watch
                         </Button>
                         {!item.completed && (
@@ -528,20 +528,20 @@ const VideoCard = ({ item, locked, onPlay, onComplete }) => (
 
 // --- Practice Card Component ---
 const PracticeCard = ({ item, locked, onStartQuiz }) => (
-    <Card className={`border shadow-sm transition-all ${locked ? 'opacity-50 grayscale border-gray-200' : 'hover:shadow-md border-purple-100 bg-purple-50/10'}`}>
+    <Card className={`border shadow-sm transition-all bg-white dark:bg-gray-900/50 backdrop-blur-md ${locked ? 'opacity-50 grayscale border-gray-200 dark:border-gray-800' : 'hover:shadow-md border-purple-100 dark:border-purple-900/30 bg-purple-50/10 dark:bg-purple-900/10'}`}>
         <CardBody className="p-4">
             <div className="flex items-start gap-4">
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${locked ? 'bg-gray-100 text-gray-400' : item.completed ? 'bg-green-100 text-green-500' : 'bg-purple-100 text-purple-500'}`}>
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${locked ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600' : item.completed ? 'bg-green-100 dark:bg-green-900/20 text-green-500' : 'bg-purple-100 dark:bg-purple-900/20 text-purple-500'}`}>
                     {locked ? <LockClosedIcon className="h-5 w-5" /> : item.completed ? <CheckCircleIcon className="h-5 w-5" /> : <SparklesIcon className="h-5 w-5" />}
                 </div>
 
                 <div className="grow">
                     <div className="flex items-start justify-between">
                         <div>
-                            <Typography variant="h6" color="blue-gray" className="text-sm">
+                            <Typography variant="h6" color="blue-gray" className="text-sm dark:text-white">
                                 {item.title}
                             </Typography>
-                            <Typography variant="small" className="font-normal text-blue-gray-500">
+                            <Typography variant="small" className="font-normal text-blue-gray-500 dark:text-gray-400">
                                 {item.practiceSubject} • {item.quizQuestions?.length || 0} Questions
                             </Typography>
                         </div>
@@ -559,7 +559,7 @@ const PracticeCard = ({ item, locked, onStartQuiz }) => (
                         </div>
                     )}
                     {locked && (
-                        <Typography variant="small" className="mt-2 flex items-center gap-1 font-normal text-gray-400">
+                        <Typography variant="small" className="mt-2 flex items-center gap-1 font-normal text-gray-400 dark:text-gray-600">
                             <LockClosedIcon className="h-3 w-3" /> Locked
                         </Typography>
                     )}

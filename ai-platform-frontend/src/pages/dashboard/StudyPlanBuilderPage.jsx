@@ -89,27 +89,27 @@ const StudyPlanBuilderPage = () => {
     return (
         <div className="mt-12">
             <div className="mb-6 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <Typography variant="h6" color="blue-gray">
+                <Typography variant="h6" color="blue-gray" className="dark:text-white">
                     AI Study Plan Builder
                 </Typography>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-8">
                 {/* Builder Form */}
-                <Card className="border border-blue-gray-100 shadow-sm h-fit">
+                <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900/50 backdrop-blur-md">
                     <CardBody className="p-6">
                         <div className="mb-6">
-                            <Typography variant="h5" color="blue-gray" className="mb-1">
+                            <Typography variant="h5" color="blue-gray" className="mb-1 dark:text-white">
                                 New Study Plan
                             </Typography>
-                            <Typography variant="small" className="font-normal text-blue-gray-600">
+                            <Typography variant="small" className="font-normal text-blue-gray-600 dark:text-gray-400">
                                 Enter a topic and we'll curate a schedule for you.
                             </Typography>
                         </div>
 
                         <form onSubmit={handleGenerate} className="flex flex-col gap-6">
                             <div>
-                                <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+                                <Typography variant="small" color="blue-gray" className="mb-2 font-medium dark:text-gray-300">
                                     What do you want to learn?
                                 </Typography>
                                 <Input
@@ -117,7 +117,7 @@ const StudyPlanBuilderPage = () => {
                                     placeholder="e.g. React Patterns, Machine Learning"
                                     value={topic}
                                     onChange={(e) => setTopic(e.target.value)}
-                                    className=" !border-t-blue-gray-200 focus:!border-t-gray-900"
+                                    className="!border-t-blue-gray-200 focus:!border-t-gray-900 dark:!border-t-gray-700 dark:focus:!border-t-white dark:text-white"
                                     labelProps={{
                                         className: "before:content-none after:content-none",
                                     }}
@@ -127,18 +127,21 @@ const StudyPlanBuilderPage = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+                                    <Typography variant="small" color="blue-gray" className="mb-2 font-medium dark:text-gray-300">
                                         Difficulty
                                     </Typography>
                                     <Select
                                         size="lg"
                                         value={difficulty}
                                         onChange={(val) => setDifficulty(val)}
-                                        className="border-blue-gray-200"
+                                        className="border-blue-gray-200 dark:border-gray-700 dark:text-white"
                                         labelProps={{
                                             className: "before:content-none after:content-none",
                                         }}
                                         disabled={loading}
+                                        menuProps={{
+                                            className: "dark:bg-gray-900 dark:border-gray-800 dark:text-white",
+                                        }}
                                     >
                                         <Option value="Beginner">Beginner</Option>
                                         <Option value="Intermediate">Intermediate</Option>
@@ -146,18 +149,21 @@ const StudyPlanBuilderPage = () => {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 font-medium">
+                                    <Typography variant="small" color="blue-gray" className="mb-2 font-medium dark:text-gray-300">
                                         Duration
                                     </Typography>
                                     <Select
                                         size="lg"
                                         value={String(durationDays)}
                                         onChange={(val) => setDurationDays(Number(val))}
-                                        className="border-blue-gray-200"
+                                        className="border-blue-gray-200 dark:border-gray-700 dark:text-white"
                                         labelProps={{
                                             className: "before:content-none after:content-none",
                                         }}
                                         disabled={loading}
+                                        menuProps={{
+                                            className: "dark:bg-gray-900 dark:border-gray-800 dark:text-white",
+                                        }}
                                     >
                                         {durationOptions.map((opt) => (
                                             <Option key={opt.value} value={String(opt.value)}>
@@ -178,7 +184,7 @@ const StudyPlanBuilderPage = () => {
                                 type="submit"
                                 disabled={loading}
                                 fullWidth
-                                className="flex items-center justify-center gap-2"
+                                className="flex items-center justify-center gap-2 dark:bg-white dark:text-black"
                             >
                                 {loading ? <Spinner className="h-4 w-4" /> : <SparklesIcon className="h-4 w-4" />}
                                 Generate Plan
@@ -187,39 +193,39 @@ const StudyPlanBuilderPage = () => {
                     </CardBody>
                 </Card>
 
-                {/* History Column */}
+                {/* History Section - Moved to Bottom */}
                 <div className="space-y-6">
                     <div>
-                        <Typography variant="h5" color="blue-gray" className="mb-1">
+                        <Typography variant="h5" color="blue-gray" className="mb-1 dark:text-white">
                             Your Plans
                         </Typography>
-                        <Typography variant="small" className="font-normal text-blue-gray-600">
+                        <Typography variant="small" className="font-normal text-blue-gray-600 dark:text-gray-400">
                             Continue where you left off
                         </Typography>
                     </div>
 
                     {historyLoading ? (
                         <div className="flex justify-center py-12">
-                            <Spinner className="h-8 w-8 text-blue-gray-900" />
+                            <Spinner className="h-8 w-8 text-blue-gray-900 dark:text-white" />
                         </div>
                     ) : history.length === 0 ? (
-                        <Card className="border border-blue-gray-100 shadow-sm">
+                        <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900/50 backdrop-blur-md">
                             <CardBody className="text-center py-12">
-                                <BookOpenIcon className="h-12 w-12 text-blue-gray-200 mx-auto mb-4" />
-                                <Typography color="blue-gray" variant="h6">
+                                <BookOpenIcon className="h-12 w-12 text-blue-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                                <Typography color="blue-gray" variant="h6" className="dark:text-white">
                                     No plans yet
                                 </Typography>
-                                <Typography color="gray" className="font-normal mt-1">
+                                <Typography color="gray" className="font-normal mt-1 dark:text-gray-400">
                                     Create your first study plan to get started!
                                 </Typography>
                             </CardBody>
                         </Card>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {history.map((plan) => (
                                 <Card
                                     key={plan.id}
-                                    className="cursor-pointer border border-blue-gray-100 hover:shadow-md transition-shadow group"
+                                    className="cursor-pointer border border-blue-gray-100 dark:border-gray-800 hover:shadow-md transition-all group bg-white dark:bg-gray-900/50 backdrop-blur-md"
                                     onClick={() => navigate(`/dashboard/study-plan/${plan.id}`)}
                                 >
                                     <CardBody className="p-5">
@@ -242,24 +248,24 @@ const StudyPlanBuilderPage = () => {
                                             )}
                                         </div>
 
-                                        <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors">
+                                        <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white">
                                             {plan.title}
                                         </Typography>
 
-                                        <Typography className="font-normal text-gray-600 line-clamp-2 text-sm mb-4">
+                                        <Typography className="font-normal text-gray-600 dark:text-gray-400 line-clamp-2 text-sm mb-4">
                                             {plan.description}
                                         </Typography>
 
-                                        <div className="pt-4 border-t border-blue-gray-50">
+                                        <div className="pt-4 border-t border-blue-gray-50 dark:border-gray-800">
                                             <div className="flex items-center justify-between mb-2">
-                                                <Typography variant="small" className="font-medium text-blue-gray-600">
+                                                <Typography variant="small" className="font-medium text-blue-gray-600 dark:text-gray-300">
                                                     {plan.progress}% Complete
                                                 </Typography>
-                                                <Typography variant="small" className="text-gray-500">
+                                                <Typography variant="small" className="text-gray-500 dark:text-gray-500">
                                                     {formatDate(plan.createdAt)}
                                                 </Typography>
                                             </div>
-                                            <div className="w-full bg-blue-gray-50 rounded-full h-1.5">
+                                            <div className="w-full bg-blue-gray-50 dark:bg-gray-800 rounded-full h-1.5">
                                                 <div
                                                     className="h-1.5 rounded-full bg-blue-500 transition-all duration-500"
                                                     style={{ width: `${plan.progress}%` }}
