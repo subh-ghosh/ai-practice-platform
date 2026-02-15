@@ -27,6 +27,7 @@ import remarkGfm from "remark-gfm";
 import { useTheme } from "@/context/ThemeContext.jsx";
 import { usePaywall } from "@/context/PaywallContext.jsx";
 import { InformationCircleIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import toast from "react-hot-toast";
 
 /* =========================
    Constants & Helpers
@@ -178,9 +179,9 @@ export function Practice() {
     setError("");
     setFeedback(null);
     setHint(null);
-    setCurrentAnswer(""); 
+    setCurrentAnswer("");
     setQuestion(null);
-    
+
     try {
       const response = await axios.post(`${BASE_URL}/api/ai/generate-question`, { subject, topic, difficulty }, getAuthHeaders());
       setQuestion(response.data);
@@ -204,6 +205,14 @@ export function Practice() {
       const config = { ...getAuthHeaders(), timeout: 90000 };
       const res = await apiCall(config);
       setFeedback(res.data);
+
+      // Toast Notification
+      if (res.data.evaluationStatus === "CORRECT") {
+        toast.success("Correct! +10 XP", { icon: "🎉" });
+      } else if (res.data.evaluationStatus === "CLOSE") {
+        toast("Close! +5 XP", { icon: "🤏" });
+      }
+
       await fetchHistory();
       setIsPolling(false);
       if (user?.subscriptionStatus === "FREE") decrementFreeActions();
@@ -223,10 +232,19 @@ export function Practice() {
           feedback: foundItem.feedback,
           hint: foundItem.hint
         });
+
+        // Toast Notification
+        if (foundItem.evaluationStatus === "CORRECT") {
+          toast.success("Correct! +10 XP", { icon: "🎉" });
+        } else if (foundItem.evaluationStatus === "CLOSE") {
+          toast("Close! +5 XP", { icon: "🤏" });
+        }
+
         await fetchHistory();
         if (user?.subscriptionStatus === "FREE") decrementFreeActions();
       } else {
         setError("We couldn't verify your result due to a connection timeout. Please check your history shortly.");
+        toast.error("Verification timeout");
       }
     } finally {
       setSubmitting(false);
@@ -237,7 +255,7 @@ export function Practice() {
   const handleSubmitAnswer = (e) => {
     e.preventDefault();
     if (!question || !currentAnswer) return;
-    handleSubmissionLogic((config) => 
+    handleSubmissionLogic((config) =>
       axios.post(`${BASE_URL}/api/practice/submit`, { questionId: question.id, answerText: currentAnswer }, config)
     );
   };
@@ -246,7 +264,7 @@ export function Practice() {
     setOpenPopover(false);
     if (!question) return;
     setLoadingAnswer(true);
-    handleSubmissionLogic((config) => 
+    handleSubmissionLogic((config) =>
       axios.post(`${BASE_URL}/api/practice/get-answer`, { questionId: question.id }, config)
     );
   };
@@ -281,7 +299,7 @@ export function Practice() {
 
   return (
     <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
-      
+
       {/* Styles & Animations */}
       <style>{`
         /* Custom Scrollbar */
@@ -313,7 +331,7 @@ export function Practice() {
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
 
       <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto">
-        
+
         {/* --- Generator Card (Top) --- 
             Z-INDEX FIX: z-20 keeps this card (and the dropdowns inside it) above the history card below.
             OVERFLOW FIX: overflow-visible allows the dropdown to hang outside the card.
@@ -321,13 +339,13 @@ export function Practice() {
         <Card className="overflow-visible relative z-20 border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up">
           <CardHeader floated={false} shadow={false} className="rounded-t-xl bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 m-0">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/20 rounded-lg shadow-inner">
-                    <SparklesIcon className="h-6 w-6 text-white animate-pulse" />
-                </div>
-                <div>
-                    <Typography variant="h5" color="white" className="font-bold tracking-tight">AI Question Generator</Typography>
-                    <Typography variant="small" color="white" className="opacity-90 font-normal">Select a topic and let AI craft a question for you.</Typography>
-                </div>
+              <div className="p-2 bg-white/20 rounded-lg shadow-inner">
+                <SparklesIcon className="h-6 w-6 text-white animate-pulse" />
+              </div>
+              <div>
+                <Typography variant="h5" color="white" className="font-bold tracking-tight">AI Question Generator</Typography>
+                <Typography variant="small" color="white" className="opacity-90 font-normal">Select a topic and let AI craft a question for you.</Typography>
+              </div>
             </div>
           </CardHeader>
 
@@ -380,9 +398,9 @@ export function Practice() {
                   }}
                 >
                   {["School", "High School", "Graduation", "Post Graduation", "Research"].map(lvl => (
-                    <Option 
-                      key={lvl} 
-                      value={lvl} 
+                    <Option
+                      key={lvl}
+                      value={lvl}
                       className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800"
                     >
                       {lvl}
@@ -395,8 +413,8 @@ export function Practice() {
             {user?.subscriptionStatus === "FREE" && (
               <Alert className="mt-6 border border-blue-100 bg-blue-50/80 text-blue-900 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-100 rounded-lg animate-fade-in">
                 <div className="flex items-center gap-3">
-                    <InformationCircleIcon className="w-5 h-5" />
-                    <Typography className="text-sm font-medium">Free Plan: You have <strong>{actionsRemaining}</strong> generations left today.</Typography>
+                  <InformationCircleIcon className="w-5 h-5" />
+                  <Typography className="text-sm font-medium">Free Plan: You have <strong>{actionsRemaining}</strong> generations left today.</Typography>
                 </div>
               </Alert>
             )}
@@ -412,9 +430,9 @@ export function Practice() {
             </div>
 
             {error && (
-                <div className="mt-4 animate-pop-in">
-                    <Typography color="red" className="text-sm font-medium text-center">{error}</Typography>
-                </div>
+              <div className="mt-4 animate-pop-in">
+                <Typography color="red" className="text-sm font-medium text-center">{error}</Typography>
+              </div>
             )}
 
             {isPolling && (
@@ -427,26 +445,26 @@ export function Practice() {
             {question && (
               <div className="mt-10 animate-slide-up">
                 <div className="mb-6">
-                    <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-1">Question</Typography>
-                    <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700 transition-all hover:border-blue-200 dark:hover:border-blue-900">
-                        <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(question.questionText)}</ReactMarkdown>
-                        </div>
+                  <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-1">Question</Typography>
+                  <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700 transition-all hover:border-blue-200 dark:hover:border-blue-900">
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(question.questionText)}</ReactMarkdown>
                     </div>
+                  </div>
                 </div>
 
                 <form onSubmit={handleSubmitAnswer}>
                   {/* Textarea Wrapper */}
                   <div className="group">
                     <Textarea
-                        label="Write your answer here..."
-                        value={currentAnswer}
-                        onChange={handleAnswerChange}
-                        rows={textareaRows}
-                        color="blue"
-                        className="!text-blue-gray-900 dark:!text-white bg-white dark:bg-gray-900 !border-blue-gray-200 focus:!border-blue-500"
-                        containerProps={{ className: "min-w-0" }}
-                        labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
+                      label="Write your answer here..."
+                      value={currentAnswer}
+                      onChange={handleAnswerChange}
+                      rows={textareaRows}
+                      color="blue"
+                      className="!text-blue-gray-900 dark:!text-white bg-white dark:bg-gray-900 !border-blue-gray-200 focus:!border-blue-500"
+                      containerProps={{ className: "min-w-0" }}
+                      labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
                     />
                   </div>
 
@@ -480,11 +498,11 @@ export function Practice() {
             {hint && (
               <div className="mt-6 p-5 border border-blue-200 bg-blue-50/50 rounded-2xl dark:bg-blue-900/10 dark:border-blue-800 animate-slide-up">
                 <div className="flex items-center gap-2 mb-2 text-blue-700 dark:text-blue-300">
-                    <InformationCircleIcon className="h-5 w-5" />
-                    <span className="font-bold text-sm uppercase">Hint</span>
+                  <InformationCircleIcon className="h-5 w-5" />
+                  <span className="font-bold text-sm uppercase">Hint</span>
                 </div>
                 <div className="prose prose-sm dark:prose-invert text-blue-gray-700 dark:text-blue-100">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(hint)}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(hint)}</ReactMarkdown>
                 </div>
               </div>
             )}
@@ -531,63 +549,63 @@ export function Practice() {
               </thead>
               <tbody>
                 {loadingHistory ? (
-                    <tr><td colSpan="6" className="p-8 text-center"><Spinner className="h-8 w-8 mx-auto" /></td></tr>
+                  <tr><td colSpan="6" className="p-8 text-center"><Spinner className="h-8 w-8 mx-auto" /></td></tr>
                 ) : visibleHistory.length === 0 ? (
-                    <tr><td colSpan="6" className="p-8 text-center text-gray-500">No history found.</td></tr>
+                  <tr><td colSpan="6" className="p-8 text-center text-gray-500">No history found.</td></tr>
                 ) : (
-                    visibleHistory.map((item, index) => (
-                        <tr key={`${item.questionId}-${index}`} onClick={() => setSelectedHistory(item)} className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-200 group">
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" color="blue-gray" className="font-normal dark:text-gray-400">{index + 1}</Typography></td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800 max-w-xs truncate"><Typography variant="small" color="blue-gray" className="font-medium dark:text-gray-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">{item.questionText}</Typography></td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.subject}</Typography></td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.difficulty}</Typography></td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">{getStatusChip(item.evaluationStatus)}</td>
-                            <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" className="font-normal text-gray-500 dark:text-gray-500">{new Date(item.submittedAt || item.generatedAt).toLocaleDateString()}</Typography></td>
-                        </tr>
-                    ))
+                  visibleHistory.map((item, index) => (
+                    <tr key={`${item.questionId}-${index}`} onClick={() => setSelectedHistory(item)} className="cursor-pointer hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors duration-200 group">
+                      <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" color="blue-gray" className="font-normal dark:text-gray-400">{index + 1}</Typography></td>
+                      <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800 max-w-xs truncate"><Typography variant="small" color="blue-gray" className="font-medium dark:text-gray-200 truncate group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">{item.questionText}</Typography></td>
+                      <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.subject}</Typography></td>
+                      <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400">{item.difficulty}</Typography></td>
+                      <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800">{getStatusChip(item.evaluationStatus)}</td>
+                      <td className="p-4 border-b border-blue-gray-50 dark:border-gray-800"><Typography variant="small" className="font-normal text-gray-500 dark:text-gray-500">{new Date(item.submittedAt || item.generatedAt).toLocaleDateString()}</Typography></td>
+                    </tr>
+                  ))
                 )}
               </tbody>
             </table>
             {filteredHistory.length > visibleHistory.length && (
-                <div className="mt-4 text-center">
-                    <Button variant="text" size="sm" onClick={() => setItemsToShow(prev => prev + 10)} className="hover:bg-blue-50 dark:hover:bg-gray-800 transition-all">Load More</Button>
-                </div>
+              <div className="mt-4 text-center">
+                <Button variant="text" size="sm" onClick={() => setItemsToShow(prev => prev + 10)} className="hover:bg-blue-50 dark:hover:bg-gray-800 transition-all">Load More</Button>
+              </div>
             )}
           </CardBody>
         </Card>
 
         {/* History Detail Modal */}
         <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-white dark:bg-gray-900 border dark:border-gray-800" animate={{ mount: { scale: 1, y: 0, opacity: 1 }, unmount: { scale: 0.9, y: -100, opacity: 0 } }}>
-            <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">Practice Details</DialogHeader>
-            <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6 custom-scroll">
-                {selectedHistory && (
-                    <div className="space-y-8 animate-fade-in">
-                        <div>
-                            <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2">Question</Typography>
-                            <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
-                                <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto custom-scroll">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(selectedHistory.questionText)}</ReactMarkdown>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wider mb-2">{selectedHistory.evaluationStatus === "REVEALED" ? "Action" : "Your Answer"}</Typography>
-                            <div className={`p-5 border rounded-2xl text-sm transition-all duration-300 ${selectedHistory.evaluationStatus === "REVEALED" ? "border-blue-100 bg-blue-50/30 text-blue-600 italic dark:bg-blue-900/10 dark:border-blue-800 dark:text-blue-300" : "border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-700 dark:text-gray-300"}`}>
-                                {selectedHistory.evaluationStatus === "REVEALED" ? "You chose to reveal the answer." : <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto custom-scroll"><ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(selectedHistory.answerText || "No answer submitted.")}</ReactMarkdown></div>}
-                            </div>
-                        </div>
-                        <div className="animate-slide-up delay-100">
-                            <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
-                            <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll transition-all duration-500 ${selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" : selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" : selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" : "bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-800"}`}>
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.evaluationStatus === "REVEALED" ? formatMarkdownText(selectedHistory.answerText) : formatMarkdownText(selectedHistory.feedback)}</ReactMarkdown>
-                            </div>
-                        </div>
+          <DialogHeader className="dark:text-white border-b dark:border-gray-800 flex justify-between items-center">Practice Details</DialogHeader>
+          <DialogBody divider className="dark:border-gray-800 overflow-y-auto max-h-[70vh] p-6 custom-scroll">
+            {selectedHistory && (
+              <div className="space-y-8 animate-fade-in">
+                <div>
+                  <Typography variant="small" className="font-bold text-blue-500 uppercase tracking-wider mb-2">Question</Typography>
+                  <div className="p-5 border border-gray-200 rounded-2xl bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
+                    <div className="prose prose-sm dark:prose-invert max-w-none text-blue-gray-800 dark:text-gray-200 font-medium leading-relaxed overflow-x-auto custom-scroll">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(selectedHistory.questionText)}</ReactMarkdown>
                     </div>
-                )}
-            </DialogBody>
-            <DialogFooter className="border-t dark:border-gray-800">
-                <Button variant="gradient" color="blue" onClick={() => setSelectedHistory(null)} className="hover:scale-105 transition-transform">Close</Button>
-            </DialogFooter>
+                  </div>
+                </div>
+                <div>
+                  <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wider mb-2">{selectedHistory.evaluationStatus === "REVEALED" ? "Action" : "Your Answer"}</Typography>
+                  <div className={`p-5 border rounded-2xl text-sm transition-all duration-300 ${selectedHistory.evaluationStatus === "REVEALED" ? "border-blue-100 bg-blue-50/30 text-blue-600 italic dark:bg-blue-900/10 dark:border-blue-800 dark:text-blue-300" : "border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 text-gray-700 dark:text-gray-300"}`}>
+                    {selectedHistory.evaluationStatus === "REVEALED" ? "You chose to reveal the answer." : <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto custom-scroll"><ReactMarkdown remarkPlugins={[remarkGfm]}>{formatMarkdownText(selectedHistory.answerText || "No answer submitted.")}</ReactMarkdown></div>}
+                  </div>
+                </div>
+                <div className="animate-slide-up delay-100">
+                  <DynamicFeedbackTitle status={selectedHistory.evaluationStatus} />
+                  <div className={`p-6 rounded-2xl prose prose-sm dark:prose-invert max-w-none overflow-x-auto leading-relaxed shadow-sm custom-scroll transition-all duration-500 ${selectedHistory.evaluationStatus === "CORRECT" ? "bg-green-50/50 border border-green-100 dark:bg-green-900/10 dark:border-green-800" : selectedHistory.evaluationStatus === "CLOSE" ? "bg-orange-50/50 border border-orange-100 dark:bg-orange-900/10 dark:border-orange-800" : selectedHistory.evaluationStatus === "REVEALED" ? "bg-blue-50/50 border border-blue-100 dark:bg-blue-900/10 dark:border-blue-800" : "bg-red-50/50 border border-red-100 dark:bg-red-900/10 dark:border-red-800"}`}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.evaluationStatus === "REVEALED" ? formatMarkdownText(selectedHistory.answerText) : formatMarkdownText(selectedHistory.feedback)}</ReactMarkdown>
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogBody>
+          <DialogFooter className="border-t dark:border-gray-800">
+            <Button variant="gradient" color="blue" onClick={() => setSelectedHistory(null)} className="hover:scale-105 transition-transform">Close</Button>
+          </DialogFooter>
         </Dialog>
       </div>
     </section>

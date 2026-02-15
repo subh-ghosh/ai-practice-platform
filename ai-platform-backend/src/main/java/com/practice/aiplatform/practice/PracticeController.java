@@ -16,7 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 // DTO for the get-answer request
-record GetAnswerRequest(Long questionId) {}
+record GetAnswerRequest(Long questionId) {
+}
 
 @RestController
 @RequestMapping("/api/practice")
@@ -31,7 +32,9 @@ public class PracticeController {
     @Autowired
     private GeminiService geminiService;
     @Autowired
-    private UsageService usageService; // 👈 --- ADD THIS
+    private UsageService usageService;
+    @Autowired
+    private com.practice.aiplatform.gamification.XpService xpService; // 👈 --- ADD THIS
 
     @PostMapping("/submit")
     public Mono<ResponseEntity<Answer>> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
@@ -68,51 +71,57 @@ public class PracticeController {
                 savedAnswer.getAnswerText(),
                 question.getSubject(),
                 question.getTopic(),
-                question.getDifficulty()
-        ).flatMap(feedback -> {
-            // ... (rest of the feedback parsing logic is unchanged)
-            String evaluationStatus;
-            String cleanFeedback = "";
-            String hint = null;
+                question.getDifficulty()).flatMap(feedback -> {
+                    // ... (rest of the feedback parsing logic is unchanged)
+                    String evaluationStatus;
+                    String cleanFeedback = "";
+                    String hint = null;
 
-            if (feedback == null || feedback.trim().isEmpty()) {
-                evaluationStatus = "INCORRECT";
-                cleanFeedback = "No response from AI.";
-            } else {
-                String[] lines = feedback.trim().split("\n", 2);
-                String firstLine = lines[0].trim().toUpperCase();
-                String restOfFeedback = (lines.length > 1) ? lines[1].trim() : "No feedback provided.";
+                    if (feedback == null || feedback.trim().isEmpty()) {
+                        evaluationStatus = "INCORRECT";
+                        cleanFeedback = "No response from AI.";
+                    } else {
+                        String[] lines = feedback.trim().split("\n", 2);
+                        String firstLine = lines[0].trim().toUpperCase();
+                        String restOfFeedback = (lines.length > 1) ? lines[1].trim() : "No feedback provided.";
 
-                if (firstLine.equals("CORRECT")) {
-                    evaluationStatus = "CORRECT";
-                    cleanFeedback = restOfFeedback;
-                } else if (firstLine.equals("CLOSE")) {
-                    evaluationStatus = "CLOSE";
-                    cleanFeedback = restOfFeedback;
-                } else {
-                    evaluationStatus = "INCORRECT";
-                    cleanFeedback = (lines.length > 1) ? feedback : "No feedback provided.";
-                }
+                        if (firstLine.equals("CORRECT")) {
+                            evaluationStatus = "CORRECT";
+                            cleanFeedback = restOfFeedback;
+                        } else if (firstLine.equals("CLOSE")) {
+                            evaluationStatus = "CLOSE";
+                            cleanFeedback = restOfFeedback;
+                        } else {
+                            evaluationStatus = "INCORRECT";
+                            cleanFeedback = (lines.length > 1) ? feedback : "No feedback provided.";
+                        }
 
-                if (!evaluationStatus.equals("CORRECT")) {
-                    String hintMarker = "[HINT]";
-                    int hintIndex = cleanFeedback.toUpperCase().indexOf(hintMarker);
+                        if (!evaluationStatus.equals("CORRECT")) {
+                            String hintMarker = "[HINT]";
+                            int hintIndex = cleanFeedback.toUpperCase().indexOf(hintMarker);
 
-                    if (hintIndex != -1) {
-                        hint = cleanFeedback.substring(hintIndex + hintMarker.length()).trim();
-                        cleanFeedback = cleanFeedback.substring(0, hintIndex).trim();
+                            if (hintIndex != -1) {
+                                hint = cleanFeedback.substring(hintIndex + hintMarker.length()).trim();
+                                cleanFeedback = cleanFeedback.substring(0, hintIndex).trim();
+                            }
+                        }
                     }
-                }
-            }
 
-            savedAnswer.setIsCorrect(evaluationStatus.equals("CORRECT"));
-            savedAnswer.setEvaluationStatus(evaluationStatus);
-            savedAnswer.setFeedback(cleanFeedback);
-            savedAnswer.setHint(hint);
-            Answer finalAnswer = answerRepository.save(savedAnswer);
+                    savedAnswer.setIsCorrect(evaluationStatus.equals("CORRECT"));
+                    savedAnswer.setEvaluationStatus(evaluationStatus);
+                    savedAnswer.setFeedback(cleanFeedback);
+                    savedAnswer.setHint(hint);
+                    Answer finalAnswer = answerRepository.save(savedAnswer);
 
-            return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(finalAnswer));
-        });
+                    // Award XP
+                    if (evaluationStatus.equals("CORRECT")) {
+                        xpService.awardXp(student, 10);
+                    } else if (evaluationStatus.equals("CLOSE")) {
+                        xpService.awardXp(student, 5);
+                    }
+
+                    return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(finalAnswer));
+                });
     }
 
     @PostMapping("/get-answer")
@@ -132,22 +141,21 @@ public class PracticeController {
                 question.getQuestionText(),
                 question.getSubject(),
                 question.getTopic(),
-                question.getDifficulty()
-        ).flatMap(answerText -> {
-            Answer newAnswer = new Answer();
-            newAnswer.setAnswerText(answerText); // The AI-generated answer
-            newAnswer.setQuestion(question);
-            newAnswer.setStudent(student);
+                question.getDifficulty()).flatMap(answerText -> {
+                    Answer newAnswer = new Answer();
+                    newAnswer.setAnswerText(answerText); // The AI-generated answer
+                    newAnswer.setQuestion(question);
+                    newAnswer.setStudent(student);
 
-            newAnswer.setIsCorrect(false);
-            newAnswer.setEvaluationStatus("REVEALED");
-            newAnswer.setFeedback("This is the AI-generated correct answer.");
-            newAnswer.setHint(null);
+                    newAnswer.setIsCorrect(false);
+                    newAnswer.setEvaluationStatus("REVEALED");
+                    newAnswer.setFeedback("This is the AI-generated correct answer.");
+                    newAnswer.setHint(null);
 
-            Answer savedAnswer = answerRepository.save(newAnswer);
+                    Answer savedAnswer = answerRepository.save(newAnswer);
 
-            return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(savedAnswer));
-        });
+                    return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(savedAnswer));
+                });
     }
 
     @GetMapping("/history")
@@ -178,16 +186,14 @@ public class PracticeController {
                             answer.getEvaluationStatus(),
                             answer.getHint(),
                             answer.getFeedback(),
-                            answer.getSubmittedAt()
-                    );
+                            answer.getSubmittedAt());
                 })
                 .toList();
 
         PracticeHistoryDto historyDto = new PracticeHistoryDto(
                 student.getId(),
                 student.getFirstName(),
-                historyList
-        );
+                historyList);
         return ResponseEntity.ok(historyDto);
     }
 }

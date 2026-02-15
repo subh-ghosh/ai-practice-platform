@@ -31,6 +31,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeProvider.jsx";
 import BadgesSection from "../../components/gamification/BadgesSection";
+import { StatisticsChart } from "@/widgets/charts";
+import { chartsConfig } from "@/configs";
 
 /* ============================ Config ============================ */
 const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
@@ -429,6 +431,25 @@ export function Profile() {
     }
   }, [user]);
 
+  const [xpHistory, setXpHistory] = useState(null);
+
+  useEffect(() => {
+    const fetchXpHistory = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const config = { headers: { "Authorization": `Bearer ${token}` } };
+        const res = await axios.get(`${BASE_URL}/api/stats/xp-history`, config);
+        setXpHistory(res.data);
+      } catch (err) {
+        console.error("Failed to fetch XP history", err);
+        setXpHistory([]);
+      }
+    };
+    if (activeTab === "profile") {
+      fetchXpHistory();
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     setEditError(null); setEditSuccess(null);
     setSecError(null); setSecSuccess(null);
@@ -573,7 +594,7 @@ export function Profile() {
             exit="exit"
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
-            {/* Left Column: Bio & Info */}
+            {/* Left Column: Bio & Info & Chart */}
             <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
               <div className="bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 rounded-2xl p-6 shadow-sm">
                 <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold mb-4">
@@ -593,6 +614,45 @@ export function Profile() {
                     <Typography className="dark:text-white font-medium">India</Typography>
                   </div>
                 </div>
+              </div>
+
+              {/* XP History Chart */}
+              <div className="bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+                <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold mb-4">
+                  XP Activity (Last 30 Days)
+                </Typography>
+                {xpHistory ? (
+                  <StatisticsChart
+                    chart={{
+                      type: "bar",
+                      height: 220,
+                      series: [{ name: "XP Earned", data: xpHistory.map(d => d.xp) }],
+                      options: {
+                        ...chartsConfig,
+                        colors: ["#3b82f6"],
+                        plotOptions: {
+                          bar: { columnWidth: "50%", borderRadius: 4 },
+                        },
+                        xaxis: {
+                          ...chartsConfig.xaxis,
+                          categories: xpHistory.map(d => new Date(d.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })),
+                        },
+                      },
+                    }}
+                    title=""
+                    description="Your daily XP earnings."
+                    footer={
+                      <Typography variant="small" className="flex items-center font-normal text-blue-gray-600 dark:text-gray-400">
+                        <CheckCircleIcon strokeWidth={2} className="h-4 w-4 text-green-500" />
+                        &nbsp;Keep up the streak!
+                      </Typography>
+                    }
+                  />
+                ) : (
+                  <div className="flex justify-center py-8">
+                    <Spinner className="h-8 w-8 text-blue-500" />
+                  </div>
+                )}
               </div>
             </motion.div>
 

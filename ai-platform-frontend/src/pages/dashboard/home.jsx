@@ -26,7 +26,9 @@ import {
   StarIcon,
   TrophyIcon,
   BookOpenIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/solid";
+import DailyChallengesCard from "../../components/gamification/DailyChallengesCard";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
@@ -449,130 +451,153 @@ export function Home() {
 
         {/* Row 3: Table & Feed */}
         <motion.div variants={itemVariants} className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <Card className="overflow-hidden xl:col-span-2 border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
-            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
-              <div>
-                <Typography variant="h6" color="blue-gray" className="mb-1">
-                  Recent Activity
+
+          <div className="xl:col-span-2">
+
+            {/* Daily Challenges Widget */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 mb-6">
+              <DailyChallengesCard />
+              {/* Placeholder for future widget or simple Activity widget */}
+              <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-[#0a0a0c]">
+                <CardBody className="p-4">
+                  <Typography variant="h6" color="blue-gray" className="mb-2 dark:text-white">
+                    Activity
+                  </Typography>
+                  <Typography variant="small" className="font-normal text-blue-gray-500 dark:text-gray-400">
+                    Your recent learning activity will appear here.
+                  </Typography>
+                </CardBody>
+              </Card>
+            </div>
+
+            {/* Recent Activity Table */}
+            <Card className="overflow-hidden border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+              <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
+                <div>
+                  <Typography variant="h6" color="blue-gray" className="mb-1">
+                    Recent Activity
+                  </Typography>
+                  <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
+                    <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
+                    <strong>{stats.totalAttempts} attempts</strong> in total
+                  </Typography>
+                </div>
+                <Link to="/dashboard/practice">
+                  <Button variant="text" size="sm" className="flex items-center gap-2 hover:bg-blue-50">
+                    <PencilIcon className="h-4 w-4" />
+                    Start Practice
+                  </Button>
+                </Link>
+              </CardHeader>
+
+              <CardBody className="overflow-x-auto hide-scrollbar px-0 pt-0 pb-0">
+                <table className="w-full table-auto">
+                  <thead>
+                    <tr>
+                      {["Question", "Subject", "Status", "Submitted"].map((el) => (
+                        <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
+                          <Typography variant="small" className="text-[11px] font-medium uppercase text-blue-gray-400">
+                            {el}
+                          </Typography>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.recentActivity.map((item, key) => {
+                      const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                      const uniqueKey = `${item.questionId}-${item.submittedAt}`;
+                      return (
+                        <motion.tr
+                          key={uniqueKey}
+                          custom={key}
+                          variants={tableRowVariants}
+                          initial="hidden"
+                          animate="visible"
+                          className="hover:bg-gray-50/50 transition-colors"
+                        >
+                          <td className={className}>
+                            <Typography className="text-xs font-normal text-blue-gray-500">
+                              {item.questionText.substring(0, 40)}...
+                            </Typography>
+                          </td>
+                          <td className={className}>
+                            <Typography variant="small" className="text-xs font-medium text-blue-gray-600">
+                              {item.subject}
+                            </Typography>
+                          </td>
+                          <td className={className}>
+                            <Chip
+                              variant="gradient"
+                              color={
+                                item.evaluationStatus === "CORRECT"
+                                  ? "green"
+                                  : item.evaluationStatus === "REVEALED"
+                                    ? "blue"
+                                    : item.evaluationStatus === "CLOSE"
+                                      ? "orange"
+                                      : "red"
+                              }
+                              value={item.evaluationStatus.toLowerCase()}
+                              className="py-0.5 px-2 text-[11px] font-medium w-fit"
+                            />
+                          </td>
+                          <td className={className}>
+                            <Typography className="text-xs font-normal text-blue-gray-500">
+                              {formatDateTime(item.submittedAt)}
+                            </Typography>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </CardBody>
+            </Card>
+          </div>
+
+          <div className="xl:col-span-1">
+            <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+              <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6">
+                <Typography variant="h6" color="blue-gray" className="mb-2">
+                  Submission Overview
                 </Typography>
                 <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
-                  <CheckCircleIcon strokeWidth={3} className="h-4 w-4 text-blue-gray-200" />
-                  <strong>{stats.totalAttempts} attempts</strong> in total
+                  Your latest 5 attempts.
                 </Typography>
-              </div>
-              <Link to="/dashboard/practice">
-                <Button variant="text" size="sm" className="flex items-center gap-2 hover:bg-blue-50">
-                  <PencilIcon className="h-4 w-4" />
-                  Start Practice
-                </Button>
-              </Link>
-            </CardHeader>
-
-            <CardBody className="overflow-x-auto hide-scrollbar px-0 pt-0 pb-0">
-              <table className="w-full table-auto">
-                <thead>
-                  <tr>
-                    {["Question", "Subject", "Status", "Submitted"].map((el) => (
-                      <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
-                        <Typography variant="small" className="text-[11px] font-medium uppercase text-blue-gray-400">
-                          {el}
-                        </Typography>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.recentActivity.map((item, key) => {
-                    const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
-                    const uniqueKey = `${item.questionId}-${item.submittedAt}`;
-                    return (
-                      <motion.tr
-                        key={uniqueKey}
-                        custom={key}
-                        variants={tableRowVariants}
-                        initial="hidden"
-                        animate="visible"
-                        className="hover:bg-gray-50/50 transition-colors"
-                      >
-                        <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {item.questionText.substring(0, 40)}...
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Typography variant="small" className="text-xs font-medium text-blue-gray-600">
-                            {item.subject}
-                          </Typography>
-                        </td>
-                        <td className={className}>
-                          <Chip
-                            variant="gradient"
-                            color={
-                              item.evaluationStatus === "CORRECT"
-                                ? "green"
-                                : item.evaluationStatus === "REVEALED"
-                                  ? "blue"
-                                  : item.evaluationStatus === "CLOSE"
-                                    ? "orange"
-                                    : "red"
-                            }
-                            value={item.evaluationStatus.toLowerCase()}
-                            className="py-0.5 px-2 text-[11px] font-medium w-fit"
-                          />
-                        </td>
-                        <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
-                            {formatDateTime(item.submittedAt)}
-                          </Typography>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </CardBody>
-          </Card>
-
-          <Card className="border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
-            <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6">
-              <Typography variant="h6" color="blue-gray" className="mb-2">
-                Submission Overview
-              </Typography>
-              <Typography variant="small" className="flex items-center gap-1 font-normal text-blue-gray-600">
-                Your latest 5 attempts.
-              </Typography>
-            </CardHeader>
-            <CardBody className="pt-0">
-              {stats.recentActivity.map((item, key) => {
-                const { Icon, color } = getOverviewIcon(item.evaluationStatus);
-                const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
-                return (
-                  <motion.div
-                    key={uniqueKey}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + (key * 0.1), type: "spring", stiffness: 100 }}
-                    className="flex items-start gap-4 py-3"
-                  >
-                    <div
-                      className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
-                        }`}
+              </CardHeader>
+              <CardBody className="pt-0">
+                {stats.recentActivity.map((item, key) => {
+                  const { Icon, color } = getOverviewIcon(item.evaluationStatus);
+                  const uniqueKey = `${item.questionId}-${item.submittedAt}-${key}`;
+                  return (
+                    <motion.div
+                      key={uniqueKey}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 + (key * 0.1), type: "spring", stiffness: 100 }}
+                      className="flex items-start gap-4 py-3"
                     >
-                      <Icon className={`!w-5 !h-5 ${color}`} />
-                    </div>
-                    <div>
-                      <Typography variant="small" color="blue-gray" className="block font-medium">
-                        {item.subject}: {item.topic.substring(0, 20)}...
-                      </Typography>
-                      <Typography as="span" variant="small" className="text-xs font-medium text-blue-gray-500">
-                        {formatDateTime(item.submittedAt)}
-                      </Typography>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </CardBody>
-          </Card>
+                      <div
+                        className={`relative p-1 after:absolute after:-bottom-6 after:left-2/4 after:w-0.5 after:-translate-x-2/4 after:bg-blue-gray-50 after:content-[''] ${key === stats.recentActivity.length - 1 ? "after:h-0" : "after:h-4/6"
+                          }`}
+                      >
+                        <Icon className={`!w-5 !h-5 ${color}`} />
+                      </div>
+                      <div>
+                        <Typography variant="small" color="blue-gray" className="block font-medium">
+                          {item.subject}: {item.topic.substring(0, 20)}...
+                        </Typography>
+                        <Typography as="span" variant="small" className="text-xs font-medium text-blue-gray-500">
+                          {formatDateTime(item.submittedAt)}
+                        </Typography>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </CardBody>
+            </Card>
+          </div>
         </motion.div>
       </motion.div>
     </div>

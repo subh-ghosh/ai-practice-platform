@@ -13,9 +13,15 @@ import java.util.List; // <-- IMPORT
 public class StatisticsController {
 
     private final StatisticsService statisticsService;
+    private final com.practice.aiplatform.user.StudentRepository studentRepository;
+    private final com.practice.aiplatform.gamification.XpService xpService;
 
-    public StatisticsController(StatisticsService statisticsService) {
+    public StatisticsController(StatisticsService statisticsService,
+            com.practice.aiplatform.user.StudentRepository studentRepository,
+            com.practice.aiplatform.gamification.XpService xpService) {
         this.statisticsService = statisticsService;
+        this.studentRepository = studentRepository;
+        this.xpService = xpService;
     }
 
     @GetMapping("/summary")
@@ -25,11 +31,25 @@ public class StatisticsController {
         return ResponseEntity.ok(stats);
     }
 
-    // --- ADD THIS NEW ENDPOINT ---
     @GetMapping("/timeseries")
     public ResponseEntity<List<DailyStatDto>> getStatisticsTimeSeries(Principal principal) {
         String email = principal.getName();
         List<DailyStatDto> timeSeriesData = statisticsService.getTimeSeriesStats(email);
         return ResponseEntity.ok(timeSeriesData);
+    }
+
+    @GetMapping("/xp-history")
+    public ResponseEntity<List<DailyXpDto>> getXpHistory(Principal principal) {
+        String email = principal.getName();
+        com.practice.aiplatform.user.Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        List<com.practice.aiplatform.gamification.DailyXpHistory> history = xpService.getXpHistory(student.getId(), 30);
+
+        List<DailyXpDto> response = history.stream()
+                .map(h -> new DailyXpDto(h.getDate(), h.getXpEarned()))
+                .collect(java.util.stream.Collectors.toList());
+
+        return ResponseEntity.ok(response);
     }
 }

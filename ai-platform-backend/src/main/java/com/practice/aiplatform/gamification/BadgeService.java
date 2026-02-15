@@ -1,7 +1,7 @@
 package com.practice.aiplatform.gamification;
 
 import com.practice.aiplatform.user.Student;
-import com.practice.aiplatform.user.StudentRepository;
+import com.practice.aiplatform.user.Student;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
