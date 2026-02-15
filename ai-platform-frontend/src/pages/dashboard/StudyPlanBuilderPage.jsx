@@ -4,6 +4,7 @@ import api from '../../api';
 import {
     Typography,
     Card,
+    CardHeader,
     CardBody,
     Input,
     Button,
@@ -87,86 +88,90 @@ const StudyPlanBuilderPage = () => {
     };
 
     return (
-        <div className="mt-12">
-            <div className="mb-6 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <Typography variant="h6" color="blue-gray" className="dark:text-white">
-                    AI Study Plan Builder
-                </Typography>
-            </div>
+        <div className="mt-12 space-y-8">
+            {/* Header hidden as it is integrated into the card now, matching Practice page style */}
 
             <div className="flex flex-col gap-8">
-                {/* Builder Form */}
-                <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900/50 backdrop-blur-md">
-                    <CardBody className="p-6">
-                        <div className="mb-6">
-                            <Typography variant="h5" color="blue-gray" className="mb-1 dark:text-white">
-                                New Study Plan
-                            </Typography>
-                            <Typography variant="small" className="font-normal text-blue-gray-600 dark:text-gray-400">
-                                Enter a topic and we'll curate a schedule for you.
-                            </Typography>
+                {/* Builder Form Card - Matching Practice.jsx style */}
+                <Card className="overflow-visible relative z-20 border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm">
+                    <CardHeader floated={false} shadow={false} className="rounded-t-xl bg-gradient-to-r from-blue-600 to-blue-400 px-6 py-4 m-0">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white/20 rounded-lg shadow-inner">
+                                <SparklesIcon className="h-6 w-6 text-white animate-pulse" />
+                            </div>
+                            <div>
+                                <Typography variant="h5" color="white" className="font-bold tracking-tight">AI Study Plan Builder</Typography>
+                                <Typography variant="small" color="white" className="opacity-90 font-normal">Enter a topic and we'll curate a schedule for you.</Typography>
+                            </div>
                         </div>
+                    </CardHeader>
 
+                    <CardBody className="p-6 md:p-8 overflow-visible">
                         <form onSubmit={handleGenerate} className="flex flex-col gap-6">
                             <div>
-                                <Typography variant="small" color="blue-gray" className="mb-2 font-medium dark:text-gray-300">
-                                    What do you want to learn?
-                                </Typography>
                                 <Input
                                     size="lg"
+                                    label="What do you want to learn?"
                                     placeholder="e.g. React Patterns, Machine Learning"
                                     value={topic}
                                     onChange={(e) => setTopic(e.target.value)}
-                                    className="!border-t-blue-gray-200 focus:!border-t-gray-900 dark:!border-t-gray-700 dark:focus:!border-t-white dark:text-white"
+                                    color="blue"
+                                    className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500 placeholder:opacity-50"
                                     labelProps={{
-                                        className: "before:content-none after:content-none",
+                                        className: "!text-blue-gray-500 dark:!text-gray-400",
                                     }}
                                     disabled={loading}
                                 />
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 font-medium dark:text-gray-300">
-                                        Difficulty
-                                    </Typography>
+                                <div className="w-full relative">
                                     <Select
                                         size="lg"
+                                        label="Difficulty"
                                         value={difficulty}
                                         onChange={(val) => setDifficulty(val)}
-                                        className="border-blue-gray-200 dark:border-gray-700 dark:text-white"
+                                        color="blue"
+                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
                                         labelProps={{
-                                            className: "before:content-none after:content-none",
+                                            className: "!text-blue-gray-500 dark:!text-gray-400",
                                         }}
                                         disabled={loading}
                                         menuProps={{
-                                            className: "dark:bg-gray-900 dark:border-gray-800 dark:text-white",
+                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                            animate: {
+                                                mount: { y: 0, scale: 1, opacity: 1 },
+                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                            },
                                         }}
                                     >
-                                        <Option value="Beginner">Beginner</Option>
-                                        <Option value="Intermediate">Intermediate</Option>
-                                        <Option value="Advanced">Advanced</Option>
+                                        <Option value="Beginner" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Beginner</Option>
+                                        <Option value="Intermediate" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Intermediate</Option>
+                                        <Option value="Advanced" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Advanced</Option>
                                     </Select>
                                 </div>
-                                <div>
-                                    <Typography variant="small" color="blue-gray" className="mb-2 font-medium dark:text-gray-300">
-                                        Duration
-                                    </Typography>
+                                <div className="w-full relative">
                                     <Select
                                         size="lg"
+                                        label="Duration"
                                         value={String(durationDays)}
                                         onChange={(val) => setDurationDays(Number(val))}
-                                        className="border-blue-gray-200 dark:border-gray-700 dark:text-white"
+                                        color="blue"
+                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
                                         labelProps={{
-                                            className: "before:content-none after:content-none",
+                                            className: "!text-blue-gray-500 dark:!text-gray-400",
                                         }}
                                         disabled={loading}
                                         menuProps={{
-                                            className: "dark:bg-gray-900 dark:border-gray-800 dark:text-white",
+                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                            animate: {
+                                                mount: { y: 0, scale: 1, opacity: 1 },
+                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                            },
                                         }}
                                     >
                                         {durationOptions.map((opt) => (
-                                            <Option key={opt.value} value={String(opt.value)}>
+                                            <Option key={opt.value} value={String(opt.value)} className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">
                                                 {opt.label}
                                             </Option>
                                         ))}
@@ -180,15 +185,16 @@ const StudyPlanBuilderPage = () => {
                                 </Alert>
                             )}
 
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                fullWidth
-                                className="flex items-center justify-center gap-2 dark:bg-white dark:text-black"
-                            >
-                                {loading ? <Spinner className="h-4 w-4" /> : <SparklesIcon className="h-4 w-4" />}
-                                Generate Plan
-                            </Button>
+                            <div className="mt-2 text-left">
+                                <Button
+                                    type="submit"
+                                    disabled={loading}
+                                    fullWidth
+                                    className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-300 active:scale-95 hover:scale-[1.02] flex items-center justify-center gap-2"
+                                >
+                                    {loading ? <Spinner className="h-4 w-4" /> : <><SparklesIcon className="h-4 w-4" /> GENERATE PLAN</>}
+                                </Button>
+                            </div>
                         </form>
                     </CardBody>
                 </Card>
@@ -209,7 +215,7 @@ const StudyPlanBuilderPage = () => {
                             <Spinner className="h-8 w-8 text-blue-gray-900 dark:text-white" />
                         </div>
                     ) : history.length === 0 ? (
-                        <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900/50 backdrop-blur-md">
+                        <Card className="border border-blue-gray-100 dark:border-gray-700 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
                             <CardBody className="text-center py-12">
                                 <BookOpenIcon className="h-12 w-12 text-blue-gray-200 dark:text-gray-700 mx-auto mb-4" />
                                 <Typography color="blue-gray" variant="h6" className="dark:text-white">
@@ -225,7 +231,7 @@ const StudyPlanBuilderPage = () => {
                             {history.map((plan) => (
                                 <Card
                                     key={plan.id}
-                                    className="cursor-pointer border border-blue-gray-100 dark:border-gray-800 hover:shadow-md transition-all group bg-white dark:bg-gray-900/50 backdrop-blur-md"
+                                    className="cursor-pointer border border-blue-gray-100 dark:border-gray-700 hover:shadow-md transition-all group bg-white/80 dark:bg-gray-900/80 backdrop-blur-md"
                                     onClick={() => navigate(`/dashboard/study-plan/${plan.id}`)}
                                 >
                                     <CardBody className="p-5">
