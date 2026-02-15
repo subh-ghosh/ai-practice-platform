@@ -34,6 +34,19 @@ const StudyPlanBuilderPage = () => {
     const [historyLoading, setHistoryLoading] = useState(true);
     const navigate = useNavigate();
     const { theme } = useTheme();
+    const [loadingStage, setLoadingStage] = useState(0);
+
+    useEffect(() => {
+        let interval;
+        if (loading) {
+            interval = setInterval(() => {
+                setLoadingStage((prev) => (prev + 1) % 4);
+            }, 2000);
+        } else {
+            setLoadingStage(0);
+        }
+        return () => clearInterval(interval);
+    }, [loading]);
 
     useEffect(() => {
         fetchHistory();
@@ -122,95 +135,112 @@ const StudyPlanBuilderPage = () => {
                     </CardHeader>
 
                     <CardBody className="p-6 md:p-8 overflow-visible">
-                        <form onSubmit={handleGenerate} className="flex flex-col gap-6">
-                            <div>
-                                <Input
-                                    size="lg"
-                                    label="What do you want to learn?"
-                                    placeholder="e.g. React Patterns, Machine Learning"
-                                    value={topic}
-                                    onChange={(e) => setTopic(e.target.value)}
-                                    color="blue"
-                                    className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800/80 !border-blue-gray-200 focus:!border-blue-500 placeholder:text-blue-gray-300 dark:placeholder:text-gray-500"
-                                    labelProps={{
-                                        className: "!text-blue-gray-500 dark:!text-gray-300",
-                                    }}
-                                    disabled={loading}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="w-full relative">
-                                    <Select
-                                        size="lg"
-                                        label="Difficulty"
-                                        value={difficulty}
-                                        onChange={(val) => setDifficulty(val)}
-                                        color="blue"
-                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
-                                        labelProps={{
-                                            className: "!text-blue-gray-500 dark:!text-gray-400",
-                                        }}
-                                        disabled={loading}
-                                        menuProps={{
-                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
-                                            animate: {
-                                                mount: { y: 0, scale: 1, opacity: 1 },
-                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
-                                            },
-                                        }}
-                                    >
-                                        <Option value="Beginner" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Beginner</Option>
-                                        <Option value="Intermediate" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Intermediate</Option>
-                                        <Option value="Advanced" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Advanced</Option>
-                                    </Select>
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-12 space-y-6">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-blue-500 blur-xl opacity-20 animate-pulse rounded-full"></div>
+                                    <Spinner className="h-16 w-16 text-blue-500" />
                                 </div>
-                                <div className="w-full relative">
-                                    <Select
-                                        size="lg"
-                                        label="Duration"
-                                        value={String(durationDays)}
-                                        onChange={(val) => setDurationDays(Number(val))}
-                                        color="blue"
-                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
-                                        labelProps={{
-                                            className: "!text-blue-gray-500 dark:!text-gray-400",
-                                        }}
-                                        disabled={loading}
-                                        menuProps={{
-                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
-                                            animate: {
-                                                mount: { y: 0, scale: 1, opacity: 1 },
-                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
-                                            },
-                                        }}
-                                    >
-                                        {durationOptions.map((opt) => (
-                                            <Option key={opt.value} value={String(opt.value)} className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">
-                                                {opt.label}
-                                            </Option>
-                                        ))}
-                                    </Select>
+                                <div className="text-center space-y-2">
+                                    <Typography variant="h5" color="blue-gray" className="dark:text-white animate-pulse">
+                                        Generating your personalized plan...
+                                    </Typography>
+                                    <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal">
+                                        {["Analyzing your topic...", "Curating best YouTube videos...", "Drafting practice quizzes...", "Finalizing your schedule..."][loadingStage]}
+                                    </Typography>
                                 </div>
                             </div>
+                        ) : (
+                            <form onSubmit={handleGenerate} className="flex flex-col gap-6">
+                                <div>
+                                    <Input
+                                        size="lg"
+                                        label="What do you want to learn?"
+                                        placeholder="e.g. React Patterns, Machine Learning"
+                                        value={topic}
+                                        onChange={(e) => setTopic(e.target.value)}
+                                        color="blue"
+                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800/80 !border-blue-gray-200 focus:!border-blue-500 placeholder:text-blue-gray-300 dark:placeholder:text-gray-500"
+                                        labelProps={{
+                                            className: "!text-blue-gray-500 dark:!text-gray-300",
+                                        }}
+                                        disabled={loading}
+                                    />
+                                </div>
 
-                            {error && (
-                                <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
-                                    {error}
-                                </Alert>
-                            )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="w-full relative">
+                                        <Select
+                                            size="lg"
+                                            label="Difficulty"
+                                            value={difficulty}
+                                            onChange={(val) => setDifficulty(val)}
+                                            color="blue"
+                                            className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
+                                            labelProps={{
+                                                className: "!text-blue-gray-500 dark:!text-gray-400",
+                                            }}
+                                            disabled={loading}
+                                            menuProps={{
+                                                className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                                animate: {
+                                                    mount: { y: 0, scale: 1, opacity: 1 },
+                                                    unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                                },
+                                            }}
+                                        >
+                                            <Option value="Beginner" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Beginner</Option>
+                                            <Option value="Intermediate" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Intermediate</Option>
+                                            <Option value="Advanced" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Advanced</Option>
+                                        </Select>
+                                    </div>
+                                    <div className="w-full relative">
+                                        <Select
+                                            size="lg"
+                                            label="Duration"
+                                            value={String(durationDays)}
+                                            onChange={(val) => setDurationDays(Number(val))}
+                                            color="blue"
+                                            className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
+                                            labelProps={{
+                                                className: "!text-blue-gray-500 dark:!text-gray-400",
+                                            }}
+                                            disabled={loading}
+                                            menuProps={{
+                                                className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                                animate: {
+                                                    mount: { y: 0, scale: 1, opacity: 1 },
+                                                    unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                                },
+                                            }}
+                                        >
+                                            {durationOptions.map((opt) => (
+                                                <Option key={opt.value} value={String(opt.value)} className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">
+                                                    {opt.label}
+                                                </Option>
+                                            ))}
+                                        </Select>
+                                    </div>
+                                </div>
 
-                            <div className="mt-2 text-left">
-                                <Button
-                                    type="submit"
-                                    disabled={loading}
-                                    fullWidth
-                                    className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-300 active:scale-95 hover:scale-[1.02] flex items-center justify-center gap-2"
-                                >
-                                    {loading ? <Spinner className="h-4 w-4" /> : <><SparklesIcon className="h-4 w-4" /> GENERATE PLAN</>}
-                                </Button>
-                            </div>
-                        </form>
+                                {error && (
+                                    <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
+                                        {error}
+                                    </Alert>
+                                )}
+
+                                <div className="mt-2 text-left">
+                                    <Button
+                                        type="submit"
+                                        disabled={loading}
+                                        fullWidth
+                                        className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-300 active:scale-95 hover:scale-[1.02] flex items-center justify-center gap-2"
+                                    >
+                                        <SparklesIcon className="h-4 w-4" /> GENERATE PLAN
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
                     </CardBody>
                 </Card>
 
