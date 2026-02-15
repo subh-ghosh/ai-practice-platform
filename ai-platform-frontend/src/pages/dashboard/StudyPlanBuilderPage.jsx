@@ -12,13 +12,14 @@ import {
     Spinner,
     Alert,
     Select,
-    Option,
+    IconButton,
 } from "@material-tailwind/react";
 import {
     SparklesIcon,
     ExclamationTriangleIcon,
     BookOpenIcon,
     CheckCircleIcon,
+    TrashIcon,
 } from '@heroicons/react/24/solid';
 import { useTheme } from "@/context/ThemeContext.jsx";
 
@@ -45,6 +46,19 @@ const StudyPlanBuilderPage = () => {
             console.error("Failed to load history:", err);
         } finally {
             setHistoryLoading(false);
+        }
+    };
+
+    const handleDelete = async (planId, e) => {
+        e.stopPropagation();
+        if (!window.confirm("Are you sure you want to delete this study plan?")) return;
+
+        try {
+            await api.delete(`/study-plans/${planId}`);
+            setHistory(history.filter(p => p.id !== planId));
+        } catch (err) {
+            console.error("Failed to delete study plan:", err);
+            alert("Failed to delete study plan. Please try again.");
         }
     };
 
@@ -234,7 +248,19 @@ const StudyPlanBuilderPage = () => {
                                     className="cursor-pointer border border-blue-gray-100 dark:border-gray-700 hover:shadow-md transition-all group bg-white/80 dark:bg-gray-900/80 backdrop-blur-md"
                                     onClick={() => navigate(`/dashboard/study-plan/${plan.id}`)}
                                 >
-                                    <CardBody className="p-5">
+                                    <CardBody className="p-5 relative">
+                                        <div className="absolute top-4 right-4 z-10">
+                                            <IconButton
+                                                variant="text"
+                                                color="red"
+                                                size="sm"
+                                                className="hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => handleDelete(plan.id, e)}
+                                            >
+                                                <TrashIcon className="h-5 w-5" />
+                                            </IconButton>
+                                        </div>
+
                                         <div className="flex justify-between items-start mb-3">
                                             <Chip
                                                 size="sm"
@@ -258,7 +284,7 @@ const StudyPlanBuilderPage = () => {
                                             )}
                                         </div>
 
-                                        <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white">
+                                        <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white line-clamp-1 pr-8">
                                             {plan.title}
                                         </Typography>
 
