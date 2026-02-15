@@ -118,4 +118,15 @@ public class StudyPlanController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteStudyPlan(@PathVariable Long id, Principal principal) {
+        try {
+            studyPlanService.deleteStudyPlan(id, principal.getName());
+            return ResponseEntity.ok(Map.of("message", "Study plan deleted successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }

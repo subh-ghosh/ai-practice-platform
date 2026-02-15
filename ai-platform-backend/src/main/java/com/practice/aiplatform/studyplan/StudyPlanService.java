@@ -445,4 +445,18 @@ public class StudyPlanService {
             throw new RuntimeException("Failed to parse study plan response: " + e.getMessage());
         }
     }
+
+    public void deleteStudyPlan(Long id, String userEmail) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        StudyPlan plan = studyPlanRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+
+        if (!plan.getStudent().getId().equals(student.getId())) {
+            throw new RuntimeException("You do not have permission to delete this study plan");
+        }
+
+        studyPlanRepository.delete(plan);
+    }
 }
