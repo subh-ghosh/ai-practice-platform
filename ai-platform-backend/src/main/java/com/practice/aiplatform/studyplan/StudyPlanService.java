@@ -74,26 +74,40 @@ public class StudyPlanService {
      * Generate 5 MCQ quiz questions for each PRACTICE item in the plan.
      */
     private void generateQuizQuestionsForPlan(StudyPlan plan, String topic, String difficulty) {
-        for (StudyPlanItem item : plan.getItems()) {
-            if ("PRACTICE".equals(item.getItemType())) {
-                try {
-                    String quizPrompt = createQuizPrompt(
-                            item.getPracticeSubject() != null ? item.getPracticeSubject() : topic,
-                            item.getPracticeTopic() != null ? item.getPracticeTopic() : topic,
-                            item.getPracticeDifficulty() != null ? item.getPracticeDifficulty() : difficulty);
+        // Filter for practice items first
+        List<StudyPlanItem> practiceItems = plan.getItems().stream()
+                .filter(item -> "PRACTICE".equals(item.getItemType()))
+                .toList();
 
-                    String quizResponse = geminiService.generateRawContent(quizPrompt).block();
-                    List<QuizQuestion> questions = parseQuizQuestions(quizResponse, item);
+        // Process in parallel to avoid timeout
+        // Using common ForkJoinPool which is suitable for this scale (3-5 threads
+        // usually)
+        practiceItems.parallelStream().forEach(item -> {
+            try {
+                String quizPrompt = createQuizPrompt(
+                        item.getPracticeSubject() != null ? item.getPracticeSubject() : topic,
+                        item.getPracticeTopic() != null ? item.getPracticeTopic() : topic,
+                        item.getPracticeDifficulty() != null ? item.getPracticeDifficulty() : difficulty);
 
+                String quizResponse = geminiService.generateRawContent(quizPrompt).block();
+                List<QuizQuestion> questions = parseQuizQuestions(quizResponse, item);
+
+                if (!questions.isEmpty()) {
                     quizQuestionRepository.saveAll(questions);
-                    item.getQuizQuestions().addAll(questions);
-
-                } catch (Exception e) {
-                    System.err.println("Failed to generate quiz for item " + item.getId() + ": " + e.getMessage());
-                    // Don't fail the whole plan if one quiz fails
+                    // No need to add to item.getQuizQuestions() here as it's not
+                    // transactional/managed in this context
+                    // and we are returning the plan which was already saved.
+                    // However, if we want the returned plan to include them, we should:
+                    synchronized (item) {
+                        item.getQuizQuestions().addAll(questions);
+                    }
                 }
+
+            } catch (Exception e) {
+                System.err.println("Failed to generate quiz for item " + item.getId() + ": " + e.getMessage());
+                // Don't fail the whole plan if one quiz fails
             }
-        }
+        });
     }
 
     private String createQuizPrompt(String subject, String practiceTopic, String difficulty) {
