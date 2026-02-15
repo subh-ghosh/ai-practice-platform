@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api';
 import {
+    Typography,
+    Card,
+    CardBody,
+    Button,
+    Chip,
+    Spinner,
+    Alert,
+    Dialog,
+    DialogBody,
+    DialogHeader,
+    Progress,
+} from "@material-tailwind/react";
+import {
     PlayIcon,
     CheckCircleIcon,
     AcademicCapIcon,
@@ -119,7 +132,6 @@ const StudyPlanViewerPage = () => {
     };
 
     // Check if an item is locked (items after incomplete PRACTICE checkpoints)
-    // Legacy items without quiz questions are NOT treated as gates
     const isItemLocked = (item) => {
         if (!plan?.items) return false;
         const sorted = [...plan.items].sort((a, b) => a.orderIndex - b.orderIndex);
@@ -136,18 +148,18 @@ const StudyPlanViewerPage = () => {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent"></div>
+            <div className="flex justify-center items-center min-h-[400px]">
+                <Spinner className="h-10 w-10 text-blue-500" />
             </div>
         );
     }
 
     if (error || !plan) {
         return (
-            <div className="max-w-4xl mx-auto p-6">
-                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r">
-                    <p className="text-red-700">{error || "Study plan not found."}</p>
-                </div>
+            <div className="mt-12">
+                <Alert color="red" icon={<XCircleIcon className="h-6 w-6" />}>
+                    {error || "Study plan not found."}
+                </Alert>
             </div>
         );
     }
@@ -167,13 +179,13 @@ const StudyPlanViewerPage = () => {
     const earnedXpInPlan = plan.items?.filter(i => i.completed).reduce((sum, item) => sum + (item.xpReward || 0), 0) || 0;
 
     return (
-        <div className="max-w-5xl mx-auto p-6 relative">
+        <div className="mt-12">
 
             {/* XP Animation Overlay */}
             {xpAnimation && (
                 <div className="fixed inset-0 pointer-events-none z-50 flex items-center justify-center">
                     <div className="animate-bounce text-center">
-                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-full text-xl font-bold shadow-2xl flex items-center gap-2">
+                        <div className="bg-gradient-to-r from-amber-400 to-orange-500 text-white px-6 py-3 rounded-full text-xl font-bold shadow-2xl flex items-center gap-2">
                             <StarIcon className="h-6 w-6" />
                             +{xpAnimation.amount} XP
                         </div>
@@ -182,64 +194,71 @@ const StudyPlanViewerPage = () => {
             )}
 
             {/* Header */}
-            <button
-                onClick={() => navigate('/dashboard/study-plan-builder')}
-                className="flex items-center text-purple-600 hover:text-purple-800 mb-4 transition-colors"
-            >
-                <ArrowLeftIcon className="h-4 w-4 mr-1" />
-                Back to Builder
-            </button>
+            <div className="mb-6">
+                <Button
+                    variant="text"
+                    color="blue-gray"
+                    className="flex items-center gap-2 pl-0 hover:bg-transparent mb-2"
+                    onClick={() => navigate('/dashboard/study-plan-builder')}
+                >
+                    <ArrowLeftIcon className="h-4 w-4" />
+                    Back to Builder
+                </Button>
 
-            <div className="bg-white shadow-lg rounded-xl p-6 mb-6">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-                            <AcademicCapIcon className="h-7 w-7 text-purple-600 mr-2" />
+                        <Typography variant="h4" color="blue-gray" className="mb-1 flex items-center gap-2">
                             {plan.title}
-                        </h1>
-                        <p className="text-gray-500 mt-1">{plan.description}</p>
-                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
-                            <span className="flex items-center">
-                                <ClockIcon className="h-4 w-4 mr-1" />
-                                {plan.durationDays} days
-                            </span>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                {plan.difficulty}
-                            </span>
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {plan.items?.length || 0} items
-                            </span>
+                        </Typography>
+                        <Typography variant="paragraph" className="font-normal text-blue-gray-600 max-w-2xl">
+                            {plan.description}
+                        </Typography>
+                        <div className="flex flex-wrap items-center gap-3 mt-3">
+                            <Chip size="sm" variant="ghost" value={`${plan.durationDays} days`} icon={<ClockIcon />} className="rounded-full" />
+                            <Chip
+                                size="sm"
+                                variant="ghost"
+                                value={plan.difficulty}
+                                color={plan.difficulty === 'Advanced' ? 'red' : plan.difficulty === 'Intermediate' ? 'amber' : 'green'}
+                                className="rounded-full"
+                            />
+                            <Chip size="sm" variant="ghost" value={`${plan.items?.length || 0} items`} icon={<BookOpenIcon />} className="rounded-full" />
                         </div>
                     </div>
-                    {/* XP Badge */}
-                    <div className="flex flex-col items-center bg-gradient-to-br from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl px-4 py-3">
-                        <TrophyIcon className="h-6 w-6 text-yellow-500 mb-1" />
-                        <span className="text-lg font-bold text-yellow-700">{earnedXpInPlan}</span>
-                        <span className="text-xs text-yellow-600">/ {totalXpInPlan} XP</span>
-                    </div>
-                </div>
 
-                {/* Progress Bar */}
-                <div className="mt-4">
-                    <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                        <span>Progress</span>
-                        <span className="font-semibold">{plan.progress}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-3">
-                        <div
-                            className={`h-3 rounded-full transition-all duration-500 ${plan.progress === 100
-                                ? 'bg-gradient-to-r from-green-400 to-emerald-500'
-                                : 'bg-gradient-to-r from-purple-500 to-indigo-500'
-                                }`}
-                            style={{ width: `${plan.progress}%` }}
-                        ></div>
-                    </div>
+                    <Card className="border border-amber-100 bg-amber-50/50 shadow-none w-fit min-w-[140px]">
+                        <CardBody className="p-3 text-center">
+                            <Typography variant="small" className="font-bold text-amber-700 uppercase text-[10px] mb-1">
+                                Total XP
+                            </Typography>
+                            <div className="flex items-center justify-center gap-1 text-amber-900">
+                                <TrophyIcon className="h-5 w-5 text-amber-500" />
+                                <span className="text-xl font-black">{earnedXpInPlan}</span>
+                                <span className="text-xs text-amber-700 font-medium">/ {totalXpInPlan}</span>
+                            </div>
+                        </CardBody>
+                    </Card>
                 </div>
             </div>
 
+            {/* Progress */}
+            <Card className="mb-8 border border-blue-gray-100 shadow-sm">
+                <CardBody className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                        <Typography variant="small" className="font-bold text-blue-gray-700">
+                            Overall Progress
+                        </Typography>
+                        <Typography variant="small" className="font-bold text-blue-500">
+                            {plan.progress}%
+                        </Typography>
+                    </div>
+                    <Progress value={plan.progress} size="lg" color="blue" className="bg-blue-gray-50 h-2.5" />
+                </CardBody>
+            </Card>
+
             {/* Embedded Video Player */}
             {activeVideo && (
-                <div className="bg-black rounded-xl overflow-hidden mb-6 shadow-xl">
+                <div className="bg-black rounded-xl overflow-hidden mb-8 shadow-lg ring-4 ring-blue-gray-900/5">
                     <div className="relative" style={{ paddingBottom: '56.25%' }}>
                         <iframe
                             className="absolute inset-0 w-full h-full"
@@ -249,44 +268,82 @@ const StudyPlanViewerPage = () => {
                             allowFullScreen
                         ></iframe>
                     </div>
-                    <button
-                        onClick={() => setActiveVideo(null)}
-                        className="w-full py-2 text-gray-400 hover:text-white text-sm transition-colors"
-                    >
-                        Close Player
-                    </button>
+                    <div className="bg-blue-gray-900 p-2 flex justify-end">
+                        <Button size="sm" color="white" variant="text" onClick={() => setActiveVideo(null)} className="text-white hover:bg-white/10">
+                            Close Player
+                        </Button>
+                    </div>
                 </div>
             )}
 
-            {/* ===== QUIZ MODAL ===== */}
-            {activeQuiz && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center overflow-y-auto pt-10 pb-10 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full">
-                        <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 rounded-t-2xl">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <h2 className="text-lg font-bold text-gray-800 flex items-center">
-                                        <SparklesIcon className="h-5 w-5 text-purple-500 mr-2" />
-                                        Knowledge Check
-                                    </h2>
-                                    <p className="text-sm text-gray-500 mt-0.5">
-                                        Answer all questions correctly to earn <span className="font-semibold text-yellow-600">{activeQuiz.item.xpReward} XP</span>
-                                    </p>
-                                </div>
-                                <button onClick={closeQuiz} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            {/* Timeline */}
+            <div className="space-y-8">
+                {dayNumbers.map((dayNum) => (
+                    <div key={dayNum}>
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500 text-white font-bold shadow-md shadow-blue-500/20">
+                                {dayNum}
                             </div>
+                            <Typography variant="h6" color="blue-gray">
+                                Day {dayNum}
+                            </Typography>
+                            <div className="h-px flex-grow bg-blue-gray-50"></div>
                         </div>
 
-                        <div className="px-6 py-4 space-y-6">
+                        <div className="ml-5 border-l-2 border-blue-gray-50 pl-6 space-y-4">
+                            {dayGroups[dayNum]
+                                .sort((a, b) => a.orderIndex - b.orderIndex)
+                                .map((item) => {
+                                    const locked = isItemLocked(item);
+                                    return item.itemType === 'VIDEO' ? (
+                                        <VideoCard
+                                            key={item.id}
+                                            item={item}
+                                            locked={locked}
+                                            onPlay={() => !locked && setActiveVideo(item.videoId)}
+                                            onComplete={() => !locked && handleMarkComplete(item.id)}
+                                        />
+                                    ) : (
+                                        <PracticeCard
+                                            key={item.id}
+                                            item={item}
+                                            locked={locked}
+                                            onStartQuiz={() => !locked && handleStartQuiz(item)}
+                                        />
+                                    );
+                                })
+                            }
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Quiz Dialog */}
+            <Dialog open={!!activeQuiz} handler={closeQuiz} size="lg">
+                <DialogHeader className="flex justify-between items-center border-b border-blue-gray-50">
+                    <div className="flex items-center gap-2">
+                        <SparklesIcon className="h-5 w-5 text-purple-500" />
+                        <Typography variant="h5" color="blue-gray">
+                            Knowledge Check
+                        </Typography>
+                    </div>
+                    <Button variant="text" color="blue-gray" onClick={closeQuiz} size="sm" className="!px-2">
+                        x
+                    </Button>
+                </DialogHeader>
+                <DialogBody className="p-6 overflow-y-auto max-h-[70vh]">
+                    {activeQuiz && (
+                        <>
                             {activeQuiz.noQuestions ? (
-                                /* Legacy item with no quiz questions */
                                 <div className="text-center py-8">
-                                    <BookOpenIcon className="h-12 w-12 text-purple-300 mx-auto mb-4" />
-                                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No Quiz Available</h3>
-                                    <p className="text-gray-500 text-sm mb-6">
+                                    <BookOpenIcon className="h-16 w-16 text-blue-gray-200 mx-auto mb-4" />
+                                    <Typography variant="h6" color="blue-gray" className="mb-2">
+                                        No Quiz Available
+                                    </Typography>
+                                    <Typography className="mb-6 font-normal text-blue-gray-500">
                                         This checkpoint was created before quizzes were available. You can mark it as complete manually.
-                                    </p>
-                                    <button
+                                    </Typography>
+                                    <Button
                                         onClick={async () => {
                                             try {
                                                 await api.patch(`/study-plans/${id}/items/${activeQuiz.itemId}/complete`);
@@ -298,29 +355,33 @@ const StudyPlanViewerPage = () => {
                                                 console.error("Failed to mark complete:", err);
                                             }
                                         }}
-                                        className="px-6 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-medium hover:from-purple-600 hover:to-indigo-600 transition-all"
+                                        color="green"
+                                        className="flex items-center justify-center gap-2 mx-auto"
                                     >
-                                        <CheckCircleIcon className="h-4 w-4 inline mr-1" />
-                                        Mark as Complete
-                                    </button>
+                                        <CheckCircleIcon className="h-4 w-4" />
+                                        Mark Custom Complete
+                                    </Button>
                                 </div>
                             ) : !quizResult ? (
-                                <>
+                                <div className="space-y-6">
+                                    <Typography variant="small" className="text-blue-gray-500 font-normal">
+                                        Answer all questions correctly to earn <span className="font-bold text-amber-600">{activeQuiz.item.xpReward} XP</span>.
+                                    </Typography>
                                     {activeQuiz.questions.map((q, idx) => (
-                                        <div key={q.id} className="bg-gray-50 rounded-xl p-4">
-                                            <p className="font-medium text-gray-800 mb-3">
-                                                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs font-bold mr-2">
+                                        <div key={q.id} className="bg-gray-50 rounded-xl p-4 border border-blue-gray-50">
+                                            <Typography variant="h6" color="blue-gray" className="mb-3 flex gap-2">
+                                                <span className="flex h-6 w-6 items-center justify-center rounded bg-blue-100 text-xs text-blue-900">
                                                     {idx + 1}
                                                 </span>
                                                 {q.questionText}
-                                            </p>
-                                            <div className="space-y-2">
+                                            </Typography>
+                                            <div className="space-y-2 pl-8">
                                                 {['A', 'B', 'C', 'D'].map((opt) => (
                                                     <label
                                                         key={opt}
-                                                        className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${quizAnswers[q.id] === opt
-                                                            ? 'border-purple-500 bg-purple-50 shadow-sm'
-                                                            : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/30'
+                                                        className={`flex items-center p-3 rounded-lg border cursor-pointer transition-colors ${quizAnswers[q.id] === opt
+                                                            ? 'border-blue-500 bg-blue-50'
+                                                            : 'border-gray-200 hover:bg-white hover:border-blue-200'
                                                             }`}
                                                     >
                                                         <input
@@ -331,278 +392,181 @@ const StudyPlanViewerPage = () => {
                                                             onChange={() => setQuizAnswers(prev => ({ ...prev, [q.id]: opt }))}
                                                             className="sr-only"
                                                         />
-                                                        <span className={`flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center text-xs font-bold mr-3 ${quizAnswers[q.id] === opt
-                                                            ? 'border-purple-500 bg-purple-500 text-white'
-                                                            : 'border-gray-300 text-gray-500'
+                                                        <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-bold mr-3 ${quizAnswers[q.id] === opt
+                                                            ? 'border-blue-500 bg-blue-500 text-white'
+                                                            : 'border-blue-gray-200 text-blue-gray-400'
                                                             }`}>
                                                             {opt}
-                                                        </span>
-                                                        <span className="text-sm text-gray-700">
+                                                        </div>
+                                                        <Typography className="text-sm font-medium text-blue-gray-700">
                                                             {q[`option${opt}`]}
-                                                        </span>
+                                                        </Typography>
                                                     </label>
                                                 ))}
                                             </div>
                                         </div>
                                     ))}
-                                    <button
+                                    <Button
                                         onClick={handleSubmitQuiz}
                                         disabled={quizLoading || Object.keys(quizAnswers).length < activeQuiz.questions.length}
-                                        className={`w-full py-3 rounded-xl text-white font-bold text-lg transition-all ${quizLoading || Object.keys(quizAnswers).length < activeQuiz.questions.length
-                                            ? 'bg-gray-300 cursor-not-allowed'
-                                            : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5'
-                                            }`}
+                                        fullWidth
+                                        color="blue"
+                                        className="mt-4"
                                     >
-                                        {quizLoading ? 'Checking...' : `Submit Answers (${Object.keys(quizAnswers).length}/${activeQuiz.questions.length})`}
-                                    </button>
-                                </>
+                                        {quizLoading ? 'Checking...' : 'Submit Answers'}
+                                    </Button>
+                                </div>
                             ) : (
-                                /* ===== QUIZ RESULTS ===== */
-                                <div className="text-center">
-                                    <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${quizResult.passed ? 'bg-green-100' : 'bg-red-100'
-                                        }`}>
+                                <div className="text-center py-4">
+                                    <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full ${quizResult.passed ? 'bg-green-100' : 'bg-red-100'}`}>
                                         {quizResult.passed ? (
                                             <TrophyIcon className="h-10 w-10 text-green-500" />
                                         ) : (
                                             <XCircleIcon className="h-10 w-10 text-red-500" />
                                         )}
                                     </div>
-                                    <h3 className={`text-2xl font-bold mb-2 ${quizResult.passed ? 'text-green-700' : 'text-red-700'}`}>
+                                    <Typography variant="h4" color={quizResult.passed ? "green" : "red"} className="mb-2">
                                         {quizResult.passed ? 'Perfect Score!' : 'Keep Trying!'}
-                                    </h3>
-                                    <p className="text-gray-600 mb-4">
-                                        You got <span className="font-bold">{quizResult.correctCount}/{quizResult.totalQuestions}</span> correct
-                                    </p>
+                                    </Typography>
+                                    <Typography className="mb-6 font-normal text-blue-gray-500">
+                                        You got <span className="font-bold text-blue-gray-900">{quizResult.correctCount}/{quizResult.totalQuestions}</span> correct
+                                    </Typography>
 
-                                    {quizResult.xpEarned > 0 && (
-                                        <div className="inline-flex items-center bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-full font-bold mb-4">
-                                            <StarIcon className="h-5 w-5 mr-1" />
-                                            +{quizResult.xpEarned} XP earned!
-                                        </div>
-                                    )}
-
-                                    {/* Question Results */}
-                                    <div className="mt-4 space-y-2 text-left">
+                                    {/* Question Breakdown */}
+                                    <div className="mb-6 space-y-2 text-left bg-gray-50 p-4 rounded-lg">
                                         {quizResult.results.map((r, idx) => (
-                                            <div key={r.questionId} className={`flex items-center p-3 rounded-lg ${r.isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-                                                }`}>
+                                            <div key={r.questionId} className="flex items-start gap-2 text-sm">
                                                 {r.isCorrect ? (
-                                                    <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2 flex-shrink-0" />
+                                                    <CheckCircleIcon className="h-5 w-5 text-green-500 shrink-0" />
                                                 ) : (
-                                                    <XCircleIcon className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                                                    <XCircleIcon className="h-5 w-5 text-red-500 shrink-0" />
                                                 )}
-                                                <span className="text-sm text-gray-700">
-                                                    Question {idx + 1}: {r.isCorrect ? 'Correct' : `Incorrect — Answer was ${r.correctOption}`}
-                                                </span>
+                                                <div>
+                                                    <span className="font-bold">Q{idx + 1}:</span> {r.isCorrect ? 'Correct' : `Incorrect (Answer: ${r.correctOption})`}
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
 
-                                    <div className="mt-6 flex gap-3 justify-center">
+                                    <div className="flex gap-2 justify-center">
                                         {!quizResult.passed && (
-                                            <button
-                                                onClick={() => {
-                                                    setQuizResult(null);
-                                                    setQuizAnswers({});
-                                                }}
-                                                className="px-6 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors"
-                                            >
+                                            <Button onClick={() => { setQuizResult(null); setQuizAnswers({}); }} variant="outlined" color="blue-gray">
                                                 Try Again
-                                            </button>
+                                            </Button>
                                         )}
-                                        <button
-                                            onClick={closeQuiz}
-                                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-                                        >
+                                        <Button onClick={closeQuiz} color="blue">
                                             {quizResult.passed ? 'Continue' : 'Close'}
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Day-by-Day Timeline */}
-            {dayNumbers.map((dayNum) => (
-                <div key={dayNum} className="mb-8">
-                    <div className="flex items-center mb-4">
-                        <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
-                            {dayNum}
-                        </div>
-                        <h2 className="ml-3 text-lg font-semibold text-gray-700">
-                            Day {dayNum}
-                        </h2>
-                        <div className="flex-grow ml-4 h-px bg-gray-200"></div>
-                    </div>
-
-                    <div className="ml-5 border-l-2 border-purple-200 pl-6 space-y-4">
-                        {dayGroups[dayNum]
-                            .sort((a, b) => a.orderIndex - b.orderIndex)
-                            .map((item) => {
-                                const locked = isItemLocked(item);
-                                return item.itemType === 'VIDEO' ? (
-                                    <VideoCard
-                                        key={item.id}
-                                        item={item}
-                                        locked={locked}
-                                        onPlay={() => !locked && setActiveVideo(item.videoId)}
-                                        onComplete={() => !locked && handleMarkComplete(item.id)}
-                                    />
-                                ) : (
-                                    <PracticeCard
-                                        key={item.id}
-                                        item={item}
-                                        locked={locked}
-                                        onStartQuiz={() => !locked && handleStartQuiz(item)}
-                                    />
-                                );
-                            })
-                        }
-                    </div>
-                </div>
-            ))}
+                        </>
+                    )}
+                </DialogBody>
+            </Dialog>
         </div>
     );
 };
 
 // --- Video Card Component ---
 const VideoCard = ({ item, locked, onPlay, onComplete }) => (
-    <div className={`bg-white rounded-lg shadow-sm border transition-all ${locked ? 'opacity-50 border-gray-200' :
-        item.completed ? 'border-green-200 bg-green-50/30 hover:shadow-md' :
-            'border-gray-200 hover:shadow-md'
-        }`}>
-        <div className="flex flex-col sm:flex-row">
+    <Card className={`border shadow-sm transition-all ${locked ? 'opacity-50 grayscale border-gray-200' : 'hover:shadow-md border-blue-gray-100'}`}>
+        <CardBody className="p-0 flex flex-col sm:flex-row">
             {/* Thumbnail */}
-            <div className={`relative sm:w-48 flex-shrink-0 ${locked ? 'cursor-not-allowed' : 'cursor-pointer'} group`} onClick={onPlay}>
+            <div className="relative sm:w-48 shrink-0 cursor-pointer group" onClick={onPlay}>
+                {locked && <div className="absolute inset-0 z-10 bg-white/50" />}
                 <img
                     src={item.thumbnailUrl || 'https://via.placeholder.com/320x180?text=Video'}
                     alt={item.title}
-                    className="w-full sm:w-48 h-28 object-cover rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none"
+                    className="h-32 w-full object-cover sm:h-full sm:rounded-l-xl sm:rounded-tr-none rounded-t-xl"
                 />
-                {locked ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none">
-                        <LockClosedIcon className="h-8 w-8 text-white" />
-                    </div>
-                ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-t-lg sm:rounded-l-lg sm:rounded-tr-none">
-                        <PlayIcon className="h-10 w-10 text-white drop-shadow-lg" />
+                {!locked && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <PlayIcon className="h-10 w-10 text-white drop-shadow-md" />
                     </div>
                 )}
                 {item.videoDuration && (
-                    <span className="absolute bottom-1 right-1 bg-black/80 text-white text-xs px-1.5 py-0.5 rounded">
+                    <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 text-[10px] font-bold text-white">
                         {formatDuration(item.videoDuration)}
                     </span>
                 )}
             </div>
 
-            {/* Info */}
-            <div className="p-4 flex-grow flex flex-col justify-between">
+            {/* Content */}
+            <div className="flex flex-col justify-between p-4 grow">
                 <div>
-                    <div className="flex items-start justify-between">
-                        <h3 className="font-semibold text-gray-800 text-sm leading-tight line-clamp-2">
+                    <div className="flex items-start justify-between gap-2">
+                        <Typography variant="h6" color="blue-gray" className="text-sm leading-tight line-clamp-2">
                             {item.title}
-                        </h3>
-                        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                            {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
-                            {item.xpReward > 0 && (
-                                <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
-                                    {item.xpReward} XP
-                                </span>
-                            )}
-                        </div>
+                        </Typography>
+                        {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500 shrink-0" />}
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">{item.channelName}</p>
-                    {item.description && (
-                        <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.description}</p>
-                    )}
+                    <Typography variant="small" className="mt-1 font-normal text-blue-gray-500">
+                        {item.channelName}
+                    </Typography>
                 </div>
+
                 {!locked && (
-                    <div className="flex items-center gap-2 mt-3">
-                        <button
-                            onClick={onPlay}
-                            className="flex items-center text-xs px-3 py-1.5 bg-red-50 text-red-600 rounded-md hover:bg-red-100 transition-colors font-medium"
-                        >
-                            <PlayIcon className="h-3 w-3 mr-1" />
-                            Watch
-                        </button>
+                    <div className="mt-3 flex items-center gap-2">
+                        <Button size="sm" variant="outlined" className="flex items-center gap-1 py-1 px-2 border-red-100 text-red-500 hover:border-red-500" onClick={onPlay}>
+                            <PlayIcon className="h-3 w-3" /> Watch
+                        </Button>
                         {!item.completed && (
-                            <button
-                                onClick={onComplete}
-                                className="flex items-center text-xs px-3 py-1.5 bg-green-50 text-green-600 rounded-md hover:bg-green-100 transition-colors font-medium"
-                            >
-                                <CheckCircleIcon className="h-3 w-3 mr-1" />
-                                Mark Done
-                            </button>
+                            <Button size="sm" variant="text" color="green" className="flex items-center gap-1 py-1 px-2" onClick={onComplete}>
+                                <CheckCircleIcon className="h-3 w-3" /> Mark Done
+                            </Button>
+                        )}
+                        {item.xpReward > 0 && !item.completed && (
+                            <Chip value={`${item.xpReward} XP`} size="sm" variant="ghost" color="amber" className="ml-auto rounded-full" />
                         )}
                     </div>
                 )}
             </div>
-        </div>
-    </div>
+        </CardBody>
+    </Card>
 );
 
 // --- Practice Card Component ---
 const PracticeCard = ({ item, locked, onStartQuiz }) => (
-    <div className={`bg-white rounded-lg shadow-sm border-2 transition-all ${locked ? 'opacity-50 border-gray-300' :
-        item.completed ? 'border-green-300 bg-green-50/30 hover:shadow-md' :
-            'border-dashed border-purple-300 bg-purple-50/20 hover:shadow-md'
-        }`}>
-        <div className="p-4">
-            <div className="flex items-start justify-between">
-                <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${locked ? 'bg-gray-100' :
-                        item.completed ? 'bg-green-100' : 'bg-purple-100'
-                        }`}>
-                        {locked ? (
-                            <LockClosedIcon className="h-4 w-4 text-gray-400" />
-                        ) : item.completed ? (
-                            <CheckCircleIcon className="h-4 w-4 text-green-600" />
-                        ) : (
-                            <BookOpenIcon className="h-4 w-4 text-purple-600" />
+    <Card className={`border shadow-sm transition-all ${locked ? 'opacity-50 grayscale border-gray-200' : 'hover:shadow-md border-purple-100 bg-purple-50/10'}`}>
+        <CardBody className="p-4">
+            <div className="flex items-start gap-4">
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${locked ? 'bg-gray-100 text-gray-400' : item.completed ? 'bg-green-100 text-green-500' : 'bg-purple-100 text-purple-500'}`}>
+                    {locked ? <LockClosedIcon className="h-5 w-5" /> : item.completed ? <CheckCircleIcon className="h-5 w-5" /> : <SparklesIcon className="h-5 w-5" />}
+                </div>
+
+                <div className="grow">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <Typography variant="h6" color="blue-gray" className="text-sm">
+                                {item.title}
+                            </Typography>
+                            <Typography variant="small" className="font-normal text-blue-gray-500">
+                                {item.practiceSubject} • {item.quizQuestions?.length || 0} Questions
+                            </Typography>
+                        </div>
+                        {item.xpReward > 0 && (
+                            <Chip value={`${item.xpReward} XP`} size="sm" variant="ghost" color="amber" className="rounded-full" />
                         )}
                     </div>
-                    <div className="ml-3">
-                        <h3 className="font-semibold text-sm text-gray-800">
-                            {item.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                            {item.practiceSubject} • {item.practiceDifficulty} • {item.quizQuestions?.length || 0} Questions
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-1">
-                    {item.completed && <CheckCircleIcon className="h-5 w-5 text-green-500" />}
-                    {item.xpReward > 0 && (
-                        <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
-                            {item.xpReward} XP
-                        </span>
+
+                    {!locked && !item.completed && (
+                        <div className="mt-3">
+                            <Button size="sm" color="purple" className="flex items-center gap-2" onClick={onStartQuiz}>
+                                <SparklesIcon className="h-3 w-3" />
+                                Start Quiz
+                            </Button>
+                        </div>
+                    )}
+                    {locked && (
+                        <Typography variant="small" className="mt-2 flex items-center gap-1 font-normal text-gray-400">
+                            <LockClosedIcon className="h-3 w-3" /> Locked
+                        </Typography>
                     )}
                 </div>
             </div>
-            {item.description && (
-                <p className="text-xs text-gray-600 mt-2 ml-11">{item.description}</p>
-            )}
-            {!locked && !item.completed && (
-                <div className="flex items-center gap-2 mt-3 ml-11">
-                    <button
-                        onClick={onStartQuiz}
-                        className="flex items-center text-xs px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:from-purple-600 hover:to-indigo-600 transition-all font-medium shadow-sm"
-                    >
-                        <SparklesIcon className="h-3.5 w-3.5 mr-1.5" />
-                        {(item.quizQuestions?.length || 0) > 0 ? 'Take Quiz to Unlock' : 'Open Checkpoint'}
-                    </button>
-                </div>
-            )}
-            {locked && (
-                <div className="flex items-center gap-2 mt-3 ml-11 text-xs text-gray-400">
-                    <LockClosedIcon className="h-3 w-3" />
-                    Complete previous checkpoint to unlock
-                </div>
-            )}
-        </div>
-    </div>
+        </CardBody>
+    </Card>
 );
 
 export { StudyPlanViewerPage };
