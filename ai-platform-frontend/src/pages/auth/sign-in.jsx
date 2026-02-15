@@ -8,12 +8,10 @@ import {
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useTheme } from "@/context/ThemeContext";
 import { GoogleLogin } from "@react-oauth/google";
 import { motion } from "framer-motion";
 
 export function SignIn() {
-  const { theme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -92,38 +90,27 @@ export function SignIn() {
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden">
-      
+    <section className="relative min-h-[calc(100vh-80px)] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden bg-[#050505]">
+
       {/* === Autofill Fix Style Block === */}
-      {/* Changed to #18181b (Zinc-900) - A Neutral Gray (No Blue Tint) */}
       <style>{`
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
         input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 1000px ${theme === 'dark' ? '#18181b' : '#ffffff'} inset !important;
-          -webkit-text-fill-color: ${theme === 'dark' ? '#ffffff' : '#000000'} !important;
+          -webkit-box-shadow: 0 0 0 1000px #18181b inset !important;
+          -webkit-text-fill-color: #ffffff !important;
           transition: background-color 5000s ease-in-out 0s;
         }
       `}</style>
 
-      {/* === Background Gradient & Animated Glow === */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-100 dark:from-gray-900 dark:via-gray-900/95 dark:to-gray-900 transition-colors duration-500" />
-      <motion.div 
-        animate={{ y: [0, -20, 0], opacity: [0.5, 0.8, 0.5] }}
-        transition={{ duration: 6, repeat: Infinity, repeatType: "reverse" }}
-        className="pointer-events-none absolute top-[-10%] right-[-5%] h-96 w-96 bg-blue-500/25 blur-[140px] rounded-full" 
-      />
-      <motion.div 
-        animate={{ y: [0, 20, 0], opacity: [0.3, 0.6, 0.3] }}
-        transition={{ duration: 8, repeat: Infinity, repeatType: "reverse" }}
-        className="pointer-events-none absolute bottom-[-15%] left-[-10%] h-96 w-96 bg-purple-500/20 blur-[140px] rounded-full" 
-      />
-      <div className="pointer-events-none absolute top-1/3 left-[30%] h-64 w-64 bg-indigo-500/20 blur-[100px] rounded-full" />
+      {/* === Background Gradients & Grid === */}
+      <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0"></div>
+      <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Left Form */}
       <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -131,14 +118,13 @@ export function SignIn() {
         >
           <Typography
             variant="h2"
-            className="font-bold mb-2 text-3xl md:text-4xl text-gray-900 dark:text-gray-100"
+            className="font-bold mb-2 text-3xl md:text-4xl text-white tracking-tight"
           >
             Sign In
           </Typography>
           <Typography
             variant="paragraph"
-            color={theme === "dark" ? "white" : "blue-gray"}
-            className="text-lg font-normal opacity-90"
+            className="text-lg font-medium text-slate-400 opacity-90"
           >
             Enter your email and password to sign in.
           </Typography>
@@ -149,7 +135,7 @@ export function SignIn() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           onSubmit={handleSubmit}
-          className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-white/70 dark:bg-gray-900/40 border border-white/40 dark:border-gray-700 rounded-2xl p-6 shadow-lg"
+          className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-[#0a0a0c]/80 border border-white/5 rounded-2xl p-6 shadow-2xl"
         >
           {success && <Alert color="green">{success}</Alert>}
           {error && <Alert color="red">{error}</Alert>}
@@ -161,9 +147,12 @@ export function SignIn() {
               label="Your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              color={theme === "dark" ? "white" : "gray"}
+              color="white"
               autoComplete="email"
-              className="!bg-transparent"
+              className="!bg-transparent focus:!border-white/20 !text-white"
+              labelProps={{
+                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+              }}
             />
 
             <Input
@@ -172,38 +161,39 @@ export function SignIn() {
               label="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              color={theme === "dark" ? "white" : "gray"}
+              color="white"
               autoComplete="current-password"
-              className="!bg-transparent"
+              className="!bg-transparent focus:!border-white/20 !text-white"
+              labelProps={{
+                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+              }}
             />
           </div>
 
           <Button
             type="submit"
-            className="mt-3"
+            className="mt-3 bg-white text-black hover:scale-[1.02] shadow-none hover:shadow-lg transition-all"
             fullWidth
             disabled={submitting || googleSubmitting}
-            variant={theme === "dark" ? "outlined" : "gradient"}
-            color={theme === "dark" ? "white" : "blue"}
           >
             {submitting ? "Signing in..." : "Sign In"}
           </Button>
 
           <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-gray-400"></div>
-            <span className="flex-shrink mx-4 text-gray-400">OR</span>
-            <div className="flex-grow border-t border-gray-400"></div>
+            <div className="flex-grow border-t border-white/10"></div>
+            <span className="flex-shrink mx-4 text-slate-500 text-sm">OR</span>
+            <div className="flex-grow border-t border-white/10"></div>
           </div>
 
           <div className="flex justify-center">
             {googleSubmitting ? (
-              <Spinner className="h-8 w-8" />
+              <Spinner className="h-8 w-8 text-white" />
             ) : (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
                   onError={handleGoogleError}
-                  theme={theme === "dark" ? "filled_black" : "outline"}
+                  theme="filled_black"
                   shape="pill"
                   width="280px"
                   text="signin_with"
@@ -214,13 +204,12 @@ export function SignIn() {
 
           <Typography
             variant="paragraph"
-            color={theme === "dark" ? "white" : "blue-gray"}
-            className="text-center font-medium mt-2"
+            className="text-center font-medium mt-2 text-slate-400"
           >
             Not registered?
             <Link
               to="/auth/sign-up"
-              className="text-gray-900 dark:text-blue-400 ml-1"
+              className="text-blue-400 hover:text-blue-300 ml-1 transition-colors"
             >
               Create account
             </Link>
@@ -229,19 +218,19 @@ export function SignIn() {
       </div>
 
       {/* Right Image */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8 }}
         className="hidden lg:flex w-2/5 justify-center"
       >
-        <div className="relative w-full h-[80vh] rounded-3xl overflow-hidden shadow-2xl">
+        <div className="relative w-full h-[80vh] rounded-[2rem] overflow-hidden shadow-2xl border border-white/5">
           <img
             src="/img/pattern.png"
             alt="Pattern"
-            className="w-full h-full object-cover opacity-90"
+            className="w-full h-full object-cover opacity-80"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent/10" />
         </div>
       </motion.div>
     </section>
