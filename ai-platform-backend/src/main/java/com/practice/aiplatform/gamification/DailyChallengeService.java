@@ -1,5 +1,7 @@
 package com.practice.aiplatform.gamification;
 
+import com.practice.aiplatform.studyplan.StudyPlan;
+import com.practice.aiplatform.studyplan.StudyPlanRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -15,13 +17,16 @@ public class DailyChallengeService {
 
     private final DailyChallengeRepository dailyChallengeRepository;
     private final StudentRepository studentRepository;
+    private final StudyPlanRepository studyPlanRepository;
     private final XpService xpService;
 
     public DailyChallengeService(DailyChallengeRepository dailyChallengeRepository,
             StudentRepository studentRepository,
+            StudyPlanRepository studyPlanRepository,
             XpService xpService) {
         this.dailyChallengeRepository = dailyChallengeRepository;
         this.studentRepository = studentRepository;
+        this.studyPlanRepository = studyPlanRepository;
         this.xpService = xpService;
     }
 
@@ -40,7 +45,18 @@ public class DailyChallengeService {
     public List<DailyChallenge> generateDailyChallenges(Student student) {
         // Generate 3 random challenges for the day
         createChallenge(student, "Quiz Master", "Complete 1 Quiz with >80% score", 50, 1);
-        createChallenge(student, "Fast Learner", "Complete 3 Practice Questions", 30, 3);
+        createChallenge(student, "Quiz Master", "Complete 1 Quiz with >80% score", 50, 1);
+
+        // Fusion Feature: Context-Aware Challenge
+        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+        if (!plans.isEmpty() && !plans.get(0).isCompleted()) {
+            StudyPlan activePlan = plans.get(0);
+            createChallenge(student, "Focus: " + activePlan.getTopic(),
+                    "Complete 2 items in your '" + activePlan.getTitle() + "' plan", 60, 2);
+        } else {
+            createChallenge(student, "Fast Learner", "Complete 3 Practice Questions", 30, 3);
+        }
+
         createChallenge(student, "Dedication", "Login and view a Study Plan", 20, 1);
 
         return dailyChallengeRepository.findByStudentIdAndDate(student.getId(), LocalDate.now());

@@ -206,7 +206,9 @@ public class StudyPlanService {
         }
 
         int xpEarned = 0;
-        boolean passed = correctCount == questions.size();
+        // Fusion Feature: Gatekeeper - Pass if score >= 80%
+        double score = (double) correctCount / questions.size();
+        boolean passed = score >= 0.8;
 
         if (passed && !item.isCompleted()) {
             // Mark item complete and award XP

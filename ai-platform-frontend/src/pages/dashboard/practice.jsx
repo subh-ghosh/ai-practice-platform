@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "@/config";
 import {
@@ -103,6 +104,19 @@ export function Practice() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedHistory, setSelectedHistory] = useState(null);
+
+  // Deep Linking
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const pSubject = searchParams.get("subject");
+    const pTopic = searchParams.get("topic");
+    const pDifficulty = searchParams.get("difficulty");
+
+    if (pSubject) setSubject(pSubject);
+    if (pTopic) setTopic(pTopic);
+    if (pDifficulty) setDifficulty(pDifficulty);
+  }, [searchParams]);
 
   // Generator State
   const [subject, setSubject] = useState("Java");

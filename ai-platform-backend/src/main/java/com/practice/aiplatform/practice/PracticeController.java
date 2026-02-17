@@ -3,7 +3,8 @@ package com.practice.aiplatform.practice;
 import com.practice.aiplatform.ai.GeminiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
-import com.practice.aiplatform.user.UsageService; // 👈 --- ADD THIS IMPORT
+import com.practice.aiplatform.user.UsageService;
+import com.practice.aiplatform.studyplan.StudyPlanService; // Fusion Feature
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,9 @@ public class PracticeController {
     @Autowired
     private UsageService usageService;
     @Autowired
-    private com.practice.aiplatform.gamification.XpService xpService; // 👈 --- ADD THIS
+    private com.practice.aiplatform.gamification.XpService xpService;
+    @Autowired
+    private StudyPlanService studyPlanService; // Fusion Feature
 
     @PostMapping("/submit")
     public Mono<ResponseEntity<Answer>> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
@@ -109,6 +112,23 @@ public class PracticeController {
 
                     savedAnswer.setIsCorrect(evaluationStatus.equals("CORRECT"));
                     savedAnswer.setEvaluationStatus(evaluationStatus);
+
+                    // Fusion Feature: The Healer
+                    // If answer is INCORRECT and difficulty is not Beginner, generate a recovery
+                    // plan
+                    if ("INCORRECT".equals(evaluationStatus)
+                            && !"Beginner".equalsIgnoreCase(question.getDifficulty())) {
+                        String recoveryMsg = "\n\n[The Healer] ❤️‍🩹 We detected some difficulty. A personalized 1-day Recovery Plan is being built for you. Check 'My Plans' in a few seconds!";
+                        cleanFeedback += recoveryMsg;
+
+                        // Fire-and-forget generation
+                        studyPlanService.generateStudyPlan(
+                                student.getEmail(),
+                                question.getTopic() + " Recovery",
+                                "Beginner",
+                                1).subscribe();
+                    }
+
                     savedAnswer.setFeedback(cleanFeedback);
                     savedAnswer.setHint(hint);
                     Answer finalAnswer = answerRepository.save(savedAnswer);

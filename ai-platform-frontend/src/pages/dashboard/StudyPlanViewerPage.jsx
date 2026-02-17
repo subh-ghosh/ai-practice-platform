@@ -220,10 +220,10 @@ const StudyPlanViewerPage = () => {
                                 variant="ghost"
                                 value={plan.difficulty}
                                 className={`rounded-full ${plan.difficulty === 'Advanced'
-                                        ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
-                                        : plan.difficulty === 'Intermediate'
-                                            ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
-                                            : 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
+                                    ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+                                    : plan.difficulty === 'Intermediate'
+                                        ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
+                                        : 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300'
                                     }`}
                             />
                             <Chip size="sm" variant="ghost" value={`${plan.items?.length || 0} items`} icon={<BookOpenIcon />} className="rounded-full dark:text-gray-300" />
@@ -306,6 +306,7 @@ const StudyPlanViewerPage = () => {
                                             locked={locked}
                                             onPlay={() => !locked && setActiveVideo(item.videoId)}
                                             onComplete={() => !locked && handleMarkComplete(item.id)}
+                                            onPractice={() => navigate(`/dashboard/practice?subject=${encodeURIComponent(plan.title)}&topic=${encodeURIComponent(item.title)}&difficulty=${encodeURIComponent(plan.difficulty)}`)}
                                         />
                                     ) : (
                                         <PracticeCard
@@ -473,7 +474,7 @@ const StudyPlanViewerPage = () => {
 };
 
 // --- Video Card Component ---
-const VideoCard = ({ item, locked, onPlay, onComplete }) => (
+const VideoCard = ({ item, locked, onPlay, onComplete, onPractice }) => (
     <Card className={`border shadow-sm transition-all bg-white dark:bg-gray-900/50 backdrop-blur-md ${locked ? 'opacity-50 grayscale border-gray-200 dark:border-gray-800' : 'hover:shadow-md border-blue-gray-100 dark:border-gray-800'}`}>
         <CardBody className="p-0 flex flex-col sm:flex-row">
             {/* Thumbnail */}
@@ -523,6 +524,9 @@ const VideoCard = ({ item, locked, onPlay, onComplete }) => (
                         {item.xpReward > 0 && !item.completed && (
                             <Chip value={`${item.xpReward} XP`} size="sm" variant="ghost" color="amber" className="ml-auto rounded-full" />
                         )}
+                        <Button size="sm" variant="outlined" color="blue" className="flex items-center gap-1 py-1 px-2 border-blue-100 text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:border-blue-900/50 dark:text-blue-400" onClick={onPractice}>
+                            <SparklesIcon className="h-3 w-3" /> Practice
+                        </Button>
                     </div>
                 )}
             </div>
