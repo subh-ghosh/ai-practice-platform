@@ -571,13 +571,17 @@ public class StudyPlanService {
 
             String analysisPrompt = String.format(
                     """
-                            Analyze this syllabus/document thoroughly. Your goal is to create a COMPREHENSIVE day-by-day study schedule for exactly %d days.
+                            Analyze this syllabus/document thoroughly. Your goal is to create a COMPREHENSIVE day-by-day study schedule for exactly %d days that guarantees 100%% coverage of all course material.
 
-                            Instructions:
-                            1. Extract the full course title, a detailed description, and difficulty level.
-                            2. Distribute the entire syllabus content across %d days. EVERY DAY must have unique content to study.
-                            3. For each day, provide a list of specific lessons.
-                            4. For each lesson, provide a highly specific search query for a high-quality educational video on YouTube (e.g., "Java Stream API tutorial for beginners" instead of just "Java").
+                            Strict Instructions:
+                            1. Identify EVERY individual topic and sub-topic mentioned in the syllabus.
+                            2. Ensure that EVERY identified sub-topic has AT LEAST one dedicated lesson with its own YouTube video search query.
+                            3. Distribute these lessons across %d days. Every day must have content.
+                            4. Instruction for YouTube Search Queries:
+                               - Refine each query to prefer long-duration videos (e.g., append "full course", "comprehensive lecture", or "full length").
+                               - Strongly prefer "whiteboard" style explanations (e.g., append "whiteboard tutorial").
+                               - Include "lecture" in the query where appropriate.
+                               - Try to identify a top-tier educator for this subject from the syllabus and use them consistently for multiple related topics to maintain teaching style continuity.
 
                             Return ONLY valid JSON with this structure:
                             {
@@ -589,9 +593,9 @@ public class StudyPlanService {
                                   "dayNumber": 1,
                                   "lessons": [
                                     {
-                                      "title": "Granular Topic Title",
-                                      "searchQuery": "exact refined search query for this specific topic",
-                                      "description": "Detailed explanation of what the student will learn today"
+                                      "title": "Specific Topic Title",
+                                      "searchQuery": "refined search query favoring long whiteboard lectures and educator consistency",
+                                      "description": "What the student will learn"
                                     }
                                   ]
                                 }
