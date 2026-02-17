@@ -142,6 +142,10 @@ export function Practice() {
 
   // Fusion Feature: Smart Suggestion
   const [suggestion, setSuggestion] = useState(null);
+
+  // Fusion Feature: Smart Recommendations (Recent/Weak Topics)
+  const [recommendations, setRecommendations] = useState(null);
+
   useEffect(() => {
     const fetchSuggestion = async () => {
       try {
@@ -155,7 +159,20 @@ export function Practice() {
         console.error("Failed to load suggestion", err);
       }
     };
+    const fetchRecommendations = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get(`${BASE_URL}/api/stats/recommendations`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.data) setRecommendations(res.data);
+      } catch (err) {
+        console.error("Failed to load recommendations", err);
+      }
+    };
     fetchSuggestion();
+    fetchRecommendations();
   }, []);
 
   useEffect(() => {
