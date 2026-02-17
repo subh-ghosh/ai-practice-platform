@@ -134,17 +134,24 @@ public class PracticeController {
                     Answer finalAnswer = answerRepository.save(savedAnswer);
 
                     // Award XP
+                    int planItemsCompleted = 0;
                     if (evaluationStatus.equals("CORRECT")) {
                         xpService.awardXp(student, 10);
 
                         // Fusion Feature: Smart Match
                         // Check if this practice fulfills a study plan item
-                        studyPlanService.markExternalPracticeAsComplete(
+                        planItemsCompleted = studyPlanService.markExternalPracticeAsComplete(
                                 student.getEmail(),
                                 question.getTopic(),
                                 question.getDifficulty());
                     } else if (evaluationStatus.equals("CLOSE")) {
                         xpService.awardXp(student, 5);
+                    }
+
+                    // Append plan completion info to feedback for frontend toast
+                    if (planItemsCompleted > 0) {
+                        String planMsg = "\n\n[PLAN_UPDATE:" + planItemsCompleted + "]";
+                        finalAnswer.setFeedback(finalAnswer.getFeedback() + planMsg);
                     }
 
                     return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(finalAnswer));

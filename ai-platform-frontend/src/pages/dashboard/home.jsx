@@ -30,6 +30,7 @@ import {
   CurrencyDollarIcon,
 } from "@heroicons/react/24/solid";
 import DailyChallengesCard from "../../components/gamification/DailyChallengesCard";
+import TodaysFocus from "./TodaysFocus";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
@@ -453,10 +454,10 @@ export function Home() {
 
           <div className="xl:col-span-2">
 
-            {/* Daily Challenges Widget */}
+            {/* Daily Challenges & Today's Focus Widget */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 mb-6">
+              <TodaysFocus user={user} />
               <DailyChallengesCard />
-              <RecommendationsCard />
             </div>
 
             {/* Recent Activity Table */}

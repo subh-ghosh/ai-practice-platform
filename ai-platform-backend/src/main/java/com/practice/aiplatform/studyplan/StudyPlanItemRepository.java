@@ -14,4 +14,8 @@ public interface StudyPlanItemRepository extends JpaRepository<StudyPlanItem, Lo
     // Find the first incomplete practice item for the student's active plan
     @Query("SELECT i FROM StudyPlanItem i JOIN i.studyPlan p WHERE p.student.id = :studentId AND i.itemType = 'PRACTICE' AND i.isCompleted = false AND p.isCompleted = false ORDER BY p.createdAt DESC, i.dayNumber ASC, i.orderIndex ASC")
     List<StudyPlanItem> findNextPracticeItems(@Param("studentId") Long studentId);
+
+    // Find all items from active (non-completed) plans for a student
+    @Query("SELECT i FROM StudyPlanItem i JOIN i.studyPlan p WHERE p.student.id = :studentId AND p.isCompleted = false")
+    List<StudyPlanItem> findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(@Param("studentId") Long studentId);
 }

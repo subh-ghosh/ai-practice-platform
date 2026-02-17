@@ -317,6 +317,10 @@ const StudyPlanViewerPage = () => {
                                             item={item}
                                             locked={locked}
                                             onStartQuiz={() => !locked && handleStartQuiz(item)}
+                                            onPractice={() => {
+                                                const pTopic = item.practiceTopic || item.title;
+                                                navigate(`/dashboard/practice?subject=${encodeURIComponent(plan.topic)}&topic=${encodeURIComponent(pTopic)}&difficulty=${encodeURIComponent(plan.difficulty)}`);
+                                            }}
                                         />
                                     );
                                 })
@@ -538,7 +542,7 @@ const VideoCard = ({ item, locked, onPlay, onComplete, onPractice }) => (
 );
 
 // --- Practice Card Component ---
-const PracticeCard = ({ item, locked, onStartQuiz }) => (
+const PracticeCard = ({ item, locked, onStartQuiz, onPractice }) => (
     <Card className={`border shadow-sm transition-all bg-white dark:bg-gray-900/50 backdrop-blur-md ${locked ? 'opacity-50 grayscale border-gray-200 dark:border-gray-800' : 'hover:shadow-md border-purple-100 dark:border-purple-900/30 bg-purple-50/10 dark:bg-purple-900/10'}`}>
         <CardBody className="p-4">
             <div className="flex items-start gap-4">
@@ -562,10 +566,14 @@ const PracticeCard = ({ item, locked, onStartQuiz }) => (
                     </div>
 
                     {!locked && !item.completed && (
-                        <div className="mt-3">
+                        <div className="mt-3 flex flex-wrap gap-2">
                             <Button size="sm" color="purple" className="flex items-center gap-2" onClick={onStartQuiz}>
                                 <SparklesIcon className="h-3 w-3" />
                                 Start Quiz
+                            </Button>
+                            <Button size="sm" variant="outlined" color="blue" className="flex items-center gap-2 border-blue-100 text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:border-blue-900/50 dark:text-blue-400" onClick={onPractice}>
+                                <SparklesIcon className="h-3 w-3" />
+                                Practice Infinite
                             </Button>
                         </div>
                     )}
@@ -577,7 +585,7 @@ const PracticeCard = ({ item, locked, onStartQuiz }) => (
                 </div>
             </div>
         </CardBody>
-    </Card>
+    </Card >
 );
 
 export { StudyPlanViewerPage };

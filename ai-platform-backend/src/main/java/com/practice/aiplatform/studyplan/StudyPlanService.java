@@ -512,29 +512,98 @@ public class StudyPlanService {
 
     // Fusion Feature: Smart Match
     // If a student practices a topic externally, mark it complete in the plan
-    public void markExternalPracticeAsComplete(String userEmail, String topic, String difficulty) {
+    // Returns the number of items marked complete
+    public int markExternalPracticeAsComplete(String userEmail, String topic, String difficulty) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         // Find items that match topic AND are incomplete
-        // We use a loose match for topic
         List<StudyPlanItem> matches = studyPlanItemRepository.findMatchingIncompleteItems(student.getId(), topic);
 
+        int completed = 0;
         for (StudyPlanItem item : matches) {
-            // Optional: Check difficulty? For now, we'll be generous and just match topic.
-            // But maybe we should check if practice difficulty >= item difficulty?
-            // tailored for MVP: just match topic.
-
             item.setCompleted(true);
+            completed++;
 
-            // Award XP (if not already awarded by the practice itself, but here we treat it
-            // as Plan XP)
             int xp = item.getXpReward() > 0 ? item.getXpReward() : PRACTICE_XP;
             student.setTotalXp(student.getTotalXp() + xp);
 
             recalculateProgress(item.getStudyPlan());
-            studyPlanRepository.save(item.getStudyPlan()); // Cascades item save
+            studyPlanRepository.save(item.getStudyPlan());
         }
         studentRepository.save(student);
+        return completed;
+    }
+
+    // ===== Active Context for Practice Page Fusion =====
+
+    public record ActiveContextDto(
+            Long planId,
+            String planTitle,
+            int progress,
+            int currentDay,
+            int totalDays,
+            List<ActiveContextItemDto> todayItems,
+            SuggestedPracticeDto nextPractice) {
+    }
+
+    public record ActiveContextItemDto(
+            Long itemId,
+            String title,
+            String type,
+            boolean isCompleted,
+            String practiceTopic,
+            String practiceSubject,
+            String practiceDifficulty) {
+    }
+
+    public ActiveContextDto getActiveContext(String userEmail) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        // Get the most recent active (non-completed) plan
+        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+        StudyPlan activePlan = plans.stream()
+                .filter(p -> !p.isCompleted())
+                .findFirst()
+                .orElse(null);
+
+        if (activePlan == null)
+            return null;
+
+        // Determine current day
+        int totalDays = activePlan.getDurationDays();
+
+        // Find the current day = the day of the first incomplete item
+        int currentDay = activePlan.getItems().stream()
+                .filter(item -> !item.isCompleted())
+                .map(StudyPlanItem::getDayNumber)
+                .min(Integer::compareTo)
+                .orElse(totalDays);
+
+        // Get today's items
+        List<ActiveContextItemDto> todayItems = activePlan.getItems().stream()
+                .filter(item -> item.getDayNumber() == currentDay)
+                .map(item -> new ActiveContextItemDto(
+                        item.getId(),
+                        item.getTitle(),
+                        item.getItemType(),
+                        item.isCompleted(),
+                        item.getPracticeTopic(),
+                        item.getPracticeSubject(),
+                        item.getPracticeDifficulty()))
+                .toList();
+
+        // Get next suggested practice
+        SuggestedPracticeDto nextPractice = getSuggestedPracticeItem(userEmail);
+
+        return new ActiveContextDto(
+                activePlan.getId(),
+                activePlan.getTitle(),
+                activePlan.getProgress(),
+                currentDay,
+                totalDays,
+                todayItems,
+                nextPractice);
     }
 }

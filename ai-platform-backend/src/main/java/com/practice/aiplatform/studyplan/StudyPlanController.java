@@ -129,4 +129,19 @@ public class StudyPlanController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    // ===== ACTIVE CONTEXT FOR PRACTICE PAGE FUSION =====
+
+    @GetMapping("/active-context")
+    public ResponseEntity<?> getActiveContext(Principal principal) {
+        try {
+            var context = studyPlanService.getActiveContext(principal.getName());
+            if (context == null) {
+                return ResponseEntity.ok(Map.of("active", false));
+            }
+            return ResponseEntity.ok(context);
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("active", false));
+        }
+    }
 }

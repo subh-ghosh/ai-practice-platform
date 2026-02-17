@@ -23,6 +23,7 @@ import {
     TrashIcon,
 } from '@heroicons/react/24/solid';
 import { useTheme } from "@/context/ThemeContext.jsx";
+import RecommendationCard from "@/components/RecommendationCard";
 
 const StudyPlanBuilderPage = () => {
     const [topic, setTopic] = useState('');
@@ -58,10 +59,11 @@ const StudyPlanBuilderPage = () => {
 
     const fetchRecommendations = async () => {
         try {
-            const res = await api.get('/stats/recommendations');
+            const res = await api.get('/recommendations');
             setRecommendations(res.data);
         } catch (err) {
             console.error("Failed to load recommendations:", err);
+            setRecommendations([]);
         }
     };
 
@@ -180,27 +182,19 @@ const StudyPlanBuilderPage = () => {
                                         disabled={loading}
                                     />
                                     {/* Smart Suggestions */}
-                                    <div className="mt-2 flex flex-wrap gap-2 animate-fade-in">
-                                        {recommendations && (
+                                    {/* Smart Suggestions */}
+                                    <div className="mt-4 flex flex-wrap gap-3 animate-fade-in">
+                                        {recommendations && recommendations.length > 0 && (
                                             <>
-                                                {recommendations.weakTopics.map(t => (
-                                                    <Chip
-                                                        key={`weak-${t}`}
-                                                        value={`Improve: ${t}`}
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="cursor-pointer hover:bg-red-100 bg-red-50 text-red-900 border border-red-200"
-                                                        onClick={() => setTopic(t)}
-                                                    />
-                                                ))}
-                                                {recommendations.recentTopics.slice(0, 3).map(t => (
-                                                    <Chip
-                                                        key={`recent-${t}`}
-                                                        value={t}
-                                                        size="sm"
-                                                        variant="ghost"
-                                                        className="cursor-pointer hover:bg-blue-100 bg-blue-50 text-blue-900 border border-blue-200"
-                                                        onClick={() => setTopic(t)}
+                                                <Typography variant="small" className="w-full font-bold text-blue-gray-500 dark:text-gray-400 mb-1">
+                                                    Recommended for you:
+                                                </Typography>
+                                                {recommendations.slice(0, 4).map((rec, idx) => (
+                                                    <RecommendationCard
+                                                        key={idx}
+                                                        recommendation={{ ...rec, action: "Create Plan" }}
+                                                        compact={true}
+                                                        onAction={(r) => setTopic(r.topic)}
                                                     />
                                                 ))}
                                             </>
