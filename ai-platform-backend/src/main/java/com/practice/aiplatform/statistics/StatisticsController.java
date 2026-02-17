@@ -52,4 +52,11 @@ public class StatisticsController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<StatisticsService.SmartRecommendationDto> getRecommendations(Principal principal) {
+        StatisticsService.SmartRecommendationDto recommendations = statisticsService
+                .getSmartRecommendations(principal.getName());
+        return ResponseEntity.ok(recommendations);
+    }
 }

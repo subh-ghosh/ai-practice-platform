@@ -136,6 +136,13 @@ public class PracticeController {
                     // Award XP
                     if (evaluationStatus.equals("CORRECT")) {
                         xpService.awardXp(student, 10);
+
+                        // Fusion Feature: Smart Match
+                        // Check if this practice fulfills a study plan item
+                        studyPlanService.markExternalPracticeAsComplete(
+                                student.getEmail(),
+                                question.getTopic(),
+                                question.getDifficulty());
                     } else if (evaluationStatus.equals("CLOSE")) {
                         xpService.awardXp(student, 5);
                     }
@@ -215,5 +222,12 @@ public class PracticeController {
                 student.getFirstName(),
                 historyList);
         return ResponseEntity.ok(historyDto);
+    }
+
+    @GetMapping("/suggestion") // Fusion Feature: Smart Suggestion
+    public ResponseEntity<StudyPlanService.SuggestedPracticeDto> getSuggestion(Principal principal) {
+        StudyPlanService.SuggestedPracticeDto suggestion = studyPlanService
+                .getSuggestedPracticeItem(principal.getName());
+        return ResponseEntity.ok(suggestion);
     }
 }

@@ -21,17 +21,27 @@ public class AiController {
 
     @Autowired
     public AiController(GeminiService geminiService,
-                        QuestionRepository questionRepository,
-                        StudentRepository studentRepository) {
+            QuestionRepository questionRepository,
+            StudentRepository studentRepository) {
         this.geminiService = geminiService;
         this.questionRepository = questionRepository;
         this.studentRepository = studentRepository;
     }
 
     // Define Records inside to avoid missing file errors
-    public record GenerateQuestionRequest(String subject, String topic, String difficulty) {}
-    public record HintRequest(Long questionId) {}
-    public record AnswerRequest(Long questionId) {}
+    public record GenerateQuestionRequest(
+            String subject,
+            String topic,
+            String difficulty,
+            Long previousQuestionId,
+            String previousStatus) {
+    }
+
+    public record HintRequest(Long questionId) {
+    }
+
+    public record AnswerRequest(Long questionId) {
+    }
 
     @PostMapping("/generate-question")
     public ResponseEntity<?> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
@@ -40,12 +50,20 @@ public class AiController {
             Student student = studentRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
+            String previousQuestionText = null;
+            if (request.previousQuestionId() != null) {
+                previousQuestionText = questionRepository.findById(request.previousQuestionId())
+                        .map(Question::getQuestionText)
+                        .orElse(null);
+            }
+
             // Assume generateQuestion returns a Mono, so we block() to get the String
             String questionText = geminiService.generateQuestion(
-                request.subject(), 
-                request.difficulty(), 
-                request.topic()
-            ).block(); 
+                    request.subject(),
+                    request.difficulty(),
+                    request.topic(),
+                    previousQuestionText,
+                    request.previousStatus()).block();
 
             Question newQuestion = new Question();
             newQuestion.setQuestionText(questionText);
@@ -53,7 +71,7 @@ public class AiController {
             newQuestion.setSubject(request.subject());
             newQuestion.setTopic(request.topic());
             newQuestion.setDifficulty(request.difficulty());
-            
+
             Question savedQuestion = questionRepository.save(newQuestion);
             return ResponseEntity.ok(savedQuestion);
 
@@ -80,8 +98,7 @@ public class AiController {
                     question.getQuestionText(),
                     question.getSubject(),
                     question.getTopic(),
-                    question.getDifficulty()
-            ).block();
+                    question.getDifficulty()).block();
 
             return ResponseEntity.ok(hint);
 
@@ -109,8 +126,7 @@ public class AiController {
                     question.getQuestionText(),
                     question.getSubject(),
                     question.getTopic(),
-                    question.getDifficulty()
-            ).block();
+                    question.getDifficulty()).block();
 
             return ResponseEntity.ok(correctAnswer);
 

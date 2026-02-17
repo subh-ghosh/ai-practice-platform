@@ -36,6 +36,9 @@ const StudyPlanBuilderPage = () => {
     const { theme } = useTheme();
     const [loadingStage, setLoadingStage] = useState(0);
 
+    // Fusion Feature: Smart Suggestions
+    const [recommendations, setRecommendations] = useState(null);
+
     useEffect(() => {
         let interval;
         if (loading) {
@@ -50,7 +53,17 @@ const StudyPlanBuilderPage = () => {
 
     useEffect(() => {
         fetchHistory();
+        fetchRecommendations();
     }, []);
+
+    const fetchRecommendations = async () => {
+        try {
+            const res = await api.get('/stats/recommendations');
+            setRecommendations(res.data);
+        } catch (err) {
+            console.error("Failed to load recommendations:", err);
+        }
+    };
 
     const fetchHistory = async () => {
         try {
@@ -166,6 +179,33 @@ const StudyPlanBuilderPage = () => {
                                         }}
                                         disabled={loading}
                                     />
+                                    {/* Smart Suggestions */}
+                                    <div className="mt-2 flex flex-wrap gap-2 animate-fade-in">
+                                        {recommendations && (
+                                            <>
+                                                {recommendations.weakTopics.map(t => (
+                                                    <Chip
+                                                        key={`weak-${t}`}
+                                                        value={`Improve: ${t}`}
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="cursor-pointer hover:bg-red-100 bg-red-50 text-red-900 border border-red-200"
+                                                        onClick={() => setTopic(t)}
+                                                    />
+                                                ))}
+                                                {recommendations.recentTopics.slice(0, 3).map(t => (
+                                                    <Chip
+                                                        key={`recent-${t}`}
+                                                        value={t}
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        className="cursor-pointer hover:bg-blue-100 bg-blue-50 text-blue-900 border border-blue-200"
+                                                        onClick={() => setTopic(t)}
+                                                    />
+                                                ))}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

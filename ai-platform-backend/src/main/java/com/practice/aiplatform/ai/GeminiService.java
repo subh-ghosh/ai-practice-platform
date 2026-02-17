@@ -39,12 +39,33 @@ public class GeminiService {
          * (This method remains unchanged, but is here for context)
          */
         public Mono<String> generateQuestion(String subject, String difficulty, String topic) {
+                return generateQuestion(subject, difficulty, topic, null, null);
+        }
+
+        public Mono<String> generateQuestion(String subject, String difficulty, String topic, String previousQuestion,
+                        String previousStatus) {
+
+                String contextPrompt = "";
+                if (previousQuestion != null && previousStatus != null) {
+                        if ("CORRECT".equalsIgnoreCase(previousStatus)) {
+                                contextPrompt = String.format(
+                                                "The student just ANSWERED CORRECTLY a question on this topic: \"%s\". "
+                                                                +
+                                                                "Now, generate a slightly more challenging question or explore a related advanced nuance. ",
+                                                previousQuestion);
+                        } else {
+                                contextPrompt = String.format(
+                                                "The student just FAILED a question on this topic: \"%s\". " +
+                                                                "Now, generate a SIMPLER question to help them understand the fundamental concept better. ",
+                                                previousQuestion);
+                        }
+                }
 
                 String prompt = String.format(
-                                "Generate one practice question for a %s level student on the subject of %s, focusing specifically on the topic of %s. "
+                                "%sGenerate one practice question for a %s level student on the subject of %s, focusing specifically on the topic of %s. "
                                                 +
                                                 "Only return the question text, with no other formatting or introductory phrases.",
-                                difficulty, subject, topic);
+                                contextPrompt, difficulty, subject, topic);
 
                 return callGeminiApi(prompt)
                                 .map(this::extractTextFromResponse);

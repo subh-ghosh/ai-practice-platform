@@ -135,9 +135,28 @@ export function Practice() {
   const [loadingAnswer, setLoadingAnswer] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
 
+
   // Fusion Feature: Success Predictor
   const [prediction, setPrediction] = useState(null);
   const [loadingPrediction, setLoadingPrediction] = useState(false);
+
+  // Fusion Feature: Smart Suggestion
+  const [suggestion, setSuggestion] = useState(null);
+  useEffect(() => {
+    const fetchSuggestion = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get(`${BASE_URL}/api/practice/suggestion`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.data) setSuggestion(res.data);
+      } catch (err) {
+        console.error("Failed to load suggestion", err);
+      }
+    };
+    fetchSuggestion();
+  }, []);
 
   useEffect(() => {
     const fetchPrediction = async () => {
@@ -217,6 +236,18 @@ export function Practice() {
       setError("You must be logged in to generate questions.");
       return;
     }
+
+    // Fusion Feature: Contextual Drilling & Challenges
+    // If the user just finished a question, pass that context to the AI
+    // so it can adapt the next question (harder if correct, simpler if incorrect).
+    let context = {};
+    if (question && feedback && feedback.evaluationStatus) {
+      context = {
+        previousQuestionId: question.id,
+        previousStatus: feedback.evaluationStatus
+      };
+    }
+
     setGenerating(true);
     setError("");
     setFeedback(null);
@@ -225,7 +256,12 @@ export function Practice() {
     setQuestion(null);
 
     try {
-      const response = await axios.post(`${BASE_URL}/api/ai/generate-question`, { subject, topic, difficulty }, getAuthHeaders());
+      const response = await axios.post(`${BASE_URL}/api/ai/generate-question`, {
+        subject,
+        topic,
+        difficulty,
+        ...context
+      }, getAuthHeaders());
       setQuestion(response.data);
       await fetchHistory();
     } catch (err) {
@@ -392,6 +428,26 @@ export function Practice() {
           </CardHeader>
 
           <CardBody className="p-6 md:p-8 overflow-visible">
+            {suggestion && (
+              <div onClick={() => {
+                setSubject(suggestion.subject);
+                setTopic(suggestion.topic);
+                setDifficulty(suggestion.difficulty);
+                toast.success(`Loaded: ${suggestion.topic}`);
+              }} className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 dark:bg-purple-900/20 dark:border-purple-800 rounded-xl cursor-pointer hover:shadow-md transition-all flex items-center gap-4 animate-slide-up group">
+                <div className="p-3 bg-white dark:bg-gray-800 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                  <span className="text-2xl">🎓</span>
+                </div>
+                <div>
+                  <Typography variant="small" className="font-bold text-purple-900 dark:text-purple-200">
+                    Smart Suggestion: {suggestion.topic}
+                  </Typography>
+                  <Typography variant="small" className="text-[11px] text-purple-700 dark:text-purple-300 opacity-80">
+                    Your study plan says this is next. Tap to practice it!
+                  </Typography>
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {/* Subject Input */}
               <div className="w-full">
@@ -419,6 +475,34 @@ export function Practice() {
                   className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500 placeholder:opacity-50"
                   labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
                 />
+
+                {/* Fusion Feature: Smart Quick-Fill */}
+                {recommendations && (
+                  <div className="mt-2 flex flex-wrap gap-1.5 animate-fade-in">
+                    {recommendations.weakTopics.length > 0 && (
+                      <Chip
+                        value={`Weak: ${recommendations.weakTopics[0]}`}
+                        size="sm"
+                        variant="ghost"
+                        className="cursor-pointer hover:bg-red-100 bg-red-50 text-red-900 border border-red-200 text-[10px] py-0.5 px-2"
+                        onClick={() => {
+                          setTopic(recommendations.weakTopics[0]);
+                          toast.success("Loaded weak topic for practice!");
+                        }}
+                      />
+                    )}
+                    {recommendations.recentTopics.slice(0, 2).map(t => (
+                      <Chip
+                        key={`recent-${t}`}
+                        value={t}
+                        size="sm"
+                        variant="ghost"
+                        className="cursor-pointer hover:bg-blue-100 bg-blue-50 text-blue-900 border border-blue-200 text-[10px] py-0.5 px-2"
+                        onClick={() => setTopic(t)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Difficulty Select - Modernized & Fixed Z-Index */}

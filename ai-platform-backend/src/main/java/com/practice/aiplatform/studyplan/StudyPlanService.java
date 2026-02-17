@@ -22,6 +22,7 @@ public class StudyPlanService {
     private final GeminiService geminiService;
     private final YouTubeService youTubeService;
     private final StudyPlanRepository studyPlanRepository;
+    private final StudyPlanItemRepository studyPlanItemRepository; // Fusion Feature
     private final QuizQuestionRepository quizQuestionRepository;
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
@@ -29,12 +30,14 @@ public class StudyPlanService {
     public StudyPlanService(GeminiService geminiService,
             YouTubeService youTubeService,
             StudyPlanRepository studyPlanRepository,
+            StudyPlanItemRepository studyPlanItemRepository,
             QuizQuestionRepository quizQuestionRepository,
             StudentRepository studentRepository,
             ObjectMapper objectMapper) {
         this.geminiService = geminiService;
         this.youTubeService = youTubeService;
         this.studyPlanRepository = studyPlanRepository;
+        this.studyPlanItemRepository = studyPlanItemRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.studentRepository = studentRepository;
         this.objectMapper = objectMapper;
@@ -113,7 +116,7 @@ public class StudyPlanService {
     private String createQuizPrompt(String subject, String practiceTopic, String difficulty) {
         return String.format(
                 """
-                        Generate exactly 5 multiple choice questions for a %s level student on the subject of %s, specifically on the topic: %s.
+                        Generate exactly %d multiple choice questions for a %s level student on the subject of %s, specifically on the topic: %s.
 
                         Return ONLY valid JSON with this exact structure:
                         {
@@ -130,14 +133,14 @@ public class StudyPlanService {
                         }
 
                         Rules:
-                        - Generate exactly 5 questions
+                        - Generate exactly %d questions
                         - Each question must have exactly 4 options (A, B, C, D)
                         - correctOption must be one of: "A", "B", "C", "D"
                         - Questions should test understanding, not just memorization
                         - Make wrong answers plausible but clearly wrong to a student who studied
                         - Do not include Markdown formatting (like ```json), just the raw JSON
                         """,
-                difficulty, subject, practiceTopic);
+                QUESTIONS_PER_PRACTICE, difficulty, subject, practiceTopic, QUESTIONS_PER_PRACTICE);
     }
 
     private List<QuizQuestion> parseQuizQuestions(String jsonResponse, StudyPlanItem item) {
@@ -481,5 +484,57 @@ public class StudyPlanService {
         }
 
         studyPlanRepository.delete(plan);
+    }
+
+    // ===== SMART SUGGESTION (Fusion Feature) =====
+
+    public record SuggestedPracticeDto(String topic, String subject, String difficulty, Long planId, Long itemId) {
+    }
+
+    public SuggestedPracticeDto getSuggestedPracticeItem(String userEmail) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        List<StudyPlanItem> nextItems = studyPlanItemRepository.findNextPracticeItems(student.getId());
+
+        if (nextItems.isEmpty()) {
+            return null;
+        }
+
+        StudyPlanItem nextItem = nextItems.get(0);
+        return new SuggestedPracticeDto(
+                nextItem.getPracticeTopic(),
+                nextItem.getPracticeSubject(),
+                nextItem.getPracticeDifficulty(),
+                nextItem.getStudyPlan().getId(),
+                nextItem.getId());
+    }
+
+    // Fusion Feature: Smart Match
+    // If a student practices a topic externally, mark it complete in the plan
+    public void markExternalPracticeAsComplete(String userEmail, String topic, String difficulty) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        // Find items that match topic AND are incomplete
+        // We use a loose match for topic
+        List<StudyPlanItem> matches = studyPlanItemRepository.findMatchingIncompleteItems(student.getId(), topic);
+
+        for (StudyPlanItem item : matches) {
+            // Optional: Check difficulty? For now, we'll be generous and just match topic.
+            // But maybe we should check if practice difficulty >= item difficulty?
+            // tailored for MVP: just match topic.
+
+            item.setCompleted(true);
+
+            // Award XP (if not already awarded by the practice itself, but here we treat it
+            // as Plan XP)
+            int xp = item.getXpReward() > 0 ? item.getXpReward() : PRACTICE_XP;
+            student.setTotalXp(student.getTotalXp() + xp);
+
+            recalculateProgress(item.getStudyPlan());
+            studyPlanRepository.save(item.getStudyPlan()); // Cascades item save
+        }
+        studentRepository.save(student);
     }
 }
