@@ -48,6 +48,7 @@ public class StudyPlanController {
     @PostMapping("/generate-from-syllabus")
     public ResponseEntity<?> generateStudyPlanFromSyllabus(
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            @RequestParam(value = "durationDays", defaultValue = "7") int durationDays,
             Principal principal) {
         String email = principal.getName();
         System.out.println("🔔 StudyPlanController: /generate-from-syllabus called by " + email);
@@ -60,7 +61,7 @@ public class StudyPlanController {
             // NOTE: Breaking the reactive chain block() here for simplicity in this
             // controller
             // In a full reactive stack, we'd return Mono<ResponseEntity>
-            var plan = studyPlanService.generateStudyPlanFromSyllabus(email, file).block();
+            var plan = studyPlanService.generateStudyPlanFromSyllabus(email, file, durationDays).block();
             return ResponseEntity.ok(plan);
 
         } catch (Exception e) {

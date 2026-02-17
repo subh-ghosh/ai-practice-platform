@@ -560,7 +560,7 @@ public class StudyPlanService {
     // ===== SYLLABUS UPLOAD FEATURE =====
 
     public Mono<StudyPlan> generateStudyPlanFromSyllabus(String userEmail,
-            org.springframework.web.multipart.MultipartFile file) {
+            org.springframework.web.multipart.MultipartFile file, int durationDays) {
         return Mono.fromCallable(() -> {
             Student student = studentRepository.findByEmail(userEmail)
                     .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -569,24 +569,31 @@ public class StudyPlanService {
             String mimeType = file.getContentType();
             byte[] fileData = file.getBytes();
 
-            String analysisPrompt = """
-                    Analyze this syllabus/document. Extract the course title, a brief description, the difficulty level (Beginner, Intermediate, or Advanced), and a list of specific chapters/modules.
-                    For each chapter, provide a search query I can use to find the best educational video on YouTube.
+            String analysisPrompt = String.format(
+                    """
+                            Analyze this syllabus/document thoroughly. Extract the full course title, a comprehensive description, and the most appropriate difficulty level (Beginner, Intermediate, or Advanced).
 
-                    Return ONLY valid JSON with this structure:
-                    {
-                      "title": "Course Title",
-                      "description": "Course Description",
-                      "difficulty": "Beginner",
-                      "chapters": [
-                        {
-                          "title": "Chapter 1: Title",
-                          "searchQuery": "exact refined search query for this chapter topic"
-                        }
-                        // ... more chapters
-                      ]
-                    }
-                    """;
+                            Break down the entire syllabus into detailed modules that can be covered over %d days.
+                            For each module, provide:
+                            1. A clear title.
+                            2. A detailed search query for high-quality educational videos on YouTube.
+                            3. A list of key learning objectives or topics covered in this module.
+
+                            Return ONLY valid JSON with this structure:
+                            {
+                              "title": "Full Course Title",
+                              "description": "Comprehensive Course Description",
+                              "difficulty": "Intermediate",
+                              "modules": [
+                                {
+                                  "title": "Module Title",
+                                  "searchQuery": "exact refined search query for this module's core topic",
+                                  "topics": ["Topic 1", "Topic 2"]
+                                }
+                              ]
+                            }
+                            """,
+                    durationDays);
 
             String analysisResponse = geminiService.generateRawContent(analysisPrompt, mimeType, fileData).block();
             JsonNode syllabusNode = parseJson(analysisResponse);
@@ -594,66 +601,72 @@ public class StudyPlanService {
             String title = syllabusNode.path("title").asText("Custom Study Plan");
             String description = syllabusNode.path("description").asText("Generated from uploaded syllabus");
             String difficulty = syllabusNode.path("difficulty").asText("Beginner");
-            JsonNode chapters = syllabusNode.path("chapters");
+            JsonNode modules = syllabusNode.path("modules");
 
-            if (!chapters.isArray() || chapters.isEmpty()) {
-                throw new RuntimeException("Could not extract chapters from the syllabus.");
+            if (!modules.isArray() || modules.isEmpty()) {
+                throw new RuntimeException("Could not extract modules from the syllabus.");
             }
 
-            // Step 2: Search Videos for EACH Chapter
+            // Step 2: Search Videos for EACH Module and organize into days
             List<StudyPlanItem> allItems = new ArrayList<>();
-            int dayCounter = 1;
-            int itemsPerDay = 3;
-            int totalChapters = chapters.size();
-            int estimatedDuration = (int) Math.ceil((double) totalChapters / 2); // Roughly 2 chapters per day
+            int totalModules = modules.size();
 
+            // Calculate how many modules to cover per day to fit the duration
+            double modulesPerDay = (double) totalModules / durationDays;
             int itemOrder = 1;
 
-            for (int i = 0; i < chapters.size(); i++) {
-                JsonNode chapter = chapters.get(i);
-                String chapterTitle = chapter.path("title").asText();
-                String searchQuery = chapter.path("searchQuery").asText();
+            for (int i = 0; i < totalModules; i++) {
+                JsonNode module = modules.get(i);
+                String moduleTitle = module.path("title").asText();
+                String searchQuery = module.path("searchQuery").asText();
 
-                // Search for 1 specific high-quality video
+                // Determine day number based on requested duration
+                int dayNumber = Math.min((int) (i / modulesPerDay) + 1, durationDays);
+
+                // Search for 1 specific high-quality video for this module
                 List<Map<String, String>> videos = youTubeService.searchVideos(searchQuery, 1);
 
                 if (!videos.isEmpty()) {
                     Map<String, String> video = videos.get(0);
                     StudyPlanItem item = new StudyPlanItem();
                     item.setItemType("VIDEO");
-                    item.setDayNumber(dayCounter);
+                    item.setDayNumber(dayNumber);
                     item.setOrderIndex(itemOrder++);
-                    item.setDescription("Chapter: " + chapterTitle);
+                    item.setDescription("Module: " + moduleTitle);
                     item.setVideoId(video.get("videoId"));
-                    item.setTitle(chapterTitle + ": " + video.get("title")); // Combine chapter title with video title
+                    item.setTitle(moduleTitle + ": " + video.get("title"));
                     item.setVideoUrl("https://www.youtube.com/watch?v=" + video.get("videoId"));
                     item.setThumbnailUrl(video.get("thumbnailUrl"));
                     item.setChannelName(video.get("channelTitle"));
                     item.setVideoDuration(video.get("duration"));
                     item.setXpReward(VIDEO_XP);
-                    item.setPracticeTopic(chapterTitle);
+
+                    // Use the first topic from the module if available
+                    String practiceTopic = module.path("topics").path(0).asText(moduleTitle);
+                    item.setPracticeTopic(practiceTopic);
                     item.setPracticeSubject(title);
                     item.setPracticeDifficulty(difficulty);
 
                     allItems.add(item);
                 }
 
-                // Add Practice Checkpoint every 2 videos or at end of list
-                if ((i + 1) % 2 == 0 || i == chapters.size() - 1) {
+                // Add Practice Checkpoint at the end of each module or if it's the end of a day
+                // or if it's the last module
+                boolean isLastInDay = (int) ((i + 1) / modulesPerDay) > (int) (i / modulesPerDay)
+                        || (i + 1) == totalModules;
+
+                if (isLastInDay) {
                     StudyPlanItem practice = new StudyPlanItem();
                     practice.setItemType("PRACTICE");
-                    practice.setDayNumber(dayCounter);
+                    practice.setDayNumber(dayNumber);
                     practice.setOrderIndex(itemOrder++);
-                    practice.setTitle("Checkpoint: " + chapterTitle);
+                    practice.setTitle("Checkpoint: " + moduleTitle);
                     practice.setPracticeSubject(title);
-                    practice.setPracticeTopic(chapterTitle);
+                    practice.setPracticeTopic(moduleTitle);
                     practice.setPracticeDifficulty(difficulty);
                     practice.setXpReward(PRACTICE_XP);
 
                     allItems.add(practice);
-
-                    // Increment day after practice
-                    dayCounter++;
                 }
             }
 
@@ -663,7 +676,7 @@ public class StudyPlanService {
             plan.setDescription(description);
             plan.setTopic(title);
             plan.setDifficulty(difficulty);
-            plan.setDurationDays(dayCounter - 1); // Total days used
+            plan.setDurationDays(durationDays);
             plan.setStudent(student);
             plan.setCreatedAt(LocalDateTime.now());
             plan.setItems(allItems); // Set items directly

@@ -124,6 +124,7 @@ const StudyPlanBuilderPage = () => {
 
                 const formData = new FormData();
                 formData.append('file', selectedFile);
+                formData.append('durationDays', durationDays);
 
                 const response = await api.post('/study-plans/generate-from-syllabus', formData, {
                     headers: {
@@ -267,59 +268,30 @@ const StudyPlanBuilderPage = () => {
                                                 </div>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="w-full relative">
-                                                    <Select
-                                                        size="lg"
-                                                        label="Difficulty"
-                                                        value={difficulty}
-                                                        onChange={(val) => setDifficulty(val)}
-                                                        color="blue"
-                                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
-                                                        labelProps={{
-                                                            className: "!text-blue-gray-500 dark:!text-gray-400",
-                                                        }}
-                                                        disabled={loading}
-                                                        menuProps={{
-                                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
-                                                            animate: {
-                                                                mount: { y: 0, scale: 1, opacity: 1 },
-                                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
-                                                            },
-                                                        }}
-                                                    >
-                                                        <Option value="Beginner" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Beginner</Option>
-                                                        <Option value="Intermediate" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Intermediate</Option>
-                                                        <Option value="Advanced" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Advanced</Option>
-                                                    </Select>
-                                                </div>
-                                                <div className="w-full relative">
-                                                    <Select
-                                                        size="lg"
-                                                        label="Duration"
-                                                        value={String(durationDays)}
-                                                        onChange={(val) => setDurationDays(Number(val))}
-                                                        color="blue"
-                                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
-                                                        labelProps={{
-                                                            className: "!text-blue-gray-500 dark:!text-gray-400",
-                                                        }}
-                                                        disabled={loading}
-                                                        menuProps={{
-                                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
-                                                            animate: {
-                                                                mount: { y: 0, scale: 1, opacity: 1 },
-                                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
-                                                            },
-                                                        }}
-                                                    >
-                                                        {durationOptions.map((opt) => (
-                                                            <Option key={opt.value} value={String(opt.value)} className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">
-                                                                {opt.label}
-                                                            </Option>
-                                                        ))}
-                                                    </Select>
-                                                </div>
+                                            <div className="w-full relative">
+                                                <Select
+                                                    size="lg"
+                                                    label="Difficulty"
+                                                    value={difficulty}
+                                                    onChange={(val) => setDifficulty(val)}
+                                                    color="blue"
+                                                    className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
+                                                    labelProps={{
+                                                        className: "!text-blue-gray-500 dark:!text-gray-400",
+                                                    }}
+                                                    disabled={loading}
+                                                    menuProps={{
+                                                        className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                                        animate: {
+                                                            mount: { y: 0, scale: 1, opacity: 1 },
+                                                            unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                                        },
+                                                    }}
+                                                >
+                                                    <Option value="Beginner" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Beginner</Option>
+                                                    <Option value="Intermediate" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Intermediate</Option>
+                                                    <Option value="Advanced" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Advanced</Option>
+                                                </Select>
                                             </div>
                                         </>
                                     ) : (
@@ -353,6 +325,35 @@ const StudyPlanBuilderPage = () => {
                                             )}
                                         </div>
                                     )}
+
+                                    {/* Duration Selector - Always Visible */}
+                                    <div className="w-full relative">
+                                        <Select
+                                            size="lg"
+                                            label="Course Duration"
+                                            value={String(durationDays)}
+                                            onChange={(val) => setDurationDays(Number(val))}
+                                            color="blue"
+                                            className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
+                                            labelProps={{
+                                                className: "!text-blue-gray-500 dark:!text-gray-400",
+                                            }}
+                                            disabled={loading}
+                                            menuProps={{
+                                                className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                                animate: {
+                                                    mount: { y: 0, scale: 1, opacity: 1 },
+                                                    unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                                },
+                                            }}
+                                        >
+                                            {durationOptions.map((opt) => (
+                                                <Option key={opt.value} value={String(opt.value)} className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">
+                                                    {opt.label} - {opt.sub}
+                                                </Option>
+                                            ))}
+                                        </Select>
+                                    </div>
 
 
                                     {error && (
