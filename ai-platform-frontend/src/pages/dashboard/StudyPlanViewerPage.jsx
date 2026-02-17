@@ -306,7 +306,10 @@ const StudyPlanViewerPage = () => {
                                             locked={locked}
                                             onPlay={() => !locked && setActiveVideo(item.videoId)}
                                             onComplete={() => !locked && handleMarkComplete(item.id)}
-                                            onPractice={() => navigate(`/dashboard/practice?subject=${encodeURIComponent(plan.title)}&topic=${encodeURIComponent(item.title)}&difficulty=${encodeURIComponent(plan.difficulty)}`)}
+                                            onPractice={() => {
+                                                const pTopic = item.practiceTopic || item.title;
+                                                navigate(`/dashboard/practice?subject=${encodeURIComponent(plan.topic)}&topic=${encodeURIComponent(pTopic)}&difficulty=${encodeURIComponent(plan.difficulty)}`);
+                                            }}
                                         />
                                     ) : (
                                         <PracticeCard

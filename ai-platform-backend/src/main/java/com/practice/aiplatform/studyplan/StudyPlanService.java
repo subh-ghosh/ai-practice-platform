@@ -361,7 +361,8 @@ public class StudyPlanService {
                                 {
                                   "type": "VIDEO",
                                   "videoId": "the_video_id_from_list",
-                                  "description": "Brief context about why this video and what to focus on"
+                                  "description": "Brief context about why this video and what to focus on",
+                                  "practiceTopic": "Specific concept covered in this video (e.g. 'Variables' not the video title)"
                                 },
                                 {
                                   "type": "PRACTICE",
@@ -433,6 +434,12 @@ public class StudyPlanService {
                                     item.setThumbnailUrl(videoData.get("thumbnailUrl"));
                                     item.setChannelName(videoData.get("channelTitle"));
                                     item.setVideoDuration(videoData.get("duration"));
+
+                                    // Fusion Feature: Clean Topics for Practice
+                                    String cleanTopic = itemNode.path("practiceTopic").asText(topic);
+                                    item.setPracticeTopic(cleanTopic);
+                                    item.setPracticeSubject(topic); // Use main plan topic as subject
+                                    item.setPracticeDifficulty(difficulty);
                                 } else {
                                     System.err.println("Warning: Unknown videoId from AI: " + videoId);
                                     continue;
