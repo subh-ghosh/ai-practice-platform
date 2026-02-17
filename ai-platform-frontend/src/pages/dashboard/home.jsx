@@ -10,7 +10,7 @@ import {
   Chip,
   Button,
 } from "@material-tailwind/react";
-import { StatisticsCard } from "@/widgets/cards";
+import { StatisticsCard, RecommendationsCard } from "@/widgets/cards";
 import { StatisticsChart } from "@/widgets/charts";
 import { chartsConfig } from "@/configs";
 import {
@@ -456,17 +456,7 @@ export function Home() {
             {/* Daily Challenges Widget */}
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-2 mb-6">
               <DailyChallengesCard />
-              {/* Placeholder for future widget or simple Activity widget */}
-              <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-[#0a0a0c]">
-                <CardBody className="p-4">
-                  <Typography variant="h6" color="blue-gray" className="mb-2 dark:text-white">
-                    Activity
-                  </Typography>
-                  <Typography variant="small" className="font-normal text-blue-gray-500 dark:text-gray-400">
-                    Your recent learning activity will appear here.
-                  </Typography>
-                </CardBody>
-              </Card>
+              <RecommendationsCard />
             </div>
 
             {/* Recent Activity Table */}

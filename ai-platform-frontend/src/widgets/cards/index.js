@@ -1,3 +1,4 @@
-export * from "./statistics-card";
-export * from "./profile-info-card";
-export * from "./message-card";
+export * from "@/widgets/cards/statistics-card";
+export * from "@/widgets/cards/profile-info-card";
+export * from "@/widgets/cards/message-card";
+export * from "@/widgets/cards/RecommendationsCard";

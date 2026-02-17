@@ -135,6 +135,33 @@ export function Practice() {
   const [loadingAnswer, setLoadingAnswer] = useState(false);
   const [openPopover, setOpenPopover] = useState(false);
 
+  // Fusion Feature: Success Predictor
+  const [prediction, setPrediction] = useState(null);
+  const [loadingPrediction, setLoadingPrediction] = useState(false);
+
+  useEffect(() => {
+    const fetchPrediction = async () => {
+      if (!subject || !topic || !difficulty) return;
+      setLoadingPrediction(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await axios.get(`${BASE_URL}/api/recommendations/predict`, {
+          params: { topic, difficulty },
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        setPrediction(res.data);
+      } catch (err) {
+        console.error("Failed to get prediction", err);
+      } finally {
+        setLoadingPrediction(false);
+      }
+    };
+
+    const debounce = setTimeout(fetchPrediction, 800);
+    return () => clearTimeout(debounce);
+  }, [subject, topic, difficulty]);
+
   const actionsRemaining = Math.max(0, FREE_ACTION_LIMIT - (user?.freeActionsUsed || 0));
 
   // --- API Helpers ---
@@ -442,6 +469,25 @@ export function Practice() {
               >
                 {generating ? <Spinner className="h-4 w-4" /> : "Generate Question"}
               </Button>
+            </div>
+
+            {/* Fusion Feature: Success Predictor Badge */}
+            <div className="mt-4 flex flex-col md:flex-row items-center gap-4">
+              {loadingPrediction ? (
+                <Typography variant="small" className="text-gray-500 animate-pulse">🔮 AI is predicting your success chance...</Typography>
+              ) : prediction && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-indigo-50 border border-indigo-100 dark:bg-indigo-900/20 dark:border-indigo-800 animate-fade-in">
+                  <span className="text-xl">🔮</span>
+                  <div>
+                    <Typography variant="small" className="font-bold text-indigo-900 dark:text-indigo-200">
+                      Win Probability: <span className={prediction.winProbability > 0.7 ? "text-green-600" : prediction.winProbability < 0.4 ? "text-red-600" : "text-orange-600"}>{(prediction.winProbability * 100).toFixed(0)}%</span>
+                    </Typography>
+                    <Typography variant="small" className="text-[10px] text-indigo-700 dark:text-indigo-300">
+                      Confidence: {prediction.confidence}
+                    </Typography>
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && (
