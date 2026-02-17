@@ -571,29 +571,34 @@ public class StudyPlanService {
 
             String analysisPrompt = String.format(
                     """
-                            Analyze this syllabus/document thoroughly. Extract the full course title, a comprehensive description, and the most appropriate difficulty level (Beginner, Intermediate, or Advanced).
+                            Analyze this syllabus/document thoroughly. Your goal is to create a COMPREHENSIVE day-by-day study schedule for exactly %d days.
 
-                            Break down the entire syllabus into detailed modules that can be covered over %d days.
-                            For each module, provide:
-                            1. A clear title.
-                            2. A detailed search query for high-quality educational videos on YouTube.
-                            3. A list of key learning objectives or topics covered in this module.
+                            Instructions:
+                            1. Extract the full course title, a detailed description, and difficulty level.
+                            2. Distribute the entire syllabus content across %d days. EVERY DAY must have unique content to study.
+                            3. For each day, provide a list of specific lessons.
+                            4. For each lesson, provide a highly specific search query for a high-quality educational video on YouTube (e.g., "Java Stream API tutorial for beginners" instead of just "Java").
 
                             Return ONLY valid JSON with this structure:
                             {
                               "title": "Full Course Title",
                               "description": "Comprehensive Course Description",
                               "difficulty": "Intermediate",
-                              "modules": [
+                              "days": [
                                 {
-                                  "title": "Module Title",
-                                  "searchQuery": "exact refined search query for this module's core topic",
-                                  "topics": ["Topic 1", "Topic 2"]
+                                  "dayNumber": 1,
+                                  "lessons": [
+                                    {
+                                      "title": "Granular Topic Title",
+                                      "searchQuery": "exact refined search query for this specific topic",
+                                      "description": "Detailed explanation of what the student will learn today"
+                                    }
+                                  ]
                                 }
                               ]
                             }
                             """,
-                    durationDays);
+                    durationDays, durationDays);
 
             String analysisResponse = geminiService.generateRawContent(analysisPrompt, mimeType, fileData).block();
             JsonNode syllabusNode = parseJson(analysisResponse);
@@ -601,70 +606,66 @@ public class StudyPlanService {
             String title = syllabusNode.path("title").asText("Custom Study Plan");
             String description = syllabusNode.path("description").asText("Generated from uploaded syllabus");
             String difficulty = syllabusNode.path("difficulty").asText("Beginner");
-            JsonNode modules = syllabusNode.path("modules");
+            JsonNode daysNode = syllabusNode.path("days");
 
-            if (!modules.isArray() || modules.isEmpty()) {
-                throw new RuntimeException("Could not extract modules from the syllabus.");
+            if (!daysNode.isArray() || daysNode.isEmpty()) {
+                throw new RuntimeException("Could not extract a valid day-by-day schedule from the syllabus.");
             }
 
-            // Step 2: Search Videos for EACH Module and organize into days
+            // Step 2: Search Videos for EACH Lesson and create plan items
             List<StudyPlanItem> allItems = new ArrayList<>();
-            int totalModules = modules.size();
-
-            // Calculate how many modules to cover per day to fit the duration
-            double modulesPerDay = (double) totalModules / durationDays;
             int itemOrder = 1;
 
-            for (int i = 0; i < totalModules; i++) {
-                JsonNode module = modules.get(i);
-                String moduleTitle = module.path("title").asText();
-                String searchQuery = module.path("searchQuery").asText();
+            for (JsonNode day : daysNode) {
+                int dayNumber = day.path("dayNumber").asInt();
+                JsonNode lessons = day.path("lessons");
 
-                // Determine day number based on requested duration
-                int dayNumber = Math.min((int) (i / modulesPerDay) + 1, durationDays);
+                if (lessons.isArray()) {
+                    for (JsonNode lesson : lessons) {
+                        String lessonTitle = lesson.path("title").asText();
+                        String searchQuery = lesson.path("searchQuery").asText();
+                        String lessonDesc = lesson.path("description").asText();
 
-                // Search for 1 specific high-quality video for this module
-                List<Map<String, String>> videos = youTubeService.searchVideos(searchQuery, 1);
+                        // Search for 1 specific high-quality video for this lesson
+                        List<Map<String, String>> videos = youTubeService.searchVideos(searchQuery, 1);
 
-                if (!videos.isEmpty()) {
-                    Map<String, String> video = videos.get(0);
-                    StudyPlanItem item = new StudyPlanItem();
-                    item.setItemType("VIDEO");
-                    item.setDayNumber(dayNumber);
-                    item.setOrderIndex(itemOrder++);
-                    item.setDescription("Module: " + moduleTitle);
-                    item.setVideoId(video.get("videoId"));
-                    item.setTitle(moduleTitle + ": " + video.get("title"));
-                    item.setVideoUrl("https://www.youtube.com/watch?v=" + video.get("videoId"));
-                    item.setThumbnailUrl(video.get("thumbnailUrl"));
-                    item.setChannelName(video.get("channelTitle"));
-                    item.setVideoDuration(video.get("duration"));
-                    item.setXpReward(VIDEO_XP);
+                        if (!videos.isEmpty()) {
+                            Map<String, String> video = videos.get(0);
+                            StudyPlanItem item = new StudyPlanItem();
+                            item.setItemType("VIDEO");
+                            item.setDayNumber(dayNumber);
+                            item.setOrderIndex(itemOrder++);
+                            item.setDescription(lessonDesc);
+                            item.setVideoId(video.get("videoId"));
+                            item.setTitle(lessonTitle);
+                            item.setVideoUrl("https://www.youtube.com/watch?v=" + video.get("videoId"));
+                            item.setThumbnailUrl(video.get("thumbnailUrl"));
+                            item.setChannelName(video.get("channelTitle"));
+                            item.setVideoDuration(video.get("duration"));
+                            item.setXpReward(VIDEO_XP);
 
-                    // Use the first topic from the module if available
-                    String practiceTopic = module.path("topics").path(0).asText(moduleTitle);
-                    item.setPracticeTopic(practiceTopic);
-                    item.setPracticeSubject(title);
-                    item.setPracticeDifficulty(difficulty);
+                            item.setPracticeTopic(lessonTitle);
+                            item.setPracticeSubject(title);
+                            item.setPracticeDifficulty(difficulty);
 
-                    allItems.add(item);
-                }
+                            allItems.add(item);
+                        }
+                    }
 
-                // Add Practice Checkpoint at the end of each module or if it's the end of a day
-                // or if it's the last module
-                boolean isLastInDay = (int) ((i + 1) / modulesPerDay) > (int) (i / modulesPerDay)
-                        || (i + 1) == totalModules;
-
-                if (isLastInDay) {
+                    // Add a Practice Checkpoint at the end of each day
                     StudyPlanItem practice = new StudyPlanItem();
                     practice.setItemType("PRACTICE");
                     practice.setDayNumber(dayNumber);
                     practice.setOrderIndex(itemOrder++);
-                    practice.setTitle("Checkpoint: " + moduleTitle);
+                    practice.setTitle("Day " + dayNumber + " Checkpoint");
                     practice.setPracticeSubject(title);
-                    practice.setPracticeTopic(moduleTitle);
+
+                    // Use the last lesson title as the practice topic for the day
+                    String lastLessonTitle = lessons.get(lessons.size() - 1).path("title").asText("Day Review");
+                    practice.setPracticeTopic(lastLessonTitle);
                     practice.setPracticeDifficulty(difficulty);
                     practice.setXpReward(PRACTICE_XP);
+                    practice.setDescription("Test your knowledge on today's topics.");
 
                     allItems.add(practice);
                 }
