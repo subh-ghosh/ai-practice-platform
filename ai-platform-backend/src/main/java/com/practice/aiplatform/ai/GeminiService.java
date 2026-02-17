@@ -155,18 +155,33 @@ public class GeminiService {
                                 .map(this::extractTextFromResponse);
         }
 
+        public Mono<String> generateRawContent(String prompt, String mimeType, byte[] data) {
+                String base64Data = java.util.Base64.getEncoder().encodeToString(data);
+                return callGeminiApi(prompt, mimeType, base64Data)
+                                .map(this::extractTextFromResponse);
+        }
+
         private Mono<GeminiResponse> callGeminiApi(String prompt) {
+                return callGeminiApi(prompt, null, null);
+        }
+
+        private Mono<GeminiResponse> callGeminiApi(String prompt, String mimeType, String base64Data) {
+                List<Map<String, Object>> parts = new java.util.ArrayList<>();
+                parts.add(Map.of("text", prompt));
+
+                if (mimeType != null && base64Data != null) {
+                        parts.add(Map.of("inline_data", Map.of(
+                                        "mime_type", mimeType,
+                                        "data", base64Data)));
+                }
+
                 Map<String, Object> requestBody = Map.of(
                                 "contents", List.of(
-                                                Map.of("parts", List.of(
-                                                                Map.of("text", prompt)))));
+                                                Map.of("parts", parts)));
 
                 return this.webClient.post()
                                 .uri(uriBuilder -> uriBuilder
                                                 .path("/v1beta/models/gemini-2.0-flash-001:generateContent")
-                                                // Note: The endpoint may differ based on your specific Gemini model and
-                                                // API
-                                                // version. Check Google's documentation for the correct path.
                                                 .queryParam("key", this.apiKey)
                                                 .build())
                                 .bodyValue(requestBody)
@@ -175,8 +190,6 @@ public class GeminiService {
                                                 status -> status.is4xxClientError() || status.is5xxServerError(),
                                                 clientResponse -> clientResponse.bodyToMono(String.class)
                                                                 .flatMap(errorBody -> {
-                                                                        // This prints the REAL error from Google to
-                                                                        // your terminal
                                                                         System.err.println("GOOGLE API ERROR: "
                                                                                         + errorBody);
                                                                         return Mono.error(new RuntimeException(

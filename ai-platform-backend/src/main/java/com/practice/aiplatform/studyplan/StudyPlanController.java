@@ -45,6 +45,31 @@ public class StudyPlanController {
         }
     }
 
+    @PostMapping("/generate-from-syllabus")
+    public ResponseEntity<?> generateStudyPlanFromSyllabus(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
+            Principal principal) {
+        String email = principal.getName();
+        System.out.println("🔔 StudyPlanController: /generate-from-syllabus called by " + email);
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "File is required"));
+        }
+
+        try {
+            // NOTE: Breaking the reactive chain block() here for simplicity in this
+            // controller
+            // In a full reactive stack, we'd return Mono<ResponseEntity>
+            var plan = studyPlanService.generateStudyPlanFromSyllabus(email, file).block();
+            return ResponseEntity.ok(plan);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Study plan generation failed: " + e.getMessage()));
+        }
+    }
+
     @GetMapping
     public ResponseEntity<List<StudyPlan>> getMyStudyPlans(Principal principal) {
         String email = principal.getName();

@@ -557,6 +557,140 @@ public class StudyPlanService {
             String practiceDifficulty) {
     }
 
+    // ===== SYLLABUS UPLOAD FEATURE =====
+
+    public Mono<StudyPlan> generateStudyPlanFromSyllabus(String userEmail,
+            org.springframework.web.multipart.MultipartFile file) {
+        return Mono.fromCallable(() -> {
+            Student student = studentRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new RuntimeException("Student not found"));
+
+            // Step 1: Analyze Syllabus & Extract Structure
+            String mimeType = file.getContentType();
+            byte[] fileData = file.getBytes();
+
+            String analysisPrompt = """
+                    Analyze this syllabus/document. Extract the course title, a brief description, the difficulty level (Beginner, Intermediate, or Advanced), and a list of specific chapters/modules.
+                    For each chapter, provide a search query I can use to find the best educational video on YouTube.
+
+                    Return ONLY valid JSON with this structure:
+                    {
+                      "title": "Course Title",
+                      "description": "Course Description",
+                      "difficulty": "Beginner",
+                      "chapters": [
+                        {
+                          "title": "Chapter 1: Title",
+                          "searchQuery": "exact refined search query for this chapter topic"
+                        }
+                        // ... more chapters
+                      ]
+                    }
+                    """;
+
+            String analysisResponse = geminiService.generateRawContent(analysisPrompt, mimeType, fileData).block();
+            JsonNode syllabusNode = parseJson(analysisResponse);
+
+            String title = syllabusNode.path("title").asText("Custom Study Plan");
+            String description = syllabusNode.path("description").asText("Generated from uploaded syllabus");
+            String difficulty = syllabusNode.path("difficulty").asText("Beginner");
+            JsonNode chapters = syllabusNode.path("chapters");
+
+            if (!chapters.isArray() || chapters.isEmpty()) {
+                throw new RuntimeException("Could not extract chapters from the syllabus.");
+            }
+
+            // Step 2: Search Videos for EACH Chapter
+            List<StudyPlanItem> allItems = new ArrayList<>();
+            int dayCounter = 1;
+            int itemsPerDay = 3;
+            int totalChapters = chapters.size();
+            int estimatedDuration = (int) Math.ceil((double) totalChapters / 2); // Roughly 2 chapters per day
+
+            int itemOrder = 1;
+
+            for (int i = 0; i < chapters.size(); i++) {
+                JsonNode chapter = chapters.get(i);
+                String chapterTitle = chapter.path("title").asText();
+                String searchQuery = chapter.path("searchQuery").asText();
+
+                // Search for 1 specific high-quality video
+                List<Map<String, String>> videos = youTubeService.searchVideos(searchQuery, 1);
+
+                if (!videos.isEmpty()) {
+                    Map<String, String> video = videos.get(0);
+                    StudyPlanItem item = new StudyPlanItem();
+                    item.setItemType("VIDEO");
+                    item.setDayNumber(dayCounter);
+                    item.setOrderIndex(itemOrder++);
+                    item.setDescription("Chapter: " + chapterTitle);
+                    item.setVideoId(video.get("videoId"));
+                    item.setTitle(chapterTitle + ": " + video.get("title")); // Combine chapter title with video title
+                    item.setVideoUrl("https://www.youtube.com/watch?v=" + video.get("videoId"));
+                    item.setThumbnailUrl(video.get("thumbnailUrl"));
+                    item.setChannelName(video.get("channelTitle"));
+                    item.setVideoDuration(video.get("duration"));
+                    item.setXpReward(VIDEO_XP);
+                    item.setPracticeTopic(chapterTitle);
+                    item.setPracticeSubject(title);
+                    item.setPracticeDifficulty(difficulty);
+
+                    allItems.add(item);
+                }
+
+                // Add Practice Checkpoint every 2 videos or at end of list
+                if ((i + 1) % 2 == 0 || i == chapters.size() - 1) {
+                    StudyPlanItem practice = new StudyPlanItem();
+                    practice.setItemType("PRACTICE");
+                    practice.setDayNumber(dayCounter);
+                    practice.setOrderIndex(itemOrder++);
+                    practice.setTitle("Checkpoint: " + chapterTitle);
+                    practice.setPracticeSubject(title);
+                    practice.setPracticeTopic(chapterTitle);
+                    practice.setPracticeDifficulty(difficulty);
+                    practice.setXpReward(PRACTICE_XP);
+
+                    allItems.add(practice);
+
+                    // Increment day after practice
+                    dayCounter++;
+                }
+            }
+
+            // Step 3: Construct and Save Plan
+            StudyPlan plan = new StudyPlan();
+            plan.setTitle(title);
+            plan.setDescription(description);
+            plan.setTopic(title);
+            plan.setDifficulty(difficulty);
+            plan.setDurationDays(dayCounter - 1); // Total days used
+            plan.setStudent(student);
+            plan.setCreatedAt(LocalDateTime.now());
+            plan.setItems(allItems); // Set items directly
+
+            // We need to associate items with the plan
+            for (StudyPlanItem item : allItems) {
+                item.setStudyPlan(plan);
+            }
+
+            StudyPlan savedPlan = studyPlanRepository.save(plan);
+
+            // Generate quizzes for practice items asynchronously
+            generateQuizQuestionsForPlan(savedPlan, title, difficulty);
+
+            return savedPlan;
+        });
+    }
+
+    private JsonNode parseJson(String jsonResponse) {
+        try {
+            String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
+            return objectMapper.readTree(cleanJson);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse AI response: " + e.getMessage());
+        }
+    }
+
     public ActiveContextDto getActiveContext(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));

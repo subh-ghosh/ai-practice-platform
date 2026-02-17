@@ -21,6 +21,7 @@ import {
     BookOpenIcon,
     CheckCircleIcon,
     TrashIcon,
+    ArrowUpTrayIcon,
 } from '@heroicons/react/24/solid';
 import { useTheme } from "@/context/ThemeContext.jsx";
 import RecommendationCard from "@/components/RecommendationCard";
@@ -33,6 +34,11 @@ const StudyPlanBuilderPage = () => {
     const [error, setError] = useState(null);
     const [history, setHistory] = useState([]);
     const [historyLoading, setHistoryLoading] = useState(true);
+
+    // Syllabus Upload State
+    const [activeTab, setActiveTab] = useState('topic');
+    const [selectedFile, setSelectedFile] = useState(null);
+
     const navigate = useNavigate();
     const { theme } = useTheme();
     const [loadingStage, setLoadingStage] = useState(0);
@@ -91,25 +97,57 @@ const StudyPlanBuilderPage = () => {
         }
     };
 
+    const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                setError("File size must be less than 10MB");
+                return;
+            }
+            setSelectedFile(file);
+            setError(null);
+        }
+    };
+
     const handleGenerate = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        if (!topic.trim()) {
-            setError("Please enter a topic.");
-            setLoading(false);
-            return;
-        }
-
         try {
-            const response = await api.post('/study-plans/generate', {
-                topic,
-                difficulty,
-                durationDays,
-            });
-            navigate(`/dashboard/study-plan/${response.data.id}`);
+            if (activeTab === 'syllabus') {
+                if (!selectedFile) {
+                    setError("Please upload a syllabus file.");
+                    setLoading(false);
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await api.post('/study-plans/generate-from-syllabus', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                navigate(`/dashboard/study-plan/${response.data.id}`);
+
+            } else {
+                if (!topic.trim()) {
+                    setError("Please enter a topic.");
+                    setLoading(false);
+                    return;
+                }
+
+                const response = await api.post('/study-plans/generate', {
+                    topic,
+                    difficulty,
+                    durationDays,
+                });
+                navigate(`/dashboard/study-plan/${response.data.id}`);
+            }
         } catch (err) {
+            console.error(err);
             setError(err.response?.data?.error || "Failed to generate study plan. Please try again.");
         } finally {
             setLoading(false);
@@ -158,122 +196,187 @@ const StudyPlanBuilderPage = () => {
                                 </div>
                                 <div className="text-center space-y-2">
                                     <Typography variant="h5" color="blue-gray" className="dark:text-white animate-pulse">
-                                        Generating your personalized plan...
+                                        {activeTab === 'topic' ? "Generating your personalized plan..." : "Analyzing your syllabus..."}
                                     </Typography>
                                     <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal">
-                                        {["Analyzing your topic...", "Curating best YouTube videos...", "Drafting practice quizzes...", "Finalizing your schedule..."][loadingStage]}
+                                        {activeTab === 'topic'
+                                            ? ["Analyzing your topic...", "Curating best YouTube videos...", "Drafting practice quizzes...", "Finalizing your schedule..."][loadingStage]
+                                            : ["Reading document structure...", "Extracting key chapters...", "Matching tailored content...", "Building your custom curriculum..."][loadingStage]
+                                        }
                                     </Typography>
                                 </div>
                             </div>
                         ) : (
-                            <form onSubmit={handleGenerate} className="flex flex-col gap-6">
-                                <div>
-                                    <Input
-                                        size="lg"
-                                        label="What do you want to learn?"
-                                        placeholder="e.g. React Patterns, Machine Learning"
-                                        value={topic}
-                                        onChange={(e) => setTopic(e.target.value)}
-                                        color="blue"
-                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800/80 !border-blue-gray-200 focus:!border-blue-500 placeholder:text-blue-gray-300 dark:placeholder:text-gray-500"
-                                        labelProps={{
-                                            className: "!text-blue-gray-500 dark:!text-gray-300",
-                                        }}
-                                        disabled={loading}
-                                    />
-                                    {/* Smart Suggestions */}
-                                    {/* Smart Suggestions */}
-                                    <div className="mt-4 flex flex-wrap gap-3 animate-fade-in">
-                                        {recommendations && recommendations.length > 0 && (
-                                            <>
-                                                <Typography variant="small" className="w-full font-bold text-blue-gray-500 dark:text-gray-400 mb-1">
-                                                    Recommended for you:
-                                                </Typography>
-                                                {recommendations.slice(0, 4).map((rec, idx) => (
-                                                    <RecommendationCard
-                                                        key={idx}
-                                                        recommendation={{ ...rec, action: "Create Plan" }}
-                                                        compact={true}
-                                                        onAction={(r) => setTopic(r.topic)}
-                                                    />
-                                                ))}
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="w-full relative">
-                                        <Select
-                                            size="lg"
-                                            label="Difficulty"
-                                            value={difficulty}
-                                            onChange={(val) => setDifficulty(val)}
-                                            color="blue"
-                                            className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
-                                            labelProps={{
-                                                className: "!text-blue-gray-500 dark:!text-gray-400",
-                                            }}
-                                            disabled={loading}
-                                            menuProps={{
-                                                className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
-                                                animate: {
-                                                    mount: { y: 0, scale: 1, opacity: 1 },
-                                                    unmount: { y: 10, scale: 0.95, opacity: 0 },
-                                                },
-                                            }}
-                                        >
-                                            <Option value="Beginner" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Beginner</Option>
-                                            <Option value="Intermediate" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Intermediate</Option>
-                                            <Option value="Advanced" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Advanced</Option>
-                                        </Select>
-                                    </div>
-                                    <div className="w-full relative">
-                                        <Select
-                                            size="lg"
-                                            label="Duration"
-                                            value={String(durationDays)}
-                                            onChange={(val) => setDurationDays(Number(val))}
-                                            color="blue"
-                                            className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
-                                            labelProps={{
-                                                className: "!text-blue-gray-500 dark:!text-gray-400",
-                                            }}
-                                            disabled={loading}
-                                            menuProps={{
-                                                className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
-                                                animate: {
-                                                    mount: { y: 0, scale: 1, opacity: 1 },
-                                                    unmount: { y: 10, scale: 0.95, opacity: 0 },
-                                                },
-                                            }}
-                                        >
-                                            {durationOptions.map((opt) => (
-                                                <Option key={opt.value} value={String(opt.value)} className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">
-                                                    {opt.label}
-                                                </Option>
-                                            ))}
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                {error && (
-                                    <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
-                                        {error}
-                                    </Alert>
-                                )}
-
-                                <div className="mt-2 text-left">
-                                    <Button
-                                        type="submit"
-                                        disabled={loading}
-                                        fullWidth
-                                        className="w-full md:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40 transition-all duration-300 active:scale-95 hover:scale-[1.02] flex items-center justify-center gap-2"
+                            <div className="flex flex-col gap-6">
+                                {/* Tabs */}
+                                <div className="flex p-1 bg-blue-gray-50 dark:bg-gray-800 rounded-xl relative">
+                                    <button
+                                        onClick={() => setActiveTab('topic')}
+                                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${activeTab === 'topic'
+                                            ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                            }`}
                                     >
-                                        <SparklesIcon className="h-4 w-4" /> GENERATE PLAN
-                                    </Button>
+                                        Enter Topic
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTab('syllabus')}
+                                        className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${activeTab === 'syllabus'
+                                            ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                                            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                            }`}
+                                    >
+                                        Upload Syllabus
+                                    </button>
                                 </div>
-                            </form>
+
+                                <form onSubmit={handleGenerate} className="flex flex-col gap-6">
+                                    {activeTab === 'topic' ? (
+                                        <>
+                                            <div>
+                                                <Input
+                                                    size="lg"
+                                                    label="What do you want to learn?"
+                                                    placeholder="e.g. React Patterns, Machine Learning"
+                                                    value={topic}
+                                                    onChange={(e) => setTopic(e.target.value)}
+                                                    color="blue"
+                                                    className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800/80 !border-blue-gray-200 focus:!border-blue-500 placeholder:text-blue-gray-300 dark:placeholder:text-gray-500"
+                                                    labelProps={{
+                                                        className: "!text-blue-gray-500 dark:!text-gray-300",
+                                                    }}
+                                                    disabled={loading}
+                                                />
+                                                {/* Smart Suggestions */}
+                                                <div className="mt-4 flex flex-wrap gap-3 animate-fade-in">
+                                                    {recommendations && recommendations.length > 0 && (
+                                                        <>
+                                                            <Typography variant="small" className="w-full font-bold text-blue-gray-500 dark:text-gray-400 mb-1">
+                                                                Recommended for you:
+                                                            </Typography>
+                                                            {recommendations.slice(0, 4).map((rec, idx) => (
+                                                                <RecommendationCard
+                                                                    key={idx}
+                                                                    recommendation={{ ...rec, action: "Create Plan" }}
+                                                                    compact={true}
+                                                                    onAction={(r) => setTopic(r.topic)}
+                                                                />
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="w-full relative">
+                                                    <Select
+                                                        size="lg"
+                                                        label="Difficulty"
+                                                        value={difficulty}
+                                                        onChange={(val) => setDifficulty(val)}
+                                                        color="blue"
+                                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
+                                                        labelProps={{
+                                                            className: "!text-blue-gray-500 dark:!text-gray-400",
+                                                        }}
+                                                        disabled={loading}
+                                                        menuProps={{
+                                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                                            animate: {
+                                                                mount: { y: 0, scale: 1, opacity: 1 },
+                                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                                            },
+                                                        }}
+                                                    >
+                                                        <Option value="Beginner" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Beginner</Option>
+                                                        <Option value="Intermediate" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Intermediate</Option>
+                                                        <Option value="Advanced" className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">Advanced</Option>
+                                                    </Select>
+                                                </div>
+                                                <div className="w-full relative">
+                                                    <Select
+                                                        size="lg"
+                                                        label="Duration"
+                                                        value={String(durationDays)}
+                                                        onChange={(val) => setDurationDays(Number(val))}
+                                                        color="blue"
+                                                        className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500"
+                                                        labelProps={{
+                                                            className: "!text-blue-gray-500 dark:!text-gray-400",
+                                                        }}
+                                                        disabled={loading}
+                                                        menuProps={{
+                                                            className: "p-2 bg-white dark:bg-gray-900 border border-blue-gray-50 dark:border-gray-800 shadow-lg shadow-blue-gray-500/10 dark:shadow-black/50 rounded-xl min-w-[200px] max-h-[300px] overflow-y-auto z-[9999]",
+                                                            animate: {
+                                                                mount: { y: 0, scale: 1, opacity: 1 },
+                                                                unmount: { y: 10, scale: 0.95, opacity: 0 },
+                                                            },
+                                                        }}
+                                                    >
+                                                        {durationOptions.map((opt) => (
+                                                            <Option key={opt.value} value={String(opt.value)} className="mb-1 rounded-lg py-2.5 px-3 text-sm font-medium transition-all hover:bg-blue-50 hover:text-blue-700 focus:bg-blue-50 focus:text-blue-700 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-300 dark:focus:bg-gray-800">
+                                                                {opt.label}
+                                                            </Option>
+                                                        ))}
+                                                    </Select>
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex flex-col gap-4">
+                                            <div className="border-2 border-dashed border-blue-gray-200 dark:border-gray-700 rounded-xl p-8 text-center hover:bg-blue-50/50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer relative group">
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,image/*"
+                                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                                    onChange={handleFileChange}
+                                                />
+                                                <div className="flex flex-col items-center gap-3">
+                                                    <div className="p-3 bg-blue-50 dark:bg-gray-800 rounded-full group-hover:scale-110 transition-transform">
+                                                        <ArrowUpTrayIcon className="h-6 w-6 text-blue-500" />
+                                                    </div>
+                                                    <div>
+                                                        <Typography variant="h6" color="blue-gray" className="dark:text-white">
+                                                            {selectedFile ? selectedFile.name : "Click or Drag to Upload Syllabus"}
+                                                        </Typography>
+                                                        <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal mt-1">
+                                                            Supports PDF, PNG, JPG (Max 5MB)
+                                                        </Typography>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {selectedFile && (
+                                                <Alert color="green" variant="ghost" className="py-2 px-4 text-sm flex items-center">
+                                                    <CheckCircleIcon className="h-4 w-4 mr-2" />
+                                                    Ready to analyze: {selectedFile.name}
+                                                </Alert>
+                                            )}
+                                        </div>
+                                    )}
+
+
+                                    {error && (
+                                        <Alert color="red" icon={<ExclamationTriangleIcon className="h-5 w-5" />}>
+                                            {error}
+                                        </Alert>
+                                    )}
+
+                                    <div className="mt-2 text-left">
+                                        <Button
+                                            type="submit"
+                                            disabled={loading || (activeTab === 'syllabus' && !selectedFile)}
+                                            fullWidth
+                                            className={`w-full md:w-auto px-8 py-3 rounded-xl shadow-lg transition-all duration-300 active:scale-95 hover:scale-[1.02] flex items-center justify-center gap-2 ${activeTab === 'syllabus' && !selectedFile
+                                                ? 'bg-gray-300 text-gray-500 shadow-none cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40'
+                                                }`}
+                                        >
+                                            <SparklesIcon className="h-4 w-4" />
+                                            {activeTab === 'topic' ? "GENERATE PLAN" : "ANALYZE & GENERATE"}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </div>
                         )}
                     </CardBody>
                 </Card>
