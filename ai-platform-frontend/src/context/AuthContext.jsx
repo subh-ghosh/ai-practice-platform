@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config";
 
 const AuthContext = createContext();
 
@@ -11,8 +12,8 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Hardcode the URL to ensure stability across pages
-  const API_URL = "https://ai-platform-backend-vauw.onrender.com/api/students";
+  // Use dynamic URL from config
+  const API_URL = `${API_BASE_URL}/students`;
 
   // 1. Check for token on startup (Auto-Login with fresh data)
   useEffect(() => {

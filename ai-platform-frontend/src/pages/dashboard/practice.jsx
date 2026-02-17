@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config";
 import {
   Typography,
   Card,
@@ -33,7 +34,7 @@ import toast from "react-hot-toast";
    Constants & Helpers
 ========================= */
 
-const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+const BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 const FREE_ACTION_LIMIT = 10;
 
 const STATUS_STYLES = {

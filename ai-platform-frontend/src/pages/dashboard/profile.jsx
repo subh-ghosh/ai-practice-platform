@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config";
 import {
   CardBody,
   Avatar,
@@ -35,7 +36,7 @@ import { StatisticsChart } from "@/widgets/charts";
 import { chartsConfig } from "@/configs";
 
 /* ============================ Config ============================ */
-const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+const BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 
 // --- Animation Variants ---
 const containerVariants = {

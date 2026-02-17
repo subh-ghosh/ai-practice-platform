@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config";
 import {
   Typography,
   Card,
@@ -154,12 +155,10 @@ export function Home() {
           }
         };
 
-        const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
-
         const [summaryRes, timeSeriesRes, spStatsRes] = await Promise.all([
-          axios.get(`${BASE_URL}/api/stats/summary`, config),
-          axios.get(`${BASE_URL}/api/stats/timeseries`, config),
-          axios.get(`${BASE_URL}/api/study-plans/stats`, config).catch(() => ({ data: null })),
+          axios.get(`${API_BASE_URL}/stats/summary`, config),
+          axios.get(`${API_BASE_URL}/stats/timeseries`, config),
+          axios.get(`${API_BASE_URL}/study-plans/stats`, config).catch(() => ({ data: null })),
         ]);
 
         if (summaryRes.data && timeSeriesRes.data) {

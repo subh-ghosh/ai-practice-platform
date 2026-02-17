@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config";
 import {
   Typography,
   Card,
@@ -27,7 +28,7 @@ import { useNavigate } from "react-router-dom";
 // --- Constants & Helpers ---
 
 const PREMIUM_MONTHLY_PLAN_ID = "premium_monthly";
-const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+const BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -215,7 +216,7 @@ export function Pricing() {
   return (
     // Updated container height to h-[calc(100vh-140px)] and added flex-col
     <div className="relative mt-6 mb-8 w-full h-[calc(100vh-140px)] flex flex-col overflow-hidden rounded-xl border border-blue-gray-50 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
-      
+
       {/* Animated Background Gradient */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         <motion.div
@@ -232,7 +233,7 @@ export function Pricing() {
 
       {/* Main Content Wrapper */}
       <div className="relative z-10 p-6 flex flex-col gap-5 h-full">
-        
+
         {/* Header & Controls */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 shrink-0">
           <div>
@@ -306,7 +307,7 @@ export function Pricing() {
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto pr-2 pb-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-800 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
-          
+
           {/* Plans Grid */}
           <motion.div
             key={billingCycle}
@@ -325,11 +326,10 @@ export function Pricing() {
               return (
                 <motion.div key={plan.id} variants={itemVariants} layout>
                   <Card
-                    className={`h-full border transition-all duration-300 ${
-                      plan.popular
+                    className={`h-full border transition-all duration-300 ${plan.popular
                         ? "border-blue-500 shadow-blue-100 dark:shadow-none dark:border-blue-600 bg-white dark:bg-gray-800 relative"
                         : "border-blue-gray-50 dark:border-gray-800 bg-white/60 dark:bg-gray-900/40 backdrop-blur-sm hover:border-blue-200"
-                    }`}
+                      }`}
                   >
                     {plan.popular && (
                       <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
@@ -376,11 +376,10 @@ export function Pricing() {
                         {plan.features.map((feature, index) => (
                           <li key={index} className="flex items-center gap-3">
                             <span
-                              className={`p-1 rounded-full ${
-                                feature.included
+                              className={`p-1 rounded-full ${feature.included
                                   ? "bg-green-50 text-green-500 dark:bg-green-900/20"
                                   : "bg-red-50 text-red-500 dark:bg-red-900/20"
-                              }`}
+                                }`}
                             >
                               {feature.included ? (
                                 <CheckIcon strokeWidth={3} className="h-3 w-3" />
@@ -389,11 +388,10 @@ export function Pricing() {
                               )}
                             </span>
                             <Typography
-                              className={`text-sm font-normal ${
-                                feature.included
+                              className={`text-sm font-normal ${feature.included
                                   ? "text-blue-gray-600 dark:text-gray-300"
                                   : "text-gray-400 decoration-line-through"
-                              }`}
+                                }`}
                             >
                               {feature.text}
                             </Typography>
@@ -408,11 +406,10 @@ export function Pricing() {
                         fullWidth={true}
                         variant={plan.popular ? "gradient" : "outlined"}
                         color={plan.popular ? "blue" : "gray"}
-                        className={`hover:scale-[1.02] active:scale-[0.98] transition-transform ${
-                          !plan.popular
+                        className={`hover:scale-[1.02] active:scale-[0.98] transition-transform ${!plan.popular
                             ? "focus:ring-blue-gray-200 dark:border-gray-600 dark:text-white"
                             : ""
-                        }`}
+                          }`}
                         onClick={isUpgradable ? displayRazorpay : undefined}
                         disabled={isCurrentPlan || (plan.isPremium && loading)}
                       >

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "@/config";
 import { useAuth } from "./AuthContext";
 
 const NotificationContext = createContext();
@@ -9,7 +10,8 @@ export function useNotifications() {
 }
 
 // Hardcode URL for safety
-const BASE_URL = "https://ai-platform-backend-vauw.onrender.com";
+// Use dynamic URL from config. Remove /api for notification endpoints as they append it themselves or expect the base
+const BASE_URL = API_BASE_URL.replace(/\/api$/, "");
 
 export function NotificationProvider({ children }) {
   const { user } = useAuth();
@@ -25,15 +27,15 @@ export function NotificationProvider({ children }) {
     if (!token) return;
 
     if (!isSilent) setLoading(true);
-    
+
     try {
       const config = { headers: { "Authorization": `Bearer ${token}` } };
-      
+
       // CHANGED: Fetch ALL notifications, not just unread
       const res = await axios.get(`${BASE_URL}/api/notifications`, config);
-      
+
       setNotifications(res.data);
-      
+
       // Calculate unread count locally
       const unread = res.data.filter(n => !n.readFlag).length;
       setUnreadCount(unread);
@@ -41,7 +43,7 @@ export function NotificationProvider({ children }) {
     } catch (err) {
       console.error("Context: Failed to fetch notifications", err);
       if (err.response && err.response.status !== 404) {
-         setError("Could not load notifications");
+        setError("Could not load notifications");
       }
     } finally {
       if (!isSilent) setLoading(false);
@@ -51,7 +53,7 @@ export function NotificationProvider({ children }) {
   // 2. Mark Read (Optimistic Update)
   const markRead = useCallback(async (id) => {
     // INSTANTLY update UI state before server responds (No Lag)
-    setNotifications(prev => 
+    setNotifications(prev =>
       prev.map(n => n.id === id ? { ...n, readFlag: true } : n)
     );
     setUnreadCount(prev => Math.max(0, prev - 1));
@@ -88,7 +90,7 @@ export function NotificationProvider({ children }) {
     if (user) {
       fetchNotifications();
       // Poll every 30 seconds to keep sync
-      const interval = setInterval(() => fetchNotifications(true), 30000); 
+      const interval = setInterval(() => fetchNotifications(true), 30000);
       return () => clearInterval(interval);
     } else {
       setNotifications([]);
@@ -96,14 +98,14 @@ export function NotificationProvider({ children }) {
     }
   }, [user, fetchNotifications]);
 
-  const value = { 
-    notifications, 
-    unreadCount, 
-    loading, 
-    error, 
-    markRead, 
+  const value = {
+    notifications,
+    unreadCount,
+    loading,
+    error,
+    markRead,
     markAllAsRead,
-    refresh: () => fetchNotifications(false) 
+    refresh: () => fetchNotifications(false)
   };
 
   return (
