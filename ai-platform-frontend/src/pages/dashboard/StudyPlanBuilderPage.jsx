@@ -202,8 +202,11 @@ const StudyPlanBuilderPage = () => {
                                     <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal">
                                         {activeTab === 'topic'
                                             ? ["Analyzing your topic...", "Curating best YouTube videos...", "Drafting practice quizzes...", "Finalizing your schedule..."][loadingStage]
-                                            : ["Reading document structure...", "Extracting key chapters...", "Matching tailored content...", "Building your custom curriculum..."][loadingStage]
+                                            : ["Reading document structure...", "Extracting key chapters...", "Finding relevant playlists...", "Building your custom curriculum..."][loadingStage]
                                         }
+                                    </Typography>
+                                    <Typography variant="small" className="text-blue-gray-400 dark:text-gray-500 italic mt-2">
+                                        This process may take 3-5 minutes. Grab a cup of coffee meanwhile! ☕
                                     </Typography>
                                 </div>
                             </div>
