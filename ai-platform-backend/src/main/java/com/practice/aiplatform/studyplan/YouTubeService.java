@@ -63,7 +63,89 @@ public class YouTubeService {
                 videoIds.add(item.path("id").path("videoId").asText());
             }
 
-            // Step 2: Get video details (duration, etc.)
+            return fetchVideoDetails(videoIds);
+
+        } catch (Exception e) {
+            System.err.println("YouTube API Error (searchVideos): " + e.getMessage());
+            e.printStackTrace();
+            return List.of();
+        }
+    }
+
+    /**
+     * Search for playlists on a given topic.
+     */
+    public List<Map<String, String>> searchPlaylists(String query, int maxResults) {
+        try {
+            String searchResponse = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/search")
+                            .queryParam("part", "snippet")
+                            .queryParam("q", query + " full course")
+                            .queryParam("type", "playlist")
+                            .queryParam("maxResults", maxResults)
+                            .queryParam("key", apiKey)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            JsonNode searchRoot = objectMapper.readTree(searchResponse);
+            JsonNode items = searchRoot.path("items");
+
+            List<Map<String, String>> playlists = new ArrayList<>();
+            for (JsonNode item : items) {
+                playlists.add(Map.of(
+                        "playlistId", item.path("id").path("playlistId").asText(),
+                        "title", item.path("snippet").path("title").asText()));
+            }
+            return playlists;
+        } catch (Exception e) {
+            System.err.println("YouTube API Error (searchPlaylists): " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Get videos from a specific playlist.
+     */
+    public List<Map<String, String>> getPlaylistItems(String playlistId, int maxResults) {
+        try {
+            String response = webClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/playlistItems")
+                            .queryParam("part", "snippet,contentDetails")
+                            .queryParam("playlistId", playlistId)
+                            .queryParam("maxResults", maxResults)
+                            .queryParam("key", apiKey)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            JsonNode root = objectMapper.readTree(response);
+            JsonNode items = root.path("items");
+
+            List<String> videoIds = new ArrayList<>();
+            for (JsonNode item : items) {
+                videoIds.add(item.path("contentDetails").path("videoId").asText());
+            }
+
+            return fetchVideoDetails(videoIds);
+        } catch (Exception e) {
+            System.err.println("YouTube API Error (getPlaylistItems): " + e.getMessage());
+            return List.of();
+        }
+    }
+
+    /**
+     * Helper to fetch full video details (duration, channel, etc.) for a list of
+     * video IDs.
+     */
+    private List<Map<String, String>> fetchVideoDetails(List<String> videoIds) {
+        if (videoIds.isEmpty())
+            return List.of();
+        try {
             String videoIdsStr = String.join(",", videoIds);
             String detailsResponse = webClient.get()
                     .uri(uriBuilder -> uriBuilder
@@ -94,13 +176,9 @@ public class YouTubeService {
                         "description", snippet.path("description").asText(""),
                         "duration", duration));
             }
-
-            System.out.println("YouTube: Found " + videos.size() + " videos for: " + query);
             return videos;
-
         } catch (Exception e) {
-            System.err.println("YouTube API Error: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("YouTube API Error (fetchVideoDetails): " + e.getMessage());
             return List.of();
         }
     }

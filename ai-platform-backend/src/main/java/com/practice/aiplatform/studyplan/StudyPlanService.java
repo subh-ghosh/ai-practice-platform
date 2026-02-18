@@ -583,27 +583,60 @@ public class StudyPlanService {
                 }
             }
 
-            // Step 1: Analyze Syllabus & Extract Structure
+            // Step 1: Pre-analyze Syllabus for Course Title and Playlist Query
             String mimeType = file.getContentType();
             byte[] fileData = file.getBytes();
 
+            String preAnalysisPrompt = """
+                    Analyze this syllabus/document. Provide a clear, educational course title and a search query for a comprehensive YouTube playlist that covers all these topics.
+
+                    Return ONLY valid JSON:
+                    {
+                      "title": "Clear Course Title",
+                      "playlistQuery": "Search query for a comprehensive playlist"
+                    }
+                    """;
+
+            String preAnalysisResponse = geminiService.generateRawContent(preAnalysisPrompt, mimeType, fileData)
+                    .block();
+            JsonNode preNode = parseJson(preAnalysisResponse);
+            String courseTitle = preNode.path("title").asText("Custom Course");
+            String playlistQuery = preNode.path("playlistQuery").asText(courseTitle);
+
+            // Step 2: Fetch Playlist Videos
+            List<Map<String, String>> playlistVideos = new ArrayList<>();
+            List<Map<String, String>> discoveredPlaylists = youTubeService.searchPlaylists(playlistQuery, 2);
+            if (!discoveredPlaylists.isEmpty()) {
+                // Get up to 50 videos from the best matching playlist
+                playlistVideos = youTubeService.getPlaylistItems(discoveredPlaylists.get(0).get("playlistId"), 50);
+            }
+
+            StringBuilder videoListStr = new StringBuilder();
+            for (int i = 0; i < playlistVideos.size(); i++) {
+                Map<String, String> v = playlistVideos.get(i);
+                videoListStr.append(String.format("%d. %s (videoId: %s)\n", i + 1, v.get("title"), v.get("videoId")));
+            }
+
+            // Step 3: Analyze Syllabus & Map Videos
             String analysisPrompt = String.format(
                     """
                             Analyze this syllabus/document thoroughly. Your goal is to create a COMPREHENSIVE day-by-day study schedule for exactly %d days that guarantees 100%% coverage of all course material.
 
+                            We found a potential YouTube playlist with these videos:
+                            %s
+
                             Strict Instructions:
                             1. Identify EVERY individual topic and sub-topic mentioned in the syllabus.
-                            2. Ensure that EVERY identified sub-topic has AT LEAST one dedicated lesson with its own YouTube video search query.
-                            3. Distribute these lessons across %d days. Every day must have content.
-                            4. Instruction for YouTube Search Queries:
-                               - Refine each query to prefer long-duration videos (e.g., append "full course", "comprehensive lecture", or "full length").
-                               - Strongly prefer "whiteboard" style explanations (e.g., append "whiteboard tutorial").
-                               - Include "lecture" in the query where appropriate.
-                               - Try to identify a top-tier educator for this subject from the syllabus and use them consistently for multiple related topics to maintain teaching style continuity.
+                            2. For EACH sub-topic, identify the most relevant video from the playlist above. Use them SEQUENTIALLY where possible.
+                            3. If no video from the playlist is a good match for a sub-topic, set `videoId` to null and provide a specific `searchQuery` for an individual YouTube search.
+                            4. Ensure EVERY sub-topic has AT LEAST one dedicated lesson/video.
+                            5. Do NOT repeat videos across the entire plan.
+                            6. Distribute these lessons across %d days. Every day must have content.
+                            7. Always end a day with a PRACTICE checkpoint.
 
                             Return ONLY valid JSON with this structure:
                             {
-                              "title": "Full Course Title",
+                              "title": "%s",
                               "description": "Comprehensive Course Description",
                               "difficulty": "Intermediate",
                               "days": [
@@ -612,30 +645,34 @@ public class StudyPlanService {
                                   "lessons": [
                                     {
                                       "title": "Specific Topic Title",
-                                      "searchQuery": "refined search query favoring long whiteboard lectures and educator consistency",
-                                      "description": "What the student will learn"
+                                      "videoId": "videoId_from_playlist_or_null",
+                                      "searchQuery": "refined search query if videoId is null, else null",
+                                      "description": "Brief context about what this video covers"
                                     }
                                   ]
                                 }
                               ]
                             }
                             """,
-                    durationDays, durationDays);
+                    durationDays, videoListStr.toString(), durationDays, courseTitle);
 
             String analysisResponse = geminiService.generateRawContent(analysisPrompt, mimeType, fileData).block();
             JsonNode syllabusNode = parseJson(analysisResponse);
 
-            String title = syllabusNode.path("title").asText("Custom Study Plan");
+            String title = syllabusNode.path("title").asText(courseTitle);
             String description = syllabusNode.path("description").asText("Generated from uploaded syllabus");
-            String difficulty = syllabusNode.path("difficulty").asText("Beginner");
+            String difficulty = syllabusNode.path("difficulty").asText("Intermediate");
             JsonNode daysNode = syllabusNode.path("days");
 
             if (!daysNode.isArray() || daysNode.isEmpty()) {
                 throw new RuntimeException("Could not extract a valid day-by-day schedule from the syllabus.");
             }
 
-            // Step 2: Search Videos for EACH Lesson and create plan items
+            // Step 4: Construct the Plan Items
             List<StudyPlanItem> allItems = new ArrayList<>();
+            Set<String> usedVideoIds = new HashSet<>();
+            Map<String, Map<String, String>> playlistVideoMap = playlistVideos.stream()
+                    .collect(Collectors.toMap(v -> v.get("videoId"), v -> v));
             int itemOrder = 1;
 
             for (JsonNode day : daysNode) {
@@ -645,25 +682,43 @@ public class StudyPlanService {
                 if (lessons.isArray()) {
                     for (JsonNode lesson : lessons) {
                         String lessonTitle = lesson.path("title").asText();
+                        String videoId = lesson.path("videoId").asText();
                         String searchQuery = lesson.path("searchQuery").asText();
                         String lessonDesc = lesson.path("description").asText();
 
-                        // Search for 1 specific high-quality video for this lesson
-                        List<Map<String, String>> videos = youTubeService.searchVideos(searchQuery, 1);
+                        Map<String, String> videoData = null;
 
-                        if (!videos.isEmpty()) {
-                            Map<String, String> video = videos.get(0);
+                        // Case A: Gemini assigned a videoId from the playlist
+                        if (!"null".equals(videoId) && !videoId.isEmpty() && playlistVideoMap.containsKey(videoId)) {
+                            if (!usedVideoIds.contains(videoId)) {
+                                videoData = playlistVideoMap.get(videoId);
+                            }
+                        }
+
+                        // Case B: Fallback search (Gemini didn't find one or it was a duplicate)
+                        if (videoData == null && !"null".equals(searchQuery) && !searchQuery.isEmpty()) {
+                            List<Map<String, String>> individualResults = youTubeService.searchVideos(searchQuery, 1);
+                            for (Map<String, String> res : individualResults) {
+                                if (!usedVideoIds.contains(res.get("videoId"))) {
+                                    videoData = res;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (videoData != null) {
+                            usedVideoIds.add(videoData.get("videoId"));
                             StudyPlanItem item = new StudyPlanItem();
                             item.setItemType("VIDEO");
                             item.setDayNumber(dayNumber);
                             item.setOrderIndex(itemOrder++);
                             item.setDescription(lessonDesc);
-                            item.setVideoId(video.get("videoId"));
+                            item.setVideoId(videoData.get("videoId"));
                             item.setTitle(lessonTitle);
-                            item.setVideoUrl("https://www.youtube.com/watch?v=" + video.get("videoId"));
-                            item.setThumbnailUrl(video.get("thumbnailUrl"));
-                            item.setChannelName(video.get("channelTitle"));
-                            item.setVideoDuration(video.get("duration"));
+                            item.setVideoUrl("https://www.youtube.com/watch?v=" + videoData.get("videoId"));
+                            item.setThumbnailUrl(videoData.get("thumbnailUrl"));
+                            item.setChannelName(videoData.get("channelTitle"));
+                            item.setVideoDuration(videoData.get("duration"));
                             item.setXpReward(VIDEO_XP);
 
                             item.setPracticeTopic(lessonTitle);
@@ -683,7 +738,9 @@ public class StudyPlanService {
                     practice.setPracticeSubject(title);
 
                     // Use the last lesson title as the practice topic for the day
-                    String lastLessonTitle = lessons.get(lessons.size() - 1).path("title").asText("Day Review");
+                    String lastLessonTitle = lessons.size() > 0
+                            ? lessons.get(lessons.size() - 1).path("title").asText("Day Review")
+                            : "General Review";
                     practice.setPracticeTopic(lastLessonTitle);
                     practice.setPracticeDifficulty(difficulty);
                     practice.setXpReward(PRACTICE_XP);
