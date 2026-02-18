@@ -48,6 +48,15 @@ public class StudyPlanService {
             Student student = studentRepository.findByEmail(userEmail)
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
+            // Daily Limit Check for Free Users
+            if ("FREE".equals(student.getSubscriptionStatus())) {
+                LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+                if (studyPlanRepository.countByStudentIdAndCreatedAtAfter(student.getId(), startOfDay) >= 1) {
+                    throw new RuntimeException(
+                            "Free tier users can only generate one study plan per day. Please upgrade for unlimited plans or try again tomorrow.");
+                }
+            }
+
             // Step 1: Search YouTube for relevant videos
             int maxVideos = Math.min(durationDays * 3, 25);
             List<Map<String, String>> videos = youTubeService.searchVideos(
@@ -564,6 +573,15 @@ public class StudyPlanService {
         return Mono.fromCallable(() -> {
             Student student = studentRepository.findByEmail(userEmail)
                     .orElseThrow(() -> new RuntimeException("Student not found"));
+
+            // Daily Limit Check for Free Users
+            if ("FREE".equals(student.getSubscriptionStatus())) {
+                LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+                if (studyPlanRepository.countByStudentIdAndCreatedAtAfter(student.getId(), startOfDay) >= 1) {
+                    throw new RuntimeException(
+                            "Free tier users can only generate one study plan per day. Please upgrade for unlimited plans or try again tomorrow.");
+                }
+            }
 
             // Step 1: Analyze Syllabus & Extract Structure
             String mimeType = file.getContentType();
