@@ -674,6 +674,7 @@ public class StudyPlanService {
             Map<String, Map<String, String>> playlistVideoMap = playlistVideos.stream()
                     .collect(Collectors.toMap(v -> v.get("videoId"), v -> v));
             int itemOrder = 1;
+            int videoItemsAdded = 0;
 
             for (JsonNode day : daysNode) {
                 int dayNumber = day.path("dayNumber").asInt();
@@ -681,26 +682,41 @@ public class StudyPlanService {
 
                 if (lessons.isArray()) {
                     for (JsonNode lesson : lessons) {
-                        String lessonTitle = lesson.path("title").asText();
-                        String videoId = lesson.path("videoId").asText();
-                        String searchQuery = lesson.path("searchQuery").asText();
+                        String lessonTitle = normalizeAiField(lesson.path("title").asText(""));
+                        String videoId = normalizeAiField(lesson.path("videoId").asText(""));
+                        String searchQuery = normalizeAiField(lesson.path("searchQuery").asText(""));
                         String lessonDesc = lesson.path("description").asText();
 
                         Map<String, String> videoData = null;
 
                         // Case A: Gemini assigned a videoId from the playlist
-                        if (!"null".equals(videoId) && !videoId.isEmpty() && playlistVideoMap.containsKey(videoId)) {
+                        if (!videoId.isEmpty() && playlistVideoMap.containsKey(videoId)) {
                             if (!usedVideoIds.contains(videoId)) {
                                 videoData = playlistVideoMap.get(videoId);
                             }
                         }
 
-                        // Case B: Fallback search (Gemini didn't find one or it was a duplicate)
-                        if (videoData == null && !"null".equals(searchQuery) && !searchQuery.isEmpty()) {
-                            List<Map<String, String>> individualResults = youTubeService.searchVideos(searchQuery, 1);
-                            for (Map<String, String> res : individualResults) {
-                                if (!usedVideoIds.contains(res.get("videoId"))) {
-                                    videoData = res;
+                        // Case B: Robust fallback search with progressively broader queries
+                        if (videoData == null) {
+                            List<String> fallbackQueries = new ArrayList<>();
+                            if (!searchQuery.isEmpty())
+                                fallbackQueries.add(searchQuery);
+                            if (!lessonTitle.isEmpty())
+                                fallbackQueries.add(lessonTitle + " " + title + " tutorial");
+                            if (!lessonTitle.isEmpty())
+                                fallbackQueries.add(lessonTitle + " tutorial for beginners");
+                            fallbackQueries.add(title + " " + difficulty + " tutorial");
+
+                            for (String query : fallbackQueries) {
+                                List<Map<String, String>> individualResults = youTubeService.searchVideos(query, 5);
+                                for (Map<String, String> res : individualResults) {
+                                    String candidateVideoId = res.get("videoId");
+                                    if (candidateVideoId != null && !usedVideoIds.contains(candidateVideoId)) {
+                                        videoData = res;
+                                        break;
+                                    }
+                                }
+                                if (videoData != null) {
                                     break;
                                 }
                             }
@@ -726,6 +742,7 @@ public class StudyPlanService {
                             item.setPracticeDifficulty(difficulty);
 
                             allItems.add(item);
+                            videoItemsAdded++;
                         }
                     }
 
@@ -748,6 +765,11 @@ public class StudyPlanService {
 
                     allItems.add(practice);
                 }
+            }
+
+            if (videoItemsAdded == 0) {
+                throw new RuntimeException(
+                        "Could not map syllabus topics to YouTube videos. Try a different syllabus file or retry in a few minutes.");
             }
 
             // Step 3: Construct and Save Plan
@@ -782,6 +804,14 @@ public class StudyPlanService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse AI response: " + e.getMessage());
         }
+    }
+
+    private String normalizeAiField(String value) {
+        if (value == null) {
+            return "";
+        }
+        String cleaned = value.trim();
+        return "null".equalsIgnoreCase(cleaned) ? "" : cleaned;
     }
 
     public ActiveContextDto getActiveContext(String userEmail) {
