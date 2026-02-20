@@ -17,14 +17,14 @@ import static org.mockito.Mockito.when;
 
 class GeminiServiceTest {
 
-    private GeminiService geminiService;
+    private AiService aiService;
 
     @BeforeEach
     void setUp() {
         // We will test the caching logic mainly, mocking the WebClient calls is hard
         // without a full server mock.
         // For unit testing logic *around* the API, we can use a spy or partial mock,
-        // but since GeminiService logic IS the API call, we might rely on integration
+        // but since AiService logic IS the API call, we might rely on integration
         // tests or
         // just basic null checks if we can't easily mock the fluent WebClient API.
 

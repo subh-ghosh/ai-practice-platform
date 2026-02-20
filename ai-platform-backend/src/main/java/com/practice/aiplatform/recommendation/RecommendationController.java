@@ -1,6 +1,6 @@
 package com.practice.aiplatform.recommendation;
 
-import com.practice.aiplatform.ai.GeminiService;
+import com.practice.aiplatform.ai.AiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,10 +13,10 @@ import java.util.Map;
 public class RecommendationController {
 
     private final RecommendationService recommendationService;
-    private final GeminiService geminiService;
+    private final AiService geminiService;
 
     public RecommendationController(RecommendationService recommendationService,
-            GeminiService geminiService) {
+            AiService geminiService) {
         this.recommendationService = recommendationService;
         this.geminiService = geminiService;
     }

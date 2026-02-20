@@ -2,7 +2,7 @@ package com.practice.aiplatform.studyplan;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.practice.aiplatform.ai.GeminiService;
+import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ public class StudyPlanService {
     private static final int PRACTICE_XP = 50;
     private static final int QUESTIONS_PER_PRACTICE = 5;
 
-    private final GeminiService geminiService;
+    private final AiService aiService;
     private final YouTubeService youTubeService;
     private final StudyPlanRepository studyPlanRepository;
     private final StudyPlanItemRepository studyPlanItemRepository; // Fusion Feature
@@ -27,14 +27,14 @@ public class StudyPlanService {
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
 
-    public StudyPlanService(GeminiService geminiService,
+    public StudyPlanService(AiService aiService,
             YouTubeService youTubeService,
             StudyPlanRepository studyPlanRepository,
             StudyPlanItemRepository studyPlanItemRepository,
             QuizQuestionRepository quizQuestionRepository,
             StudentRepository studentRepository,
             ObjectMapper objectMapper) {
-        this.geminiService = geminiService;
+        this.aiService = aiService;
         this.youTubeService = youTubeService;
         this.studyPlanRepository = studyPlanRepository;
         this.studyPlanItemRepository = studyPlanItemRepository;
@@ -70,7 +70,7 @@ public class StudyPlanService {
             String prompt = createPrompt(topic, difficulty, durationDays, videos);
 
             // Step 3: Call AI to curate and organize
-            String aiResponse = geminiService.generateRawContent(prompt).block();
+            String aiResponse = aiService.generateStudyPlanContent(prompt).block();
 
             // Step 4: Parse and save the plan structure
             StudyPlan plan = parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
@@ -101,7 +101,7 @@ public class StudyPlanService {
                         item.getPracticeTopic() != null ? item.getPracticeTopic() : topic,
                         item.getPracticeDifficulty() != null ? item.getPracticeDifficulty() : difficulty);
 
-                String quizResponse = geminiService.generateRawContent(quizPrompt).block();
+                String quizResponse = aiService.generatePracticeContent(quizPrompt).block();
                 List<QuizQuestion> questions = parseQuizQuestions(quizResponse, item);
 
                 if (!questions.isEmpty()) {
@@ -597,7 +597,7 @@ public class StudyPlanService {
                     }
                     """;
 
-            String preAnalysisResponse = geminiService.generateRawContent(preAnalysisPrompt, mimeType, fileData)
+            String preAnalysisResponse = aiService.generateStudyPlanContent(preAnalysisPrompt, mimeType, fileData)
                     .block();
             JsonNode preNode = parseJson(preAnalysisResponse);
             String courseTitle = preNode.path("title").asText("Custom Course");
@@ -656,7 +656,7 @@ public class StudyPlanService {
                             """,
                     durationDays, videoListStr.toString(), durationDays, courseTitle);
 
-            String analysisResponse = geminiService.generateRawContent(analysisPrompt, mimeType, fileData).block();
+            String analysisResponse = aiService.generateStudyPlanContent(analysisPrompt, mimeType, fileData).block();
             JsonNode syllabusNode = parseJson(analysisResponse);
 
             String title = syllabusNode.path("title").asText(courseTitle);

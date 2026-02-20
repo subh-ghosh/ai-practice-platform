@@ -2,7 +2,7 @@ package com.practice.aiplatform.course;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.practice.aiplatform.ai.GeminiService;
+import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.stereotype.Service;
@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
 @Service
 public class CourseGeneratorService {
 
-    private final GeminiService geminiService;
+    private final AiService geminiService;
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
 
-    public CourseGeneratorService(GeminiService geminiService,
+    public CourseGeneratorService(AiService geminiService,
             CourseRepository courseRepository,
             StudentRepository studentRepository,
             ObjectMapper objectMapper) {
