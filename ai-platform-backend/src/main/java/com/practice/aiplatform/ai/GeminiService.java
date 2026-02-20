@@ -181,7 +181,7 @@ public class GeminiService {
 
                 return this.webClient.post()
                                 .uri(uriBuilder -> uriBuilder
-                                                .path("/v1beta/models/gemini-2.5-pro:generateContent")
+                                                .path("/v1beta/models/gemini-2.0-flash:generateContent")
                                                 .queryParam("key", this.apiKey)
                                                 .build())
                                 .bodyValue(requestBody)
