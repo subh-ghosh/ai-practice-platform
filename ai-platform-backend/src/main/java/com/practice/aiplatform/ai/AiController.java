@@ -15,12 +15,12 @@ import java.security.Principal;
 @CrossOrigin
 public class AiController {
 
-    private final GeminiService geminiService;
+    private final AiService geminiService;
     private final QuestionRepository questionRepository;
     private final StudentRepository studentRepository;
 
     @Autowired
-    public AiController(GeminiService geminiService,
+    public AiController(AiService geminiService,
             QuestionRepository questionRepository,
             StudentRepository studentRepository) {
         this.geminiService = geminiService;

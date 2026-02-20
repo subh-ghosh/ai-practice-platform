@@ -2,41 +2,59 @@ package com.practice.aiplatform.ai;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 @Service
-public class GeminiService {
+public class AiService {
 
         private final WebClient webClient;
         private final String apiKey;
+        private final String practiceModel;
+        private final String studyPlanModel;
 
-        public GeminiService(@Qualifier("geminiWebClient") WebClient webClient,
-                        @Value("${gemini.api.key}") String apiKey) {
+        public AiService(@Qualifier("aiWebClient") WebClient webClient,
+                        @Value("${groq.api.key}") String apiKey,
+                        @Value("${ai.model.practice:llama-3.1-8b-instant}") String practiceModel,
+                        @Value("${ai.model.study-plan:llama-3.3-70b-versatile}") String studyPlanModel) {
                 this.webClient = webClient;
                 this.apiKey = apiKey;
+                this.practiceModel = practiceModel;
+                this.studyPlanModel = studyPlanModel;
         }
 
         /**
-         * Generates raw content from the Gemini API.
-         * Added for CourseGeneratorService.
+         * Generates raw content for general/practice usage.
          */
         private final java.util.Map<String, Mono<String>> responseCache = new java.util.concurrent.ConcurrentHashMap<>();
 
         public Mono<String> generateRawContent(String prompt) {
-                return responseCache.computeIfAbsent(prompt, key -> callGeminiApi(key)
+                return generatePracticeContent(prompt);
+        }
+
+        public Mono<String> generatePracticeContent(String prompt) {
+                String cacheKey = "practice::" + this.practiceModel + "::" + prompt;
+                return responseCache.computeIfAbsent(cacheKey, key -> callAiApi(prompt, this.practiceModel)
                                 .map(this::extractTextFromResponse)
-                                .cache() // Cache the result (or error) and replay to future subscribers
+                                .cache()
                 );
         }
 
+        public Mono<String> generateStudyPlanContent(String prompt) {
+                String cacheKey = "studyplan::" + this.studyPlanModel + "::" + prompt;
+                return responseCache.computeIfAbsent(cacheKey, key -> callAiApi(prompt, this.studyPlanModel)
+                                .map(this::extractTextFromResponse)
+                                .cache());
+        }
+
         /**
-         * Calls the Gemini API to generate a new question.
-         * (This method remains unchanged, but is here for context)
+         * Calls the AI API to generate a new question.
          */
         public Mono<String> generateQuestion(String subject, String difficulty, String topic) {
                 return generateQuestion(subject, difficulty, topic, null, null);
@@ -67,12 +85,12 @@ public class GeminiService {
                                                 "Only return the question text, with no other formatting or introductory phrases.",
                                 contextPrompt, difficulty, subject, topic);
 
-                return callGeminiApi(prompt)
+                return callAiApi(prompt, this.practiceModel)
                                 .map(this::extractTextFromResponse);
         }
 
         /**
-         * Calls the Gemini API to evaluate a student's answer.
+         * Calls the AI API to evaluate a student's answer.
          *
          * @param questionText The original question.
          * @param answerText   The student's submitted answer.
@@ -100,12 +118,12 @@ public class GeminiService {
                                                 "3. If the answer is 'INCORRECT' or 'CLOSE', add a new line at the very end starting with the exact text '[HINT]' followed by a detailed and informative hint to guide the student.",
                                 subject, topic, difficulty, questionText, answerText);
 
-                return callGeminiApi(prompt)
+                return callAiApi(prompt, this.practiceModel)
                                 .map(this::extractTextFromResponse);
         }
 
         /**
-         * Calls the Gemini API to generate a hint for a question.
+         * Calls the AI API to generate a hint for a question.
          *
          * @param questionText The original question.
          * @param subject      The question's subject.
@@ -126,12 +144,12 @@ public class GeminiService {
                                                 "Do NOT provide the full answer. Only return the hint text.",
                                 subject, topic, difficulty, questionText);
 
-                return callGeminiApi(prompt)
+                return callAiApi(prompt, this.practiceModel)
                                 .map(this::extractTextFromResponse);
         }
 
         /**
-         * Calls the Gemini API to generate a full, correct answer for a question.
+         * Calls the AI API to generate a full, correct answer for a question.
          *
          * @param questionText The original question.
          * @param subject      The question's subject.
@@ -151,63 +169,59 @@ public class GeminiService {
                                                 "Start by providing the direct answer, then provide a step-by-step explanation.",
                                 difficulty, topic, subject, questionText);
 
-                return callGeminiApi(prompt)
+                return callAiApi(prompt, this.practiceModel)
                                 .map(this::extractTextFromResponse);
         }
 
         public Mono<String> generateRawContent(String prompt, String mimeType, byte[] data) {
-                String base64Data = java.util.Base64.getEncoder().encodeToString(data);
-                return callGeminiApi(prompt, mimeType, base64Data)
-                                .map(this::extractTextFromResponse);
+                return generateStudyPlanContent(prompt, mimeType, data);
         }
 
-        private Mono<GeminiResponse> callGeminiApi(String prompt) {
-                return callGeminiApi(prompt, null, null);
-        }
-
-        private Mono<GeminiResponse> callGeminiApi(String prompt, String mimeType, String base64Data) {
-                List<Map<String, Object>> parts = new java.util.ArrayList<>();
-                parts.add(Map.of("text", prompt));
-
-                if (mimeType != null && base64Data != null) {
-                        parts.add(Map.of("inline_data", Map.of(
-                                        "mime_type", mimeType,
-                                        "data", base64Data)));
+        public Mono<String> generateStudyPlanContent(String prompt, String mimeType, byte[] data) {
+                String fullPrompt = prompt;
+                if (mimeType != null && mimeType.startsWith("text/")) {
+                        String textPayload = new String(data, StandardCharsets.UTF_8);
+                        fullPrompt = prompt + "\n\nAttached text content:\n" + textPayload;
+                } else if (mimeType != null && data != null && data.length > 0) {
+                        return Mono.error(new RuntimeException(
+                                        "Current AI provider supports text attachments only. Convert the syllabus to plain text and retry."));
                 }
+                return callAiApi(fullPrompt, this.studyPlanModel).map(this::extractTextFromResponse);
+        }
 
+        private Mono<AiResponse> callAiApi(String prompt, String model) {
                 Map<String, Object> requestBody = Map.of(
-                                "contents", List.of(
-                                                Map.of("parts", parts)));
+                                "model", model,
+                                "messages", List.of(
+                                                Map.of(
+                                                                "role", "user",
+                                                                "content", prompt)),
+                                "temperature", 0.2);
 
                 return this.webClient.post()
-                                .uri(uriBuilder -> uriBuilder
-                                                .path("/v1beta/models/gemini-2.0-flash:generateContent")
-                                                .queryParam("key", this.apiKey)
-                                                .build())
+                                .uri("/v1/chat/completions")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.apiKey)
                                 .bodyValue(requestBody)
                                 .retrieve()
                                 .onStatus(
                                                 status -> status.is4xxClientError() || status.is5xxServerError(),
                                                 clientResponse -> clientResponse.bodyToMono(String.class)
                                                                 .flatMap(errorBody -> {
-                                                                        System.err.println("GOOGLE API ERROR: "
+                                                                        System.err.println("AI API ERROR: "
                                                                                         + errorBody);
                                                                         return Mono.error(new RuntimeException(
-                                                                                        "Gemini API Error: "
+                                                                                        "AI API Error: "
                                                                                                         + errorBody));
                                                                 }))
-                                .bodyToMono(GeminiResponse.class)
+                                .bodyToMono(AiResponse.class)
                                 .doOnError(e -> System.err.println("CRITICAL ERROR: " + e.getMessage()));
         }
 
-        private String extractTextFromResponse(GeminiResponse response) {
-                // ... (this method remains unchanged)
+        private String extractTextFromResponse(AiResponse response) {
                 try {
-                        return response.candidates().get(0)
-                                        .content().parts().get(0)
-                                        .text();
+                        return response.choices().get(0).message().content();
                 } catch (Exception e) {
-                        System.err.println("Error parsing Gemini response: " + e.getMessage());
+                        System.err.println("Error parsing AI response: " + e.getMessage());
                         return "Error: Could not parse AI response.";
                 }
         }

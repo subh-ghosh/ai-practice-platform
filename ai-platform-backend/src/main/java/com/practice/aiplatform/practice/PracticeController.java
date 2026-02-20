@@ -1,6 +1,6 @@
 package com.practice.aiplatform.practice;
 
-import com.practice.aiplatform.ai.GeminiService;
+import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import com.practice.aiplatform.user.UsageService;
@@ -31,7 +31,7 @@ public class PracticeController {
     @Autowired
     private StudentRepository studentRepository;
     @Autowired
-    private GeminiService geminiService;
+    private AiService geminiService;
     @Autowired
     private UsageService usageService;
     @Autowired

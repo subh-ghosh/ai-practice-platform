@@ -1,6 +1,6 @@
 package com.practice.aiplatform.course;
 
-import com.practice.aiplatform.ai.GeminiService;
+import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import com.practice.aiplatform.security.JwtUtil;
@@ -23,7 +23,7 @@ class CourseControllerTest {
     private CourseRepository courseRepository;
 
     @Mock
-    private GeminiService geminiService;
+    private AiService aiService;
 
     @Mock
     private StudentRepository studentRepository;
