@@ -6,6 +6,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -182,11 +185,26 @@ public class AiService {
                 if (mimeType != null && mimeType.startsWith("text/")) {
                         String textPayload = new String(data, StandardCharsets.UTF_8);
                         fullPrompt = prompt + "\n\nAttached text content:\n" + textPayload;
+                } else if ("application/pdf".equalsIgnoreCase(mimeType) && data != null && data.length > 0) {
+                        String pdfText = extractPdfText(data);
+                        if (pdfText.isBlank()) {
+                                return Mono.error(new RuntimeException("Could not extract readable text from the PDF."));
+                        }
+                        fullPrompt = prompt + "\n\nExtracted syllabus text from PDF:\n" + pdfText;
                 } else if (mimeType != null && data != null && data.length > 0) {
                         return Mono.error(new RuntimeException(
-                                        "Current AI provider supports text attachments only. Convert the syllabus to plain text and retry."));
+                                        "Current AI provider supports text and PDF attachments. Convert this file to text/PDF and retry."));
                 }
                 return callAiApi(fullPrompt, this.studyPlanModel).map(this::extractTextFromResponse);
+        }
+
+        private String extractPdfText(byte[] data) {
+                try (PDDocument document = Loader.loadPDF(data)) {
+                        PDFTextStripper stripper = new PDFTextStripper();
+                        return stripper.getText(document).trim();
+                } catch (Exception e) {
+                        throw new RuntimeException("Failed to read PDF content: " + e.getMessage(), e);
+                }
         }
 
         private Mono<AiResponse> callAiApi(String prompt, String model) {
