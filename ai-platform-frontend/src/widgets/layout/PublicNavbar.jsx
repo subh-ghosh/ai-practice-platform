@@ -9,12 +9,15 @@ import {
 } from "@material-tailwind/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
 // import { ThemeToggle } from "./ThemeToggle";
 
 export function PublicNavbar() {
   const [openNav, setOpenNav] = React.useState(false);
   const { theme } = useTheme();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const loginTarget = user ? "/dashboard/home" : "/auth/sign-in";
 
   React.useEffect(() => {
     window.addEventListener("resize", () => window.innerWidth >= 960 && setOpenNav(false));
@@ -85,10 +88,10 @@ export function PublicNavbar() {
             <Button
               variant="text"
               size="sm"
-              onClick={() => navigate("/auth/sign-in")}
+              onClick={() => navigate(loginTarget)}
               className="text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10"
             >
-              Sign In
+              {user ? "Dashboard" : "Sign In"}
             </Button>
 
             <Button
@@ -133,10 +136,10 @@ export function PublicNavbar() {
               variant="text"
               size="sm"
               fullWidth
-              onClick={() => navigate("/auth/sign-in")}
+              onClick={() => navigate(loginTarget)}
               className="text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10"
             >
-              Sign In
+              {user ? "Dashboard" : "Sign In"}
             </Button>
 
             <Button

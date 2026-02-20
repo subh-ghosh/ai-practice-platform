@@ -1,8 +1,15 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import routes from "@/routes";
 import { PublicNavbar } from "@/widgets/layout";
+import { useAuth } from "@/context/AuthContext";
 
 export function Auth() {
+  const { user } = useAuth();
+
+  if (user) {
+    return <Navigate to="/dashboard/home" replace />;
+  }
+
   return (
     // --- 👇 THIS IS THE CHANGE --- 👇
     // Removed all flexbox classes
