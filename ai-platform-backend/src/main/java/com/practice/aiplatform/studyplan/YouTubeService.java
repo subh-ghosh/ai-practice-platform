@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,7 +19,8 @@ public class YouTubeService {
     private final String apiKey;
     private final ObjectMapper objectMapper;
 
-    public YouTubeService(@Qualifier("youtubeWebClient") WebClient webClient,
+    public YouTubeService(
+            @Qualifier("youtubeWebClient") WebClient webClient,
             @Value("${youtube.api.key}") String apiKey,
             ObjectMapper objectMapper) {
         this.webClient = webClient;
@@ -26,20 +28,15 @@ public class YouTubeService {
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Search YouTube for educational videos on a given topic.
-     * Returns a list of video metadata maps.
-     */
     public List<Map<String, String>> searchVideos(String query, int maxResults) {
         try {
-            // Step 1: Search for videos
-            String searchResponse = webClient.get()
+            String responseBody = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/search")
                             .queryParam("part", "snippet")
                             .queryParam("q", query + " tutorial educational")
                             .queryParam("type", "video")
-                            .queryParam("videoDuration", "medium") // 4-20 min videos
+                            .queryParam("videoDuration", "medium")
                             .queryParam("relevanceLanguage", "en")
                             .queryParam("order", "relevance")
                             .queryParam("maxResults", maxResults)
@@ -49,35 +46,31 @@ public class YouTubeService {
                     .bodyToMono(String.class)
                     .block();
 
-            JsonNode searchRoot = objectMapper.readTree(searchResponse);
-            JsonNode items = searchRoot.path("items");
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode items = root.path("items");
 
             if (!items.isArray() || items.isEmpty()) {
-                System.err.println("YouTube: No results for query: " + query);
                 return List.of();
             }
 
-            // Collect video IDs for duration lookup
             List<String> videoIds = new ArrayList<>();
             for (JsonNode item : items) {
-                videoIds.add(item.path("id").path("videoId").asText());
+                String videoId = item.path("id").path("videoId").asText("");
+                if (!videoId.isBlank()) {
+                    videoIds.add(videoId);
+                }
             }
 
             return fetchVideoDetails(videoIds);
-
         } catch (Exception e) {
-            System.err.println("YouTube API Error (searchVideos): " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("YouTube searchVideos error: " + e.getMessage());
             return List.of();
         }
     }
 
-    /**
-     * Search for playlists on a given topic.
-     */
     public List<Map<String, String>> searchPlaylists(String query, int maxResults) {
         try {
-            String searchResponse = webClient.get()
+            String responseBody = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/search")
                             .queryParam("part", "snippet")
@@ -90,28 +83,31 @@ public class YouTubeService {
                     .bodyToMono(String.class)
                     .block();
 
-            JsonNode searchRoot = objectMapper.readTree(searchResponse);
-            JsonNode items = searchRoot.path("items");
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode items = root.path("items");
 
             List<Map<String, String>> playlists = new ArrayList<>();
-            for (JsonNode item : items) {
-                playlists.add(Map.of(
-                        "playlistId", item.path("id").path("playlistId").asText(),
-                        "title", item.path("snippet").path("title").asText()));
+            if (!items.isArray()) {
+                return playlists;
             }
+
+            for (JsonNode item : items) {
+                Map<String, String> playlist = new HashMap<>();
+                playlist.put("playlistId", item.path("id").path("playlistId").asText(""));
+                playlist.put("title", item.path("snippet").path("title").asText(""));
+                playlists.add(playlist);
+            }
+
             return playlists;
         } catch (Exception e) {
-            System.err.println("YouTube API Error (searchPlaylists): " + e.getMessage());
+            System.err.println("YouTube searchPlaylists error: " + e.getMessage());
             return List.of();
         }
     }
 
-    /**
-     * Get videos from a specific playlist.
-     */
     public List<Map<String, String>> getPlaylistItems(String playlistId, int maxResults) {
         try {
-            String response = webClient.get()
+            String responseBody = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/playlistItems")
                             .queryParam("part", "snippet,contentDetails")
@@ -123,62 +119,76 @@ public class YouTubeService {
                     .bodyToMono(String.class)
                     .block();
 
-            JsonNode root = objectMapper.readTree(response);
+            JsonNode root = objectMapper.readTree(responseBody);
             JsonNode items = root.path("items");
 
             List<String> videoIds = new ArrayList<>();
-            for (JsonNode item : items) {
-                videoIds.add(item.path("contentDetails").path("videoId").asText());
+            if (items.isArray()) {
+                for (JsonNode item : items) {
+                    String videoId = item.path("contentDetails").path("videoId").asText("");
+                    if (!videoId.isBlank()) {
+                        videoIds.add(videoId);
+                    }
+                }
             }
 
             return fetchVideoDetails(videoIds);
         } catch (Exception e) {
-            System.err.println("YouTube API Error (getPlaylistItems): " + e.getMessage());
+            System.err.println("YouTube getPlaylistItems error: " + e.getMessage());
             return List.of();
         }
     }
 
-    /**
-     * Helper to fetch full video details (duration, channel, etc.) for a list of
-     * video IDs.
-     */
     private List<Map<String, String>> fetchVideoDetails(List<String> videoIds) {
-        if (videoIds.isEmpty())
+        if (videoIds == null || videoIds.isEmpty()) {
             return List.of();
+        }
+
         try {
-            String videoIdsStr = String.join(",", videoIds);
-            String detailsResponse = webClient.get()
+            String ids = String.join(",", videoIds);
+
+            String responseBody = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/videos")
                             .queryParam("part", "contentDetails,snippet")
-                            .queryParam("id", videoIdsStr)
+                            .queryParam("id", ids)
                             .queryParam("key", apiKey)
                             .build())
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
 
-            JsonNode detailsRoot = objectMapper.readTree(detailsResponse);
-            JsonNode detailItems = detailsRoot.path("items");
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode items = root.path("items");
 
             List<Map<String, String>> videos = new ArrayList<>();
-            for (JsonNode video : detailItems) {
-                String videoId = video.path("id").asText();
-                JsonNode snippet = video.path("snippet");
-                String duration = video.path("contentDetails").path("duration").asText();
-
-                videos.add(Map.of(
-                        "videoId", videoId,
-                        "title", snippet.path("title").asText(),
-                        "channelTitle", snippet.path("channelTitle").asText(),
-                        "thumbnailUrl", snippet.path("thumbnails").path("high").path("url").asText(
-                                snippet.path("thumbnails").path("default").path("url").asText("")),
-                        "description", snippet.path("description").asText(""),
-                        "duration", duration));
+            if (!items.isArray()) {
+                return videos;
             }
+
+            for (JsonNode video : items) {
+                String videoId = video.path("id").asText("");
+                JsonNode snippet = video.path("snippet");
+                String duration = video.path("contentDetails").path("duration").asText("");
+
+                String highThumb = snippet.path("thumbnails").path("high").path("url").asText("");
+                String defaultThumb = snippet.path("thumbnails").path("default").path("url").asText("");
+                String thumbnailUrl = !highThumb.isBlank() ? highThumb : defaultThumb;
+
+                Map<String, String> videoMap = new HashMap<>();
+                videoMap.put("videoId", videoId);
+                videoMap.put("title", snippet.path("title").asText(""));
+                videoMap.put("channelTitle", snippet.path("channelTitle").asText(""));
+                videoMap.put("thumbnailUrl", thumbnailUrl);
+                videoMap.put("description", snippet.path("description").asText(""));
+                videoMap.put("duration", duration);
+
+                videos.add(videoMap);
+            }
+
             return videos;
         } catch (Exception e) {
-            System.err.println("YouTube API Error (fetchVideoDetails): " + e.getMessage());
+            System.err.println("YouTube fetchVideoDetails error: " + e.getMessage());
             return List.of();
         }
     }

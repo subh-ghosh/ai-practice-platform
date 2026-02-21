@@ -6,8 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/gamification")
@@ -17,39 +17,62 @@ public class GamificationController {
         private final StudentRepository studentRepository;
         private final DailyChallengeService dailyChallengeService;
 
-        public GamificationController(BadgeService badgeService, StudentRepository studentRepository,
-                        DailyChallengeService dailyChallengeService) {
+        public GamificationController(
+                BadgeService badgeService,
+                StudentRepository studentRepository,
+                DailyChallengeService dailyChallengeService) {
                 this.badgeService = badgeService;
                 this.studentRepository = studentRepository;
                 this.dailyChallengeService = dailyChallengeService;
         }
 
-        public record BadgeResponse(String code, String displayName, String description, String icon, boolean earned) {
+        public record BadgeResponse(
+                String code,
+                String displayName,
+                String description,
+                String icon,
+                boolean earned) {
         }
 
-        public record ChallengeResponse(Long id, String title, String description, int xpReward, int targetAmount,
-                        int currentAmount, boolean claimed, boolean isCompleted) {
+        public record ChallengeResponse(
+                Long id,
+                String title,
+                String description,
+                int xpReward,
+                int targetAmount,
+                int currentAmount,
+                boolean claimed,
+                boolean isCompleted) {
         }
 
         @GetMapping("/badges")
         public ResponseEntity<List<BadgeResponse>> getMyBadges(Principal principal) {
                 String email = principal.getName();
+
                 Student student = studentRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Student not found"));
+                        .orElseThrow(() -> new RuntimeException("Student not found"));
 
                 List<UserBadge> earnedBadges = badgeService.getUserBadges(student.getId());
-                List<String> earnedCodes = earnedBadges.stream()
-                                .map(ub -> ub.getBadge().name())
-                                .collect(Collectors.toList());
 
-                List<BadgeResponse> response = List.of(Badge.values()).stream()
-                                .map(b -> new BadgeResponse(
-                                                b.name(),
-                                                b.getDisplayName(),
-                                                b.getDescription(),
-                                                b.getIcon(),
-                                                earnedCodes.contains(b.name())))
-                                .collect(Collectors.toList());
+                List<String> earnedCodes = new ArrayList<>();
+                for (UserBadge userBadge : earnedBadges) {
+                        earnedCodes.add(userBadge.getBadge().name());
+                }
+
+                List<BadgeResponse> response = new ArrayList<>();
+                Badge[] allBadges = Badge.values();
+
+                for (Badge badge : allBadges) {
+                        boolean earned = earnedCodes.contains(badge.name());
+
+                        response.add(new BadgeResponse(
+                                badge.name(),
+                                badge.getDisplayName(),
+                                badge.getDescription(),
+                                badge.getIcon(),
+                                earned
+                        ));
+                }
 
                 return ResponseEntity.ok(response);
         }
@@ -57,22 +80,27 @@ public class GamificationController {
         @GetMapping("/daily-challenges")
         public ResponseEntity<List<ChallengeResponse>> getDailyChallenges(Principal principal) {
                 String email = principal.getName();
+
                 Student student = studentRepository.findByEmail(email)
-                                .orElseThrow(() -> new RuntimeException("Student not found"));
+                        .orElseThrow(() -> new RuntimeException("Student not found"));
 
                 List<DailyChallenge> challenges = dailyChallengeService.getTodayChallenges(student.getId());
 
-                List<ChallengeResponse> response = challenges.stream()
-                                .map(c -> new ChallengeResponse(
-                                                c.getId(),
-                                                c.getTitle(),
-                                                c.getDescription(),
-                                                c.getXpReward(),
-                                                c.getTargetAmount(),
-                                                c.getCurrentAmount(),
-                                                c.isClaimed(),
-                                                c.getCurrentAmount() >= c.getTargetAmount()))
-                                .collect(Collectors.toList());
+                List<ChallengeResponse> response = new ArrayList<>();
+                for (DailyChallenge challenge : challenges) {
+                        boolean completed = challenge.getCurrentAmount() >= challenge.getTargetAmount();
+
+                        response.add(new ChallengeResponse(
+                                challenge.getId(),
+                                challenge.getTitle(),
+                                challenge.getDescription(),
+                                challenge.getXpReward(),
+                                challenge.getTargetAmount(),
+                                challenge.getCurrentAmount(),
+                                challenge.isClaimed(),
+                                completed
+                        ));
+                }
 
                 return ResponseEntity.ok(response);
         }

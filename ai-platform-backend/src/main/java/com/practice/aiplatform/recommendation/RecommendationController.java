@@ -53,7 +53,7 @@ public class RecommendationController {
                     "Format: First sentence about what they're doing well or struggling with. " +
                     "Second sentence is actionable advice. Keep it under 50 words total.\n\n" + promptData;
 
-            String insight = geminiService.generateRawContent(prompt).block();
+            String insight = geminiService.generateRawContent(prompt);
 
             return ResponseEntity.ok(Map.of(
                     "insight", insight != null ? insight.trim() : "Keep practicing! Consistency is key.",

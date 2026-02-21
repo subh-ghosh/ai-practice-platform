@@ -1,5 +1,6 @@
 package com.practice.aiplatform.user;
 
+import com.practice.aiplatform.security.JwtUtil;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
@@ -9,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.practice.aiplatform.security.JwtUtil; // 👈 --- ADD THIS IMPORT
 
 import java.security.Principal;
 import java.time.LocalDate;
@@ -26,22 +26,20 @@ public class PaymentController {
     private String razorpayKeySecret;
 
     private final StudentRepository studentRepository;
-    private final JwtUtil jwtUtil; // 👈 --- ADD THIS
+    private final JwtUtil jwtUtil;
 
-    public PaymentController(StudentRepository studentRepository, JwtUtil jwtUtil) { // 👈 --- UPDATE CONSTRUCTOR
-        this.studentRepository = studentRepository;
-        this.jwtUtil = jwtUtil; // 👈 --- ADD THIS
-    }
-
-    // A simple map to define your plans
     private static final Map<String, Integer> PLANS = Map.of(
-            "premium_monthly", 19900, // ₹199.00 in paise
-            "premium_yearly", 199900 // ₹1999.00 in paise
+            "premium_monthly", 19900,
+            "premium_yearly", 199900
     );
+
+    public PaymentController(StudentRepository studentRepository, JwtUtil jwtUtil) {
+        this.studentRepository = studentRepository;
+        this.jwtUtil = jwtUtil;
+    }
 
     @PostMapping("/create-order")
     public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest request, Principal principal) {
-        // ... (This method remains unchanged)
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -71,7 +69,8 @@ public class PaymentController {
                     amount.toString(),
                     "INR",
                     student.getFirstName(),
-                    student.getEmail());
+                    student.getEmail()
+            );
 
             return ResponseEntity.ok(response);
 
@@ -82,12 +81,7 @@ public class PaymentController {
     }
 
     @PostMapping("/verify-payment")
-    public ResponseEntity<?> verifyPayment(@RequestBody VerifyPaymentRequest request, Principal principal) { // 👈 ---
-                                                                                                             // Return
-                                                                                                             // type
-                                                                                                             // changed
-                                                                                                             // to
-                                                                                                             // ResponseEntity<?>
+    public ResponseEntity<?> verifyPayment(@RequestBody VerifyPaymentRequest request, Principal principal) {
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -99,35 +93,33 @@ public class PaymentController {
 
             boolean isValid = Utils.verifyPaymentSignature(options, razorpayKeySecret);
 
-            if (isValid) {
-                // --- Payment is Verified ---
-                // 1. Update student's subscription status in your database
-                student.setSubscriptionStatus("PREMIUM");
-                student.setSubscriptionEndsAt(LocalDate.now().plusMonths(1));
-                student.setFreeActionsUsed(0); // Reset free counter
-                Student savedStudent = studentRepository.save(student);
-
-                // 2. Return the UPDATED StudentDto (with a fresh token)
-                String token = jwtUtil.generateToken(savedStudent);
-                StudentDto updatedDto = new StudentDto(
-                        savedStudent.getId(),
-                        savedStudent.getEmail(),
-                        savedStudent.getFirstName(),
-                        savedStudent.getLastName(),
-                        savedStudent.getGender(),
-                        token,
-                        savedStudent.getSubscriptionStatus(),
-                        savedStudent.getFreeActionsUsed(),
-                        savedStudent.getTotalXp(),
-                        savedStudent.getStreakDays(),
-                        null);
-
-                return ResponseEntity.ok(updatedDto); // 👈 --- RETURN THE NEW DTO
-            } else {
-                // --- Payment Verification Failed ---
+            if (!isValid) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("status", "error", "message", "Invalid payment signature."));
             }
+
+            student.setSubscriptionStatus("PREMIUM");
+            student.setSubscriptionEndsAt(LocalDate.now().plusMonths(1));
+            student.setFreeActionsUsed(0);
+
+            Student savedStudent = studentRepository.save(student);
+            String token = jwtUtil.generateToken(savedStudent);
+
+            StudentDto updatedDto = new StudentDto(
+                    savedStudent.getId(),
+                    savedStudent.getEmail(),
+                    savedStudent.getFirstName(),
+                    savedStudent.getLastName(),
+                    savedStudent.getGender(),
+                    token,
+                    savedStudent.getSubscriptionStatus(),
+                    savedStudent.getFreeActionsUsed(),
+                    savedStudent.getTotalXp(),
+                    savedStudent.getStreakDays(),
+                    null
+            );
+
+            return ResponseEntity.ok(updatedDto);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

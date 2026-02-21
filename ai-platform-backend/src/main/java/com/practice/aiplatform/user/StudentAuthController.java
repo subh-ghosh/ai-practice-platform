@@ -1,10 +1,10 @@
-// Force Update
 package com.practice.aiplatform.user;
 
 import com.practice.aiplatform.notifications.NotificationService;
 import com.practice.aiplatform.security.JwtUtil;
-import com.practice.aiplatform.user.GoogleAuthService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.practice.aiplatform.security.RefreshToken;
+import com.practice.aiplatform.security.RefreshTokenService;
+import com.practice.aiplatform.security.TokenRefreshException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,7 +18,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/students")
-@CrossOrigin // Fixes CORS issues
+@CrossOrigin
 public class StudentAuthController {
 
     private final StudentRepository studentRepository;
@@ -26,15 +26,15 @@ public class StudentAuthController {
     private final JwtUtil jwtUtil;
     private final NotificationService notificationService;
     private final GoogleAuthService googleAuthService;
-    private final com.practice.aiplatform.security.RefreshTokenService refreshTokenService;
+    private final RefreshTokenService refreshTokenService;
 
-    @Autowired
-    public StudentAuthController(StudentRepository studentRepository,
+    public StudentAuthController(
+            StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
             NotificationService notificationService,
             GoogleAuthService googleAuthService,
-            com.practice.aiplatform.security.RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
@@ -43,123 +43,92 @@ public class StudentAuthController {
         this.refreshTokenService = refreshTokenService;
     }
 
-    // --- 1. REGISTER ---
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        if (studentRepository.findByEmail(req.email).isPresent()) {
+        if (studentRepository.findByEmail(req.email()).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Email already exists"));
         }
 
         Student student = new Student();
-        student.setEmail(req.email);
-        student.setPassword(passwordEncoder.encode(req.password));
-        student.setFirstName(req.firstName);
-        student.setLastName(req.lastName);
-
-        // Set defaults
+        student.setEmail(req.email());
+        student.setPassword(passwordEncoder.encode(req.password()));
+        student.setFirstName(req.firstName());
+        student.setLastName(req.lastName());
         student.setFreeActionsUsed(0);
         student.setSubscriptionStatus("FREE");
 
         Student savedStudent = studentRepository.save(student);
 
-        // Notify
         try {
-            notificationService.notify(savedStudent.getId(), "REGISTER", "Welcome! Registration successful.");
-        } catch (Exception e) {
-            System.out.println("Notification failed: " + e.getMessage());
+            notificationService.createNotification(savedStudent.getId(), "REGISTER", "Welcome! Registration successful.");
+        } catch (Exception ignored) {
         }
 
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
     }
 
-    // --- 2. LOGIN (with Streak Logic + DTO Response) ---
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-        Optional<Student> studentOpt = studentRepository.findByEmail(req.email);
+        Optional<Student> studentOpt = studentRepository.findByEmail(req.email());
 
-        if (studentOpt.isPresent()) {
-            Student student = studentOpt.get();
-            if (passwordEncoder.matches(req.password, student.getPassword())) {
-
-                // --- Streak Logic ---
-                LocalDate today = LocalDate.now();
-                if (student.getLastLoginDate() != null) {
-                    long daysBetween = ChronoUnit.DAYS.between(student.getLastLoginDate(), today);
-                    if (daysBetween == 1) {
-                        student.setStreakDays(student.getStreakDays() + 1);
-                    } else if (daysBetween > 1) {
-                        student.setStreakDays(1); // Reset streak
-                    }
-                    // daysBetween == 0 means same day login, keep streak unchanged
-                } else {
-                    student.setStreakDays(1); // First login
-                }
-                student.setLastLoginDate(today);
-                studentRepository.save(student);
-
-                // Generate Token
-                String token = jwtUtil.generateToken(student);
-
-                // Generate Refresh Token
-                // Delete existing refresh token first to ensure rotation/single active token
-                // policy
-                refreshTokenService.deleteByUserId(student.getId());
-                com.practice.aiplatform.security.RefreshToken refreshToken = refreshTokenService
-                        .createRefreshToken(student.getId());
-
-                // Notify
-                try {
-                    notificationService.notify(student.getId(), "LOGIN", "New login detected.");
-                } catch (Exception e) {
-                    // Ignore notification errors during login
-                }
-
-                // Return DTO (not raw entity) to prevent serialization issues
-                StudentDto dto = new StudentDto(
-                        student.getId(),
-                        student.getEmail(),
-                        student.getFirstName(),
-                        student.getLastName(),
-                        student.getGender(),
-                        token,
-                        student.getSubscriptionStatus(),
-                        student.getFreeActionsUsed(),
-                        student.getTotalXp(),
-                        student.getStreakDays(),
-                        refreshToken.getToken());
-
-                Map<String, Object> response = new HashMap<>();
-                response.put("token", token);
-                response.put("refreshToken", refreshToken.getToken());
-                response.put("student", dto);
-                response.put("message", "Login successful");
-
-                return ResponseEntity.ok(response);
-            }
+        if (studentOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid credentials"));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid credentials"));
-    }
 
-    // --- 3. GOOGLE LOGIN (DTO Response) ---
+        Student student = studentOpt.get();
+        if (!passwordEncoder.matches(req.password(), student.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid credentials"));
+        }
+
+        updateStreak(student);
+        studentRepository.save(student);
+
+        String token = jwtUtil.generateToken(student);
+
+        refreshTokenService.deleteByUserId(student.getId());
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(student.getId());
+
+        try {
+            notificationService.createNotification(student.getId(), "LOGIN", "New login detected.");
+        } catch (Exception ignored) {
+        }
+
+        StudentDto dto = new StudentDto(
+                student.getId(),
+                student.getEmail(),
+                student.getFirstName(),
+                student.getLastName(),
+                student.getGender(),
+                token,
+                student.getSubscriptionStatus(),
+                student.getFreeActionsUsed(),
+                student.getTotalXp(),
+                student.getStreakDays(),
+                refreshToken.getToken());
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("token", token);
+        response.put("refreshToken", refreshToken.getToken());
+        response.put("student", dto);
+        response.put("message", "Login successful");
+
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/oauth/google")
     public ResponseEntity<?> handleGoogleLogin(@RequestBody Map<String, String> request) {
-
         try {
             String idToken = request.get("token");
-
             var payload = googleAuthService.verifyToken(idToken);
 
             if (payload == null) {
-                return ResponseEntity.status(401).body("Invalid Google token");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Google token");
             }
 
             String email = payload.getEmail();
-
             Optional<Student> existing = studentRepository.findByEmail(email);
 
             Student student;
-
             if (existing.isPresent()) {
                 student = existing.get();
             } else {
@@ -167,36 +136,20 @@ public class StudentAuthController {
                 student.setEmail(email);
                 student.setFirstName((String) payload.get("given_name"));
                 student.setLastName((String) payload.get("family_name"));
-                student.setPassword(""); // no password for Google users
+                student.setPassword("");
                 student.setSubscriptionStatus("FREE");
                 student.setFreeActionsUsed(0);
-
                 studentRepository.save(student);
             }
 
-            // Streak logic for Google login too
-            LocalDate today = LocalDate.now();
-            if (student.getLastLoginDate() != null) {
-                long daysBetween = ChronoUnit.DAYS.between(student.getLastLoginDate(), today);
-                if (daysBetween == 1) {
-                    student.setStreakDays(student.getStreakDays() + 1);
-                } else if (daysBetween > 1) {
-                    student.setStreakDays(1);
-                }
-            } else {
-                student.setStreakDays(1);
-            }
-            student.setLastLoginDate(today);
+            updateStreak(student);
             studentRepository.save(student);
 
             String jwt = jwtUtil.generateToken(student);
 
-            // Refresh Token
             refreshTokenService.deleteByUserId(student.getId());
-            com.practice.aiplatform.security.RefreshToken refreshToken = refreshTokenService
-                    .createRefreshToken(student.getId());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(student.getId());
 
-            // Return DTO instead of raw entity
             StudentDto dto = new StudentDto(
                     student.getId(),
                     student.getEmail(),
@@ -219,53 +172,51 @@ public class StudentAuthController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Google Auth Failed");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Google Auth Failed");
         }
     }
 
-    // --- 4. REFRESH TOKEN ---
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
-        String requestRefreshToken = request.refreshToken;
+        String requestRefreshToken = request.refreshToken();
 
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
-                .map(com.practice.aiplatform.security.RefreshToken::getStudent)
+                .map(RefreshToken::getStudent)
                 .map(student -> {
                     String token = jwtUtil.generateToken(student);
                     return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
                 })
-                .orElseThrow(() -> new com.practice.aiplatform.security.TokenRefreshException(requestRefreshToken,
-                        "Refresh token is not in database!"));
+                .orElseThrow(() -> new TokenRefreshException(
+                        requestRefreshToken,
+                        "Refresh token is not in database!"
+                ));
     }
 
-    // --- INNER CLASSES (DTOs) ---
-    // Using static inner classes ensures you don't need extra files
-    static class RegisterRequest {
-        public String firstName;
-        public String lastName;
-        public String email;
-        public String password;
+    private void updateStreak(Student student) {
+        LocalDate today = LocalDate.now();
+
+        if (student.getLastLoginDate() != null) {
+            long daysBetween = ChronoUnit.DAYS.between(student.getLastLoginDate(), today);
+
+            if (daysBetween == 1) {
+                student.setStreakDays(student.getStreakDays() + 1);
+            } else if (daysBetween > 1) {
+                student.setStreakDays(1);
+            }
+        } else {
+            student.setStreakDays(1);
+        }
+
+        student.setLastLoginDate(today);
     }
 
-    static class LoginRequest {
-        public String email;
-        public String password;
+    public record RefreshTokenRequest(String refreshToken) {
     }
 
-    static class RefreshTokenRequest {
-        public String refreshToken;
-    }
-
-    static class TokenRefreshResponse {
-        public String accessToken;
-        public String refreshToken;
-        public String tokenType = "Bearer";
-
+    public record TokenRefreshResponse(String accessToken, String refreshToken, String tokenType) {
         public TokenRefreshResponse(String accessToken, String refreshToken) {
-            this.accessToken = accessToken;
-            this.refreshToken = refreshToken;
+            this(accessToken, refreshToken, "Bearer");
         }
     }
 }

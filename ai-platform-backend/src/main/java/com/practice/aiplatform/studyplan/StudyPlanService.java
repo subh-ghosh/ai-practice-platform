@@ -6,11 +6,10 @@ import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class StudyPlanService {
@@ -22,12 +21,13 @@ public class StudyPlanService {
     private final AiService aiService;
     private final YouTubeService youTubeService;
     private final StudyPlanRepository studyPlanRepository;
-    private final StudyPlanItemRepository studyPlanItemRepository; // Fusion Feature
+    private final StudyPlanItemRepository studyPlanItemRepository;
     private final QuizQuestionRepository quizQuestionRepository;
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
 
-    public StudyPlanService(AiService aiService,
+    public StudyPlanService(
+            AiService aiService,
             YouTubeService youTubeService,
             StudyPlanRepository studyPlanRepository,
             StudyPlanItemRepository studyPlanItemRepository,
@@ -43,163 +43,155 @@ public class StudyPlanService {
         this.objectMapper = objectMapper;
     }
 
-    public Mono<StudyPlan> generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
-        return Mono.fromCallable(() -> {
-            Student student = studentRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("Student not found"));
+    public StudyPlan generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
-            // Daily Limit Check for Free Users
-            if ("FREE".equals(student.getSubscriptionStatus())) {
-                LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-                if (studyPlanRepository.countByStudentIdAndCreatedAtAfter(student.getId(), startOfDay) >= 1) {
-                    throw new RuntimeException(
-                            "Free tier users can only generate one study plan per day. Please upgrade for unlimited plans or try again tomorrow.");
-                }
-            }
+        enforceDailyLimitForFreeUsers(student);
 
-            // Step 1: Search YouTube for relevant videos
-            int maxVideos = Math.min(durationDays * 3, 25);
-            List<Map<String, String>> videos = youTubeService.searchVideos(
-                    topic + " " + difficulty + " tutorial", maxVideos);
+        int maxVideos = Math.min(durationDays * 3, 25);
+        List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial", maxVideos);
 
-            if (videos.isEmpty()) {
-                throw new RuntimeException("No videos found for the topic: " + topic);
-            }
+        if (videos.isEmpty()) {
+            throw new RuntimeException("No videos found for the topic: " + topic);
+        }
 
-            // Step 2: Build AI prompt with video data
-            String prompt = createPrompt(topic, difficulty, durationDays, videos);
+        String prompt = createPrompt(topic, difficulty, durationDays, videos);
+        String aiResponse = aiService.generateStudyPlanContent(prompt);
 
-            // Step 3: Call AI to curate and organize
-            String aiResponse = aiService.generateStudyPlanContent(prompt).block();
+        StudyPlan plan = parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
+        generateQuizQuestionsForPlan(plan, topic, difficulty);
 
-            // Step 4: Parse and save the plan structure
-            StudyPlan plan = parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
-
-            // Step 5: Generate quiz questions for each PRACTICE item
-            generateQuizQuestionsForPlan(plan, topic, difficulty);
-
-            return plan;
-        });
+        return plan;
     }
 
-    /**
-     * Generate 5 MCQ quiz questions for each PRACTICE item in the plan.
-     */
+    private void enforceDailyLimitForFreeUsers(Student student) {
+        if (!"FREE".equals(student.getSubscriptionStatus())) {
+            return;
+        }
+
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        long count = studyPlanRepository.countByStudentIdAndCreatedAtAfter(student.getId(), startOfDay);
+
+        if (count >= 1) {
+            throw new RuntimeException(
+                    "Free tier users can only generate one study plan per day. Please upgrade for unlimited plans or try again tomorrow.");
+        }
+    }
+
     private void generateQuizQuestionsForPlan(StudyPlan plan, String topic, String difficulty) {
-        // Filter for practice items first
-        List<StudyPlanItem> practiceItems = plan.getItems().stream()
-                .filter(item -> "PRACTICE".equals(item.getItemType()))
-                .toList();
+        List<StudyPlanItem> items = plan.getItems();
 
-        // Process in parallel to avoid timeout
-        // Using common ForkJoinPool which is suitable for this scale (3-5 threads
-        // usually)
-        practiceItems.parallelStream().forEach(item -> {
+        for (StudyPlanItem item : items) {
+            if (!"PRACTICE".equals(item.getItemType())) {
+                continue;
+            }
+
             try {
-                String quizPrompt = createQuizPrompt(
-                        item.getPracticeSubject() != null ? item.getPracticeSubject() : topic,
-                        item.getPracticeTopic() != null ? item.getPracticeTopic() : topic,
-                        item.getPracticeDifficulty() != null ? item.getPracticeDifficulty() : difficulty);
+                String subject = item.getPracticeSubject() != null ? item.getPracticeSubject() : topic;
+                String practiceTopic = item.getPracticeTopic() != null ? item.getPracticeTopic() : topic;
+                String level = item.getPracticeDifficulty() != null ? item.getPracticeDifficulty() : difficulty;
 
-                String quizResponse = aiService.generatePracticeContent(quizPrompt).block();
+                String quizPrompt = createQuizPrompt(subject, practiceTopic, level);
+                String quizResponse = aiService.generatePracticeContent(quizPrompt);
+
                 List<QuizQuestion> questions = parseQuizQuestions(quizResponse, item);
-
                 if (!questions.isEmpty()) {
                     quizQuestionRepository.saveAll(questions);
-                    // No need to add to item.getQuizQuestions() here as it's not
-                    // transactional/managed in this context
-                    // and we are returning the plan which was already saved.
-                    // However, if we want the returned plan to include them, we should:
-                    synchronized (item) {
-                        item.getQuizQuestions().addAll(questions);
-                    }
+                    item.getQuizQuestions().addAll(questions);
                 }
-
             } catch (Exception e) {
                 System.err.println("Failed to generate quiz for item " + item.getId() + ": " + e.getMessage());
-                // Don't fail the whole plan if one quiz fails
             }
-        });
+        }
     }
 
     private String createQuizPrompt(String subject, String practiceTopic, String difficulty) {
         return String.format(
                 """
-                        Generate exactly %d multiple choice questions for a %s level student on the subject of %s, specifically on the topic: %s.
+                Generate exactly %d multiple choice questions for a %s level student on the subject of %s, specifically on the topic: %s.
 
-                        Return ONLY valid JSON with this exact structure:
-                        {
-                          "questions": [
-                            {
-                              "question": "The question text",
-                              "optionA": "First option",
-                              "optionB": "Second option",
-                              "optionC": "Third option",
-                              "optionD": "Fourth option",
-                              "correctOption": "A"
-                            }
-                          ]
-                        }
+                Return ONLY valid JSON with this exact structure:
+                {
+                  "questions": [
+                    {
+                      "question": "The question text",
+                      "optionA": "First option",
+                      "optionB": "Second option",
+                      "optionC": "Third option",
+                      "optionD": "Fourth option",
+                      "correctOption": "A"
+                    }
+                  ]
+                }
 
-                        Rules:
-                        - Generate exactly %d questions
-                        - Each question must have exactly 4 options (A, B, C, D)
-                        - correctOption must be one of: "A", "B", "C", "D"
-                        - Questions should test understanding, not just memorization
-                        - Make wrong answers plausible but clearly wrong to a student who studied
-                        - Do not include Markdown formatting (like ```json), just the raw JSON
-                        """,
-                QUESTIONS_PER_PRACTICE, difficulty, subject, practiceTopic, QUESTIONS_PER_PRACTICE);
+                Rules:
+                - Generate exactly %d questions
+                - Each question must have exactly 4 options (A, B, C, D)
+                - correctOption must be one of: "A", "B", "C", "D"
+                - Questions should test understanding
+                - Do not include Markdown formatting
+                """,
+                QUESTIONS_PER_PRACTICE, difficulty, subject, practiceTopic, QUESTIONS_PER_PRACTICE
+        );
     }
 
     private List<QuizQuestion> parseQuizQuestions(String jsonResponse, StudyPlanItem item) {
         List<QuizQuestion> questions = new ArrayList<>();
+
         try {
             String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
             JsonNode root = objectMapper.readTree(cleanJson);
             JsonNode questionsNode = root.path("questions");
 
-            if (questionsNode.isArray()) {
-                for (JsonNode qNode : questionsNode) {
-                    QuizQuestion q = new QuizQuestion();
-                    q.setQuestionText(qNode.path("question").asText(""));
-                    q.setOptionA(qNode.path("optionA").asText(""));
-                    q.setOptionB(qNode.path("optionB").asText(""));
-                    q.setOptionC(qNode.path("optionC").asText(""));
-                    q.setOptionD(qNode.path("optionD").asText(""));
-                    q.setCorrectOption(qNode.path("correctOption").asText("A").toUpperCase());
-                    q.setStudyPlanItem(item);
-                    questions.add(q);
-                }
+            if (!questionsNode.isArray()) {
+                return questions;
+            }
+
+            for (JsonNode qNode : questionsNode) {
+                QuizQuestion q = new QuizQuestion();
+                q.setQuestionText(qNode.path("question").asText(""));
+                q.setOptionA(qNode.path("optionA").asText(""));
+                q.setOptionB(qNode.path("optionB").asText(""));
+                q.setOptionC(qNode.path("optionC").asText(""));
+                q.setOptionD(qNode.path("optionD").asText(""));
+                q.setCorrectOption(qNode.path("correctOption").asText("A").toUpperCase());
+                q.setStudyPlanItem(item);
+                questions.add(q);
             }
         } catch (Exception e) {
             System.err.println("Quiz parsing error: " + e.getMessage());
         }
+
         return questions;
     }
 
-    // ===== QUIZ SUBMISSION =====
-
-    public record QuizResult(int totalQuestions, int correctCount, int xpEarned, boolean passed,
+    public record QuizResult(
+            int totalQuestions,
+            int correctCount,
+            int xpEarned,
+            boolean passed,
             List<QuestionResult> results) {
     }
 
     public record QuestionResult(Long questionId, String correctOption, boolean isCorrect) {
     }
 
-    /**
-     * Submit quiz answers for a PRACTICE item.
-     * Returns results with XP earned.
-     * Item is marked complete only when all questions are correct.
-     */
     public QuizResult submitQuizAnswers(Long planId, Long itemId, Map<Long, String> answers) {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
 
-        StudyPlanItem item = plan.getItems().stream()
-                .filter(i -> i.getId().equals(itemId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
+        StudyPlanItem item = null;
+        for (StudyPlanItem it : plan.getItems()) {
+            if (it.getId().equals(itemId)) {
+                item = it;
+                break;
+            }
+        }
+
+        if (item == null) {
+            throw new RuntimeException("Item not found in this plan");
+        }
 
         if (!"PRACTICE".equals(item.getItemType())) {
             throw new RuntimeException("This item is not a practice checkpoint");
@@ -207,32 +199,29 @@ public class StudyPlanService {
 
         List<QuizQuestion> questions = quizQuestionRepository.findByStudyPlanItemId(itemId);
         List<QuestionResult> results = new ArrayList<>();
-        int correctCount = 0;
 
+        int correctCount = 0;
         for (QuizQuestion q : questions) {
-            String submittedAnswer = answers.getOrDefault(q.getId(), "").toUpperCase();
-            boolean isCorrect = q.getCorrectOption().equalsIgnoreCase(submittedAnswer);
-            if (isCorrect)
+            String submitted = answers.getOrDefault(q.getId(), "").toUpperCase();
+            boolean isCorrect = q.getCorrectOption().equalsIgnoreCase(submitted);
+            if (isCorrect) {
                 correctCount++;
+            }
             results.add(new QuestionResult(q.getId(), q.getCorrectOption(), isCorrect));
         }
 
         int xpEarned = 0;
-        // Fusion Feature: Gatekeeper - Pass if score >= 80%
-        double score = (double) correctCount / questions.size();
+        double score = questions.isEmpty() ? 0.0 : (double) correctCount / questions.size();
         boolean passed = score >= 0.8;
 
         if (passed && !item.isCompleted()) {
-            // Mark item complete and award XP
             item.setCompleted(true);
             xpEarned = PRACTICE_XP;
 
-            // Award XP to student
             Student student = plan.getStudent();
             student.setTotalXp(student.getTotalXp() + xpEarned);
             studentRepository.save(student);
 
-            // Recalculate plan progress
             recalculateProgress(plan);
             studyPlanRepository.save(plan);
         }
@@ -240,47 +229,51 @@ public class StudyPlanService {
         return new QuizResult(questions.size(), correctCount, xpEarned, passed, results);
     }
 
-    /**
-     * Get quiz questions for an item (without correct answers —
-     * they're @JsonIgnore).
-     */
     public List<QuizQuestion> getQuizQuestions(Long planId, Long itemId) {
-        // Verify item belongs to plan
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
 
-        plan.getItems().stream()
-                .filter(i -> i.getId().equals(itemId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
+        boolean belongsToPlan = false;
+        for (StudyPlanItem item : plan.getItems()) {
+            if (item.getId().equals(itemId)) {
+                belongsToPlan = true;
+                break;
+            }
+        }
+
+        if (!belongsToPlan) {
+            throw new RuntimeException("Item not found in this plan");
+        }
 
         return quizQuestionRepository.findByStudyPlanItemId(itemId);
     }
-
-    // ===== MARK VIDEO COMPLETE =====
 
     public StudyPlanItem markItemComplete(Long planId, Long itemId) {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
 
-        StudyPlanItem item = plan.getItems().stream()
-                .filter(i -> i.getId().equals(itemId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Item not found in this plan"));
+        StudyPlanItem item = null;
+        for (StudyPlanItem it : plan.getItems()) {
+            if (it.getId().equals(itemId)) {
+                item = it;
+                break;
+            }
+        }
 
-        // PRACTICE items with quiz questions must be completed through quizzes
+        if (item == null) {
+            throw new RuntimeException("Item not found in this plan");
+        }
+
         if ("PRACTICE".equals(item.getItemType())) {
             List<QuizQuestion> questions = quizQuestionRepository.findByStudyPlanItemId(itemId);
             if (!questions.isEmpty()) {
                 throw new RuntimeException("Practice items with quizzes must be completed through the quiz");
             }
-            // Legacy PRACTICE items without quiz questions can be marked complete manually
         }
 
         if (!item.isCompleted()) {
             item.setCompleted(true);
 
-            // Award XP
             int xp = item.getXpReward() > 0 ? item.getXpReward() : VIDEO_XP;
             Student student = plan.getStudent();
             student.setTotalXp(student.getTotalXp() + xp);
@@ -293,8 +286,6 @@ public class StudyPlanService {
         return item;
     }
 
-    // ===== STATS =====
-
     public record StudyPlanStats(int activePlans, int completedPlans, int totalXp, int totalItemsCompleted) {
     }
 
@@ -304,25 +295,42 @@ public class StudyPlanService {
 
         List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
 
-        int active = 0, completed = 0, itemsCompleted = 0;
+        int active = 0;
+        int completed = 0;
+        int itemsCompleted = 0;
+
         for (StudyPlan plan : plans) {
             if (plan.isCompleted()) {
                 completed++;
             } else {
                 active++;
             }
-            itemsCompleted += plan.getItems().stream().filter(StudyPlanItem::isCompleted).count();
+
+            for (StudyPlanItem item : plan.getItems()) {
+                if (item.isCompleted()) {
+                    itemsCompleted++;
+                }
+            }
         }
 
         return new StudyPlanStats(active, completed, student.getTotalXp(), itemsCompleted);
     }
 
-    // ===== HELPERS =====
-
     private void recalculateProgress(StudyPlan plan) {
-        long totalItems = plan.getItems().size();
-        long completedItems = plan.getItems().stream().filter(StudyPlanItem::isCompleted).count();
-        int progress = totalItems > 0 ? (int) ((completedItems * 100) / totalItems) : 0;
+        int totalItems = plan.getItems().size();
+        int completedItems = 0;
+
+        for (StudyPlanItem item : plan.getItems()) {
+            if (item.isCompleted()) {
+                completedItems++;
+            }
+        }
+
+        int progress = 0;
+        if (totalItems > 0) {
+            progress = (completedItems * 100) / totalItems;
+        }
+
         plan.setProgress(progress);
         plan.setCompleted(progress == 100);
     }
@@ -330,6 +338,7 @@ public class StudyPlanService {
     public List<StudyPlan> getStudyPlans(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
+
         return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
     }
 
@@ -338,10 +347,9 @@ public class StudyPlanService {
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
     }
 
-    // ===== PLAN GENERATION HELPERS (unchanged) =====
-
     private String createPrompt(String topic, String difficulty, int durationDays, List<Map<String, String>> videos) {
         StringBuilder videoList = new StringBuilder();
+
         for (int i = 0; i < videos.size(); i++) {
             Map<String, String> v = videos.get(i);
             videoList.append(String.format(
@@ -351,64 +359,57 @@ public class StudyPlanService {
 
         return String.format(
                 """
-                        You are an expert curriculum designer. Create a structured study plan for a "%s" level student learning "%s" over %d days.
+                You are an expert curriculum designer. Create a structured study plan for a "%s" level student learning "%s" over %d days.
 
-                        Here are videos available for this topic:
-                        %s
+                Here are videos available for this topic:
+                %s
 
-                        Your task:
-                        1. Select the BEST and most relevant videos from the list above (you don't have to use all of them)
-                        2. Organize them into a day-by-day schedule across %d days
-                        3. After every 2-3 videos, insert a PRACTICE checkpoint where the student should practice what they learned
-                        4. For each practice checkpoint, specify the subject, topic, and difficulty for generating practice questions
-
-                        Return ONLY valid JSON with this exact structure:
+                Return ONLY valid JSON with this structure:
+                {
+                  "title": "Study Plan Title",
+                  "description": "Brief description",
+                  "days": [
+                    {
+                      "dayNumber": 1,
+                      "items": [
                         {
-                          "title": "Study Plan Title",
-                          "description": "Brief description of what will be learned",
-                          "days": [
-                            {
-                              "dayNumber": 1,
-                              "items": [
-                                {
-                                  "type": "VIDEO",
-                                  "videoId": "the_video_id_from_list",
-                                  "description": "Brief context about why this video and what to focus on",
-                                  "practiceTopic": "Specific concept covered in this video (e.g. 'Variables' not the video title)"
-                                },
-                                {
-                                  "type": "PRACTICE",
-                                  "practiceSubject": "The subject area",
-                                  "practiceTopic": "Specific topic to practice",
-                                  "practiceDifficulty": "%s",
-                                  "description": "Practice the concepts from the previous videos"
-                                }
-                              ]
-                            }
-                          ]
+                          "type": "VIDEO",
+                          "videoId": "video_id",
+                          "description": "what to focus on",
+                          "practiceTopic": "topic"
+                        },
+                        {
+                          "type": "PRACTICE",
+                          "practiceSubject": "subject",
+                          "practiceTopic": "topic",
+                          "practiceDifficulty": "%s",
+                          "description": "practice description"
                         }
-
-                        Rules:
-                        - Use ONLY videoId values from the provided list
-                        - Each day should have 2-4 items total
-                        - Always end a day with a PRACTICE checkpoint
-                        - Make descriptions helpful and specific
-                        - Distribute content evenly across all %d days
-                        Do not include Markdown formatting (like ```json), just the raw JSON.
-                        """,
-                difficulty, topic, durationDays, videoList.toString(),
-                durationDays, difficulty, durationDays);
+                      ]
+                    }
+                  ]
+                }
+                """,
+                difficulty, topic, durationDays, videoList.toString(), difficulty
+        );
     }
 
-    private StudyPlan parseAndSavePlan(String jsonResponse, Student student,
-            String topic, String difficulty, int durationDays,
+    private StudyPlan parseAndSavePlan(
+            String jsonResponse,
+            Student student,
+            String topic,
+            String difficulty,
+            int durationDays,
             List<Map<String, String>> videos) {
+
         try {
             String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
             JsonNode root = objectMapper.readTree(cleanJson);
 
-            Map<String, Map<String, String>> videoMap = videos.stream()
-                    .collect(Collectors.toMap(v -> v.get("videoId"), v -> v));
+            Map<String, Map<String, String>> videoMap = new HashMap<>();
+            for (Map<String, String> video : videos) {
+                videoMap.put(video.get("videoId"), video);
+            }
 
             StudyPlan plan = new StudyPlan();
             plan.setTitle(root.path("title").asText("Study Plan: " + topic));
@@ -421,63 +422,61 @@ public class StudyPlanService {
 
             int globalOrder = 1;
             JsonNode days = root.path("days");
+
             if (days.isArray()) {
                 for (JsonNode day : days) {
                     int dayNumber = day.path("dayNumber").asInt(1);
                     JsonNode dayItems = day.path("items");
 
-                    if (dayItems.isArray()) {
-                        for (JsonNode itemNode : dayItems) {
-                            StudyPlanItem item = new StudyPlanItem();
-                            String type = itemNode.path("type").asText("VIDEO");
-                            item.setItemType(type);
-                            item.setDayNumber(dayNumber);
-                            item.setOrderIndex(globalOrder++);
-                            item.setDescription(itemNode.path("description").asText(""));
+                    if (!dayItems.isArray()) {
+                        continue;
+                    }
 
-                            if ("VIDEO".equals(type)) {
-                                String videoId = itemNode.path("videoId").asText("");
-                                Map<String, String> videoData = videoMap.get(videoId);
+                    for (JsonNode itemNode : dayItems) {
+                        StudyPlanItem item = new StudyPlanItem();
+                        String type = itemNode.path("type").asText("VIDEO");
 
-                                if (videoData != null) {
-                                    item.setVideoId(videoId);
-                                    item.setTitle(videoData.get("title"));
-                                    item.setVideoUrl("https://www.youtube.com/watch?v=" + videoId);
-                                    item.setThumbnailUrl(videoData.get("thumbnailUrl"));
-                                    item.setChannelName(videoData.get("channelTitle"));
-                                    item.setVideoDuration(videoData.get("duration"));
+                        item.setItemType(type);
+                        item.setDayNumber(dayNumber);
+                        item.setOrderIndex(globalOrder++);
+                        item.setDescription(itemNode.path("description").asText(""));
 
-                                    // Fusion Feature: Clean Topics for Practice
-                                    String cleanTopic = itemNode.path("practiceTopic").asText(topic);
-                                    item.setPracticeTopic(cleanTopic);
-                                    item.setPracticeSubject(topic); // Use main plan topic as subject
-                                    item.setPracticeDifficulty(difficulty);
-                                } else {
-                                    System.err.println("Warning: Unknown videoId from AI: " + videoId);
-                                    continue;
-                                }
-                                item.setXpReward(VIDEO_XP);
-                            } else if ("PRACTICE".equals(type)) {
-                                item.setTitle("Checkpoint: " + itemNode.path("practiceTopic").asText(topic));
-                                item.setPracticeSubject(itemNode.path("practiceSubject").asText(topic));
-                                item.setPracticeTopic(itemNode.path("practiceTopic").asText(topic));
-                                item.setPracticeDifficulty(
-                                        itemNode.path("practiceDifficulty").asText(difficulty));
-                                item.setXpReward(PRACTICE_XP);
+                        if ("VIDEO".equals(type)) {
+                            String videoId = itemNode.path("videoId").asText("");
+                            Map<String, String> videoData = videoMap.get(videoId);
+
+                            if (videoData == null) {
+                                continue;
                             }
 
-                            plan.addItem(item);
+                            item.setVideoId(videoId);
+                            item.setTitle(videoData.get("title"));
+                            item.setVideoUrl("https://www.youtube.com/watch?v=" + videoId);
+                            item.setThumbnailUrl(videoData.get("thumbnailUrl"));
+                            item.setChannelName(videoData.get("channelTitle"));
+                            item.setVideoDuration(videoData.get("duration"));
+
+                            String cleanTopic = itemNode.path("practiceTopic").asText(topic);
+                            item.setPracticeTopic(cleanTopic);
+                            item.setPracticeSubject(topic);
+                            item.setPracticeDifficulty(difficulty);
+                            item.setXpReward(VIDEO_XP);
+                        } else if ("PRACTICE".equals(type)) {
+                            item.setTitle("Checkpoint: " + itemNode.path("practiceTopic").asText(topic));
+                            item.setPracticeSubject(itemNode.path("practiceSubject").asText(topic));
+                            item.setPracticeTopic(itemNode.path("practiceTopic").asText(topic));
+                            item.setPracticeDifficulty(itemNode.path("practiceDifficulty").asText(difficulty));
+                            item.setXpReward(PRACTICE_XP);
                         }
+
+                        plan.addItem(item);
                     }
                 }
             }
 
             return studyPlanRepository.save(plan);
-
         } catch (Exception e) {
-            System.err.println("Study Plan Parsing Error: " + e.getMessage());
-            System.err.println("Raw Response: " + jsonResponse);
-            throw new RuntimeException("Failed to parse study plan response: " + e.getMessage());
+            throw new RuntimeException("Failed to parse study plan response: " + e.getMessage(), e);
         }
     }
 
@@ -495,8 +494,6 @@ public class StudyPlanService {
         studyPlanRepository.delete(plan);
     }
 
-    // ===== SMART SUGGESTION (Fusion Feature) =====
-
     public record SuggestedPracticeDto(String topic, String subject, String difficulty, Long planId, Long itemId) {
     }
 
@@ -505,28 +502,25 @@ public class StudyPlanService {
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         List<StudyPlanItem> nextItems = studyPlanItemRepository.findNextPracticeItems(student.getId());
-
         if (nextItems.isEmpty()) {
             return null;
         }
 
         StudyPlanItem nextItem = nextItems.get(0);
+
         return new SuggestedPracticeDto(
                 nextItem.getPracticeTopic(),
                 nextItem.getPracticeSubject(),
                 nextItem.getPracticeDifficulty(),
                 nextItem.getStudyPlan().getId(),
-                nextItem.getId());
+                nextItem.getId()
+        );
     }
 
-    // Fusion Feature: Smart Match
-    // If a student practices a topic externally, mark it complete in the plan
-    // Returns the number of items marked complete
     public int markExternalPracticeAsComplete(String userEmail, String topic, String difficulty) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        // Find items that match topic AND are incomplete
         List<StudyPlanItem> matches = studyPlanItemRepository.findMatchingIncompleteItems(student.getId(), topic);
 
         int completed = 0;
@@ -540,11 +534,10 @@ public class StudyPlanService {
             recalculateProgress(item.getStudyPlan());
             studyPlanRepository.save(item.getStudyPlan());
         }
+
         studentRepository.save(student);
         return completed;
     }
-
-    // ===== Active Context for Practice Page Fusion =====
 
     public record ActiveContextDto(
             Long planId,
@@ -566,235 +559,209 @@ public class StudyPlanService {
             String practiceDifficulty) {
     }
 
-    // ===== SYLLABUS UPLOAD FEATURE =====
+    public StudyPlan generateStudyPlanFromSyllabus(String userEmail, MultipartFile file, int durationDays) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
-    public Mono<StudyPlan> generateStudyPlanFromSyllabus(String userEmail,
-            org.springframework.web.multipart.MultipartFile file, int durationDays) {
-        return Mono.fromCallable(() -> {
-            Student student = studentRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("Student not found"));
+        enforceDailyLimitForFreeUsers(student);
 
-            // Daily Limit Check for Free Users
-            if ("FREE".equals(student.getSubscriptionStatus())) {
-                LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
-                if (studyPlanRepository.countByStudentIdAndCreatedAtAfter(student.getId(), startOfDay) >= 1) {
-                    throw new RuntimeException(
-                            "Free tier users can only generate one study plan per day. Please upgrade for unlimited plans or try again tomorrow.");
+        String mimeType = file.getContentType();
+        byte[] fileData;
+        try {
+            fileData = file.getBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to read uploaded file.", e);
+        }
+
+        String preAnalysisPrompt = """
+                Analyze this syllabus/document.
+                Return ONLY valid JSON:
+                {
+                  "title": "Clear Course Title",
+                  "playlistQuery": "Search query for a comprehensive playlist"
                 }
-            }
+                """;
 
-            // Step 1: Pre-analyze Syllabus for Course Title and Playlist Query
-            String mimeType = file.getContentType();
-            byte[] fileData = file.getBytes();
+        String preAnalysisResponse = aiService.generateStudyPlanContent(preAnalysisPrompt, mimeType, fileData);
+        JsonNode preNode = parseJson(preAnalysisResponse);
 
-            String preAnalysisPrompt = """
-                    Analyze this syllabus/document. Provide a clear, educational course title and a search query for a comprehensive YouTube playlist that covers all these topics.
+        String courseTitle = preNode.path("title").asText("Custom Course");
+        String playlistQuery = preNode.path("playlistQuery").asText(courseTitle);
 
-                    Return ONLY valid JSON:
+        List<Map<String, String>> playlistVideos = new ArrayList<>();
+        List<Map<String, String>> foundPlaylists = youTubeService.searchPlaylists(playlistQuery, 2);
+        if (!foundPlaylists.isEmpty()) {
+            playlistVideos = youTubeService.getPlaylistItems(foundPlaylists.get(0).get("playlistId"), 50);
+        }
+
+        StringBuilder videoList = new StringBuilder();
+        for (int i = 0; i < playlistVideos.size(); i++) {
+            Map<String, String> v = playlistVideos.get(i);
+            videoList.append(i + 1).append(". ").append(v.get("title")).append(" (videoId: ").append(v.get("videoId")).append(")\n");
+        }
+
+        String analysisPrompt = String.format(
+                """
+                Analyze this syllabus and create a %d-day complete study plan.
+
+                Playlist videos:
+                %s
+
+                Return ONLY valid JSON:
+                {
+                  "title": "%s",
+                  "description": "Description",
+                  "difficulty": "Intermediate",
+                  "days": [
                     {
-                      "title": "Clear Course Title",
-                      "playlistQuery": "Search query for a comprehensive playlist"
+                      "dayNumber": 1,
+                      "lessons": [
+                        {
+                          "title": "Topic",
+                          "videoId": "id_or_null",
+                          "searchQuery": "query_if_needed",
+                          "description": "lesson description"
+                        }
+                      ]
                     }
-                    """;
+                  ]
+                }
+                """,
+                durationDays, videoList.toString(), courseTitle
+        );
 
-            String preAnalysisResponse = aiService.generateStudyPlanContent(preAnalysisPrompt, mimeType, fileData)
-                    .block();
-            JsonNode preNode = parseJson(preAnalysisResponse);
-            String courseTitle = preNode.path("title").asText("Custom Course");
-            String playlistQuery = preNode.path("playlistQuery").asText(courseTitle);
+        String analysisResponse = aiService.generateStudyPlanContent(analysisPrompt, mimeType, fileData);
+        JsonNode root = parseJson(analysisResponse);
 
-            // Step 2: Fetch Playlist Videos
-            List<Map<String, String>> playlistVideos = new ArrayList<>();
-            List<Map<String, String>> discoveredPlaylists = youTubeService.searchPlaylists(playlistQuery, 2);
-            if (!discoveredPlaylists.isEmpty()) {
-                // Get up to 50 videos from the best matching playlist
-                playlistVideos = youTubeService.getPlaylistItems(discoveredPlaylists.get(0).get("playlistId"), 50);
+        String title = root.path("title").asText(courseTitle);
+        String description = root.path("description").asText("Generated from uploaded syllabus");
+        String difficulty = root.path("difficulty").asText("Intermediate");
+        JsonNode daysNode = root.path("days");
+
+        if (!daysNode.isArray() || daysNode.isEmpty()) {
+            throw new RuntimeException("Could not extract a valid day-by-day schedule from the syllabus.");
+        }
+
+        Map<String, Map<String, String>> playlistVideoMap = new HashMap<>();
+        for (Map<String, String> v : playlistVideos) {
+            playlistVideoMap.put(v.get("videoId"), v);
+        }
+
+        Set<String> usedVideoIds = new HashSet<>();
+        List<StudyPlanItem> allItems = new ArrayList<>();
+
+        int itemOrder = 1;
+        int videoItemsAdded = 0;
+
+        for (JsonNode day : daysNode) {
+            int dayNumber = day.path("dayNumber").asInt();
+            JsonNode lessons = day.path("lessons");
+
+            if (!lessons.isArray()) {
+                continue;
             }
 
-            StringBuilder videoListStr = new StringBuilder();
-            for (int i = 0; i < playlistVideos.size(); i++) {
-                Map<String, String> v = playlistVideos.get(i);
-                videoListStr.append(String.format("%d. %s (videoId: %s)\n", i + 1, v.get("title"), v.get("videoId")));
-            }
+            for (JsonNode lesson : lessons) {
+                String lessonTitle = normalizeAiField(lesson.path("title").asText(""));
+                String videoId = normalizeAiField(lesson.path("videoId").asText(""));
+                String searchQuery = normalizeAiField(lesson.path("searchQuery").asText(""));
+                String lessonDesc = lesson.path("description").asText("");
 
-            // Step 3: Analyze Syllabus & Map Videos
-            String analysisPrompt = String.format(
-                    """
-                            Analyze this syllabus/document thoroughly. Your goal is to create a COMPREHENSIVE day-by-day study schedule for exactly %d days that guarantees 100%% coverage of all course material.
+                Map<String, String> videoData = null;
 
-                            We found a potential YouTube playlist with these videos:
-                            %s
+                if (!videoId.isEmpty() && playlistVideoMap.containsKey(videoId) && !usedVideoIds.contains(videoId)) {
+                    videoData = playlistVideoMap.get(videoId);
+                }
 
-                            Strict Instructions:
-                            1. Identify EVERY individual topic and sub-topic mentioned in the syllabus.
-                            2. For EACH sub-topic, identify the most relevant video from the playlist above. Use them SEQUENTIALLY where possible.
-                            3. If no video from the playlist is a good match for a sub-topic, set `videoId` to null and provide a specific `searchQuery` for an individual YouTube search.
-                            4. Ensure EVERY sub-topic has AT LEAST one dedicated lesson/video.
-                            5. Do NOT repeat videos across the entire plan.
-                            6. Distribute these lessons across %d days. Every day must have content.
-                            7. Always end a day with a PRACTICE checkpoint.
+                if (videoData == null) {
+                    List<String> fallbackQueries = new ArrayList<>();
+                    if (!searchQuery.isEmpty()) fallbackQueries.add(searchQuery);
+                    if (!lessonTitle.isEmpty()) fallbackQueries.add(lessonTitle + " " + title + " tutorial");
+                    if (!lessonTitle.isEmpty()) fallbackQueries.add(lessonTitle + " tutorial for beginners");
+                    fallbackQueries.add(title + " " + difficulty + " tutorial");
 
-                            Return ONLY valid JSON with this structure:
-                            {
-                              "title": "%s",
-                              "description": "Comprehensive Course Description",
-                              "difficulty": "Intermediate",
-                              "days": [
-                                {
-                                  "dayNumber": 1,
-                                  "lessons": [
-                                    {
-                                      "title": "Specific Topic Title",
-                                      "videoId": "videoId_from_playlist_or_null",
-                                      "searchQuery": "refined search query if videoId is null, else null",
-                                      "description": "Brief context about what this video covers"
-                                    }
-                                  ]
-                                }
-                              ]
-                            }
-                            """,
-                    durationDays, videoListStr.toString(), durationDays, courseTitle);
-
-            String analysisResponse = aiService.generateStudyPlanContent(analysisPrompt, mimeType, fileData).block();
-            JsonNode syllabusNode = parseJson(analysisResponse);
-
-            String title = syllabusNode.path("title").asText(courseTitle);
-            String description = syllabusNode.path("description").asText("Generated from uploaded syllabus");
-            String difficulty = syllabusNode.path("difficulty").asText("Intermediate");
-            JsonNode daysNode = syllabusNode.path("days");
-
-            if (!daysNode.isArray() || daysNode.isEmpty()) {
-                throw new RuntimeException("Could not extract a valid day-by-day schedule from the syllabus.");
-            }
-
-            // Step 4: Construct the Plan Items
-            List<StudyPlanItem> allItems = new ArrayList<>();
-            Set<String> usedVideoIds = new HashSet<>();
-            Map<String, Map<String, String>> playlistVideoMap = playlistVideos.stream()
-                    .collect(Collectors.toMap(v -> v.get("videoId"), v -> v));
-            int itemOrder = 1;
-            int videoItemsAdded = 0;
-
-            for (JsonNode day : daysNode) {
-                int dayNumber = day.path("dayNumber").asInt();
-                JsonNode lessons = day.path("lessons");
-
-                if (lessons.isArray()) {
-                    for (JsonNode lesson : lessons) {
-                        String lessonTitle = normalizeAiField(lesson.path("title").asText(""));
-                        String videoId = normalizeAiField(lesson.path("videoId").asText(""));
-                        String searchQuery = normalizeAiField(lesson.path("searchQuery").asText(""));
-                        String lessonDesc = lesson.path("description").asText();
-
-                        Map<String, String> videoData = null;
-
-                        // Case A: Gemini assigned a videoId from the playlist
-                        if (!videoId.isEmpty() && playlistVideoMap.containsKey(videoId)) {
-                            if (!usedVideoIds.contains(videoId)) {
-                                videoData = playlistVideoMap.get(videoId);
+                    for (String query : fallbackQueries) {
+                        List<Map<String, String>> results = youTubeService.searchVideos(query, 5);
+                        for (Map<String, String> r : results) {
+                            String candidateId = r.get("videoId");
+                            if (candidateId != null && !usedVideoIds.contains(candidateId)) {
+                                videoData = r;
+                                break;
                             }
                         }
-
-                        // Case B: Robust fallback search with progressively broader queries
-                        if (videoData == null) {
-                            List<String> fallbackQueries = new ArrayList<>();
-                            if (!searchQuery.isEmpty())
-                                fallbackQueries.add(searchQuery);
-                            if (!lessonTitle.isEmpty())
-                                fallbackQueries.add(lessonTitle + " " + title + " tutorial");
-                            if (!lessonTitle.isEmpty())
-                                fallbackQueries.add(lessonTitle + " tutorial for beginners");
-                            fallbackQueries.add(title + " " + difficulty + " tutorial");
-
-                            for (String query : fallbackQueries) {
-                                List<Map<String, String>> individualResults = youTubeService.searchVideos(query, 5);
-                                for (Map<String, String> res : individualResults) {
-                                    String candidateVideoId = res.get("videoId");
-                                    if (candidateVideoId != null && !usedVideoIds.contains(candidateVideoId)) {
-                                        videoData = res;
-                                        break;
-                                    }
-                                }
-                                if (videoData != null) {
-                                    break;
-                                }
-                            }
-                        }
-
                         if (videoData != null) {
-                            usedVideoIds.add(videoData.get("videoId"));
-                            StudyPlanItem item = new StudyPlanItem();
-                            item.setItemType("VIDEO");
-                            item.setDayNumber(dayNumber);
-                            item.setOrderIndex(itemOrder++);
-                            item.setDescription(lessonDesc);
-                            item.setVideoId(videoData.get("videoId"));
-                            item.setTitle(lessonTitle);
-                            item.setVideoUrl("https://www.youtube.com/watch?v=" + videoData.get("videoId"));
-                            item.setThumbnailUrl(videoData.get("thumbnailUrl"));
-                            item.setChannelName(videoData.get("channelTitle"));
-                            item.setVideoDuration(videoData.get("duration"));
-                            item.setXpReward(VIDEO_XP);
-
-                            item.setPracticeTopic(lessonTitle);
-                            item.setPracticeSubject(title);
-                            item.setPracticeDifficulty(difficulty);
-
-                            allItems.add(item);
-                            videoItemsAdded++;
+                            break;
                         }
                     }
+                }
 
-                    // Add a Practice Checkpoint at the end of each day
-                    StudyPlanItem practice = new StudyPlanItem();
-                    practice.setItemType("PRACTICE");
-                    practice.setDayNumber(dayNumber);
-                    practice.setOrderIndex(itemOrder++);
-                    practice.setTitle("Day " + dayNumber + " Checkpoint");
-                    practice.setPracticeSubject(title);
+                if (videoData != null) {
+                    usedVideoIds.add(videoData.get("videoId"));
 
-                    // Use the last lesson title as the practice topic for the day
-                    String lastLessonTitle = lessons.size() > 0
-                            ? lessons.get(lessons.size() - 1).path("title").asText("Day Review")
-                            : "General Review";
-                    practice.setPracticeTopic(lastLessonTitle);
-                    practice.setPracticeDifficulty(difficulty);
-                    practice.setXpReward(PRACTICE_XP);
-                    practice.setDescription("Test your knowledge on today's topics.");
+                    StudyPlanItem item = new StudyPlanItem();
+                    item.setItemType("VIDEO");
+                    item.setDayNumber(dayNumber);
+                    item.setOrderIndex(itemOrder++);
+                    item.setDescription(lessonDesc);
+                    item.setVideoId(videoData.get("videoId"));
+                    item.setTitle(lessonTitle);
+                    item.setVideoUrl("https://www.youtube.com/watch?v=" + videoData.get("videoId"));
+                    item.setThumbnailUrl(videoData.get("thumbnailUrl"));
+                    item.setChannelName(videoData.get("channelTitle"));
+                    item.setVideoDuration(videoData.get("duration"));
+                    item.setXpReward(VIDEO_XP);
+                    item.setPracticeTopic(lessonTitle);
+                    item.setPracticeSubject(title);
+                    item.setPracticeDifficulty(difficulty);
 
-                    allItems.add(practice);
+                    allItems.add(item);
+                    videoItemsAdded++;
                 }
             }
 
-            if (videoItemsAdded == 0) {
-                throw new RuntimeException(
-                        "Could not map syllabus topics to YouTube videos. Try a different syllabus file or retry in a few minutes.");
+            StudyPlanItem practice = new StudyPlanItem();
+            practice.setItemType("PRACTICE");
+            practice.setDayNumber(dayNumber);
+            practice.setOrderIndex(itemOrder++);
+            practice.setTitle("Day " + dayNumber + " Checkpoint");
+            practice.setPracticeSubject(title);
+
+            String lastLessonTitle = "General Review";
+            if (lessons.size() > 0) {
+                lastLessonTitle = lessons.get(lessons.size() - 1).path("title").asText("Day Review");
             }
 
-            // Step 3: Construct and Save Plan
-            StudyPlan plan = new StudyPlan();
-            plan.setTitle(title);
-            plan.setDescription(description);
-            plan.setTopic(title);
-            plan.setDifficulty(difficulty);
-            plan.setDurationDays(durationDays);
-            plan.setStudent(student);
-            plan.setCreatedAt(LocalDateTime.now());
-            plan.setItems(allItems); // Set items directly
+            practice.setPracticeTopic(lastLessonTitle);
+            practice.setPracticeDifficulty(difficulty);
+            practice.setXpReward(PRACTICE_XP);
+            practice.setDescription("Test your knowledge on today's topics.");
 
-            // We need to associate items with the plan
-            for (StudyPlanItem item : allItems) {
-                item.setStudyPlan(plan);
-            }
+            allItems.add(practice);
+        }
 
-            StudyPlan savedPlan = studyPlanRepository.save(plan);
+        if (videoItemsAdded == 0) {
+            throw new RuntimeException(
+                    "Could not map syllabus topics to YouTube videos. Try a different syllabus file or retry.");
+        }
 
-            // Generate quizzes for practice items asynchronously
-            generateQuizQuestionsForPlan(savedPlan, title, difficulty);
+        StudyPlan plan = new StudyPlan();
+        plan.setTitle(title);
+        plan.setDescription(description);
+        plan.setTopic(title);
+        plan.setDifficulty(difficulty);
+        plan.setDurationDays(durationDays);
+        plan.setStudent(student);
+        plan.setCreatedAt(LocalDateTime.now());
+        plan.setItems(allItems);
 
-            return savedPlan;
-        });
+        for (StudyPlanItem item : allItems) {
+            item.setStudyPlan(plan);
+        }
+
+        StudyPlan savedPlan = studyPlanRepository.save(plan);
+        generateQuizQuestionsForPlan(savedPlan, title, difficulty);
+
+        return savedPlan;
     }
 
     private JsonNode parseJson(String jsonResponse) {
@@ -802,7 +769,7 @@ public class StudyPlanService {
             String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
             return objectMapper.readTree(cleanJson);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse AI response: " + e.getMessage());
+            throw new RuntimeException("Failed to parse AI response: " + e.getMessage(), e);
         }
     }
 
@@ -818,40 +785,44 @@ public class StudyPlanService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        // Get the most recent active (non-completed) plan
         List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
-        StudyPlan activePlan = plans.stream()
-                .filter(p -> !p.isCompleted())
-                .findFirst()
-                .orElse(null);
 
-        if (activePlan == null)
+        StudyPlan activePlan = null;
+        for (StudyPlan plan : plans) {
+            if (!plan.isCompleted()) {
+                activePlan = plan;
+                break;
+            }
+        }
+
+        if (activePlan == null) {
             return null;
+        }
 
-        // Determine current day
         int totalDays = activePlan.getDurationDays();
+        int currentDay = totalDays;
 
-        // Find the current day = the day of the first incomplete item
-        int currentDay = activePlan.getItems().stream()
-                .filter(item -> !item.isCompleted())
-                .map(StudyPlanItem::getDayNumber)
-                .min(Integer::compareTo)
-                .orElse(totalDays);
+        for (StudyPlanItem item : activePlan.getItems()) {
+            if (!item.isCompleted() && item.getDayNumber() < currentDay) {
+                currentDay = item.getDayNumber();
+            }
+        }
 
-        // Get today's items
-        List<ActiveContextItemDto> todayItems = activePlan.getItems().stream()
-                .filter(item -> item.getDayNumber() == currentDay)
-                .map(item -> new ActiveContextItemDto(
+        List<ActiveContextItemDto> todayItems = new ArrayList<>();
+        for (StudyPlanItem item : activePlan.getItems()) {
+            if (item.getDayNumber() == currentDay) {
+                todayItems.add(new ActiveContextItemDto(
                         item.getId(),
                         item.getTitle(),
                         item.getItemType(),
                         item.isCompleted(),
                         item.getPracticeTopic(),
                         item.getPracticeSubject(),
-                        item.getPracticeDifficulty()))
-                .toList();
+                        item.getPracticeDifficulty()
+                ));
+            }
+        }
 
-        // Get next suggested practice
         SuggestedPracticeDto nextPractice = getSuggestedPracticeItem(userEmail);
 
         return new ActiveContextDto(
@@ -861,6 +832,7 @@ public class StudyPlanService {
                 currentDay,
                 totalDays,
                 todayItems,
-                nextPractice);
+                nextPractice
+        );
     }
 }

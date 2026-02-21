@@ -1,24 +1,30 @@
 package com.practice.aiplatform.statistics;
 
+import com.practice.aiplatform.gamification.DailyXpHistory;
+import com.practice.aiplatform.gamification.XpService;
+import com.practice.aiplatform.user.Student;
+import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.security.Principal;
-import java.util.List; // <-- IMPORT
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/stats")
 public class StatisticsController {
 
     private final StatisticsService statisticsService;
-    private final com.practice.aiplatform.user.StudentRepository studentRepository;
-    private final com.practice.aiplatform.gamification.XpService xpService;
+    private final StudentRepository studentRepository;
+    private final XpService xpService;
 
-    public StatisticsController(StatisticsService statisticsService,
-            com.practice.aiplatform.user.StudentRepository studentRepository,
-            com.practice.aiplatform.gamification.XpService xpService) {
+    public StatisticsController(
+            StatisticsService statisticsService,
+            StudentRepository studentRepository,
+            XpService xpService) {
         this.statisticsService = statisticsService;
         this.studentRepository = studentRepository;
         this.xpService = xpService;
@@ -41,22 +47,25 @@ public class StatisticsController {
     @GetMapping("/xp-history")
     public ResponseEntity<List<DailyXpDto>> getXpHistory(Principal principal) {
         String email = principal.getName();
-        com.practice.aiplatform.user.Student student = studentRepository.findByEmail(email)
+
+        Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<com.practice.aiplatform.gamification.DailyXpHistory> history = xpService.getXpHistory(student.getId(), 30);
+        List<DailyXpHistory> history = xpService.getXpHistory(student.getId(), 30);
 
-        List<DailyXpDto> response = history.stream()
-                .map(h -> new DailyXpDto(h.getDate(), h.getXpEarned()))
-                .collect(java.util.stream.Collectors.toList());
+        List<DailyXpDto> response = new ArrayList<>();
+        for (DailyXpHistory item : history) {
+            response.add(new DailyXpDto(item.getDate(), item.getXpEarned()));
+        }
 
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/recommendations")
     public ResponseEntity<StatisticsService.SmartRecommendationDto> getRecommendations(Principal principal) {
-        StatisticsService.SmartRecommendationDto recommendations = statisticsService
-                .getSmartRecommendations(principal.getName());
+        StatisticsService.SmartRecommendationDto recommendations =
+                statisticsService.getSmartRecommendations(principal.getName());
+
         return ResponseEntity.ok(recommendations);
     }
 }

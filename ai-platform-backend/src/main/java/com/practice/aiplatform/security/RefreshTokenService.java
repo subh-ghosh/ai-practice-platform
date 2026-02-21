@@ -1,8 +1,8 @@
 package com.practice.aiplatform.security;
 
+import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -12,41 +12,54 @@ import java.util.UUID;
 
 @Service
 public class RefreshTokenService {
+
     @Value("${jwt.refreshExpirationMs}")
     private Long refreshTokenDurationMs;
 
-    @Autowired
-    private RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final StudentRepository studentRepository;
 
-    @Autowired
-    private StudentRepository studentRepository;
+    public RefreshTokenService(
+            RefreshTokenRepository refreshTokenRepository,
+            StudentRepository studentRepository) {
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.studentRepository = studentRepository;
+    }
 
     public Optional<RefreshToken> findByToken(String token) {
         return refreshTokenRepository.findByToken(token);
     }
 
     public RefreshToken createRefreshToken(Long userId) {
+        Student student = studentRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
         RefreshToken refreshToken = new RefreshToken();
-
-        refreshToken.setStudent(studentRepository.findById(userId).get());
-        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
+        refreshToken.setStudent(student);
         refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
 
-        refreshToken = refreshTokenRepository.save(refreshToken);
-        return refreshToken;
+        return refreshTokenRepository.save(refreshToken);
     }
 
     public RefreshToken verifyExpiration(RefreshToken token) {
-        if (token.getExpiryDate().compareTo(Instant.now()) < 0) {
+        boolean expired = token.getExpiryDate().isBefore(Instant.now());
+
+        if (expired) {
             refreshTokenRepository.delete(token);
-            throw new TokenRefreshException(token.getToken(),
-                    "Refresh token was expired. Please make a new signin request");
+            throw new TokenRefreshException(
+                    token.getToken(),
+                    "Refresh token was expired. Please sign in again.");
         }
+
         return token;
     }
 
     @Transactional
     public int deleteByUserId(Long userId) {
-        return refreshTokenRepository.deleteByStudent(studentRepository.findById(userId).get());
+        Student student = studentRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        return refreshTokenRepository.deleteByStudent(student);
     }
 }

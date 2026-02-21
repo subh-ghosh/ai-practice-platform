@@ -1,19 +1,28 @@
 package com.practice.aiplatform.notifications;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.Instant;
 
 @Entity
 @Table(name = "notifications")
+@Getter
+@Setter
+@NoArgsConstructor
 public class Notification {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
     @Column(nullable = false, length = 40)
-    private String type; // LOGIN, REGISTER, PROFILE_UPDATED
+    private String type;
 
     @Column(nullable = false, length = 300)
     private String message;
@@ -22,9 +31,7 @@ public class Notification {
     private Instant createdAt;
 
     @Column(name = "read_flag", nullable = false)
-    private boolean readFlag = false; 
-
-    public Notification() {}
+    private boolean readFlag = false;
 
     public Notification(Long studentId, String type, String message) {
         this.studentId = studentId;
@@ -36,30 +43,8 @@ public class Notification {
 
     @PrePersist
     public void prePersist() {
-        if (createdAt == null) createdAt = Instant.now();
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
     }
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public Long getStudentId() { return studentId; }
-    public void setStudentId(Long studentId) { this.studentId = studentId; }
-
-    public String getType() { return type; }
-    public void setType(String type) { this.type = type; }
-
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
-    // --- 👇 FIX: Add BOTH getters to ensure JSON works perfectly ---
-    public boolean isReadFlag() { return readFlag; }
-    
-    // Jackson sometimes misses "is" for non-standard boolean names, so we add "get"
-    public boolean getReadFlag() { return readFlag; }
-
-    public void setReadFlag(boolean readFlag) { this.readFlag = readFlag; }
 }

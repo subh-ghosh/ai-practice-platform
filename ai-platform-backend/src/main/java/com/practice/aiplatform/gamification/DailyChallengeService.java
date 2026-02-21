@@ -4,13 +4,11 @@ import com.practice.aiplatform.studyplan.StudyPlan;
 import com.practice.aiplatform.studyplan.StudyPlanRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Random;
 
 @Service
 public class DailyChallengeService {
@@ -20,7 +18,8 @@ public class DailyChallengeService {
     private final StudyPlanRepository studyPlanRepository;
     private final XpService xpService;
 
-    public DailyChallengeService(DailyChallengeRepository dailyChallengeRepository,
+    public DailyChallengeService(
+            DailyChallengeRepository dailyChallengeRepository,
             StudentRepository studentRepository,
             StudyPlanRepository studyPlanRepository,
             XpService xpService) {
@@ -34,48 +33,56 @@ public class DailyChallengeService {
         LocalDate today = LocalDate.now();
         List<DailyChallenge> challenges = dailyChallengeRepository.findByStudentIdAndDate(studentId, today);
 
-        if (challenges.isEmpty()) {
-            Student student = studentRepository.findById(studentId).orElseThrow();
-            return generateDailyChallenges(student);
+        if (!challenges.isEmpty()) {
+            return challenges;
         }
-        return challenges;
+
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        return generateDailyChallenges(student);
     }
 
     @Transactional
     public List<DailyChallenge> generateDailyChallenges(Student student) {
-        // Generate 3 random challenges for the day
-        createChallenge(student, "Quiz Master", "Complete 1 Quiz with >80% score", 50, 1);
-        createChallenge(student, "Quiz Master", "Complete 1 Quiz with >80% score", 50, 1);
-
-        // Fusion Feature: Context-Aware Challenge
-        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
-        if (!plans.isEmpty() && !plans.get(0).isCompleted()) {
-            StudyPlan activePlan = plans.get(0);
-            createChallenge(student, "Focus: " + activePlan.getTopic(),
-                    "Complete 2 items in your '" + activePlan.getTitle() + "' plan", 60, 2);
-        } else {
-            createChallenge(student, "Fast Learner", "Complete 3 Practice Questions", 30, 3);
-        }
-
-        createChallenge(student, "Dedication", "Login and view a Study Plan", 20, 1);
+        createChallenge(student, "Quiz Master", "Complete 1 quiz with >80% score", 50, 1);
+        createChallenge(student, "Fast Learner", "Complete 3 practice questions", 30, 3);
+        createPlanBasedChallenge(student);
 
         return dailyChallengeRepository.findByStudentIdAndDate(student.getId(), LocalDate.now());
     }
 
-    private void createChallenge(Student student, String title, String description, int xp, int target) {
-        DailyChallenge challenge = new DailyChallenge(student, title, description, xp, target);
+    private void createPlanBasedChallenge(Student student) {
+        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+
+        if (!plans.isEmpty() && !plans.get(0).isCompleted()) {
+            StudyPlan activePlan = plans.get(0);
+            createChallenge(
+                    student,
+                    "Focus: " + activePlan.getTopic(),
+                    "Complete 2 items in '" + activePlan.getTitle() + "'",
+                    60,
+                    2
+            );
+        } else {
+            createChallenge(student, "Dedication", "Open and review your study plan", 20, 1);
+        }
+    }
+
+    private void createChallenge(Student student, String title, String description, int xpReward, int targetAmount) {
+        DailyChallenge challenge = new DailyChallenge(student, title, description, xpReward, targetAmount);
         dailyChallengeRepository.save(challenge);
     }
 
     @Transactional
     public void incrementProgress(Long studentId, String challengeTitle, int amount) {
-        LocalDate today = LocalDate.now();
-        List<DailyChallenge> challenges = dailyChallengeRepository.findByStudentIdAndDate(studentId, today);
+        List<DailyChallenge> challenges =
+                dailyChallengeRepository.findByStudentIdAndDate(studentId, LocalDate.now());
 
         for (DailyChallenge challenge : challenges) {
-            if (challenge.getTitle().equalsIgnoreCase(challengeTitle) && !challenge.isClaimed()) {
-                challenge
-                        .setCurrentAmount(Math.min(challenge.getCurrentAmount() + amount, challenge.getTargetAmount()));
+            if (!challenge.isClaimed() && challenge.getTitle().equalsIgnoreCase(challengeTitle)) {
+                int updated = Math.min(challenge.getCurrentAmount() + amount, challenge.getTargetAmount());
+                challenge.setCurrentAmount(updated);
                 dailyChallengeRepository.save(challenge);
             }
         }
@@ -87,8 +94,9 @@ public class DailyChallengeService {
                 .orElseThrow(() -> new RuntimeException("Challenge not found"));
 
         if (challenge.isClaimed()) {
-            throw new RuntimeException("Already claimed");
+            throw new RuntimeException("Reward already claimed");
         }
+
         if (challenge.getCurrentAmount() < challenge.getTargetAmount()) {
             throw new RuntimeException("Challenge not completed yet");
         }
@@ -96,14 +104,7 @@ public class DailyChallengeService {
         challenge.setClaimed(true);
         dailyChallengeRepository.save(challenge);
 
-        // Add XP to student via XpService
         Student student = challenge.getStudent();
         xpService.awardXp(student, challenge.getXpReward());
-    }
-
-    // Cron job to clean up old challenges (Optional, or just generate on demand)
-    @Scheduled(cron = "0 0 0 * * ?") // Midnight
-    public void cleanupOldChallenges() {
-        // Could implement cleanup here if needed
     }
 }

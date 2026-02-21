@@ -21,25 +21,22 @@ public class StudyPlanController {
     public record GenerateStudyPlanRequest(String topic, String difficulty, int durationDays) {
     }
 
+    public record QuizSubmission(Map<Long, String> answers) {
+    }
+
     @PostMapping("/generate")
     public ResponseEntity<?> generateStudyPlan(@RequestBody GenerateStudyPlanRequest request, Principal principal) {
-        String email = principal.getName();
-        System.out.println("🔔 StudyPlanController: /generate called by " + email + " for topic: " + request.topic());
-
         if (request.topic() == null || request.topic().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Topic is required"));
         }
 
+        String email = principal.getName();
         int duration = request.durationDays() > 0 ? request.durationDays() : 7;
 
         try {
-            var plan = studyPlanService.generateStudyPlan(
-                    email, request.topic(), request.difficulty(), duration).block();
-
+            StudyPlan plan = studyPlanService.generateStudyPlan(email, request.topic(), request.difficulty(), duration);
             return ResponseEntity.ok(plan);
-
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Study plan generation failed: " + e.getMessage()));
         }
@@ -50,22 +47,17 @@ public class StudyPlanController {
             @RequestParam("file") org.springframework.web.multipart.MultipartFile file,
             @RequestParam(value = "durationDays", defaultValue = "7") int durationDays,
             Principal principal) {
-        String email = principal.getName();
-        System.out.println("🔔 StudyPlanController: /generate-from-syllabus called by " + email);
 
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "File is required"));
         }
 
-        try {
-            // NOTE: Breaking the reactive chain block() here for simplicity in this
-            // controller
-            // In a full reactive stack, we'd return Mono<ResponseEntity>
-            var plan = studyPlanService.generateStudyPlanFromSyllabus(email, file, durationDays).block();
-            return ResponseEntity.ok(plan);
+        String email = principal.getName();
 
+        try {
+            StudyPlan plan = studyPlanService.generateStudyPlanFromSyllabus(email, file, durationDays);
+            return ResponseEntity.ok(plan);
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Study plan generation failed: " + e.getMessage()));
         }
@@ -89,8 +81,6 @@ public class StudyPlanController {
         }
     }
 
-    // ===== MARK VIDEO ITEM COMPLETE =====
-
     @PatchMapping("/{planId}/items/{itemId}/complete")
     public ResponseEntity<?> markItemComplete(@PathVariable Long planId, @PathVariable Long itemId) {
         try {
@@ -101,8 +91,6 @@ public class StudyPlanController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
-
-    // ===== QUIZ ENDPOINTS =====
 
     @GetMapping("/{planId}/items/{itemId}/quiz")
     public ResponseEntity<?> getQuizQuestions(@PathVariable Long planId, @PathVariable Long itemId) {
@@ -115,16 +103,14 @@ public class StudyPlanController {
         }
     }
 
-    public record QuizSubmission(Map<Long, String> answers) {
-    }
-
     @PostMapping("/{planId}/items/{itemId}/quiz/submit")
     public ResponseEntity<?> submitQuiz(
             @PathVariable Long planId,
             @PathVariable Long itemId,
             @RequestBody QuizSubmission submission) {
         try {
-            var result = studyPlanService.submitQuizAnswers(planId, itemId, submission.answers());
+            StudyPlanService.QuizResult result =
+                    studyPlanService.submitQuizAnswers(planId, itemId, submission.answers());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -132,12 +118,10 @@ public class StudyPlanController {
         }
     }
 
-    // ===== STATS =====
-
     @GetMapping("/stats")
     public ResponseEntity<?> getStats(Principal principal) {
         try {
-            var stats = studyPlanService.getStats(principal.getName());
+            StudyPlanService.StudyPlanStats stats = studyPlanService.getStats(principal.getName());
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -156,12 +140,10 @@ public class StudyPlanController {
         }
     }
 
-    // ===== ACTIVE CONTEXT FOR PRACTICE PAGE FUSION =====
-
     @GetMapping("/active-context")
     public ResponseEntity<?> getActiveContext(Principal principal) {
         try {
-            var context = studyPlanService.getActiveContext(principal.getName());
+            StudyPlanService.ActiveContextDto context = studyPlanService.getActiveContext(principal.getName());
             if (context == null) {
                 return ResponseEntity.ok(Map.of("active", false));
             }

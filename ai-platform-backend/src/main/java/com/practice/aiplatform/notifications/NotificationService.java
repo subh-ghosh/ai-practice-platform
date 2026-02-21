@@ -2,40 +2,46 @@ package com.practice.aiplatform.notifications;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class NotificationService {
-    
-    private final NotificationRepository repo;
 
-    public NotificationService(NotificationRepository repo) {
-        this.repo = repo;
+    private final NotificationRepository notificationRepository;
+
+    public NotificationService(NotificationRepository notificationRepository) {
+        this.notificationRepository = notificationRepository;
     }
 
     @Transactional
-    public Notification notify(Long studentId, String type, String message) {
-        return repo.save(new Notification(studentId, type, message));
+    public Notification createNotification(Long studentId, String type, String message) {
+        Notification notification = new Notification(studentId, type, message);
+        return notificationRepository.save(notification);
     }
 
-    public List<Notification> list(Long studentId) {
-        return repo.findByStudentIdOrderByCreatedAtDesc(studentId);
+    public List<Notification> getAllNotifications(Long studentId) {
+        return notificationRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
     }
 
-    public List<Notification> listUnread(Long studentId) {
-        return repo.findUnread(studentId);
-    }
-
-    @Transactional
-    public void markRead(Long id) {
-        repo.findById(id).ifPresent(n -> { 
-            n.setReadFlag(true); 
-            repo.save(n); 
-        });
+    public List<Notification> getUnreadNotifications(Long studentId) {
+        return notificationRepository.findUnread(studentId);
     }
 
     @Transactional
-    public void markAllRead(Long studentId) {
-        repo.markAllAsRead(studentId);
+    public void markAsRead(Long notificationId) {
+        Optional<Notification> optionalNotification = notificationRepository.findById(notificationId);
+
+        if (optionalNotification.isPresent()) {
+            Notification notification = optionalNotification.get();
+            notification.setReadFlag(true);
+            notificationRepository.save(notification);
+        }
+    }
+
+    @Transactional
+    public void markAllAsRead(Long studentId) {
+        notificationRepository.markAllAsRead(studentId);
     }
 }

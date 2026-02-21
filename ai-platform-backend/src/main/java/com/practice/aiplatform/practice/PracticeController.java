@@ -1,22 +1,20 @@
 package com.practice.aiplatform.practice;
 
 import com.practice.aiplatform.ai.AiService;
+import com.practice.aiplatform.studyplan.StudyPlanService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import com.practice.aiplatform.user.UsageService;
-import com.practice.aiplatform.studyplan.StudyPlanService; // Fusion Feature
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Mono;
 
 import java.security.Principal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// DTO for the get-answer request
 record GetAnswerRequest(Long questionId) {
 }
 
@@ -31,25 +29,21 @@ public class PracticeController {
     @Autowired
     private StudentRepository studentRepository;
     @Autowired
-    private AiService geminiService;
+    private AiService aiService;
     @Autowired
     private UsageService usageService;
     @Autowired
     private com.practice.aiplatform.gamification.XpService xpService;
     @Autowired
-    private StudyPlanService studyPlanService; // Fusion Feature
+    private StudyPlanService studyPlanService;
 
     @PostMapping("/submit")
-    public Mono<ResponseEntity<Answer>> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
+    public ResponseEntity<Answer> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
+        String email = principal.getName();
 
-        String email = principal.getName(); // 👈 --- GET EMAIL
-
-        // --- 👇 ADD THIS PAYWALL CHECK ---
         if (!usageService.canPerformAction(email)) {
-            // User has reached their free limit, return 402 Payment Required
-            return Mono.just(ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build());
+            return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).build();
         }
-        // --- 👆 END OF PAYWALL CHECK ---
 
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -58,108 +52,52 @@ public class PracticeController {
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
         if (!question.getStudent().getId().equals(student.getId())) {
-            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Answer newAnswer = new Answer();
-        newAnswer.setAnswerText(request.answerText());
-        newAnswer.setQuestion(question);
-        newAnswer.setStudent(student);
+        Answer savedAnswer = saveInitialAnswer(student, question, request.answerText());
 
-        Answer savedAnswer = answerRepository.save(newAnswer);
-
-        // --- UPDATED METHOD CALL with context ---
-        return geminiService.evaluateAnswer(
+        String aiFeedback = aiService.evaluateAnswer(
                 question.getQuestionText(),
                 savedAnswer.getAnswerText(),
                 question.getSubject(),
                 question.getTopic(),
-                question.getDifficulty()).flatMap(feedback -> {
-                    // ... (rest of the feedback parsing logic is unchanged)
-                    String evaluationStatus;
-                    String cleanFeedback = "";
-                    String hint = null;
+                question.getDifficulty()
+        );
 
-                    if (feedback == null || feedback.trim().isEmpty()) {
-                        evaluationStatus = "INCORRECT";
-                        cleanFeedback = "No response from AI.";
-                    } else {
-                        String[] lines = feedback.trim().split("\n", 2);
-                        String firstLine = lines[0].trim().toUpperCase();
-                        String restOfFeedback = (lines.length > 1) ? lines[1].trim() : "No feedback provided.";
+        ParsedFeedback parsedFeedback = parseFeedback(aiFeedback);
 
-                        if (firstLine.equals("CORRECT")) {
-                            evaluationStatus = "CORRECT";
-                            cleanFeedback = restOfFeedback;
-                        } else if (firstLine.equals("CLOSE")) {
-                            evaluationStatus = "CLOSE";
-                            cleanFeedback = restOfFeedback;
-                        } else {
-                            evaluationStatus = "INCORRECT";
-                            cleanFeedback = (lines.length > 1) ? feedback : "No feedback provided.";
-                        }
+        savedAnswer.setIsCorrect("CORRECT".equals(parsedFeedback.status));
+        savedAnswer.setEvaluationStatus(parsedFeedback.status);
 
-                        if (!evaluationStatus.equals("CORRECT")) {
-                            String hintMarker = "[HINT]";
-                            int hintIndex = cleanFeedback.toUpperCase().indexOf(hintMarker);
+        String finalFeedback = parsedFeedback.feedbackText;
 
-                            if (hintIndex != -1) {
-                                hint = cleanFeedback.substring(hintIndex + hintMarker.length()).trim();
-                                cleanFeedback = cleanFeedback.substring(0, hintIndex).trim();
-                            }
-                        }
-                    }
+        if ("INCORRECT".equals(parsedFeedback.status) && !"Beginner".equalsIgnoreCase(question.getDifficulty())) {
+            finalFeedback += "\n\n[The Healer] We detected difficulty. A simple 1-day recovery plan was created.";
+            studyPlanService.generateStudyPlan(
+                    student.getEmail(),
+                    question.getTopic() + " Recovery",
+                    "Beginner",
+                    1
+            );
+        }
 
-                    savedAnswer.setIsCorrect(evaluationStatus.equals("CORRECT"));
-                    savedAnswer.setEvaluationStatus(evaluationStatus);
+        savedAnswer.setFeedback(finalFeedback);
+        savedAnswer.setHint(parsedFeedback.hint);
 
-                    // Fusion Feature: The Healer
-                    // If answer is INCORRECT and difficulty is not Beginner, generate a recovery
-                    // plan
-                    if ("INCORRECT".equals(evaluationStatus)
-                            && !"Beginner".equalsIgnoreCase(question.getDifficulty())) {
-                        String recoveryMsg = "\n\n[The Healer] ❤️‍🩹 We detected some difficulty. A personalized 1-day Recovery Plan is being built for you. Check 'My Plans' in a few seconds!";
-                        cleanFeedback += recoveryMsg;
+        Answer finalAnswer = answerRepository.save(savedAnswer);
 
-                        // Fire-and-forget generation
-                        studyPlanService.generateStudyPlan(
-                                student.getEmail(),
-                                question.getTopic() + " Recovery",
-                                "Beginner",
-                                1).subscribe();
-                    }
+        int planItemsCompleted = handleXpAndPlanProgress(student, question, parsedFeedback.status);
 
-                    savedAnswer.setFeedback(cleanFeedback);
-                    savedAnswer.setHint(hint);
-                    Answer finalAnswer = answerRepository.save(savedAnswer);
+        if (planItemsCompleted > 0) {
+            finalAnswer.setFeedback(finalAnswer.getFeedback() + "\n\n[PLAN_UPDATE:" + planItemsCompleted + "]");
+        }
 
-                    // Award XP
-                    int planItemsCompleted = 0;
-                    if (evaluationStatus.equals("CORRECT")) {
-                        xpService.awardXp(student, 10);
-
-                        // Fusion Feature: Smart Match
-                        // Check if this practice fulfills a study plan item
-                        planItemsCompleted = studyPlanService.markExternalPracticeAsComplete(
-                                student.getEmail(),
-                                question.getTopic(),
-                                question.getDifficulty());
-                    } else if (evaluationStatus.equals("CLOSE")) {
-                        xpService.awardXp(student, 5);
-                    }
-
-                    // Append plan completion info to feedback for frontend toast
-                    if (planItemsCompleted > 0) {
-                        String planMsg = "\n\n[PLAN_UPDATE:" + planItemsCompleted + "]";
-                        finalAnswer.setFeedback(finalAnswer.getFeedback() + planMsg);
-                    }
-
-                    return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(finalAnswer));
-                });
+        return ResponseEntity.status(HttpStatus.CREATED).body(finalAnswer);
     }
 
     @PostMapping("/get-answer")
-    public Mono<ResponseEntity<Answer>> getAnswer(@RequestBody GetAnswerRequest request, Principal principal) {
+    public ResponseEntity<Answer> getAnswer(@RequestBody GetAnswerRequest request, Principal principal) {
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -167,74 +105,141 @@ public class PracticeController {
                 .orElseThrow(() -> new RuntimeException("Question not found"));
 
         if (!question.getStudent().getId().equals(student.getId())) {
-            return Mono.just(ResponseEntity.status(HttpStatus.FORBIDDEN).build());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // --- UPDATED METHOD CALL with context ---
-        return geminiService.getCorrectAnswer(
+        String answerText = aiService.getCorrectAnswer(
                 question.getQuestionText(),
                 question.getSubject(),
                 question.getTopic(),
-                question.getDifficulty()).flatMap(answerText -> {
-                    Answer newAnswer = new Answer();
-                    newAnswer.setAnswerText(answerText); // The AI-generated answer
-                    newAnswer.setQuestion(question);
-                    newAnswer.setStudent(student);
+                question.getDifficulty()
+        );
 
-                    newAnswer.setIsCorrect(false);
-                    newAnswer.setEvaluationStatus("REVEALED");
-                    newAnswer.setFeedback("This is the AI-generated correct answer.");
-                    newAnswer.setHint(null);
+        Answer answer = new Answer();
+        answer.setAnswerText(answerText);
+        answer.setQuestion(question);
+        answer.setStudent(student);
+        answer.setIsCorrect(false);
+        answer.setEvaluationStatus("REVEALED");
+        answer.setFeedback("This is the AI-generated correct answer.");
+        answer.setHint(null);
 
-                    Answer savedAnswer = answerRepository.save(newAnswer);
-
-                    return Mono.just(ResponseEntity.status(HttpStatus.CREATED).body(savedAnswer));
-                });
+        Answer savedAnswer = answerRepository.save(answer);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedAnswer);
     }
 
     @GetMapping("/history")
     public ResponseEntity<PracticeHistoryDto> getHistory(Principal principal) {
-
         Optional<Student> studentOptional = studentRepository.findByEmail(principal.getName());
-
         if (studentOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-        Student student = studentOptional.get();
 
+        Student student = studentOptional.get();
         List<Answer> answers = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
 
-        List<PracticeHistoryDto.QuestionAnswerDto> historyList = answers.stream()
-                .map(answer -> {
-                    Question question = answer.getQuestion();
+        List<PracticeHistoryDto.QuestionAnswerDto> historyList = new ArrayList<>();
+        for (Answer answer : answers) {
+            Question question = answer.getQuestion();
 
-                    return new PracticeHistoryDto.QuestionAnswerDto(
-                            question.getId(),
-                            question.getQuestionText(),
-                            question.getSubject(),
-                            question.getTopic(),
-                            question.getDifficulty(),
-                            question.getGeneratedAt(),
-                            answer.getAnswerText(),
-                            answer.getIsCorrect(),
-                            answer.getEvaluationStatus(),
-                            answer.getHint(),
-                            answer.getFeedback(),
-                            answer.getSubmittedAt());
-                })
-                .toList();
+            PracticeHistoryDto.QuestionAnswerDto item = new PracticeHistoryDto.QuestionAnswerDto(
+                    question.getId(),
+                    question.getQuestionText(),
+                    question.getSubject(),
+                    question.getTopic(),
+                    question.getDifficulty(),
+                    question.getGeneratedAt(),
+                    answer.getAnswerText(),
+                    answer.getIsCorrect(),
+                    answer.getEvaluationStatus(),
+                    answer.getHint(),
+                    answer.getFeedback(),
+                    answer.getSubmittedAt()
+            );
+
+            historyList.add(item);
+        }
 
         PracticeHistoryDto historyDto = new PracticeHistoryDto(
                 student.getId(),
                 student.getFirstName(),
-                historyList);
+                historyList
+        );
+
         return ResponseEntity.ok(historyDto);
     }
 
-    @GetMapping("/suggestion") // Fusion Feature: Smart Suggestion
+    @GetMapping("/suggestion")
     public ResponseEntity<StudyPlanService.SuggestedPracticeDto> getSuggestion(Principal principal) {
-        StudyPlanService.SuggestedPracticeDto suggestion = studyPlanService
-                .getSuggestedPracticeItem(principal.getName());
+        StudyPlanService.SuggestedPracticeDto suggestion =
+                studyPlanService.getSuggestedPracticeItem(principal.getName());
         return ResponseEntity.ok(suggestion);
+    }
+
+    private Answer saveInitialAnswer(Student student, Question question, String answerText) {
+        Answer answer = new Answer();
+        answer.setAnswerText(answerText);
+        answer.setQuestion(question);
+        answer.setStudent(student);
+        return answerRepository.save(answer);
+    }
+
+    private int handleXpAndPlanProgress(Student student, Question question, String status) {
+        int planItemsCompleted = 0;
+
+        if ("CORRECT".equals(status)) {
+            xpService.awardXp(student, 10);
+            planItemsCompleted = studyPlanService.markExternalPracticeAsComplete(
+                    student.getEmail(),
+                    question.getTopic(),
+                    question.getDifficulty()
+            );
+        } else if ("CLOSE".equals(status)) {
+            xpService.awardXp(student, 5);
+        }
+
+        return planItemsCompleted;
+    }
+
+    private ParsedFeedback parseFeedback(String rawFeedback) {
+        if (rawFeedback == null || rawFeedback.trim().isEmpty()) {
+            return new ParsedFeedback("INCORRECT", "No response from AI.", null);
+        }
+
+        String status = "INCORRECT";
+        String feedbackText = rawFeedback;
+        String hint = null;
+
+        String[] lines = rawFeedback.trim().split("\n", 2);
+        String firstLine = lines[0].trim().toUpperCase();
+
+        if ("CORRECT".equals(firstLine) || "CLOSE".equals(firstLine) || "INCORRECT".equals(firstLine)) {
+            status = firstLine;
+            feedbackText = lines.length > 1 ? lines[1].trim() : "No feedback provided.";
+        }
+
+        if (!"CORRECT".equals(status)) {
+            String hintMarker = "[HINT]";
+            int hintIndex = feedbackText.toUpperCase().indexOf(hintMarker);
+
+            if (hintIndex != -1) {
+                hint = feedbackText.substring(hintIndex + hintMarker.length()).trim();
+                feedbackText = feedbackText.substring(0, hintIndex).trim();
+            }
+        }
+
+        return new ParsedFeedback(status, feedbackText, hint);
+    }
+
+    private static class ParsedFeedback {
+        String status;
+        String feedbackText;
+        String hint;
+
+        ParsedFeedback(String status, String feedbackText, String hint) {
+            this.status = status;
+            this.feedbackText = feedbackText;
+            this.hint = hint;
+        }
     }
 }

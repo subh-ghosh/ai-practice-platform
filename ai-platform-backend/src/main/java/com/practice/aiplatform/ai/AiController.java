@@ -4,7 +4,6 @@ import com.practice.aiplatform.practice.Question;
 import com.practice.aiplatform.practice.QuestionRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,20 +14,19 @@ import java.security.Principal;
 @CrossOrigin
 public class AiController {
 
-    private final AiService geminiService;
+    private final AiService aiService;
     private final QuestionRepository questionRepository;
     private final StudentRepository studentRepository;
 
-    @Autowired
-    public AiController(AiService geminiService,
+    public AiController(
+            AiService aiService,
             QuestionRepository questionRepository,
             StudentRepository studentRepository) {
-        this.geminiService = geminiService;
+        this.aiService = aiService;
         this.questionRepository = questionRepository;
         this.studentRepository = studentRepository;
     }
 
-    // Define Records inside to avoid missing file errors
     public record GenerateQuestionRequest(
             String subject,
             String topic,
@@ -47,6 +45,7 @@ public class AiController {
     public ResponseEntity<?> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
         try {
             String email = principal.getName();
+
             Student student = studentRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
@@ -57,62 +56,54 @@ public class AiController {
                         .orElse(null);
             }
 
-            // Assume generateQuestion returns a Mono, so we block() to get the String
-            String questionText = geminiService.generateQuestion(
+            String questionText = aiService.generateQuestion(
                     request.subject(),
                     request.difficulty(),
                     request.topic(),
                     previousQuestionText,
-                    request.previousStatus()).block();
+                    request.previousStatus());
 
-            Question newQuestion = new Question();
-            newQuestion.setQuestionText(questionText);
-            newQuestion.setStudent(student);
-            newQuestion.setSubject(request.subject());
-            newQuestion.setTopic(request.topic());
-            newQuestion.setDifficulty(request.difficulty());
+            Question question = new Question();
+            question.setStudent(student);
+            question.setSubject(request.subject());
+            question.setTopic(request.topic());
+            question.setDifficulty(request.difficulty());
+            question.setQuestionText(questionText);
 
-            Question savedQuestion = questionRepository.save(newQuestion);
-            return ResponseEntity.ok(savedQuestion);
+            Question saved = questionRepository.save(question);
+            return ResponseEntity.ok(saved);
 
         } catch (Exception e) {
-            e.printStackTrace();
             return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
     }
 
     @PostMapping("/get-hint")
-    public ResponseEntity<?> getHint(
-            @RequestBody HintRequest request,
-            Principal principal) {
-
+    public ResponseEntity<?> getHint(@RequestBody HintRequest request, Principal principal) {
         try {
             String email = principal.getName();
+
             studentRepository.findByEmail(email)
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
             Question question = questionRepository.findById(request.questionId())
                     .orElseThrow(() -> new RuntimeException("Question not found"));
 
-            String hint = geminiService.getHint(
+            String hint = aiService.getHint(
                     question.getQuestionText(),
                     question.getSubject(),
                     question.getTopic(),
-                    question.getDifficulty()).block();
+                    question.getDifficulty());
 
             return ResponseEntity.ok(hint);
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError()
-                    .body("Error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
     }
 
     @PostMapping("/get-answer")
-    public ResponseEntity<?> getAnswer(
-            @RequestBody AnswerRequest request,
-            Principal principal) {
-
+    public ResponseEntity<?> getAnswer(@RequestBody AnswerRequest request, Principal principal) {
         try {
             String email = principal.getName();
 
@@ -122,19 +113,16 @@ public class AiController {
             Question question = questionRepository.findById(request.questionId())
                     .orElseThrow(() -> new RuntimeException("Question not found"));
 
-            String correctAnswer = geminiService.getCorrectAnswer(
+            String answer = aiService.getCorrectAnswer(
                     question.getQuestionText(),
                     question.getSubject(),
                     question.getTopic(),
-                    question.getDifficulty()).block();
+                    question.getDifficulty());
 
-            return ResponseEntity.ok(correctAnswer);
+            return ResponseEntity.ok(answer);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError()
-                    .body("Error: " + e.getMessage());
+            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
         }
     }
-
 }

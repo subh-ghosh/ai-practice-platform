@@ -1,12 +1,13 @@
 package com.practice.aiplatform.user;
 
+import com.practice.aiplatform.notifications.NotificationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-import com.practice.aiplatform.notifications.NotificationService;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 record ProfileUpdateRequest(
@@ -43,56 +44,47 @@ public class StudentController {
 
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Principal principal) {
-        if (principal == null)
+        if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
+
         return ResponseEntity.ok(StudentResponseDTO.fromEntity(student));
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(
-            @RequestBody ProfileUpdateRequest req,
-            Principal principal) {
-        if (principal == null)
+    public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest req, Principal principal) {
+        if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        if (req.firstName() != null)
-            student.setFirstName(req.firstName().trim());
-        if (req.lastName() != null)
-            student.setLastName(req.lastName().trim());
-        if (req.gender() != null)
-            student.setGender(req.gender().trim().toLowerCase());
-
-        if (req.bio() != null)
-            student.setBio(req.bio().trim());
-        if (req.headline() != null)
-            student.setHeadline(req.headline().trim());
-        if (req.avatarUrl() != null)
-            student.setAvatarUrl(req.avatarUrl().trim());
-        if (req.githubUrl() != null)
-            student.setGithubUrl(req.githubUrl().trim());
-        if (req.linkedinUrl() != null)
-            student.setLinkedinUrl(req.linkedinUrl().trim());
-        if (req.websiteUrl() != null)
-            student.setWebsiteUrl(req.websiteUrl().trim());
+        if (req.firstName() != null) student.setFirstName(req.firstName().trim());
+        if (req.lastName() != null) student.setLastName(req.lastName().trim());
+        if (req.gender() != null) student.setGender(req.gender().trim().toLowerCase());
+        if (req.bio() != null) student.setBio(req.bio().trim());
+        if (req.headline() != null) student.setHeadline(req.headline().trim());
+        if (req.avatarUrl() != null) student.setAvatarUrl(req.avatarUrl().trim());
+        if (req.githubUrl() != null) student.setGithubUrl(req.githubUrl().trim());
+        if (req.linkedinUrl() != null) student.setLinkedinUrl(req.linkedinUrl().trim());
+        if (req.websiteUrl() != null) student.setWebsiteUrl(req.websiteUrl().trim());
 
         studentRepository.save(student);
 
-        // notify on profile update
-        notificationService.notify(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
+        notificationService.createNotification(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
 
         return ResponseEntity.ok(StudentResponseDTO.fromEntity(student));
     }
 
     @PutMapping("/password")
-    public ResponseEntity<String> changePassword(
-            @RequestBody ChangePasswordRequest req,
-            Principal principal) {
-        if (principal == null)
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest req, Principal principal) {
+        if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
 
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -108,26 +100,32 @@ public class StudentController {
 
         student.setPassword(passwordEncoder.encode(req.newPassword()));
         studentRepository.save(student);
+
         return ResponseEntity.ok("Password changed successfully.");
     }
 
     @DeleteMapping("/account")
     public ResponseEntity<?> deleteAccount(Principal principal) {
-        if (principal == null)
+        if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
+
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
+
         studentRepository.delete(student);
         return ResponseEntity.noContent().build();
     }
 
-    // --- Leaderboard Endpoint ---
     @GetMapping("/leaderboard")
     public ResponseEntity<List<StudentResponseDTO>> getLeaderboard() {
         List<Student> topStudents = studentRepository.findTop10ByOrderByTotalXpDesc();
-        List<StudentResponseDTO> dtos = topStudents.stream()
-                .map(StudentResponseDTO::fromEntity)
-                .toList();
+
+        List<StudentResponseDTO> dtos = new ArrayList<>();
+        for (Student student : topStudents) {
+            dtos.add(StudentResponseDTO.fromEntity(student));
+        }
+
         return ResponseEntity.ok(dtos);
     }
 }

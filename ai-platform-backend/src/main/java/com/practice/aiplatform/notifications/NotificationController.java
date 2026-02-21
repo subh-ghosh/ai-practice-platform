@@ -1,5 +1,6 @@
 package com.practice.aiplatform.notifications;
 
+import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,48 +11,60 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
-    
-    private final NotificationService service;
+
+    private final NotificationService notificationService;
     private final StudentRepository studentRepository;
 
-    public NotificationController(NotificationService service, StudentRepository studentRepository) {
-        this.service = service;
+    public NotificationController(NotificationService notificationService, StudentRepository studentRepository) {
+        this.notificationService = notificationService;
         this.studentRepository = studentRepository;
     }
 
-    private Long currentStudentId(Principal principal) {
-        if (principal == null) return null;
+    private Student getCurrentStudent(Principal principal) {
+        if (principal == null) {
+            throw new RuntimeException("Unauthorized");
+        }
+
         return studentRepository.findByEmail(principal.getName())
-                .map(s -> s.getId())
-                .orElse(null);
+                .orElseThrow(() -> new RuntimeException("Student not found"));
     }
 
     @GetMapping
-    public ResponseEntity<List<Notification>> all(Principal principal) {
-        Long sid = currentStudentId(principal);
-        if (sid == null) return ResponseEntity.status(401).build();
-        return ResponseEntity.ok(service.list(sid));
+    public ResponseEntity<List<Notification>> getAllNotifications(Principal principal) {
+        try {
+            Student student = getCurrentStudent(principal);
+            List<Notification> notifications = notificationService.getAllNotifications(student.getId());
+            return ResponseEntity.ok(notifications);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).build();
+        }
     }
 
     @GetMapping("/unread")
-    public ResponseEntity<List<Notification>> unread(Principal principal) {
-        Long sid = currentStudentId(principal);
-        if (sid == null) return ResponseEntity.status(401).build();
-        return ResponseEntity.ok(service.listUnread(sid));
+    public ResponseEntity<List<Notification>> getUnreadNotifications(Principal principal) {
+        try {
+            Student student = getCurrentStudent(principal);
+            List<Notification> unreadNotifications = notificationService.getUnreadNotifications(student.getId());
+            return ResponseEntity.ok(unreadNotifications);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).build();
+        }
     }
 
     @PatchMapping("/{id}/read")
-    public ResponseEntity<Void> markRead(@PathVariable Long id) {
-        service.markRead(id);
+    public ResponseEntity<Void> markNotificationAsRead(@PathVariable Long id) {
+        notificationService.markAsRead(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/read-all")
-    public ResponseEntity<Void> markAllRead(Principal principal) {
-        Long sid = currentStudentId(principal);
-        if (sid == null) return ResponseEntity.status(401).build();
-        
-        service.markAllRead(sid);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> markAllNotificationsAsRead(Principal principal) {
+        try {
+            Student student = getCurrentStudent(principal);
+            notificationService.markAllAsRead(student.getId());
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(401).build();
+        }
     }
 }

@@ -10,5 +10,5 @@ import java.util.List;
 public interface DailyChallengeRepository extends JpaRepository<DailyChallenge, Long> {
     List<DailyChallenge> findByStudentIdAndDate(Long studentId, LocalDate date);
 
-    void deleteByDateBefore(LocalDate date); // Cleanup old challenges
+    void deleteByDateBefore(LocalDate date);
 }

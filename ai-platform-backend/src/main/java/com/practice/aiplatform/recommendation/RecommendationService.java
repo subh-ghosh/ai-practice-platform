@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
@@ -20,7 +19,8 @@ public class RecommendationService {
     private final StudentRepository studentRepository;
     private final StudyPlanItemRepository studyPlanItemRepository;
 
-    public RecommendationService(AnswerRepository answerRepository,
+    public RecommendationService(
+            AnswerRepository answerRepository,
             StudentRepository studentRepository,
             StudyPlanItemRepository studyPlanItemRepository) {
         this.answerRepository = answerRepository;
@@ -28,27 +28,21 @@ public class RecommendationService {
         this.studyPlanItemRepository = studyPlanItemRepository;
     }
 
-    // ===== Enhanced Recommendation Record =====
-
     public record EnhancedRecommendation(
-            String type, // WEAKNESS, DECLINING, MASTERED, READY_TO_ADVANCE, STALE, PLAN_GAP
+            String type,
             String topic,
             String currentDifficulty,
             String suggestedDifficulty,
             double accuracy,
-            String trend, // IMPROVING, DECLINING, STABLE
+            String trend,
             String reason,
             String action,
-            String actionType, // PRACTICE, STUDY_PLAN, REVIEW
+            String actionType,
             String deepLink) {
     }
 
-    // ===== Prediction Record (unchanged) =====
-
     public record Prediction(String topic, String difficulty, double winProbability, String confidence) {
     }
-
-    // ===== Enhanced Recommendations =====
 
     public List<EnhancedRecommendation> getRecommendations(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
@@ -56,156 +50,127 @@ public class RecommendationService {
 
         List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
         if (history.isEmpty()) {
-            return List.of(new EnhancedRecommendation(
+            List<EnhancedRecommendation> fallback = new ArrayList<>();
+            fallback.add(new EnhancedRecommendation(
                     "READY_TO_ADVANCE", "Java", "Beginner", "Beginner",
                     0.0, "STABLE",
                     "Welcome! Start your learning journey.",
                     "Begin with a Beginner Java quiz",
                     "PRACTICE",
                     "/dashboard/practice?subject=Java&topic=Object+Oriented+Programming&difficulty=School"));
+            return fallback;
         }
 
-        // Group answers by topic
-        Map<String, List<Answer>> topicStats = history.stream()
-                .filter(a -> a.getQuestion() != null && a.getQuestion().getTopic() != null)
-                .collect(Collectors.groupingBy(a -> a.getQuestion().getTopic()));
+        Map<String, List<Answer>> topicStats = new HashMap<>();
+        for (Answer answer : history) {
+            if (answer.getQuestion() == null) {
+                continue;
+            }
+            String topic = answer.getQuestion().getTopic();
+            if (topic == null) {
+                continue;
+            }
+
+            if (!topicStats.containsKey(topic)) {
+                topicStats.put(topic, new ArrayList<>());
+            }
+            topicStats.get(topic).add(answer);
+        }
 
         List<EnhancedRecommendation> recommendations = new ArrayList<>();
 
         for (Map.Entry<String, List<Answer>> entry : topicStats.entrySet()) {
             String topic = entry.getKey();
             List<Answer> answers = entry.getValue();
-            if (answers.isEmpty())
+            if (answers.isEmpty()) {
                 continue;
+            }
 
-            // --- Calculate overall accuracy ---
-            long gradable = answers.stream()
-                    .filter(a -> List.of("CORRECT", "INCORRECT", "CLOSE").contains(a.getEvaluationStatus()))
-                    .count();
-            long correct = answers.stream().filter(a -> "CORRECT".equals(a.getEvaluationStatus())).count();
-            double accuracy = gradable > 0 ? (double) correct / gradable : 0.0;
+            long gradable = 0;
+            long correct = 0;
+            for (Answer answer : answers) {
+                String status = answer.getEvaluationStatus();
+                if (isGradableStatus(status)) {
+                    gradable++;
+                    if ("CORRECT".equals(status)) {
+                        correct++;
+                    }
+                }
+            }
 
-            // --- Calculate trend (last 5 vs prior 5) ---
+            double accuracy = 0.0;
+            if (gradable > 0) {
+                accuracy = (double) correct / gradable;
+            }
+
             String trend = calculateTrend(answers);
-
-            // --- Determine most common difficulty for this topic ---
-            String commonDifficulty = answers.stream()
-                    .filter(a -> a.getQuestion() != null && a.getQuestion().getDifficulty() != null)
-                    .collect(Collectors.groupingBy(a -> a.getQuestion().getDifficulty(), Collectors.counting()))
-                    .entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(Map.Entry::getKey)
-                    .orElse("Beginner");
-
-            // --- Most recent answer timestamp ---
-            LocalDateTime lastPracticed = answers.stream()
-                    .filter(a -> a.getSubmittedAt() != null)
-                    .map(Answer::getSubmittedAt)
-                    .max(LocalDateTime::compareTo)
-                    .orElse(LocalDateTime.now());
-
+            String commonDifficulty = findMostCommonDifficulty(answers);
+            LocalDateTime lastPracticed = findLastPracticedTime(answers);
             long daysSinceLastPractice = ChronoUnit.DAYS.between(lastPracticed, LocalDateTime.now());
 
-            // === STALE: No practice in 7+ days ===
             if (daysSinceLastPractice >= 7 && gradable >= 3) {
                 recommendations.add(new EnhancedRecommendation(
                         "STALE", topic, commonDifficulty, commonDifficulty,
                         accuracy, trend,
-                        String.format("Last practiced %d days ago — time for a refresher!", daysSinceLastPractice),
+                        "Last practiced " + daysSinceLastPractice + " days ago - time for a refresher!",
                         "Quick refresher session",
                         "PRACTICE",
                         "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
-                continue; // Don't double-report
+                continue;
             }
 
-            // === WEAKNESS: Accuracy < 60%, ≥ 3 attempts ===
             if (accuracy < 0.6 && gradable >= 3) {
                 recommendations.add(new EnhancedRecommendation(
                         "WEAKNESS", topic, commonDifficulty, "School",
                         accuracy, trend,
-                        String.format("Accuracy: %.0f%% — needs focused practice", accuracy * 100),
+                        "Accuracy: " + Math.round(accuracy * 100) + "% - needs focused practice",
                         "Review basics and take a recovery quiz",
                         "PRACTICE",
                         "/dashboard/practice?topic=" + encode(topic) + "&difficulty=School"));
-            }
-            // === DECLINING: Trend is declining even if overall accuracy is okay ===
-            else if ("DECLINING".equals(trend) && gradable >= 6) {
+            } else if ("DECLINING".equals(trend) && gradable >= 6) {
                 recommendations.add(new EnhancedRecommendation(
                         "DECLINING", topic, commonDifficulty, commonDifficulty,
                         accuracy, trend,
-                        String.format("Accuracy: %.0f%% but declining — slipping recently", accuracy * 100),
+                        "Accuracy: " + Math.round(accuracy * 100) + "% but declining recently",
                         "Do a focused review before moving on",
                         "REVIEW",
                         "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
-            }
-            // === MASTERED: Accuracy > 90%, ≥ 10 attempts ===
-            else if (accuracy > 0.9 && gradable >= 10) {
+            } else if (accuracy > 0.9 && gradable >= 10) {
                 String nextDiff = getNextDifficulty(commonDifficulty);
                 recommendations.add(new EnhancedRecommendation(
                         "MASTERED", topic, commonDifficulty, nextDiff,
                         accuracy, trend,
-                        String.format("Accuracy: %.0f%% — you've mastered this!", accuracy * 100),
+                        "Accuracy: " + Math.round(accuracy * 100) + "% - you have mastered this",
                         "Challenge yourself at " + nextDiff + " level",
                         "PRACTICE",
                         "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(nextDiff)));
-            }
-            // === READY_TO_ADVANCE: Accuracy 70-90%, ≥ 5 attempts ===
-            else if (accuracy >= 0.7 && accuracy <= 0.9 && gradable >= 5) {
+            } else if (accuracy >= 0.7 && accuracy <= 0.9 && gradable >= 5) {
                 recommendations.add(new EnhancedRecommendation(
                         "READY_TO_ADVANCE", topic, commonDifficulty, commonDifficulty,
                         accuracy, trend,
-                        String.format("Accuracy: %.0f%% — almost there!", accuracy * 100),
+                        "Accuracy: " + Math.round(accuracy * 100) + "% - almost there",
                         "One more round to solidify your understanding",
                         "PRACTICE",
                         "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
             }
         }
 
-        // === PLAN_GAP: Topics in active study plan but never practiced ===
-        try {
-            List<StudyPlanItem> activePlanItems = studyPlanItemRepository
-                    .findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(student.getId());
+        addPlanGapRecommendations(student, topicStats, recommendations);
 
-            Set<String> practicedTopics = topicStats.keySet().stream()
-                    .map(String::toLowerCase)
-                    .collect(Collectors.toSet());
+        recommendations.sort((a, b) -> Integer.compare(getPriority(a.type()), getPriority(b.type())));
 
-            activePlanItems.stream()
-                    .filter(item -> item.getPracticeTopic() != null)
-                    .map(StudyPlanItem::getPracticeTopic)
-                    .distinct()
-                    .filter(planTopic -> !practicedTopics.contains(planTopic.toLowerCase()))
-                    .limit(3)
-                    .forEach(planTopic -> recommendations.add(new EnhancedRecommendation(
-                            "PLAN_GAP", planTopic, "Beginner", "Beginner",
-                            0.0, "STABLE",
-                            "This topic is in your study plan but hasn't been practiced yet",
-                            "Start practicing to stay on track",
-                            "PRACTICE",
-                            "/dashboard/practice?topic=" + encode(planTopic))));
-        } catch (Exception e) {
-            // Gracefully ignore if plan data unavailable
-            System.err.println("Plan gap analysis failed: " + e.getMessage());
+        if (recommendations.isEmpty()) {
+            recommendations.add(new EnhancedRecommendation(
+                    "READY_TO_ADVANCE", "New Topic", "Beginner", "Beginner",
+                    0.0, "STABLE",
+                    "You are doing great! Keep exploring.",
+                    "Try a new topic to expand your skills",
+                    "PRACTICE",
+                    "/dashboard/practice"));
         }
 
-        // Sort: WEAKNESS > DECLINING > STALE > PLAN_GAP > READY_TO_ADVANCE > MASTERED
-        Map<String, Integer> priority = Map.of(
-                "WEAKNESS", 0, "DECLINING", 1, "STALE", 2,
-                "PLAN_GAP", 3, "READY_TO_ADVANCE", 4, "MASTERED", 5);
-        recommendations.sort(Comparator.comparingInt(r -> priority.getOrDefault(r.type(), 99)));
-
-        return recommendations.isEmpty()
-                ? List.of(new EnhancedRecommendation(
-                        "READY_TO_ADVANCE", "New Topic", "Beginner", "Beginner",
-                        0.0, "STABLE",
-                        "You're doing great! Keep exploring.",
-                        "Try a new topic to expand your skills",
-                        "PRACTICE",
-                        "/dashboard/practice"))
-                : recommendations;
+        return recommendations;
     }
-
-    // ===== AI Coach Summary (raw data for Gemini prompt) =====
 
     public String buildAiCoachPromptData(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
@@ -213,32 +178,60 @@ public class RecommendationService {
 
         List<Answer> recent = answerRepository.findTop20ByStudentOrderBySubmittedAtDesc(student);
         if (recent.isEmpty()) {
-            return null; // No data for coaching
+            return null;
         }
 
-        // Build a concise summary for the AI
+        Map<String, List<Answer>> byTopic = new HashMap<>();
+        for (Answer answer : recent) {
+            if (answer.getQuestion() == null || answer.getQuestion().getTopic() == null) {
+                continue;
+            }
+
+            String topic = answer.getQuestion().getTopic();
+            if (!byTopic.containsKey(topic)) {
+                byTopic.put(topic, new ArrayList<>());
+            }
+            byTopic.get(topic).add(answer);
+        }
+
         StringBuilder summary = new StringBuilder();
         summary.append("Student's last 20 practice results:\n");
 
-        Map<String, List<Answer>> byTopic = recent.stream()
-                .filter(a -> a.getQuestion() != null)
-                .collect(Collectors.groupingBy(a -> a.getQuestion().getTopic()));
-
         for (Map.Entry<String, List<Answer>> entry : byTopic.entrySet()) {
-            long correct = entry.getValue().stream()
-                    .filter(a -> "CORRECT".equals(a.getEvaluationStatus())).count();
-            long total = entry.getValue().stream()
-                    .filter(a -> List.of("CORRECT", "INCORRECT", "CLOSE").contains(a.getEvaluationStatus()))
-                    .count();
-            double acc = total > 0 ? (double) correct / total * 100 : 0;
-            summary.append(String.format("- %s: %.0f%% accuracy (%d/%d correct)\n",
-                    entry.getKey(), acc, correct, total));
+            String topic = entry.getKey();
+            List<Answer> answers = entry.getValue();
+
+            long correct = 0;
+            long total = 0;
+
+            for (Answer answer : answers) {
+                String status = answer.getEvaluationStatus();
+                if (isGradableStatus(status)) {
+                    total++;
+                    if ("CORRECT".equals(status)) {
+                        correct++;
+                    }
+                }
+            }
+
+            double accuracyPercent = 0.0;
+            if (total > 0) {
+                accuracyPercent = ((double) correct / total) * 100.0;
+            }
+
+            summary.append("- ")
+                    .append(topic)
+                    .append(": ")
+                    .append(Math.round(accuracyPercent))
+                    .append("% accuracy (")
+                    .append(correct)
+                    .append("/")
+                    .append(total)
+                    .append(" correct)\n");
         }
 
         return summary.toString();
     }
-
-    // ===== Prediction (unchanged) =====
 
     public Prediction predictSuccess(String userEmail, String topic, String difficulty) {
         Student student = studentRepository.findByEmail(userEmail)
@@ -246,85 +239,220 @@ public class RecommendationService {
 
         List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
 
-        List<Answer> topicHistory = history.stream()
-                .filter(a -> a.getQuestion() != null && a.getQuestion().getTopic() != null)
-                .filter(a -> a.getQuestion().getTopic().equalsIgnoreCase(topic))
-                .limit(20)
-                .toList();
+        List<Answer> topicHistory = new ArrayList<>();
+        for (Answer answer : history) {
+            if (answer.getQuestion() == null || answer.getQuestion().getTopic() == null) {
+                continue;
+            }
+            if (answer.getQuestion().getTopic().equalsIgnoreCase(topic)) {
+                topicHistory.add(answer);
+            }
+            if (topicHistory.size() == 20) {
+                break;
+            }
+        }
 
         if (topicHistory.isEmpty()) {
             return new Prediction(topic, difficulty, 0.5, "LOW_DATA");
         }
 
-        double totalWeight = 0;
-        double weightedScore = 0;
+        double weightedScore = 0.0;
+        double totalWeight = 0.0;
 
         for (int i = 0; i < topicHistory.size(); i++) {
-            Answer a = topicHistory.get(i);
+            Answer answer = topicHistory.get(i);
             double weight = topicHistory.size() - i;
-            double score = "CORRECT".equals(a.getEvaluationStatus()) ? 1.0 : 0.0;
+            double score = "CORRECT".equals(answer.getEvaluationStatus()) ? 1.0 : 0.0;
+
             weightedScore += score * weight;
             totalWeight += weight;
         }
 
         double probability = totalWeight > 0 ? weightedScore / totalWeight : 0.5;
 
-        if ("Hard".equalsIgnoreCase(difficulty) || "Research".equalsIgnoreCase(difficulty)
+        if ("Hard".equalsIgnoreCase(difficulty)
+                || "Research".equalsIgnoreCase(difficulty)
                 || "Post Graduation".equalsIgnoreCase(difficulty)) {
-            probability *= 0.8;
+            probability = probability * 0.8;
         }
 
         String confidence = topicHistory.size() > 10 ? "HIGH" : "MEDIUM";
         return new Prediction(topic, difficulty, probability, confidence);
     }
 
-    // ===== Helper Methods =====
+    private void addPlanGapRecommendations(
+            Student student,
+            Map<String, List<Answer>> topicStats,
+            List<EnhancedRecommendation> recommendations) {
+        try {
+            List<StudyPlanItem> activePlanItems =
+                    studyPlanItemRepository.findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(student.getId());
+
+            Set<String> practicedTopicsLower = new HashSet<>();
+            for (String topic : topicStats.keySet()) {
+                practicedTopicsLower.add(topic.toLowerCase());
+            }
+
+            Set<String> alreadyAdded = new HashSet<>();
+            int added = 0;
+
+            for (StudyPlanItem item : activePlanItems) {
+                String planTopic = item.getPracticeTopic();
+                if (planTopic == null) {
+                    continue;
+                }
+
+                String lower = planTopic.toLowerCase();
+                if (practicedTopicsLower.contains(lower)) {
+                    continue;
+                }
+                if (alreadyAdded.contains(lower)) {
+                    continue;
+                }
+
+                recommendations.add(new EnhancedRecommendation(
+                        "PLAN_GAP", planTopic, "Beginner", "Beginner",
+                        0.0, "STABLE",
+                        "This topic is in your study plan but has not been practiced yet",
+                        "Start practicing to stay on track",
+                        "PRACTICE",
+                        "/dashboard/practice?topic=" + encode(planTopic)));
+
+                alreadyAdded.add(lower);
+                added++;
+                if (added == 3) {
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Plan gap analysis failed: " + e.getMessage());
+        }
+    }
 
     private String calculateTrend(List<Answer> answers) {
-        List<Answer> gradable = answers.stream()
-                .filter(a -> List.of("CORRECT", "INCORRECT", "CLOSE").contains(a.getEvaluationStatus()))
-                .toList();
+        List<Answer> gradable = new ArrayList<>();
+        for (Answer answer : answers) {
+            if (isGradableStatus(answer.getEvaluationStatus())) {
+                gradable.add(answer);
+            }
+        }
 
-        if (gradable.size() < 6)
+        if (gradable.size() < 6) {
             return "STABLE";
+        }
 
-        // Last 5 answers (most recent)
-        List<Answer> recent = gradable.subList(0, Math.min(5, gradable.size()));
-        long recentCorrect = recent.stream().filter(a -> "CORRECT".equals(a.getEvaluationStatus())).count();
-        double recentAcc = (double) recentCorrect / recent.size();
+        int recentEnd = Math.min(5, gradable.size());
+        List<Answer> recent = gradable.subList(0, recentEnd);
 
-        // Prior 5 answers
-        List<Answer> prior = gradable.subList(Math.min(5, gradable.size()),
-                Math.min(10, gradable.size()));
-        if (prior.isEmpty())
+        int priorStart = recentEnd;
+        int priorEnd = Math.min(10, gradable.size());
+        if (priorStart >= priorEnd) {
             return "STABLE";
+        }
+        List<Answer> prior = gradable.subList(priorStart, priorEnd);
 
-        long priorCorrect = prior.stream().filter(a -> "CORRECT".equals(a.getEvaluationStatus())).count();
-        double priorAcc = (double) priorCorrect / prior.size();
+        double recentAcc = accuracyForList(recent);
+        double priorAcc = accuracyForList(prior);
 
         double diff = recentAcc - priorAcc;
-        if (diff > 0.15)
+        if (diff > 0.15) {
             return "IMPROVING";
-        if (diff < -0.15)
+        }
+        if (diff < -0.15) {
             return "DECLINING";
+        }
         return "STABLE";
     }
 
+    private double accuracyForList(List<Answer> answers) {
+        if (answers.isEmpty()) {
+            return 0.0;
+        }
+
+        int correct = 0;
+        for (Answer answer : answers) {
+            if ("CORRECT".equals(answer.getEvaluationStatus())) {
+                correct++;
+            }
+        }
+
+        return (double) correct / answers.size();
+    }
+
+    private String findMostCommonDifficulty(List<Answer> answers) {
+        Map<String, Integer> countByDifficulty = new HashMap<>();
+
+        for (Answer answer : answers) {
+            if (answer.getQuestion() == null) {
+                continue;
+            }
+
+            String difficulty = answer.getQuestion().getDifficulty();
+            if (difficulty == null) {
+                continue;
+            }
+
+            int current = countByDifficulty.getOrDefault(difficulty, 0);
+            countByDifficulty.put(difficulty, current + 1);
+        }
+
+        String best = "Beginner";
+        int bestCount = -1;
+
+        for (Map.Entry<String, Integer> entry : countByDifficulty.entrySet()) {
+            if (entry.getValue() > bestCount) {
+                bestCount = entry.getValue();
+                best = entry.getKey();
+            }
+        }
+
+        return best;
+    }
+
+    private LocalDateTime findLastPracticedTime(List<Answer> answers) {
+        LocalDateTime last = null;
+
+        for (Answer answer : answers) {
+            LocalDateTime submittedAt = answer.getSubmittedAt();
+            if (submittedAt == null) {
+                continue;
+            }
+            if (last == null || submittedAt.isAfter(last)) {
+                last = submittedAt;
+            }
+        }
+
+        return last != null ? last : LocalDateTime.now();
+    }
+
+    private int getPriority(String type) {
+        if ("WEAKNESS".equals(type)) return 0;
+        if ("DECLINING".equals(type)) return 1;
+        if ("STALE".equals(type)) return 2;
+        if ("PLAN_GAP".equals(type)) return 3;
+        if ("READY_TO_ADVANCE".equals(type)) return 4;
+        if ("MASTERED".equals(type)) return 5;
+        return 99;
+    }
+
+    private boolean isGradableStatus(String status) {
+        return "CORRECT".equals(status) || "INCORRECT".equals(status) || "CLOSE".equals(status);
+    }
+
     private String getNextDifficulty(String current) {
-        return switch (current) {
-            case "School" -> "High School";
-            case "High School" -> "Graduation";
-            case "Graduation" -> "Post Graduation";
-            case "Post Graduation" -> "Research";
-            case "Beginner" -> "Intermediate";
-            case "Intermediate" -> "Advanced";
-            default -> "Hard";
-        };
+        if ("School".equals(current)) return "High School";
+        if ("High School".equals(current)) return "Graduation";
+        if ("Graduation".equals(current)) return "Post Graduation";
+        if ("Post Graduation".equals(current)) return "Research";
+        if ("Beginner".equals(current)) return "Intermediate";
+        if ("Intermediate".equals(current)) return "Advanced";
+        return "Hard";
     }
 
     private String encode(String value) {
-        if (value == null)
+        if (value == null) {
             return "";
+        }
         return value.replace(" ", "+");
     }
 }

@@ -6,62 +6,59 @@ import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 
 @Service
 public class CourseGeneratorService {
 
-    private final AiService geminiService;
+    private final AiService aiService;
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
 
-    public CourseGeneratorService(AiService geminiService,
+    public CourseGeneratorService(
+            AiService aiService,
             CourseRepository courseRepository,
             StudentRepository studentRepository,
             ObjectMapper objectMapper) {
-        this.geminiService = geminiService;
+        this.aiService = aiService;
         this.courseRepository = courseRepository;
         this.studentRepository = studentRepository;
         this.objectMapper = objectMapper;
     }
 
-    public Mono<Course> generateCourse(String userEmail, String topic, String level) {
-        return Mono.just(userEmail)
-                .map(email -> studentRepository.findByEmail(email)
-                        .orElseThrow(() -> new RuntimeException("Student not found")))
-                .flatMap(student -> {
-                    String prompt = createPrompt(topic, level);
-                    return geminiService.generateRawContent(prompt)
-                            .map(jsonResponse -> parseAndSaveCourse(jsonResponse, student, topic, level));
-                });
+    public Course generateCourse(String userEmail, String topic, String level) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        String prompt = buildPrompt(topic, level);
+        String aiText = aiService.generateRawContent(prompt);
+
+        return parseAndSaveCourse(aiText, student, topic, level);
     }
 
-    private String createPrompt(String topic, String level) {
+    private String buildPrompt(String topic, String level) {
         return String.format("""
-                Create a structured course on the topic: "%s" for a "%s" level student.
-                Return ONLY valid JSON with this structure:
+                Create a course for topic "%s" at level "%s".
+
+                Return only JSON:
                 {
                   "title": "Course Title",
-                  "description": "Brief description",
+                  "description": "Short summary",
                   "modules": [
                     {
                       "title": "Module Title",
-                      "content": "Detailed lesson content for this module (at least 3 sentences)."
+                      "content": "Module lesson content"
                     }
                   ]
                 }
-                Do not include Markdown formatting (like ```json), just the raw JSON.
                 """, topic, level);
     }
 
-    private Course parseAndSaveCourse(String jsonResponse, Student student, String topic, String level) {
+    private Course parseAndSaveCourse(String aiText, Student student, String topic, String level) {
         try {
-            // Clean up Markdown code blocks if present (just in case)
-            String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
-
+            String cleanJson = aiText.replace("```json", "").replace("```", "").trim();
             JsonNode root = objectMapper.readTree(cleanJson);
 
             Course course = new Course();
@@ -72,24 +69,21 @@ public class CourseGeneratorService {
             course.setStudent(student);
             course.setCreatedAt(LocalDateTime.now());
 
-            JsonNode modulesNode = root.path("modules");
-            if (modulesNode.isArray()) {
-                int index = 1;
-                for (JsonNode moduleNode : modulesNode) {
+            JsonNode modules = root.path("modules");
+            if (modules.isArray()) {
+                int orderIndex = 1;
+                for (JsonNode moduleNode : modules) {
                     Module module = new Module();
-                    module.setTitle(moduleNode.path("title").asText("New Module"));
+                    module.setTitle(moduleNode.path("title").asText("Module"));
                     module.setContent(moduleNode.path("content").asText(""));
-                    module.setOrderIndex(index++);
+                    module.setOrderIndex(orderIndex++);
                     course.addModule(module);
                 }
             }
 
             return courseRepository.save(course);
-
         } catch (Exception e) {
-            System.err.println("JSON Parsing Error: " + e.getMessage());
-            System.err.println("Raw Response: " + jsonResponse);
-            throw new RuntimeException("Failed to parse AI response: " + e.getMessage());
+            throw new RuntimeException("Failed to parse and save generated course: " + e.getMessage(), e);
         }
     }
 }

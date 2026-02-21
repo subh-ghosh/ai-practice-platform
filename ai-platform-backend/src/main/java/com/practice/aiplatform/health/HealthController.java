@@ -1,4 +1,4 @@
-package com.practice.aiplatform;
+package com.practice.aiplatform.health;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
