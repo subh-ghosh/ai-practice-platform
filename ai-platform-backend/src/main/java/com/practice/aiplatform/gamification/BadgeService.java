@@ -1,8 +1,6 @@
 package com.practice.aiplatform.gamification;
 
 import com.practice.aiplatform.user.Student;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,13 +16,11 @@ public class BadgeService {
         this.userBadgeRepository = userBadgeRepository;
     }
 
-    @Cacheable(value = "UserBadgesCache", key = "#studentId", sync = true)
     public List<UserBadge> getUserBadges(Long studentId) {
         return userBadgeRepository.findByStudentId(studentId);
     }
 
     @Transactional
-    @CacheEvict(value = "UserBadgesCache", key = "#student.id")
     public void unlockBadge(Student student, Badge badge) {
         boolean alreadyUnlocked = userBadgeRepository.existsByStudentIdAndBadge(student.getId(), badge);
         if (alreadyUnlocked) {

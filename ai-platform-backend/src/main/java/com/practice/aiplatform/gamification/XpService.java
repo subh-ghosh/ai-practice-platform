@@ -3,7 +3,6 @@ package com.practice.aiplatform.gamification;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +25,6 @@ public class XpService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "UserXpHistoryCache", key = "#student.id"),
             @CacheEvict(value = "LeaderboardCache", allEntries = true),
             @CacheEvict(value = "UserProfileCache", key = "#student.email")
     })
@@ -47,7 +45,6 @@ public class XpService {
         dailyXpHistoryRepository.save(history);
     }
 
-    @Cacheable(value = "UserXpHistoryCache", key = "#studentId", sync = true)
     public List<DailyXpHistory> getXpHistory(Long studentId) {
         LocalDate endDate = LocalDate.now();
         LocalDate startDate = endDate.minusDays(XP_HISTORY_DAYS);

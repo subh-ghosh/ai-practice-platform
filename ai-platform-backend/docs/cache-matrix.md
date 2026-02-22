@@ -36,19 +36,17 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 | `StatisticsService.getTimeSeriesStats` | `UserStatisticsTimeseriesCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
 | `StatisticsService.getSmartRecommendations` | `UserStatisticsRecommendationsCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer`, study-plan mutation methods above |
 | `PracticeController.getHistoryCached` | `UserPracticeHistoryCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
-| `NotificationService.getAllNotifications` | `UserNotificationAllCache` | `#studentId` | `1m` | `createNotification`, `markAsRead (manual targeted)`, `markAllAsRead` |
-| `NotificationService.getUnreadNotifications` | `UserNotificationUnreadCache` | `#studentId` | `1m` | `createNotification`, `markAsRead (manual targeted)`, `markAllAsRead` |
-| `BadgeService.getUserBadges` | `UserBadgesCache` | `#studentId` | `5m` | `BadgeService.unlockBadge` |
-| `DailyChallengeService.getTodayChallenges` | `UserDailyChallengesCache` | `#studentId` | `1m` | `generateDailyChallenges`, `incrementProgress`, `claimReward (manual targeted)` |
-| `XpService.getXpHistory` | `UserXpHistoryCache` | `#studentId` | `2m` | `XpService.awardXp` |
+| `NotificationService.getAllNotifications` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `NotificationService.getUnreadNotifications` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `BadgeService.getUserBadges` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `DailyChallengeService.getTodayChallenges` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `XpService.getXpHistory` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
 | `CourseController.getMyCoursesCached` | `UserCoursesCache` | `#email` | `10m` | `CourseController.generateCourse`, `CourseController.deleteCourse` |
 | `StudentController.getProfileCached` | `UserProfileCache` | `#email` | `5m` | `StudentController.updateProfile`, `StudentController.changePassword`, `StudentController.deleteAccount`, `XpService.awardXp` |
 | `StudentController.getLeaderboardCached` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
 | `UsageService.hasActionsRemaining` | `UserUsageRemainingCache` | `#userEmail` | `30s` | `UsageService.canPerformAction`, `StudentController.changePassword`, `StudentController.deleteAccount` |
 
 ## Manual targeted evictions
-- `NotificationService.markAsRead`: evicts `UserNotificationAllCache` and `UserNotificationUnreadCache` for only that notification's `studentId`.
-- `DailyChallengeService.claimReward`: evicts `UserDailyChallengesCache` only for that challenge owner's `studentId`.
 - `StudyPlanService.deleteStudyPlan`: evicts all quiz-question cache keys for that owned plan (`userEmail-planId-itemId`).
 - `StudyPlanService.markExternalPracticeAsComplete`: evicts `StudyPlanByIdCache` only for touched owned plans.
 
