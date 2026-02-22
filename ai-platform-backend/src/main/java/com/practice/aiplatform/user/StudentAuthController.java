@@ -1,5 +1,6 @@
 package com.practice.aiplatform.user;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.practice.aiplatform.notifications.NotificationService;
 import com.practice.aiplatform.security.JwtUtil;
 import com.practice.aiplatform.security.RefreshToken;
@@ -119,7 +120,7 @@ public class StudentAuthController {
     public ResponseEntity<?> handleGoogleLogin(@RequestBody Map<String, String> request) {
         try {
             String idToken = request.get("token");
-            var payload = googleAuthService.verifyToken(idToken);
+            GoogleIdToken.Payload payload = googleAuthService.verifyToken(idToken);
 
             if (payload == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Google token");
@@ -140,6 +141,10 @@ public class StudentAuthController {
                 student.setSubscriptionStatus("FREE");
                 student.setFreeActionsUsed(0);
                 studentRepository.save(student);
+                try {
+                    notificationService.createNotification(student.getId(), "REGISTER", "Welcome! Registration successful via Google.");
+                } catch (Exception ignored) {
+                }
             }
 
             updateStreak(student);
@@ -149,6 +154,11 @@ public class StudentAuthController {
 
             refreshTokenService.deleteByUserId(student.getId());
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(student.getId());
+
+            try {
+                notificationService.createNotification(student.getId(), "LOGIN", "Google login successful.");
+            } catch (Exception ignored) {
+            }
 
             StudentDto dto = new StudentDto(
                     student.getId(),

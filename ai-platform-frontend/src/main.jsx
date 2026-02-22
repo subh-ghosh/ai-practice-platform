@@ -13,6 +13,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { PaywallProvider } from "@/context/PaywallContext.jsx";
 import axios from "axios";
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 // ✅ FIXED SECURITY INTERCEPTOR
 axios.interceptors.request.use(
@@ -43,7 +44,7 @@ axios.interceptors.request.use(
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter>
-      <GoogleOAuthProvider clientId="245465683815-auku1hggm3glvv2urqkblfnm85d8udel.apps.googleusercontent.com">
+      <GoogleOAuthProvider clientId={googleClientId || ""}>
         <ThemeProvider>
           <MaterialTailwindControllerProvider>
             <AppThemeProvider>

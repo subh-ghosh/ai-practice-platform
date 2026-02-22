@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +45,7 @@ public class StudyPlanService {
         this.objectMapper = objectMapper;
     }
 
+    @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail")
     public StudyPlan generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -177,6 +180,7 @@ public class StudyPlanService {
     public record QuestionResult(Long questionId, String correctOption, boolean isCorrect) {
     }
 
+    @CacheEvict(value = "UserStudyPlansCache", allEntries = true)
     public QuizResult submitQuizAnswers(Long planId, Long itemId, Map<Long, String> answers) {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
@@ -248,6 +252,7 @@ public class StudyPlanService {
         return quizQuestionRepository.findByStudyPlanItemId(itemId);
     }
 
+    @CacheEvict(value = "UserStudyPlansCache", allEntries = true)
     public StudyPlanItem markItemComplete(Long planId, Long itemId) {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
@@ -335,6 +340,7 @@ public class StudyPlanService {
         plan.setCompleted(progress == 100);
     }
 
+    @Cacheable(value = "UserStudyPlansCache", key = "#userEmail", sync = true)
     public List<StudyPlan> getStudyPlans(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -480,6 +486,7 @@ public class StudyPlanService {
         }
     }
 
+    @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail")
     public void deleteStudyPlan(Long id, String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -517,6 +524,7 @@ public class StudyPlanService {
         );
     }
 
+    @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail")
     public int markExternalPracticeAsComplete(String userEmail, String topic, String difficulty) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -559,6 +567,7 @@ public class StudyPlanService {
             String practiceDifficulty) {
     }
 
+    @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail")
     public StudyPlan generateStudyPlanFromSyllabus(String userEmail, MultipartFile file, int durationDays) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));

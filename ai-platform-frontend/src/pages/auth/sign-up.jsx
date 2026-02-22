@@ -52,7 +52,7 @@ export function SignUp() {
 
     setSubmitting(true);
     try {
-      await api.post("/api/students/register", {
+      await api.post("/students/register", {
         firstName,
         lastName,
         email,

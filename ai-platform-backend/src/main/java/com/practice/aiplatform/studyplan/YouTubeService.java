@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -28,6 +29,7 @@ public class YouTubeService {
         this.objectMapper = objectMapper;
     }
 
+    @Cacheable(value="YtSearchVideosCache", key = "#query + '-' + #maxResults", sync = true)
     public List<Map<String, String>> searchVideos(String query, int maxResults) {
         try {
             String responseBody = webClient.get()
@@ -67,7 +69,7 @@ public class YouTubeService {
             return List.of();
         }
     }
-
+    @Cacheable(value = "YtSearchPlaylistsCache", key = "#query + '-' + #maxResults", sync = true)
     public List<Map<String, String>> searchPlaylists(String query, int maxResults) {
         try {
             String responseBody = webClient.get()
@@ -105,6 +107,7 @@ public class YouTubeService {
         }
     }
 
+    @Cacheable(value = "YtPlaylistItemsCache", key = "#playlistId + '-' + #maxResults", sync = true)
     public List<Map<String, String>> getPlaylistItems(String playlistId, int maxResults) {
         try {
             String responseBody = webClient.get()

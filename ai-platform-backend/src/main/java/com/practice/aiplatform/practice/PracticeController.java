@@ -6,6 +6,8 @@ import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import com.practice.aiplatform.user.UsageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +40,13 @@ public class PracticeController {
     private StudyPlanService studyPlanService;
 
     @PostMapping("/submit")
+    @Caching(evict = {
+            @CacheEvict(value = "UserRecommendationsCache", key = "#principal.name"),
+            @CacheEvict(value = "PredictSuccessCache", allEntries = true),
+            @CacheEvict(value = "UserStatsSummaryCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatsTimeSeriesCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatsRecommendationsCache", key = "#principal.name")
+    })
     public ResponseEntity<Answer> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
         String email = principal.getName();
 
