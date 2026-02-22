@@ -90,7 +90,6 @@ public class StudentController {
 
     @PutMapping("/password")
     @Caching(evict = {
-            @CacheEvict(value = "SecurityUserDetailsCache", key = "#principal.name"),
             @CacheEvict(value = "UserProfileCache", key = "#principal.name"),
             @CacheEvict(value = "UserUsageRemainingCache", key = "#principal.name")
     })
@@ -121,7 +120,6 @@ public class StudentController {
     @Caching(evict = {
             @CacheEvict(value = "UserProfileCache", key = "#principal.name"),
             @CacheEvict(value = "LeaderboardCache", allEntries = true),
-            @CacheEvict(value = "SecurityUserDetailsCache", key = "#principal.name"),
             @CacheEvict(value = "UserUsageRemainingCache", key = "#principal.name")
     })
     public ResponseEntity<?> deleteAccount(Principal principal) {

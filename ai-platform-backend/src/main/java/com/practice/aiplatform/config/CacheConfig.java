@@ -50,7 +50,6 @@ public class CacheConfig {
                 .withCacheConfiguration("UserCoursesCache", buildConfig(Duration.ofMinutes(10)))
                 .withCacheConfiguration("UserProfileCache", buildConfig(Duration.ofMinutes(5)))
                 .withCacheConfiguration("LeaderboardCache", buildConfig(Duration.ofMinutes(1)))
-                .withCacheConfiguration("SecurityUserDetailsCache", buildConfig(Duration.ofMinutes(2)))
                 .withCacheConfiguration("UserUsageRemainingCache", buildConfig(Duration.ofSeconds(30)));
     }
 
