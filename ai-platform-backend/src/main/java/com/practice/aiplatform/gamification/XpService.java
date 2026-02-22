@@ -14,6 +14,8 @@ import java.util.List;
 @Service
 public class XpService {
 
+    private static final int XP_HISTORY_DAYS = 30;
+
     private final StudentRepository studentRepository;
     private final DailyXpHistoryRepository dailyXpHistoryRepository;
 
@@ -24,9 +26,9 @@ public class XpService {
 
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "UserXpHistoryCache", allEntries = true),
+            @CacheEvict(value = "UserXpHistoryCache", key = "#student.id"),
             @CacheEvict(value = "LeaderboardCache", allEntries = true),
-            @CacheEvict(value = "UserProfileCache", allEntries = true)
+            @CacheEvict(value = "UserProfileCache", key = "#student.email")
     })
     public void awardXp(Student student, int amount) {
         if (amount <= 0)
@@ -45,10 +47,10 @@ public class XpService {
         dailyXpHistoryRepository.save(history);
     }
 
-    @Cacheable(value = "UserXpHistoryCache", key = "#studentId + '-' + #days", sync = true)
-    public List<DailyXpHistory> getXpHistory(Long studentId, int days) {
+    @Cacheable(value = "UserXpHistoryCache", key = "#studentId", sync = true)
+    public List<DailyXpHistory> getXpHistory(Long studentId) {
         LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(days);
+        LocalDate startDate = endDate.minusDays(XP_HISTORY_DAYS);
         return dailyXpHistoryRepository.findByStudentIdAndDateBetweenOrderByDateAsc(studentId, startDate, endDate);
     }
 }

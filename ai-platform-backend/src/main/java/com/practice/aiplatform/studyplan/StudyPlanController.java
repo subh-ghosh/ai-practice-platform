@@ -71,9 +71,9 @@ public class StudyPlanController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getStudyPlan(@PathVariable Long id) {
+    public ResponseEntity<?> getStudyPlan(@PathVariable Long id, Principal principal) {
         try {
-            StudyPlan plan = studyPlanService.getStudyPlan(id);
+            StudyPlan plan = studyPlanService.getStudyPlan(id, principal.getName());
             return ResponseEntity.ok(plan);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -82,9 +82,9 @@ public class StudyPlanController {
     }
 
     @PatchMapping("/{planId}/items/{itemId}/complete")
-    public ResponseEntity<?> markItemComplete(@PathVariable Long planId, @PathVariable Long itemId) {
+    public ResponseEntity<?> markItemComplete(@PathVariable Long planId, @PathVariable Long itemId, Principal principal) {
         try {
-            StudyPlanItem item = studyPlanService.markItemComplete(planId, itemId);
+            StudyPlanItem item = studyPlanService.markItemComplete(planId, itemId, principal.getName());
             return ResponseEntity.ok(item);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -93,9 +93,9 @@ public class StudyPlanController {
     }
 
     @GetMapping("/{planId}/items/{itemId}/quiz")
-    public ResponseEntity<?> getQuizQuestions(@PathVariable Long planId, @PathVariable Long itemId) {
+    public ResponseEntity<?> getQuizQuestions(@PathVariable Long planId, @PathVariable Long itemId, Principal principal) {
         try {
-            List<QuizQuestion> questions = studyPlanService.getQuizQuestions(planId, itemId);
+            List<QuizQuestion> questions = studyPlanService.getQuizQuestions(planId, itemId, principal.getName());
             return ResponseEntity.ok(questions);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -107,10 +107,11 @@ public class StudyPlanController {
     public ResponseEntity<?> submitQuiz(
             @PathVariable Long planId,
             @PathVariable Long itemId,
-            @RequestBody QuizSubmission submission) {
+            @RequestBody QuizSubmission submission,
+            Principal principal) {
         try {
             StudyPlanService.QuizResult result =
-                    studyPlanService.submitQuizAnswers(planId, itemId, submission.answers());
+                    studyPlanService.submitQuizAnswers(planId, itemId, submission.answers(), principal.getName());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

@@ -51,7 +51,7 @@ public class StatisticsController {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<DailyXpHistory> history = xpService.getXpHistory(student.getId(), 30);
+        List<DailyXpHistory> history = xpService.getXpHistory(student.getId());
 
         List<DailyXpDto> response = new ArrayList<>();
         for (DailyXpHistory item : history) {

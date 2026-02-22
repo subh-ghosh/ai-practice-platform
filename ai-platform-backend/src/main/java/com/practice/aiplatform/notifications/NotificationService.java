@@ -1,5 +1,7 @@
 package com.practice.aiplatform.notifications;
 
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -13,9 +15,11 @@ import java.util.Optional;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final CacheManager cacheManager;
 
-    public NotificationService(NotificationRepository notificationRepository) {
+    public NotificationService(NotificationRepository notificationRepository, CacheManager cacheManager) {
         this.notificationRepository = notificationRepository;
+        this.cacheManager = cacheManager;
     }
 
     @Transactional
@@ -39,10 +43,6 @@ public class NotificationService {
     }
 
     @Transactional
-    @Caching(evict = {
-            @CacheEvict(value = "UserNotificationAllCache", allEntries = true),
-            @CacheEvict(value = "UserNotificationUnreadCache", allEntries = true)
-    })
     public void markAsRead(Long notificationId) {
         Optional<Notification> optionalNotification = notificationRepository.findById(notificationId);
 
@@ -50,6 +50,7 @@ public class NotificationService {
             Notification notification = optionalNotification.get();
             notification.setReadFlag(true);
             notificationRepository.save(notification);
+            evictNotificationCaches(notification.getStudentId());
         }
     }
 
@@ -60,5 +61,16 @@ public class NotificationService {
     })
     public void markAllAsRead(Long studentId) {
         notificationRepository.markAllAsRead(studentId);
+    }
+
+    private void evictNotificationCaches(Long studentId) {
+        Cache allCache = cacheManager.getCache("UserNotificationAllCache");
+        Cache unreadCache = cacheManager.getCache("UserNotificationUnreadCache");
+        if (allCache != null) {
+            allCache.evict(studentId);
+        }
+        if (unreadCache != null) {
+            unreadCache.evict(studentId);
+        }
     }
 }

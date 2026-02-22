@@ -1,57 +1,57 @@
 # Redis Cache Matrix
 
 ## Summary
-Redis caching is implemented to reduce repeat DB/API/AI work on hot read paths, with targeted eviction on writes to keep data consistent.
+Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalidation is intentionally targeted (mostly key-based) to avoid cross-user cache churn.
 
-### Why this was done
-- Reduce DB hits on repeated dashboard, practice, statistics, and study-plan reads.
-- Reduce external YouTube API calls and quota usage.
-- Reduce repeated recommendation/AI-coach/statistics computation cost.
-- Keep correctness with explicit eviction when data changes.
+### Core cache rules now in code
+- `@Cacheable` is only on DTO/list/map-returning methods (not `ResponseEntity` controller endpoints).
+- Study-plan caches that reference a plan/item are now user-scoped in the key.
+- High-churn `allEntries = true` usage was reduced where practical, replaced with key eviction.
+- Manual `CacheManager` eviction is used where annotation-only eviction cannot target the correct key set.
 
-### How this was done
-- Enabled Spring Cache + Redis.
-- Centralized cache names and per-cache TTL in `CacheConfig`.
-- Added `@Cacheable(sync = true)` to read-heavy methods.
-- Added `@CacheEvict` / `@Caching` on write/mutation methods that impact cached reads.
-- Added a fail-safe `CacheErrorHandler` so cache failures do not fail requests.
-- Enabled debug logs for cache and Redis visibility.
-
-### Core infra files
-- `pom.xml`
+## Core infra files
 - `src/main/java/com/practice/aiplatform/AiPlatformApplication.java`
 - `src/main/java/com/practice/aiplatform/config/CacheConfig.java`
 - `src/main/java/com/practice/aiplatform/config/CacheErrorConfig.java`
 - `src/main/resources/application.properties`
 
 ## Cache Table
-| Method | Cache Name | Key | TTL | Invalidated By |
+| Cached Method | Cache Name | Key | TTL | Invalidated By |
 |---|---|---|---|---|
 | `YouTubeService.searchVideos` | `YtSearchVideosCache` | `#query + '-' + #maxResults` | `12h` | TTL only |
 | `YouTubeService.searchPlaylists` | `YtSearchPlaylistsCache` | `#query + '-' + #maxResults` | `12h` | TTL only |
 | `YouTubeService.getPlaylistItems` | `YtPlaylistItemsCache` | `#playlistId + '-' + #maxResults` | `12h` | TTL only |
 | `StudyPlanService.getStudyPlans` | `UserStudyPlansCache` | `#userEmail` | `5m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
-| `StudyPlanService.getStudyPlan` | `StudyPlanByIdCache` | `#id` | `5m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
-| `StudyPlanService.getStats` | `UserStudyPlanStatsCache` | `#userEmail` | `3m` | same study-plan mutation methods above |
-| `StudyPlanService.getQuizQuestions` | `StudyPlanQuizQuestionsCache` | `#planId + '-' + #itemId` | `5m` | `submitQuizAnswers` |
-| `StudyPlanService.getSuggestedPracticeItem` | `UserSuggestedPracticeCache` | `#userEmail` | `2m` | `generateStudyPlan`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
+| `StudyPlanService.getStudyPlan` | `StudyPlanByIdCache` | `#userEmail + '-' + #id` | `5m` | `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete (manual targeted)` |
+| `StudyPlanService.getStats` | `UserStudyPlanStatsCache` | `#userEmail` | `3m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
+| `StudyPlanService.getQuizQuestions` | `StudyPlanQuizQuestionsCache` | `#userEmail + '-' + #planId + '-' + #itemId` | `5m` | `submitQuizAnswers`, `deleteStudyPlan (manual targeted)` |
+| `StudyPlanService.getSuggestedPracticeItem` | `UserSuggestedPracticeCache` | `#userEmail` | `2m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
 | `StudyPlanService.getActiveContext` | `UserActiveContextCache` | `#userEmail` | `2m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
-| `RecommendationService.getRecommendations` | `UserRecommendationsCache` | `#userEmail` | `2m` | `PracticeController.submitAnswer/getAnswer`, study-plan mutations |
-| `RecommendationService.predictSuccess` | `PredictSuccessCache` | `#userEmail + '-' + #topic + '-' + #difficulty` | `5m` | `PracticeController.submitAnswer/getAnswer` (`allEntries`) |
-| `RecommendationService.buildAiCoachPromptData` | `UserAiCoachPromptCache` | `#userEmail` | `2m` | `PracticeController.submitAnswer/getAnswer` |
-| `RecommendationController.getAiCoachInsight` | `UserAiCoachInsightCache` | `#principal.name` | `2m` | `PracticeController.submitAnswer/getAnswer` |
-| `StatisticsService.getStatistics` | `UserStatisticsSummaryCache` | `#email` | `2m` | `PracticeController.submitAnswer/getAnswer` |
-| `StatisticsService.getTimeSeriesStats` | `UserStatisticsTimeseriesCache` | `#email` | `2m` | `PracticeController.submitAnswer/getAnswer` |
-| `StatisticsService.getSmartRecommendations` | `UserStatisticsRecommendationsCache` | `#email` | `2m` | `PracticeController.submitAnswer/getAnswer`, study-plan mutations |
-| `PracticeController.getHistory` | `UserPracticeHistoryCache` | `#principal.name` | `2m` | `PracticeController.submitAnswer/getAnswer` |
-| `NotificationService.getAllNotifications` | `UserNotificationAllCache` | `#studentId` | `1m` | `createNotification`, `markAsRead`, `markAllAsRead` |
-| `NotificationService.getUnreadNotifications` | `UserNotificationUnreadCache` | `#studentId` | `1m` | `createNotification`, `markAsRead`, `markAllAsRead` |
+| `RecommendationService.getRecommendations` | `UserRecommendationsCache` | `#userEmail` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer`, study-plan mutation methods above |
+| `RecommendationService.predictSuccess` | `PredictSuccessCache` | `#userEmail + '-' + #topic + '-' + #difficulty` | `5m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` (`allEntries`) |
+| `RecommendationService.buildAiCoachPromptData` | `UserAiCoachPromptCache` | `#userEmail` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
+| `RecommendationController.getAiCoachInsightCached` | `UserAiCoachInsightCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
+| `StatisticsService.getStatistics` | `UserStatisticsSummaryCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
+| `StatisticsService.getTimeSeriesStats` | `UserStatisticsTimeseriesCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
+| `StatisticsService.getSmartRecommendations` | `UserStatisticsRecommendationsCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer`, study-plan mutation methods above |
+| `PracticeController.getHistoryCached` | `UserPracticeHistoryCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
+| `NotificationService.getAllNotifications` | `UserNotificationAllCache` | `#studentId` | `1m` | `createNotification`, `markAsRead (manual targeted)`, `markAllAsRead` |
+| `NotificationService.getUnreadNotifications` | `UserNotificationUnreadCache` | `#studentId` | `1m` | `createNotification`, `markAsRead (manual targeted)`, `markAllAsRead` |
 | `BadgeService.getUserBadges` | `UserBadgesCache` | `#studentId` | `5m` | `BadgeService.unlockBadge` |
-| `DailyChallengeService.getTodayChallenges` | `UserDailyChallengesCache` | `#studentId` | `1m` | `generateDailyChallenges`, `incrementProgress`, `claimReward` |
-| `XpService.getXpHistory` | `UserXpHistoryCache` | `#studentId + '-' + #days` | `2m` | `XpService.awardXp` (`allEntries`) |
-| `CourseController.getMyCourses` | `UserCoursesCache` | `#principal.name` | `10m` | `generateCourse`, `deleteCourse` |
-| `StudentController.getProfile` | `UserProfileCache` | `#principal.name` | `5m` | `updateProfile`, `changePassword`, `deleteAccount`, `XpService.awardXp` (`allEntries`) |
-| `StudentController.getLeaderboard` | `LeaderboardCache` | `'top10'` | `1m` | `updateProfile`, `deleteAccount`, study-plan completion methods, `XpService.awardXp` |
-| `StudentDetailsService.loadUserByUsername` | `SecurityUserDetailsCache` | `#email` | `2m` | `StudentController.changePassword`, `StudentController.deleteAccount` |
+| `DailyChallengeService.getTodayChallenges` | `UserDailyChallengesCache` | `#studentId` | `1m` | `generateDailyChallenges`, `incrementProgress`, `claimReward (manual targeted)` |
+| `XpService.getXpHistory` | `UserXpHistoryCache` | `#studentId` | `2m` | `XpService.awardXp` |
+| `CourseController.getMyCoursesCached` | `UserCoursesCache` | `#email` | `10m` | `CourseController.generateCourse`, `CourseController.deleteCourse` |
+| `StudentController.getProfileCached` | `UserProfileCache` | `#email` | `5m` | `StudentController.updateProfile`, `StudentController.changePassword`, `StudentController.deleteAccount`, `XpService.awardXp` |
+| `StudentController.getLeaderboardCached` | `LeaderboardCache` | `'top10'` | `1m` | `StudentController.updateProfile`, `StudentController.deleteAccount`, `StudyPlanService.submitQuizAnswers`, `StudyPlanService.markItemComplete`, `StudyPlanService.markExternalPracticeAsComplete`, `XpService.awardXp` |
 | `UsageService.hasActionsRemaining` | `UserUsageRemainingCache` | `#userEmail` | `30s` | `UsageService.canPerformAction`, `StudentController.changePassword`, `StudentController.deleteAccount` |
 
+## Manual targeted evictions
+- `NotificationService.markAsRead`: evicts `UserNotificationAllCache` and `UserNotificationUnreadCache` for only that notification's `studentId`.
+- `DailyChallengeService.claimReward`: evicts `UserDailyChallengesCache` only for that challenge owner's `studentId`.
+- `StudyPlanService.deleteStudyPlan`: evicts all quiz-question cache keys for that owned plan (`userEmail-planId-itemId`).
+- `StudyPlanService.markExternalPracticeAsComplete`: evicts `StudyPlanByIdCache` only for touched owned plans.
+
+## Validation notes
+- Cache names in annotations match `CacheConfig` definitions.
+- No `SecurityUserDetailsCache` is active in current code.
+- Backend compiles with these cache changes.

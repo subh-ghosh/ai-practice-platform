@@ -2,8 +2,10 @@ package com.practice.aiplatform.course;
 
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,10 @@ public class CourseController {
     private final CourseGeneratorService courseGeneratorService;
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
+
+    @Lazy
+    @Autowired
+    private CourseController self;
 
     public CourseController(
             CourseGeneratorService courseGeneratorService,
@@ -63,19 +69,19 @@ public class CourseController {
     }
 
     @GetMapping
-    @Cacheable(value = "UserCoursesCache", key = "#principal.name", sync = true)
     public ResponseEntity<List<CourseResponseDTO>> getMyCourses(Principal principal) {
-        String email = principal.getName();
+        return ResponseEntity.ok(self.getMyCoursesCached(principal.getName()));
+    }
 
+    @Cacheable(value = "UserCoursesCache", key = "#email", sync = true)
+    public List<CourseResponseDTO> getMyCoursesCached(String email) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         List<Course> courses = courseRepository.findByStudentId(student.getId());
-        List<CourseResponseDTO> response = courses.stream()
+        return courses.stream()
                 .map(CourseResponseDTO::fromEntity)
                 .toList();
-
-        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")

@@ -5,9 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +32,10 @@ public class StudyPlanService {
     private final QuizQuestionRepository quizQuestionRepository;
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
+    private final CacheManager cacheManager;
+    @Lazy
+    @Autowired
+    private StudyPlanService self;
 
     public StudyPlanService(
             AiService aiService,
@@ -36,7 +44,8 @@ public class StudyPlanService {
             StudyPlanItemRepository studyPlanItemRepository,
             QuizQuestionRepository quizQuestionRepository,
             StudentRepository studentRepository,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            CacheManager cacheManager) {
         this.aiService = aiService;
         this.youTubeService = youTubeService;
         this.studyPlanRepository = studyPlanRepository;
@@ -44,6 +53,7 @@ public class StudyPlanService {
         this.quizQuestionRepository = quizQuestionRepository;
         this.studentRepository = studentRepository;
         this.objectMapper = objectMapper;
+        this.cacheManager = cacheManager;
     }
 
     @Caching(evict = {
@@ -52,8 +62,7 @@ public class StudyPlanService {
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
             @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
-            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
-            @CacheEvict(value = "StudyPlanByIdCache", allEntries = true)
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail")
     })
     public StudyPlan generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
         Student student = studentRepository.findByEmail(userEmail)
@@ -190,16 +199,18 @@ public class StudyPlanService {
     }
 
     @Caching(evict = {
-            @CacheEvict(value = "UserStudyPlansCache", allEntries = true),
-            @CacheEvict(value = "UserStudyPlanStatsCache", allEntries = true),
-            @CacheEvict(value = "UserActiveContextCache", allEntries = true),
-            @CacheEvict(value = "StudyPlanByIdCache", key = "#planId"),
-            @CacheEvict(value = "StudyPlanQuizQuestionsCache", key = "#planId + '-' + #itemId"),
+            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
+            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #planId"),
+            @CacheEvict(value = "StudyPlanQuizQuestionsCache", key = "#userEmail + '-' + #planId + '-' + #itemId"),
             @CacheEvict(value = "LeaderboardCache", allEntries = true)
     })
-    public QuizResult submitQuizAnswers(Long planId, Long itemId, Map<Long, String> answers) {
-        StudyPlan plan = studyPlanRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+    public QuizResult submitQuizAnswers(Long planId, Long itemId, Map<Long, String> answers, String userEmail) {
+        StudyPlan plan = getOwnedStudyPlan(planId, userEmail);
 
         StudyPlanItem item = null;
         for (StudyPlanItem it : plan.getItems()) {
@@ -249,10 +260,9 @@ public class StudyPlanService {
         return new QuizResult(questions.size(), correctCount, xpEarned, passed, results);
     }
 
-    @Cacheable(value = "StudyPlanQuizQuestionsCache", key = "#planId + '-' + #itemId", sync = true)
-    public List<QuizQuestion> getQuizQuestions(Long planId, Long itemId) {
-        StudyPlan plan = studyPlanRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+    @Cacheable(value = "StudyPlanQuizQuestionsCache", key = "#userEmail + '-' + #planId + '-' + #itemId", sync = true)
+    public List<QuizQuestion> getQuizQuestions(Long planId, Long itemId, String userEmail) {
+        StudyPlan plan = getOwnedStudyPlan(planId, userEmail);
 
         boolean belongsToPlan = false;
         for (StudyPlanItem item : plan.getItems()) {
@@ -270,15 +280,17 @@ public class StudyPlanService {
     }
 
     @Caching(evict = {
-            @CacheEvict(value = "UserStudyPlansCache", allEntries = true),
-            @CacheEvict(value = "UserStudyPlanStatsCache", allEntries = true),
-            @CacheEvict(value = "UserActiveContextCache", allEntries = true),
-            @CacheEvict(value = "StudyPlanByIdCache", key = "#planId"),
+            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
+            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #planId"),
             @CacheEvict(value = "LeaderboardCache", allEntries = true)
     })
-    public StudyPlanItem markItemComplete(Long planId, Long itemId) {
-        StudyPlan plan = studyPlanRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+    public StudyPlanItem markItemComplete(Long planId, Long itemId, String userEmail) {
+        StudyPlan plan = getOwnedStudyPlan(planId, userEmail);
 
         StudyPlanItem item = null;
         for (StudyPlanItem it : plan.getItems()) {
@@ -372,10 +384,9 @@ public class StudyPlanService {
         return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
     }
 
-    @Cacheable(value = "StudyPlanByIdCache", key = "#id", sync = true)
-    public StudyPlan getStudyPlan(Long id) {
-        return studyPlanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+    @Cacheable(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #id", sync = true)
+    public StudyPlan getStudyPlan(Long id, String userEmail) {
+        return getOwnedStudyPlan(id, userEmail);
     }
 
     private String createPrompt(String topic, String difficulty, int durationDays, List<Map<String, String>> videos) {
@@ -518,19 +529,11 @@ public class StudyPlanService {
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
             @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
             @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
-            @CacheEvict(value = "StudyPlanByIdCache", key = "#id")
+            @CacheEvict(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #id")
     })
     public void deleteStudyPlan(Long id, String userEmail) {
-        Student student = studentRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        StudyPlan plan = studyPlanRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Study plan not found"));
-
-        if (!plan.getStudent().getId().equals(student.getId())) {
-            throw new RuntimeException("You do not have permission to delete this study plan");
-        }
-
+        StudyPlan plan = getOwnedStudyPlan(id, userEmail);
+        evictOwnedQuizQuestionCaches(userEmail, plan);
         studyPlanRepository.delete(plan);
     }
 
@@ -565,7 +568,6 @@ public class StudyPlanService {
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
             @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
             @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
-            @CacheEvict(value = "StudyPlanByIdCache", allEntries = true),
             @CacheEvict(value = "LeaderboardCache", allEntries = true)
     })
     public int markExternalPracticeAsComplete(String userEmail, String topic, String difficulty) {
@@ -573,6 +575,7 @@ public class StudyPlanService {
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         List<StudyPlanItem> matches = studyPlanItemRepository.findMatchingIncompleteItems(student.getId(), topic);
+        Set<Long> touchedPlanIds = new HashSet<>();
 
         int completed = 0;
         for (StudyPlanItem item : matches) {
@@ -584,9 +587,15 @@ public class StudyPlanService {
 
             recalculateProgress(item.getStudyPlan());
             studyPlanRepository.save(item.getStudyPlan());
+            if (item.getStudyPlan() != null && item.getStudyPlan().getId() != null) {
+                touchedPlanIds.add(item.getStudyPlan().getId());
+            }
         }
 
         studentRepository.save(student);
+        for (Long planId : touchedPlanIds) {
+            evictOwnedStudyPlanByIdCache(userEmail, planId);
+        }
         return completed;
     }
 
@@ -616,8 +625,7 @@ public class StudyPlanService {
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
             @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
-            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
-            @CacheEvict(value = "StudyPlanByIdCache", allEntries = true)
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail")
     })
     public StudyPlan generateStudyPlanFromSyllabus(String userEmail, MultipartFile file, int durationDays) {
         Student student = studentRepository.findByEmail(userEmail)
@@ -884,7 +892,7 @@ public class StudyPlanService {
             }
         }
 
-        SuggestedPracticeDto nextPractice = getSuggestedPracticeItem(userEmail);
+        SuggestedPracticeDto nextPractice = self.getSuggestedPracticeItem(userEmail);
 
         return new ActiveContextDto(
                 activePlan.getId(),
@@ -895,5 +903,40 @@ public class StudyPlanService {
                 todayItems,
                 nextPractice
         );
+    }
+
+    private StudyPlan getOwnedStudyPlan(Long planId, String userEmail) {
+        StudyPlan plan = studyPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Study plan not found"));
+
+        if (plan.getStudent() == null || plan.getStudent().getEmail() == null) {
+            throw new RuntimeException("Study plan owner could not be verified");
+        }
+
+        if (!plan.getStudent().getEmail().equalsIgnoreCase(userEmail)) {
+            throw new RuntimeException("You do not have permission to access this study plan");
+        }
+
+        return plan;
+    }
+
+    private void evictOwnedStudyPlanByIdCache(String userEmail, Long planId) {
+        Cache cache = cacheManager.getCache("StudyPlanByIdCache");
+        if (cache != null && planId != null) {
+            cache.evict(userEmail + "-" + planId);
+        }
+    }
+
+    private void evictOwnedQuizQuestionCaches(String userEmail, StudyPlan plan) {
+        Cache cache = cacheManager.getCache("StudyPlanQuizQuestionsCache");
+        if (cache == null || plan == null || plan.getId() == null || plan.getItems() == null) {
+            return;
+        }
+
+        for (StudyPlanItem item : plan.getItems()) {
+            if (item != null && item.getId() != null) {
+                cache.evict(userEmail + "-" + plan.getId() + "-" + item.getId());
+            }
+        }
     }
 }

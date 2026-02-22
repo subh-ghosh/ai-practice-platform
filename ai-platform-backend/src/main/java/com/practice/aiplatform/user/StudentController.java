@@ -1,9 +1,11 @@
 package com.practice.aiplatform.user;
 
 import com.practice.aiplatform.notifications.NotificationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +37,9 @@ public class StudentController {
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    @Lazy
+    @Autowired
+    private StudentController self;
 
     public StudentController(
             StudentRepository studentRepository,
@@ -46,16 +51,19 @@ public class StudentController {
     }
 
     @GetMapping("/profile")
-    @Cacheable(value = "UserProfileCache", key = "#principal.name", sync = true)
     public ResponseEntity<?> getProfile(Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        Student student = studentRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+        return ResponseEntity.ok(self.getProfileCached(principal.getName()));
+    }
 
-        return ResponseEntity.ok(StudentResponseDTO.fromEntity(student));
+    @Cacheable(value = "UserProfileCache", key = "#email", sync = true)
+    public StudentResponseDTO getProfileCached(String email) {
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+        return StudentResponseDTO.fromEntity(student);
     }
 
     @PutMapping("/profile")
@@ -135,8 +143,12 @@ public class StudentController {
     }
 
     @GetMapping("/leaderboard")
-    @Cacheable(value = "LeaderboardCache", key = "'top10'", sync = true)
     public ResponseEntity<List<StudentResponseDTO>> getLeaderboard() {
+        return ResponseEntity.ok(self.getLeaderboardCached());
+    }
+
+    @Cacheable(value = "LeaderboardCache", key = "'top10'", sync = true)
+    public List<StudentResponseDTO> getLeaderboardCached() {
         List<Student> topStudents = studentRepository.findTop10ByOrderByTotalXpDesc();
 
         List<StudentResponseDTO> dtos = new ArrayList<>();
@@ -144,6 +156,6 @@ public class StudentController {
             dtos.add(StudentResponseDTO.fromEntity(student));
         }
 
-        return ResponseEntity.ok(dtos);
+        return dtos;
     }
 }

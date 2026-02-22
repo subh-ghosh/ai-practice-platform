@@ -1,7 +1,9 @@
 package com.practice.aiplatform.recommendation;
 
 import com.practice.aiplatform.ai.AiService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +17,9 @@ public class RecommendationController {
 
     private final RecommendationService recommendationService;
     private final AiService geminiService;
+    @Lazy
+    @Autowired
+    private RecommendationController self;
 
     public RecommendationController(RecommendationService recommendationService,
             AiService geminiService) {
@@ -37,16 +42,20 @@ public class RecommendationController {
     }
 
     @GetMapping("/ai-coach")
-    @Cacheable(value = "UserAiCoachInsightCache", key = "#principal.name", sync = true)
     public ResponseEntity<Map<String, String>> getAiCoachInsight(Principal principal) {
+        return ResponseEntity.ok(self.getAiCoachInsightCached(principal.getName()));
+    }
+
+    @Cacheable(value = "UserAiCoachInsightCache", key = "#email", sync = true)
+    public Map<String, String> getAiCoachInsightCached(String email) {
         try {
-            String promptData = recommendationService.buildAiCoachPromptData(principal.getName());
+            String promptData = recommendationService.buildAiCoachPromptData(email);
 
             if (promptData == null) {
-                return ResponseEntity.ok(Map.of(
+                return Map.of(
                         "insight", "Welcome! Start practicing to receive personalized coaching insights.",
                         "suggestedTopic", "",
-                        "suggestedAction", "PRACTICE"));
+                        "suggestedAction", "PRACTICE");
             }
 
             String prompt = "You are a concise, encouraging learning coach. Based on this student's recent practice data, "
@@ -57,15 +66,15 @@ public class RecommendationController {
 
             String insight = geminiService.generateRawContent(prompt);
 
-            return ResponseEntity.ok(Map.of(
+            return Map.of(
                     "insight", insight != null ? insight.trim() : "Keep practicing! Consistency is key.",
                     "suggestedTopic", "",
-                    "suggestedAction", "PRACTICE"));
+                    "suggestedAction", "PRACTICE");
         } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
+            return Map.of(
                     "insight", "Keep going! Every practice session makes you stronger.",
                     "suggestedTopic", "",
-                    "suggestedAction", "PRACTICE"));
+                    "suggestedAction", "PRACTICE");
         }
     }
 }

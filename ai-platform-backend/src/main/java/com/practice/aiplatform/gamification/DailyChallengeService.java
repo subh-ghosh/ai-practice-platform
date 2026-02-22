@@ -4,8 +4,12 @@ import com.practice.aiplatform.studyplan.StudyPlan;
 import com.practice.aiplatform.studyplan.StudyPlanRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,16 +23,22 @@ public class DailyChallengeService {
     private final StudentRepository studentRepository;
     private final StudyPlanRepository studyPlanRepository;
     private final XpService xpService;
+    private final CacheManager cacheManager;
+    @Lazy
+    @Autowired
+    private DailyChallengeService self;
 
     public DailyChallengeService(
             DailyChallengeRepository dailyChallengeRepository,
             StudentRepository studentRepository,
             StudyPlanRepository studyPlanRepository,
-            XpService xpService) {
+            XpService xpService,
+            CacheManager cacheManager) {
         this.dailyChallengeRepository = dailyChallengeRepository;
         this.studentRepository = studentRepository;
         this.studyPlanRepository = studyPlanRepository;
         this.xpService = xpService;
+        this.cacheManager = cacheManager;
     }
 
     @Cacheable(value = "UserDailyChallengesCache", key = "#studentId", sync = true)
@@ -43,7 +53,7 @@ public class DailyChallengeService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        return generateDailyChallenges(student);
+        return self.generateDailyChallenges(student);
     }
 
     @Transactional
@@ -94,7 +104,6 @@ public class DailyChallengeService {
     }
 
     @Transactional
-    @CacheEvict(value = "UserDailyChallengesCache", allEntries = true)
     public void claimReward(Long challengeId) {
         DailyChallenge challenge = dailyChallengeRepository.findById(challengeId)
                 .orElseThrow(() -> new RuntimeException("Challenge not found"));
@@ -112,5 +121,13 @@ public class DailyChallengeService {
 
         Student student = challenge.getStudent();
         xpService.awardXp(student, challenge.getXpReward());
+        evictDailyChallengeCache(student.getId());
+    }
+
+    private void evictDailyChallengeCache(Long studentId) {
+        Cache cache = cacheManager.getCache("UserDailyChallengesCache");
+        if (cache != null) {
+            cache.evict(studentId);
+        }
     }
 }

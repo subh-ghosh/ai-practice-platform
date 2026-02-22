@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,6 +40,9 @@ public class PracticeController {
     private com.practice.aiplatform.gamification.XpService xpService;
     @Autowired
     private StudyPlanService studyPlanService;
+    @Lazy
+    @Autowired
+    private PracticeController self;
 
     @PostMapping("/submit")
     @Caching(evict = {
@@ -152,14 +156,19 @@ public class PracticeController {
     }
 
     @GetMapping("/history")
-    @Cacheable(value = "UserPracticeHistoryCache", key = "#principal.name", sync = true)
     public ResponseEntity<PracticeHistoryDto> getHistory(Principal principal) {
         Optional<Student> studentOptional = studentRepository.findByEmail(principal.getName());
         if (studentOptional.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
 
-        Student student = studentOptional.get();
+        return ResponseEntity.ok(self.getHistoryCached(principal.getName()));
+    }
+
+    @Cacheable(value = "UserPracticeHistoryCache", key = "#email", sync = true)
+    public PracticeHistoryDto getHistoryCached(String email) {
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
         List<Answer> answers = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
 
         List<PracticeHistoryDto.QuestionAnswerDto> historyList = new ArrayList<>();
@@ -190,7 +199,7 @@ public class PracticeController {
                 historyList
         );
 
-        return ResponseEntity.ok(historyDto);
+        return historyDto;
     }
 
     @GetMapping("/suggestion")
