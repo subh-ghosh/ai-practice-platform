@@ -3,7 +3,6 @@ package com.practice.aiplatform.security;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,7 +20,6 @@ public class StudentDetailsService implements UserDetailsService {
     private StudentRepository studentRepository;
 
     @Override
-    @Cacheable(value = "SecurityUserDetailsCache", key = "#email", sync = true)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
