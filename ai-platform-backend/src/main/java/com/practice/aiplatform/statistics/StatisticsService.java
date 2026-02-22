@@ -1,5 +1,6 @@
 package com.practice.aiplatform.statistics;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.practice.aiplatform.practice.Answer;
 import com.practice.aiplatform.practice.AnswerRepository;
 import com.practice.aiplatform.practice.PracticeHistoryDto;
@@ -184,6 +185,7 @@ public class StatisticsService {
         return result;
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record SmartRecommendationDto(List<String> recentTopics, List<String> weakTopics) {
     }
 

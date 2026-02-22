@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,10 +53,8 @@ public class RecommendationController {
             String promptData = recommendationService.buildAiCoachPromptData(email);
 
             if (promptData == null) {
-                return Map.of(
-                        "insight", "Welcome! Start practicing to receive personalized coaching insights.",
-                        "suggestedTopic", "",
-                        "suggestedAction", "PRACTICE");
+                return createInsightResponse(
+                        "Welcome! Start practicing to receive personalized coaching insights.");
             }
 
             String prompt = "You are a concise, encouraging learning coach. Based on this student's recent practice data, "
@@ -66,15 +65,18 @@ public class RecommendationController {
 
             String insight = geminiService.generateRawContent(prompt);
 
-            return Map.of(
-                    "insight", insight != null ? insight.trim() : "Keep practicing! Consistency is key.",
-                    "suggestedTopic", "",
-                    "suggestedAction", "PRACTICE");
+            return createInsightResponse(
+                    insight != null ? insight.trim() : "Keep practicing! Consistency is key.");
         } catch (Exception e) {
-            return Map.of(
-                    "insight", "Keep going! Every practice session makes you stronger.",
-                    "suggestedTopic", "",
-                    "suggestedAction", "PRACTICE");
+            return createInsightResponse("Keep going! Every practice session makes you stronger.");
         }
+    }
+
+    private Map<String, String> createInsightResponse(String insight) {
+        Map<String, String> response = new HashMap<>();
+        response.put("insight", insight);
+        response.put("suggestedTopic", "");
+        response.put("suggestedAction", "PRACTICE");
+        return response;
     }
 }

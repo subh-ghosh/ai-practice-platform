@@ -8,6 +8,7 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 - Study-plan caches that reference a plan/item are now user-scoped in the key.
 - High-churn `allEntries = true` usage was reduced where practical, replaced with key eviction.
 - Manual `CacheManager` eviction is used where annotation-only eviction cannot target the correct key set.
+- Cache keys are namespaced with schema prefix `v2::` to avoid reading incompatible legacy payloads.
 
 ## Core infra files
 - `src/main/java/com/practice/aiplatform/AiPlatformApplication.java`
@@ -54,5 +55,7 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 ## Validation notes
 - Cache names in annotations match `CacheConfig` definitions.
 - Redis cache serialization is configured with polymorphic typing for final DTOs/records (`DefaultTyping.EVERYTHING`) to prevent cache-hit deserialization failures.
+- Cached DTO records used by hot endpoints are explicitly annotated with `@JsonTypeInfo` for serializer compatibility.
+- Cached map/list payloads avoid immutable JDK collection implementations on hot paths.
 - No `SecurityUserDetailsCache` is active in current code.
 - Backend compiles with these cache changes.

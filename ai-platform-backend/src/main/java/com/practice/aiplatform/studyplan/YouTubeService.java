@@ -52,7 +52,7 @@ public class YouTubeService {
             JsonNode items = root.path("items");
 
             if (!items.isArray() || items.isEmpty()) {
-                return List.of();
+                return new ArrayList<>();
             }
 
             List<String> videoIds = new ArrayList<>();
@@ -66,7 +66,7 @@ public class YouTubeService {
             return fetchVideoDetails(videoIds);
         } catch (Exception e) {
             System.err.println("YouTube searchVideos error: " + e.getMessage());
-            return List.of();
+            return new ArrayList<>();
         }
     }
 
@@ -104,7 +104,7 @@ public class YouTubeService {
             return playlists;
         } catch (Exception e) {
             System.err.println("YouTube searchPlaylists error: " + e.getMessage());
-            return List.of();
+            return new ArrayList<>();
         }
     }
 
@@ -139,13 +139,13 @@ public class YouTubeService {
             return fetchVideoDetails(videoIds);
         } catch (Exception e) {
             System.err.println("YouTube getPlaylistItems error: " + e.getMessage());
-            return List.of();
+            return new ArrayList<>();
         }
     }
 
     private List<Map<String, String>> fetchVideoDetails(List<String> videoIds) {
         if (videoIds == null || videoIds.isEmpty()) {
-            return List.of();
+            return new ArrayList<>();
         }
 
         try {
@@ -193,7 +193,7 @@ public class YouTubeService {
             return videos;
         } catch (Exception e) {
             System.err.println("YouTube fetchVideoDetails error: " + e.getMessage());
-            return List.of();
+            return new ArrayList<>();
         }
     }
 }

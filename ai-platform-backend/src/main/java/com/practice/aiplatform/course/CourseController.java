@@ -11,8 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -40,7 +42,7 @@ public class CourseController {
 
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
-        return ResponseEntity.ok("Course Controller is ALIVE");
+        return ResponseEntity.ok("Course Controller is ALIVE | cache-schema=v2 | serializer=typed");
     }
 
     @GetMapping("/auth-check")
@@ -81,7 +83,7 @@ public class CourseController {
         List<Course> courses = courseRepository.findByStudentId(student.getId());
         return courses.stream()
                 .map(CourseResponseDTO::fromEntity)
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     @DeleteMapping("/{id}")

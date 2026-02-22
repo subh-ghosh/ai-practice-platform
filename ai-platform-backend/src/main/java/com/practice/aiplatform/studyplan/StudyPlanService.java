@@ -1,5 +1,6 @@
 package com.practice.aiplatform.studyplan;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.aiplatform.ai.AiService;
@@ -326,6 +327,7 @@ public class StudyPlanService {
         return item;
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record StudyPlanStats(int activePlans, int completedPlans, int totalXp, int totalItemsCompleted) {
     }
 
@@ -537,6 +539,7 @@ public class StudyPlanService {
         studyPlanRepository.delete(plan);
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record SuggestedPracticeDto(String topic, String subject, String difficulty, Long planId, Long itemId) {
     }
 
@@ -599,6 +602,7 @@ public class StudyPlanService {
         return completed;
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record ActiveContextDto(
             Long planId,
             String planTitle,
@@ -609,6 +613,7 @@ public class StudyPlanService {
             SuggestedPracticeDto nextPractice) {
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record ActiveContextItemDto(
             Long itemId,
             String title,

@@ -1,5 +1,6 @@
 package com.practice.aiplatform.recommendation;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.practice.aiplatform.practice.Answer;
 import com.practice.aiplatform.practice.AnswerRepository;
 import com.practice.aiplatform.studyplan.StudyPlanItem;
@@ -29,6 +30,7 @@ public class RecommendationService {
         this.studyPlanItemRepository = studyPlanItemRepository;
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record EnhancedRecommendation(
             String type,
             String topic,
@@ -42,6 +44,7 @@ public class RecommendationService {
             String deepLink) {
     }
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record Prediction(String topic, String difficulty, double winProbability, String confidence) {
     }
 
