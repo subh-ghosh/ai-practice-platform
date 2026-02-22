@@ -261,7 +261,6 @@ public class StudyPlanService {
         return new QuizResult(questions.size(), correctCount, xpEarned, passed, results);
     }
 
-    @Cacheable(value = "StudyPlanQuizQuestionsCache", key = "#userEmail + '-' + #planId + '-' + #itemId", sync = true)
     public List<QuizQuestion> getQuizQuestions(Long planId, Long itemId, String userEmail) {
         StudyPlan plan = getOwnedStudyPlan(planId, userEmail);
 
@@ -378,7 +377,6 @@ public class StudyPlanService {
         plan.setCompleted(progress == 100);
     }
 
-    @Cacheable(value = "UserStudyPlansCache", key = "#userEmail", sync = true)
     public List<StudyPlan> getStudyPlans(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -386,7 +384,6 @@ public class StudyPlanService {
         return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
     }
 
-    @Cacheable(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #id", sync = true)
     public StudyPlan getStudyPlan(Long id, String userEmail) {
         return getOwnedStudyPlan(id, userEmail);
     }

@@ -22,10 +22,10 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 | `YouTubeService.searchVideos` | `YtSearchVideosCache` | `#query + '-' + #maxResults` | `12h` | TTL only |
 | `YouTubeService.searchPlaylists` | `YtSearchPlaylistsCache` | `#query + '-' + #maxResults` | `12h` | TTL only |
 | `YouTubeService.getPlaylistItems` | `YtPlaylistItemsCache` | `#playlistId + '-' + #maxResults` | `12h` | TTL only |
-| `StudyPlanService.getStudyPlans` | `UserStudyPlansCache` | `#userEmail` | `5m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
-| `StudyPlanService.getStudyPlan` | `StudyPlanByIdCache` | `#userEmail + '-' + #id` | `5m` | `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete (manual targeted)` |
+| `StudyPlanService.getStudyPlans` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `StudyPlanService.getStudyPlan` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
 | `StudyPlanService.getStats` | `UserStudyPlanStatsCache` | `#userEmail` | `3m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
-| `StudyPlanService.getQuizQuestions` | `StudyPlanQuizQuestionsCache` | `#userEmail + '-' + #planId + '-' + #itemId` | `5m` | `submitQuizAnswers`, `deleteStudyPlan (manual targeted)` |
+| `StudyPlanService.getQuizQuestions` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
 | `StudyPlanService.getSuggestedPracticeItem` | `UserSuggestedPracticeCache` | `#userEmail` | `2m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
 | `StudyPlanService.getActiveContext` | `UserActiveContextCache` | `#userEmail` | `2m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
 | `RecommendationService.getRecommendations` | `UserRecommendationsCache` | `#userEmail` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer`, study-plan mutation methods above |
@@ -43,7 +43,7 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 | `XpService.getXpHistory` | `UserXpHistoryCache` | `#studentId` | `2m` | `XpService.awardXp` |
 | `CourseController.getMyCoursesCached` | `UserCoursesCache` | `#email` | `10m` | `CourseController.generateCourse`, `CourseController.deleteCourse` |
 | `StudentController.getProfileCached` | `UserProfileCache` | `#email` | `5m` | `StudentController.updateProfile`, `StudentController.changePassword`, `StudentController.deleteAccount`, `XpService.awardXp` |
-| `StudentController.getLeaderboardCached` | `LeaderboardCache` | `'top10'` | `1m` | `StudentController.updateProfile`, `StudentController.deleteAccount`, `StudyPlanService.submitQuizAnswers`, `StudyPlanService.markItemComplete`, `StudyPlanService.markExternalPracticeAsComplete`, `XpService.awardXp` |
+| `StudentController.getLeaderboardCached` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
 | `UsageService.hasActionsRemaining` | `UserUsageRemainingCache` | `#userEmail` | `30s` | `UsageService.canPerformAction`, `StudentController.changePassword`, `StudentController.deleteAccount` |
 
 ## Manual targeted evictions
