@@ -1,5 +1,7 @@
 package com.practice.aiplatform.user;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class UsageService {
      * @return true if the action is allowed, false if they have hit their paywall.
      */
     @Transactional
+    @CacheEvict(value = "UserUsageRemainingCache", key = "#userEmail")
     public boolean canPerformAction(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found with email: " + userEmail));
@@ -55,6 +58,7 @@ public class UsageService {
      * @return true if the user can still perform actions, false otherwise.
      */
     @Transactional(readOnly = true)
+    @Cacheable(value = "UserUsageRemainingCache", key = "#userEmail", sync = true)
     public boolean hasActionsRemaining(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found with email: " + userEmail));

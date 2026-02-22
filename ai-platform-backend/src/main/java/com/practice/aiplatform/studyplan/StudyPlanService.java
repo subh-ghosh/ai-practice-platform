@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +46,15 @@ public class StudyPlanService {
         this.objectMapper = objectMapper;
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
+            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "StudyPlanByIdCache", allEntries = true)
+    })
     public StudyPlan generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -177,6 +189,14 @@ public class StudyPlanService {
     public record QuestionResult(Long questionId, String correctOption, boolean isCorrect) {
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "UserStudyPlansCache", allEntries = true),
+            @CacheEvict(value = "UserStudyPlanStatsCache", allEntries = true),
+            @CacheEvict(value = "UserActiveContextCache", allEntries = true),
+            @CacheEvict(value = "StudyPlanByIdCache", key = "#planId"),
+            @CacheEvict(value = "StudyPlanQuizQuestionsCache", key = "#planId + '-' + #itemId"),
+            @CacheEvict(value = "LeaderboardCache", allEntries = true)
+    })
     public QuizResult submitQuizAnswers(Long planId, Long itemId, Map<Long, String> answers) {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
@@ -229,6 +249,7 @@ public class StudyPlanService {
         return new QuizResult(questions.size(), correctCount, xpEarned, passed, results);
     }
 
+    @Cacheable(value = "StudyPlanQuizQuestionsCache", key = "#planId + '-' + #itemId", sync = true)
     public List<QuizQuestion> getQuizQuestions(Long planId, Long itemId) {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
@@ -248,6 +269,13 @@ public class StudyPlanService {
         return quizQuestionRepository.findByStudyPlanItemId(itemId);
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "UserStudyPlansCache", allEntries = true),
+            @CacheEvict(value = "UserStudyPlanStatsCache", allEntries = true),
+            @CacheEvict(value = "UserActiveContextCache", allEntries = true),
+            @CacheEvict(value = "StudyPlanByIdCache", key = "#planId"),
+            @CacheEvict(value = "LeaderboardCache", allEntries = true)
+    })
     public StudyPlanItem markItemComplete(Long planId, Long itemId) {
         StudyPlan plan = studyPlanRepository.findById(planId)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
@@ -289,6 +317,7 @@ public class StudyPlanService {
     public record StudyPlanStats(int activePlans, int completedPlans, int totalXp, int totalItemsCompleted) {
     }
 
+    @Cacheable(value = "UserStudyPlanStatsCache", key = "#userEmail", sync = true)
     public StudyPlanStats getStats(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -335,6 +364,7 @@ public class StudyPlanService {
         plan.setCompleted(progress == 100);
     }
 
+    @Cacheable(value = "UserStudyPlansCache", key = "#userEmail", sync = true)
     public List<StudyPlan> getStudyPlans(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -342,6 +372,7 @@ public class StudyPlanService {
         return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
     }
 
+    @Cacheable(value = "StudyPlanByIdCache", key = "#id", sync = true)
     public StudyPlan getStudyPlan(Long id) {
         return studyPlanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Study plan not found"));
@@ -480,6 +511,15 @@ public class StudyPlanService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
+            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "StudyPlanByIdCache", key = "#id")
+    })
     public void deleteStudyPlan(Long id, String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -497,6 +537,7 @@ public class StudyPlanService {
     public record SuggestedPracticeDto(String topic, String subject, String difficulty, Long planId, Long itemId) {
     }
 
+    @Cacheable(value = "UserSuggestedPracticeCache", key = "#userEmail", sync = true)
     public SuggestedPracticeDto getSuggestedPracticeItem(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -517,6 +558,16 @@ public class StudyPlanService {
         );
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
+            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "StudyPlanByIdCache", allEntries = true),
+            @CacheEvict(value = "LeaderboardCache", allEntries = true)
+    })
     public int markExternalPracticeAsComplete(String userEmail, String topic, String difficulty) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -559,6 +610,15 @@ public class StudyPlanService {
             String practiceDifficulty) {
     }
 
+    @Caching(evict = {
+            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
+            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "StudyPlanByIdCache", allEntries = true)
+    })
     public StudyPlan generateStudyPlanFromSyllabus(String userEmail, MultipartFile file, int durationDays) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -781,6 +841,7 @@ public class StudyPlanService {
         return "null".equalsIgnoreCase(cleaned) ? "" : cleaned;
     }
 
+    @Cacheable(value = "UserActiveContextCache", key = "#userEmail", sync = true)
     public ActiveContextDto getActiveContext(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));

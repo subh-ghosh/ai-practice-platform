@@ -6,6 +6,9 @@ import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import com.practice.aiplatform.user.UsageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +41,16 @@ public class PracticeController {
     private StudyPlanService studyPlanService;
 
     @PostMapping("/submit")
+    @Caching(evict = {
+            @CacheEvict(value = "UserPracticeHistoryCache", key = "#principal.name"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#principal.name"),
+            @CacheEvict(value = "PredictSuccessCache", allEntries = true),
+            @CacheEvict(value = "UserAiCoachPromptCache", key = "#principal.name"),
+            @CacheEvict(value = "UserAiCoachInsightCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatisticsSummaryCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatisticsTimeseriesCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#principal.name")
+    })
     public ResponseEntity<Answer> submitAnswer(@RequestBody SubmitAnswerRequest request, Principal principal) {
         String email = principal.getName();
 
@@ -97,6 +110,16 @@ public class PracticeController {
     }
 
     @PostMapping("/get-answer")
+    @Caching(evict = {
+            @CacheEvict(value = "UserPracticeHistoryCache", key = "#principal.name"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#principal.name"),
+            @CacheEvict(value = "PredictSuccessCache", allEntries = true),
+            @CacheEvict(value = "UserAiCoachPromptCache", key = "#principal.name"),
+            @CacheEvict(value = "UserAiCoachInsightCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatisticsSummaryCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatisticsTimeseriesCache", key = "#principal.name"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#principal.name")
+    })
     public ResponseEntity<Answer> getAnswer(@RequestBody GetAnswerRequest request, Principal principal) {
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -129,6 +152,7 @@ public class PracticeController {
     }
 
     @GetMapping("/history")
+    @Cacheable(value = "UserPracticeHistoryCache", key = "#principal.name", sync = true)
     public ResponseEntity<PracticeHistoryDto> getHistory(Principal principal) {
         Optional<Student> studentOptional = studentRepository.findByEmail(principal.getName());
         if (studentOptional.isEmpty()) {

@@ -2,6 +2,8 @@ package com.practice.aiplatform.course;
 
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +46,7 @@ public class CourseController {
     }
 
     @PostMapping("/generate")
+    @CacheEvict(value = "UserCoursesCache", key = "#principal.name")
     public ResponseEntity<?> generateCourse(@RequestBody GenerateCourseRequest request, Principal principal) {
         if (request.topic() == null || request.topic().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Topic is required"));
@@ -60,6 +63,7 @@ public class CourseController {
     }
 
     @GetMapping
+    @Cacheable(value = "UserCoursesCache", key = "#principal.name", sync = true)
     public ResponseEntity<List<CourseResponseDTO>> getMyCourses(Principal principal) {
         String email = principal.getName();
 
@@ -75,6 +79,7 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
+    @CacheEvict(value = "UserCoursesCache", key = "#principal.name")
     public ResponseEntity<?> deleteCourse(@PathVariable Long id, Principal principal) {
         String email = principal.getName();
 

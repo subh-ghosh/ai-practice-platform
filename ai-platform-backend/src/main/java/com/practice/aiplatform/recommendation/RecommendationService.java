@@ -6,6 +6,7 @@ import com.practice.aiplatform.studyplan.StudyPlanItem;
 import com.practice.aiplatform.studyplan.StudyPlanItemRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,6 +45,7 @@ public class RecommendationService {
     public record Prediction(String topic, String difficulty, double winProbability, String confidence) {
     }
 
+    @Cacheable(value = "UserRecommendationsCache", key = "#userEmail", sync = true)
     public List<EnhancedRecommendation> getRecommendations(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -172,6 +174,7 @@ public class RecommendationService {
         return recommendations;
     }
 
+    @Cacheable(value = "UserAiCoachPromptCache", key = "#userEmail", sync = true)
     public String buildAiCoachPromptData(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -233,6 +236,7 @@ public class RecommendationService {
         return summary.toString();
     }
 
+    @Cacheable(value = "PredictSuccessCache", key = "#userEmail + '-' + #topic + '-' + #difficulty", sync = true)
     public Prediction predictSuccess(String userEmail, String topic, String difficulty) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));

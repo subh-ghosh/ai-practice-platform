@@ -1,6 +1,9 @@
 package com.practice.aiplatform.user;
 
 import com.practice.aiplatform.notifications.NotificationService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -43,6 +46,7 @@ public class StudentController {
     }
 
     @GetMapping("/profile")
+    @Cacheable(value = "UserProfileCache", key = "#principal.name", sync = true)
     public ResponseEntity<?> getProfile(Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
@@ -55,6 +59,10 @@ public class StudentController {
     }
 
     @PutMapping("/profile")
+    @Caching(evict = {
+            @CacheEvict(value = "UserProfileCache", key = "#principal.name"),
+            @CacheEvict(value = "LeaderboardCache", allEntries = true)
+    })
     public ResponseEntity<?> updateProfile(@RequestBody ProfileUpdateRequest req, Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
@@ -81,6 +89,11 @@ public class StudentController {
     }
 
     @PutMapping("/password")
+    @Caching(evict = {
+            @CacheEvict(value = "SecurityUserDetailsCache", key = "#principal.name"),
+            @CacheEvict(value = "UserProfileCache", key = "#principal.name"),
+            @CacheEvict(value = "UserUsageRemainingCache", key = "#principal.name")
+    })
     public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest req, Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
@@ -105,6 +118,12 @@ public class StudentController {
     }
 
     @DeleteMapping("/account")
+    @Caching(evict = {
+            @CacheEvict(value = "UserProfileCache", key = "#principal.name"),
+            @CacheEvict(value = "LeaderboardCache", allEntries = true),
+            @CacheEvict(value = "SecurityUserDetailsCache", key = "#principal.name"),
+            @CacheEvict(value = "UserUsageRemainingCache", key = "#principal.name")
+    })
     public ResponseEntity<?> deleteAccount(Principal principal) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
@@ -118,6 +137,7 @@ public class StudentController {
     }
 
     @GetMapping("/leaderboard")
+    @Cacheable(value = "LeaderboardCache", key = "'top10'", sync = true)
     public ResponseEntity<List<StudentResponseDTO>> getLeaderboard() {
         List<Student> topStudents = studentRepository.findTop10ByOrderByTotalXpDesc();
 

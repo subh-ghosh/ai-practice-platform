@@ -4,6 +4,8 @@ import com.practice.aiplatform.studyplan.StudyPlan;
 import com.practice.aiplatform.studyplan.StudyPlanRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +31,7 @@ public class DailyChallengeService {
         this.xpService = xpService;
     }
 
+    @Cacheable(value = "UserDailyChallengesCache", key = "#studentId", sync = true)
     public List<DailyChallenge> getTodayChallenges(Long studentId) {
         LocalDate today = LocalDate.now();
         List<DailyChallenge> challenges = dailyChallengeRepository.findByStudentIdAndDate(studentId, today);
@@ -44,6 +47,7 @@ public class DailyChallengeService {
     }
 
     @Transactional
+    @CacheEvict(value = "UserDailyChallengesCache", key = "#student.id")
     public List<DailyChallenge> generateDailyChallenges(Student student) {
         createChallenge(student, "Quiz Master", "Complete 1 quiz with >80% score", 50, 1);
         createChallenge(student, "Fast Learner", "Complete 3 practice questions", 30, 3);
@@ -75,6 +79,7 @@ public class DailyChallengeService {
     }
 
     @Transactional
+    @CacheEvict(value = "UserDailyChallengesCache", key = "#studentId")
     public void incrementProgress(Long studentId, String challengeTitle, int amount) {
         List<DailyChallenge> challenges =
                 dailyChallengeRepository.findByStudentIdAndDate(studentId, LocalDate.now());
@@ -89,6 +94,7 @@ public class DailyChallengeService {
     }
 
     @Transactional
+    @CacheEvict(value = "UserDailyChallengesCache", allEntries = true)
     public void claimReward(Long challengeId) {
         DailyChallenge challenge = dailyChallengeRepository.findById(challengeId)
                 .orElseThrow(() -> new RuntimeException("Challenge not found"));

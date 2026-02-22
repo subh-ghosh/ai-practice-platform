@@ -6,6 +6,7 @@ import com.practice.aiplatform.practice.PracticeHistoryDto;
 import com.practice.aiplatform.practice.Question;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -23,6 +24,7 @@ public class StatisticsService {
         this.studentRepository = studentRepository;
     }
 
+    @Cacheable(value = "UserStatisticsSummaryCache", key = "#email", sync = true)
     public StatisticsDto getStatistics(String email) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -116,6 +118,7 @@ public class StatisticsService {
         );
     }
 
+    @Cacheable(value = "UserStatisticsTimeseriesCache", key = "#email", sync = true)
     public List<DailyStatDto> getTimeSeriesStats(String email) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
@@ -184,6 +187,7 @@ public class StatisticsService {
     public record SmartRecommendationDto(List<String> recentTopics, List<String> weakTopics) {
     }
 
+    @Cacheable(value = "UserStatisticsRecommendationsCache", key = "#email", sync = true)
     public SmartRecommendationDto getSmartRecommendations(String email) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));

@@ -1,6 +1,7 @@
 package com.practice.aiplatform.recommendation;
 
 import com.practice.aiplatform.ai.AiService;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +37,7 @@ public class RecommendationController {
     }
 
     @GetMapping("/ai-coach")
+    @Cacheable(value = "UserAiCoachInsightCache", key = "#principal.name", sync = true)
     public ResponseEntity<Map<String, String>> getAiCoachInsight(Principal principal) {
         try {
             String promptData = recommendationService.buildAiCoachPromptData(principal.getName());
