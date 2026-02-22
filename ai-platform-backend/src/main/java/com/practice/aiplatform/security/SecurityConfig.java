@@ -1,5 +1,6 @@
 package com.practice.aiplatform.security;
 
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -39,6 +40,8 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/health", "/actuator/health").permitAll()
                         .requestMatchers("/api/courses/ping").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

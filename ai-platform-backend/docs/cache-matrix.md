@@ -53,5 +53,6 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 
 ## Validation notes
 - Cache names in annotations match `CacheConfig` definitions.
+- Redis cache serialization is configured with polymorphic typing for final DTOs/records (`DefaultTyping.EVERYTHING`) to prevent cache-hit deserialization failures.
 - No `SecurityUserDetailsCache` is active in current code.
 - Backend compiles with these cache changes.
