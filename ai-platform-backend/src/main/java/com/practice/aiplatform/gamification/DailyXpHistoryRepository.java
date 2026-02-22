@@ -13,4 +13,6 @@ public interface DailyXpHistoryRepository extends JpaRepository<DailyXpHistory, 
 
     List<DailyXpHistory> findByStudentIdAndDateBetweenOrderByDateAsc(Long studentId, LocalDate startDate,
             LocalDate endDate);
+
+    long deleteByStudentId(Long studentId);
 }

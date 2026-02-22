@@ -21,4 +21,6 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
     List<Answer> findTop20ByStudentOrderBySubmittedAtDesc(Student student);
 
+    long deleteByStudentId(Long studentId);
+
 }

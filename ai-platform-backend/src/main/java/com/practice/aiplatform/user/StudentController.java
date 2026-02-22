@@ -37,6 +37,7 @@ public class StudentController {
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
+    private final StudentAccountService studentAccountService;
     @Lazy
     @Autowired
     private StudentController self;
@@ -44,10 +45,12 @@ public class StudentController {
     public StudentController(
             StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            StudentAccountService studentAccountService) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
+        this.studentAccountService = studentAccountService;
     }
 
     @GetMapping("/profile")
@@ -135,10 +138,7 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        Student student = studentRepository.findByEmail(principal.getName())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        studentRepository.delete(student);
+        studentAccountService.deleteAccountByEmail(principal.getName());
         return ResponseEntity.noContent().build();
     }
 

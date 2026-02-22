@@ -57,3 +57,8 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 - Cached map/list payloads avoid immutable JDK collection implementations on hot paths.
 - No `SecurityUserDetailsCache` is active in current code.
 - Backend compiles with these cache changes.
+
+## Related data-consistency fix (non-cache)
+- `StudentController.deleteAccount` now delegates to `StudentAccountService.deleteAccountByEmail` (`@Transactional`).
+- Account deletion explicitly clears student-linked rows (`notifications`, `refresh tokens`, `daily_challenges`, `daily_xp_history`, `answers`, `questions`, `user_badges`, `courses`, `study_plans`) before deleting `students`.
+- This prevents `500` on delete-account caused by FK constraints and avoids stale test users remaining in leaderboard data.

@@ -10,4 +10,6 @@ public interface UserBadgeRepository extends JpaRepository<UserBadge, Long> {
     List<UserBadge> findByStudentId(Long studentId);
 
     boolean existsByStudentIdAndBadge(Long studentId, Badge badge);
+
+    long deleteByStudentId(Long studentId);
 }

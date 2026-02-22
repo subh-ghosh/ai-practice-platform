@@ -11,4 +11,6 @@ public interface DailyChallengeRepository extends JpaRepository<DailyChallenge, 
     List<DailyChallenge> findByStudentIdAndDate(Long studentId, LocalDate date);
 
     void deleteByDateBefore(LocalDate date);
+
+    long deleteByStudentId(Long studentId);
 }

@@ -9,5 +9,6 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     // Spring Data JPA gives us save(), findById(), etc. for free.
     // We can add custom query methods here later if needed,
     // e.g., finding all questions for a specific student.
+    long deleteByStudentId(Long studentId);
 
 }
