@@ -13,7 +13,9 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "daily_challenges")
+@Table(name = "daily_challenges", indexes = {
+        @Index(name = "idx_daily_challenges_student_date", columnList = "student_id, date")
+})
 public class DailyChallenge {
 
     @Id

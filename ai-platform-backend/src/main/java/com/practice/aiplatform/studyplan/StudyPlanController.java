@@ -64,8 +64,13 @@ public class StudyPlanController {
     }
 
     @GetMapping
-    public ResponseEntity<List<StudyPlan>> getMyStudyPlans(Principal principal) {
+    public ResponseEntity<?> getMyStudyPlans(
+            Principal principal,
+            @RequestParam(name = "summary", defaultValue = "false") boolean summary) {
         String email = principal.getName();
+        if (summary) {
+            return ResponseEntity.ok(studyPlanService.getStudyPlanSummaries(email));
+        }
         List<StudyPlan> plans = studyPlanService.getStudyPlans(email);
         return ResponseEntity.ok(plans);
     }

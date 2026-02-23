@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "user_badges", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "student_id", "badge" })
+}, indexes = {
+        @Index(name = "idx_user_badges_student", columnList = "student_id")
 })
 public class UserBadge {
 

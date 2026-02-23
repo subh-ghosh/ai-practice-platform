@@ -5,16 +5,13 @@ param(
   [string]$ItemId,
   [string]$Topic = "Java",
   [string]$Difficulty = "Beginner",
-  [int]$Vus = 20,
-  [string]$Duration = "1m",
-  [switch]$Warmup,
-  [int]$WarmupVus = 5,
-  [string]$WarmupDuration = "1m"
+  [int]$Vus = 5,
+  [string]$Duration = "1m"
 )
 
 $ErrorActionPreference = "Stop"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$outDir = Join-Path $here ("results-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+$outDir = Join-Path $here ("warmup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 New-Item -ItemType Directory -Path $outDir | Out-Null
 
 $scripts = @(
@@ -43,20 +40,8 @@ $scripts = @(
 if ($PlanId) { $scripts += "study-plan-by-id.js" }
 if ($PlanId -and $ItemId) { $scripts += "study-plan-quiz.js" }
 
-if ($Warmup) {
-  & (Join-Path $here "run-warmup-read-tests.ps1") `
-    -BaseUrl $BaseUrl `
-    -Token $Token `
-    -PlanId $PlanId `
-    -ItemId $ItemId `
-    -Topic $Topic `
-    -Difficulty $Difficulty `
-    -Vus $WarmupVus `
-    -Duration $WarmupDuration
-}
-
 foreach ($s in $scripts) {
-  Write-Host "Running $s ..."
+  Write-Host "Warming $s ..."
   $log = Join-Path $outDir ($s.Replace('.js','.txt'))
   $cmd = @(
     "run",
@@ -73,4 +58,4 @@ foreach ($s in $scripts) {
   & k6 @cmd 2>&1 | Tee-Object -FilePath $log
 }
 
-Write-Host "Done. Results folder: $outDir"
+Write-Host "Warmup done. Folder: $outDir"

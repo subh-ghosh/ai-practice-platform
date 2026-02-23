@@ -75,7 +75,7 @@ const StudyPlanBuilderPage = () => {
 
     const fetchHistory = async () => {
         try {
-            const response = await api.get('/study-plans');
+            const response = await api.get('/study-plans?summary=true');
             setHistory(response.data);
         } catch (err) {
             console.error("Failed to load history:", err);

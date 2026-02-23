@@ -14,7 +14,9 @@ import java.util.List;
 @Entity
 @Data
 @NoArgsConstructor
-@Table(name = "study_plans")
+@Table(name = "study_plans", indexes = {
+        @Index(name = "idx_study_plans_student_created", columnList = "student_id, created_at")
+})
 public class StudyPlan {
 
     @Id

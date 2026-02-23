@@ -59,6 +59,7 @@ public class StudyPlanService {
 
     @Caching(evict = {
             @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
             @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
@@ -201,6 +202,7 @@ public class StudyPlanService {
 
     @Caching(evict = {
             @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
             @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
@@ -282,6 +284,7 @@ public class StudyPlanService {
 
     @Caching(evict = {
             @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
             @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
@@ -384,6 +387,14 @@ public class StudyPlanService {
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
         return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+    }
+
+    @Cacheable(value = "UserStudyPlanSummariesCache", key = "#userEmail", sync = true)
+    public List<StudyPlanSummaryDto> getStudyPlanSummaries(String userEmail) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        return studyPlanRepository.findSummariesByStudentId(student.getId());
     }
 
     @Cacheable(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #id", sync = true)
@@ -526,6 +537,7 @@ public class StudyPlanService {
 
     @Caching(evict = {
             @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
             @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
@@ -566,6 +578,7 @@ public class StudyPlanService {
 
     @Caching(evict = {
             @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
             @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
@@ -626,6 +639,7 @@ public class StudyPlanService {
 
     @Caching(evict = {
             @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
             @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
             @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
             @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),

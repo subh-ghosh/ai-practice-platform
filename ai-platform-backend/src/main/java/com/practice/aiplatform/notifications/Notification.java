@@ -8,7 +8,10 @@ import lombok.Setter;
 import java.time.Instant;
 
 @Entity
-@Table(name = "notifications")
+@Table(name = "notifications", indexes = {
+        @Index(name = "idx_notifications_student_created", columnList = "student_id, created_at"),
+        @Index(name = "idx_notifications_student_read_created", columnList = "student_id, read_flag, created_at")
+})
 @Getter
 @Setter
 @NoArgsConstructor

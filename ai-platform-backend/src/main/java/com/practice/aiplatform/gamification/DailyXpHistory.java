@@ -14,6 +14,8 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "daily_xp_history", uniqueConstraints = {
         @UniqueConstraint(columnNames = { "student_id", "date" })
+}, indexes = {
+        @Index(name = "idx_xp_history_student_date", columnList = "student_id, date")
 })
 public class DailyXpHistory {
 
