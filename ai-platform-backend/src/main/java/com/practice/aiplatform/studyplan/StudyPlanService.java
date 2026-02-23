@@ -960,12 +960,33 @@ public class StudyPlanService {
     }
 
     private StudyPlanDetailDto toDetailDto(StudyPlan plan) {
+        Map<Long, List<QuizQuestion>> questionsByItemId = new HashMap<>();
+        if (plan.getItems() != null && !plan.getItems().isEmpty()) {
+            List<Long> itemIds = new ArrayList<>();
+            for (StudyPlanItem item : plan.getItems()) {
+                if (item != null && item.getId() != null) {
+                    itemIds.add(item.getId());
+                }
+            }
+            if (!itemIds.isEmpty()) {
+                List<QuizQuestion> questions = quizQuestionRepository.findByStudyPlanItemIdIn(itemIds);
+                for (QuizQuestion question : questions) {
+                    Long itemId = question.getStudyPlanItem() != null ? question.getStudyPlanItem().getId() : null;
+                    if (itemId == null) {
+                        continue;
+                    }
+                    questionsByItemId.computeIfAbsent(itemId, k -> new ArrayList<>()).add(question);
+                }
+            }
+        }
+
         List<StudyPlanItemDto> items = new ArrayList<>();
         if (plan.getItems() != null) {
             for (StudyPlanItem item : plan.getItems()) {
                 List<StudyPlanQuizQuestionDto> questions = new ArrayList<>();
-                if (item.getQuizQuestions() != null) {
-                    for (QuizQuestion q : item.getQuizQuestions()) {
+                List<QuizQuestion> itemQuestions = questionsByItemId.get(item.getId());
+                if (itemQuestions != null) {
+                    for (QuizQuestion q : itemQuestions) {
                         questions.add(new StudyPlanQuizQuestionDto(
                                 q.getId(),
                                 q.getQuestionText(),

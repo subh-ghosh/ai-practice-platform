@@ -11,7 +11,7 @@ import java.util.List;
 public interface StudyPlanRepository extends JpaRepository<StudyPlan, Long> {
     List<StudyPlan> findByStudentIdOrderByCreatedAtDesc(Long studentId);
 
-    @EntityGraph(attributePaths = { "items", "items.quizQuestions" })
+    @EntityGraph(attributePaths = { "items" })
     @Query("select p from StudyPlan p where p.id = :id")
     StudyPlan findWithItemsById(@Param("id") Long id);
 

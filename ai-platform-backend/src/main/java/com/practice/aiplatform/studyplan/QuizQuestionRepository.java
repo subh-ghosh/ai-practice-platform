@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface QuizQuestionRepository extends JpaRepository<QuizQuestion, Long> {
     List<QuizQuestion> findByStudyPlanItemId(Long studyPlanItemId);
+
+    List<QuizQuestion> findByStudyPlanItemIdIn(List<Long> studyPlanItemIds);
 }
