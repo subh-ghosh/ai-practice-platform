@@ -89,9 +89,24 @@ export function NotificationProvider({ children }) {
   useEffect(() => {
     if (user) {
       fetchNotifications();
-      // Poll every 30 seconds to keep sync
-      const interval = setInterval(() => fetchNotifications(true), 30000);
-      return () => clearInterval(interval);
+      // Poll every 2 minutes to reduce Redis requests
+      const interval = setInterval(() => {
+        if (!document.hidden) {
+          fetchNotifications(true);
+        }
+      }, 120000);
+
+      const onVisibility = () => {
+        if (!document.hidden) {
+          fetchNotifications(true);
+        }
+      };
+      document.addEventListener("visibilitychange", onVisibility);
+
+      return () => {
+        clearInterval(interval);
+        document.removeEventListener("visibilitychange", onVisibility);
+      };
     } else {
       setNotifications([]);
       setUnreadCount(0);
