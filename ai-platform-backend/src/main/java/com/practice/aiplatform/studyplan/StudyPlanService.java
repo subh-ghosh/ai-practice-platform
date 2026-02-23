@@ -14,6 +14,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
@@ -398,8 +399,18 @@ public class StudyPlanService {
     }
 
     @Cacheable(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #id", sync = true)
+    @Transactional(readOnly = true)
     public StudyPlan getStudyPlan(Long id, String userEmail) {
-        return getOwnedStudyPlan(id, userEmail);
+        StudyPlan plan = getOwnedStudyPlan(id, userEmail);
+        if (plan.getItems() != null) {
+            plan.getItems().forEach(item -> {
+                if (item != null && item.getQuizQuestions() != null) {
+                    item.getQuizQuestions().size();
+                }
+            });
+            plan.getItems().size();
+        }
+        return plan;
     }
 
     private String createPrompt(String topic, String difficulty, int durationDays, List<Map<String, String>> videos) {
