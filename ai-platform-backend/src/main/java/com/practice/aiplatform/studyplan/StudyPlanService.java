@@ -382,7 +382,6 @@ public class StudyPlanService {
         plan.setCompleted(progress == 100);
     }
 
-    @Cacheable(value = "UserStudyPlansCache", key = "#userEmail", sync = true)
     public List<StudyPlan> getStudyPlans(String userEmail) {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));

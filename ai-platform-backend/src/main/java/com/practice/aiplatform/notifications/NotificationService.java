@@ -22,11 +22,11 @@ public class NotificationService {
         this.notificationRepository = notificationRepository;
         this.cacheManager = cacheManager;
         this.localAllCache = Caffeine.newBuilder()
-                .expireAfterWrite(Duration.ofSeconds(10))
+                .expireAfterWrite(Duration.ofSeconds(30))
                 .maximumSize(1000)
                 .build();
         this.localUnreadCache = Caffeine.newBuilder()
-                .expireAfterWrite(Duration.ofSeconds(10))
+                .expireAfterWrite(Duration.ofSeconds(30))
                 .maximumSize(1000)
                 .build();
     }

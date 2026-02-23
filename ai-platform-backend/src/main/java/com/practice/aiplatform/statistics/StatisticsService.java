@@ -1,13 +1,17 @@
 package com.practice.aiplatform.statistics;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.practice.aiplatform.practice.Answer;
 import com.practice.aiplatform.practice.AnswerRepository;
 import com.practice.aiplatform.practice.PracticeHistoryDto;
 import com.practice.aiplatform.practice.Question;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -19,14 +23,33 @@ public class StatisticsService {
 
     private final AnswerRepository answerRepository;
     private final StudentRepository studentRepository;
+    private final Cache<String, StatisticsDto> localSummaryCache;
+    @Lazy
+    @Autowired
+    private StatisticsService self;
 
     public StatisticsService(AnswerRepository answerRepository, StudentRepository studentRepository) {
         this.answerRepository = answerRepository;
         this.studentRepository = studentRepository;
+        this.localSummaryCache = Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofSeconds(15))
+                .maximumSize(2000)
+                .build();
+    }
+
+    public StatisticsDto getStatistics(String email) {
+        StatisticsDto cached = localSummaryCache.getIfPresent(email);
+        if (cached != null) {
+            return cached;
+        }
+
+        StatisticsDto value = self.getStatisticsCached(email);
+        localSummaryCache.put(email, value);
+        return value;
     }
 
     @Cacheable(value = "UserStatisticsSummaryCache", key = "#email", sync = true)
-    public StatisticsDto getStatistics(String email) {
+    public StatisticsDto getStatisticsCached(String email) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 

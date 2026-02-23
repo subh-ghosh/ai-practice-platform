@@ -1,5 +1,7 @@
 package com.practice.aiplatform.user;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.practice.aiplatform.notifications.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -12,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +41,7 @@ public class StudentController {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
     private final StudentAccountService studentAccountService;
+    private final Cache<String, StudentResponseDTO> localProfileCache;
     @Lazy
     @Autowired
     private StudentController self;
@@ -51,6 +55,10 @@ public class StudentController {
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
         this.studentAccountService = studentAccountService;
+        this.localProfileCache = Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofSeconds(15))
+                .maximumSize(2000)
+                .build();
     }
 
     @GetMapping("/profile")
@@ -59,7 +67,15 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
         }
 
-        return ResponseEntity.ok(self.getProfileCached(principal.getName()));
+        String email = principal.getName();
+        StudentResponseDTO cached = localProfileCache.getIfPresent(email);
+        if (cached != null) {
+            return ResponseEntity.ok(cached);
+        }
+
+        StudentResponseDTO value = self.getProfileCached(email);
+        localProfileCache.put(email, value);
+        return ResponseEntity.ok(value);
     }
 
     @Cacheable(value = "UserProfileCache", key = "#email", sync = true)
@@ -93,6 +109,7 @@ public class StudentController {
         if (req.websiteUrl() != null) student.setWebsiteUrl(req.websiteUrl().trim());
 
         studentRepository.save(student);
+        localProfileCache.invalidate(principal.getName());
 
         notificationService.createNotification(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
 
@@ -123,6 +140,7 @@ public class StudentController {
 
         student.setPassword(passwordEncoder.encode(req.newPassword()));
         studentRepository.save(student);
+        localProfileCache.invalidate(principal.getName());
 
         return ResponseEntity.ok("Password changed successfully.");
     }
@@ -139,6 +157,7 @@ public class StudentController {
         }
 
         studentAccountService.deleteAccountByEmail(principal.getName());
+        localProfileCache.invalidate(principal.getName());
         return ResponseEntity.noContent().build();
     }
 

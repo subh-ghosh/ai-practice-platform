@@ -9,7 +9,7 @@ param(
   [string]$Duration = "1m"
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 $outDir = Join-Path $here ("warmup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 New-Item -ItemType Directory -Path $outDir | Out-Null
@@ -56,6 +56,9 @@ foreach ($s in $scripts) {
     (Join-Path $here $s)
   )
   & k6 @cmd 2>&1 | Tee-Object -FilePath $log
+  if ($LASTEXITCODE -ne 0) {
+    Write-Warning "k6 exited with code $LASTEXITCODE for $s. Continuing."
+  }
 }
 
 Write-Host "Warmup done. Folder: $outDir"
