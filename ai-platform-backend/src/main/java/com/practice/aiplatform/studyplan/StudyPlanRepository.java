@@ -1,6 +1,7 @@
 package com.practice.aiplatform.studyplan;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -9,6 +10,10 @@ import java.util.List;
 
 public interface StudyPlanRepository extends JpaRepository<StudyPlan, Long> {
     List<StudyPlan> findByStudentIdOrderByCreatedAtDesc(Long studentId);
+
+    @EntityGraph(attributePaths = { "items", "items.quizQuestions" })
+    @Query("select p from StudyPlan p where p.id = :id")
+    StudyPlan findWithItemsById(@Param("id") Long id);
 
     @Query("""
             select new com.practice.aiplatform.studyplan.StudyPlanSummaryDto(

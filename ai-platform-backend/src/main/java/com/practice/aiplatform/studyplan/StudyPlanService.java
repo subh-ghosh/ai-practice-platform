@@ -400,17 +400,9 @@ public class StudyPlanService {
 
     @Cacheable(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #id", sync = true)
     @Transactional(readOnly = true)
-    public StudyPlan getStudyPlan(Long id, String userEmail) {
-        StudyPlan plan = getOwnedStudyPlan(id, userEmail);
-        if (plan.getItems() != null) {
-            plan.getItems().forEach(item -> {
-                if (item != null && item.getQuizQuestions() != null) {
-                    item.getQuizQuestions().size();
-                }
-            });
-            plan.getItems().size();
-        }
-        return plan;
+    public StudyPlanDetailDto getStudyPlan(Long id, String userEmail) {
+        StudyPlan plan = getOwnedStudyPlanWithItems(id, userEmail);
+        return toDetailDto(plan);
     }
 
     private String createPrompt(String topic, String difficulty, int durationDays, List<Map<String, String>> videos) {
@@ -948,6 +940,96 @@ public class StudyPlanService {
         }
 
         return plan;
+    }
+
+    private StudyPlan getOwnedStudyPlanWithItems(Long planId, String userEmail) {
+        StudyPlan plan = studyPlanRepository.findWithItemsById(planId);
+        if (plan == null) {
+            throw new RuntimeException("Study plan not found");
+        }
+
+        if (plan.getStudent() == null || plan.getStudent().getEmail() == null) {
+            throw new RuntimeException("Study plan owner could not be verified");
+        }
+
+        if (!plan.getStudent().getEmail().equalsIgnoreCase(userEmail)) {
+            throw new RuntimeException("You do not have permission to access this study plan");
+        }
+
+        return plan;
+    }
+
+    private StudyPlanDetailDto toDetailDto(StudyPlan plan) {
+        List<StudyPlanItemDto> items = new ArrayList<>();
+        if (plan.getItems() != null) {
+            for (StudyPlanItem item : plan.getItems()) {
+                List<StudyPlanQuizQuestionDto> questions = new ArrayList<>();
+                if (item.getQuizQuestions() != null) {
+                    for (QuizQuestion q : item.getQuizQuestions()) {
+                        questions.add(new StudyPlanQuizQuestionDto(
+                                q.getId(),
+                                q.getQuestionText(),
+                                q.getOptionA(),
+                                q.getOptionB(),
+                                q.getOptionC(),
+                                q.getOptionD()
+                        ));
+                    }
+                }
+
+                items.add(new StudyPlanItemDto(
+                        item.getId(),
+                        item.getItemType(),
+                        item.getTitle(),
+                        item.getDescription(),
+                        item.getVideoId(),
+                        item.getVideoUrl(),
+                        item.getThumbnailUrl(),
+                        item.getChannelName(),
+                        item.getVideoDuration(),
+                        item.getPracticeSubject(),
+                        item.getPracticeTopic(),
+                        item.getPracticeDifficulty(),
+                        item.getDayNumber(),
+                        item.getOrderIndex(),
+                        item.getXpReward(),
+                        questions,
+                        item.isCompleted()
+                ));
+            }
+        }
+
+        Student student = plan.getStudent();
+        StudyPlanDetailStudentDto studentDto = student == null ? null : new StudyPlanDetailStudentDto(
+                student.getId(),
+                student.getFirstName(),
+                student.getLastName(),
+                student.getGender(),
+                student.getBio(),
+                student.getHeadline(),
+                student.getAvatarUrl(),
+                student.getGithubUrl(),
+                student.getLinkedinUrl(),
+                student.getWebsiteUrl(),
+                student.getSubscriptionStatus(),
+                student.getTotalXp(),
+                student.getStreakDays(),
+                student.getLastLoginDate() == null ? null : student.getLastLoginDate().toString()
+        );
+
+        return new StudyPlanDetailDto(
+                plan.getId(),
+                plan.getTitle(),
+                plan.getTopic(),
+                plan.getDifficulty(),
+                plan.getDurationDays(),
+                plan.getDescription(),
+                plan.getProgress(),
+                studentDto,
+                items,
+                plan.getCreatedAt(),
+                plan.isCompleted()
+        );
     }
 
     private void evictOwnedStudyPlanByIdCache(String userEmail, Long planId) {

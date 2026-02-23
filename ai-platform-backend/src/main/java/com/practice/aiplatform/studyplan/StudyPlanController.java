@@ -78,7 +78,7 @@ public class StudyPlanController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getStudyPlan(@PathVariable Long id, Principal principal) {
         try {
-            StudyPlan plan = studyPlanService.getStudyPlan(id, principal.getName());
+            StudyPlanDetailDto plan = studyPlanService.getStudyPlan(id, principal.getName());
             return ResponseEntity.ok(plan);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
