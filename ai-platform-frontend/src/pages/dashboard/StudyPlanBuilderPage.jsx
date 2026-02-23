@@ -65,7 +65,7 @@ const StudyPlanBuilderPage = () => {
 
     const fetchRecommendations = async () => {
         try {
-            const res = await api.get('/recommendations');
+            const res = await api.get('/recommendations/dashboard');
             setRecommendations(res.data);
         } catch (err) {
             console.error("Failed to load recommendations:", err);
