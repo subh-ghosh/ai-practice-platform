@@ -5,6 +5,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -50,6 +51,11 @@ public class AiService {
                 return generateQuestion(subject, difficulty, topic, null, null);
         }
 
+        @Cacheable(
+                value = "AiQuestionCache",
+                key = "#subject + '|' + #difficulty + '|' + #topic + '|' + (#previousQuestion ?: '') + '|' + (#previousStatus ?: '')",
+                sync = true
+        )
         public String generateQuestion(
                 String subject,
                 String difficulty,
@@ -81,6 +87,11 @@ public class AiService {
                 return extractTextFromResponse(response);
         }
 
+        @Cacheable(
+                value = "AiEvaluateCache",
+                key = "#subject + '|' + #topic + '|' + #difficulty + '|' + #questionText + '|' + #answerText",
+                sync = true
+        )
         public String evaluateAnswer(String questionText, String answerText, String subject, String topic, String difficulty) {
                 String prompt = String.format(
                         "Subject: %s, Topic: %s, Level: %s.\n"
@@ -96,6 +107,11 @@ public class AiService {
                 return extractTextFromResponse(response);
         }
 
+        @Cacheable(
+                value = "AiHintCache",
+                key = "#subject + '|' + #topic + '|' + #difficulty + '|' + #questionText",
+                sync = true
+        )
         public String getHint(String questionText, String subject, String topic, String difficulty) {
                 String prompt = String.format(
                         "Give one concise hint only.\n"
@@ -107,6 +123,11 @@ public class AiService {
                 return extractTextFromResponse(response);
         }
 
+        @Cacheable(
+                value = "AiAnswerCache",
+                key = "#subject + '|' + #topic + '|' + #difficulty + '|' + #questionText",
+                sync = true
+        )
         public String getCorrectAnswer(String questionText, String subject, String topic, String difficulty) {
                 String prompt = String.format(
                         "Provide the correct answer and short explanation.\n"

@@ -5,6 +5,8 @@ import com.practice.aiplatform.security.JwtUtil;
 import com.practice.aiplatform.security.RefreshToken;
 import com.practice.aiplatform.security.RefreshTokenService;
 import com.practice.aiplatform.security.TokenRefreshException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +22,8 @@ import java.util.Optional;
 @RequestMapping("/api/students")
 @CrossOrigin
 public class StudentAuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(StudentAuthController.class);
 
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
@@ -45,74 +49,119 @@ public class StudentAuthController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest req) {
-        if (studentRepository.findByEmail(req.email()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Email already exists"));
+        if (req == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Invalid request body"));
         }
 
-        Student student = new Student();
-        student.setEmail(req.email());
-        student.setPassword(passwordEncoder.encode(req.password()));
-        student.setFirstName(req.firstName());
-        student.setLastName(req.lastName());
-        student.setFreeActionsUsed(0);
-        student.setSubscriptionStatus("FREE");
+        String email = normalizeEmail(req.email());
+        String firstName = normalizeName(req.firstName(), "Student");
+        String lastName = normalizeName(req.lastName(), "");
+        String password = req.password();
 
-        Student savedStudent = studentRepository.save(student);
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Email and password are required"));
+        }
 
         try {
-            notificationService.createNotification(savedStudent.getId(), "REGISTER", "Welcome! Registration successful.");
-        } catch (Exception ignored) {
-        }
+            if (studentRepository.findByEmail(email).isPresent()) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Email already exists"));
+            }
 
-        return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+            Student student = new Student();
+            student.setEmail(email);
+            student.setPassword(passwordEncoder.encode(password));
+            student.setFirstName(firstName);
+            student.setLastName(lastName);
+            student.setFreeActionsUsed(0);
+            student.setSubscriptionStatus("FREE");
+            student.setTotalXp(0);
+            student.setStreakDays(1);
+
+            Student savedStudent = studentRepository.save(student);
+
+            try {
+                notificationService.createNotification(savedStudent.getId(), "REGISTER", "Welcome! Registration successful.");
+            } catch (Exception ignored) {
+            }
+
+            return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+        } catch (Exception ex) {
+            log.error("Register failed for email {}: {}", email, ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Registration failed. Please try again."));
+        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest req) {
-        Optional<Student> studentOpt = studentRepository.findByEmail(req.email());
+        if (req == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Invalid request body"));
+        }
+
+        String email = normalizeEmail(req.email());
+        if (email == null || email.isBlank() || req.password() == null || req.password().isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Email and password are required"));
+        }
+
+        Optional<Student> studentOpt;
+        try {
+            studentOpt = studentRepository.findByEmail(email);
+        } catch (Exception ex) {
+            log.error("Login pre-check failed for email {}: {}", email, ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Login failed. Please try again."));
+        }
 
         if (studentOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid credentials"));
         }
 
-        Student student = studentOpt.get();
-        if (!passwordEncoder.matches(req.password(), student.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid credentials"));
-        }
-
-        updateStreak(student);
-        studentRepository.save(student);
-
-        String token = jwtUtil.generateToken(student);
-
-        refreshTokenService.deleteByUserId(student.getId());
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(student.getId());
-
         try {
-            notificationService.createNotification(student.getId(), "LOGIN", "New login detected.");
-        } catch (Exception ignored) {
+            Student student = studentOpt.get();
+            if (!passwordEncoder.matches(req.password(), student.getPassword())) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid credentials"));
+            }
+
+            updateStreak(student);
+            studentRepository.save(student);
+
+            String token = jwtUtil.generateToken(student);
+
+            refreshTokenService.deleteByUserId(student.getId());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(student.getId());
+
+            try {
+                notificationService.createNotification(student.getId(), "LOGIN", "New login detected.");
+            } catch (Exception ignored) {
+            }
+
+            StudentDto dto = new StudentDto(
+                    student.getId(),
+                    student.getEmail(),
+                    student.getFirstName(),
+                    student.getLastName(),
+                    student.getGender(),
+                    token,
+                    student.getSubscriptionStatus(),
+                    student.getFreeActionsUsed(),
+                    student.getTotalXp(),
+                    student.getStreakDays(),
+                    refreshToken.getToken());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("refreshToken", refreshToken.getToken());
+            response.put("student", dto);
+            response.put("message", "Login successful");
+
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            log.error("Login failed for email {}: {}", email, ex.getMessage(), ex);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Login failed. Please try again."));
         }
-
-        StudentDto dto = new StudentDto(
-                student.getId(),
-                student.getEmail(),
-                student.getFirstName(),
-                student.getLastName(),
-                student.getGender(),
-                token,
-                student.getSubscriptionStatus(),
-                student.getFreeActionsUsed(),
-                student.getTotalXp(),
-                student.getStreakDays(),
-                refreshToken.getToken());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", token);
-        response.put("refreshToken", refreshToken.getToken());
-        response.put("student", dto);
-        response.put("message", "Login successful");
-
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/oauth/google")
@@ -218,5 +267,20 @@ public class StudentAuthController {
         public TokenRefreshResponse(String accessToken, String refreshToken) {
             this(accessToken, refreshToken, "Bearer");
         }
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null) {
+            return null;
+        }
+        return email.trim().toLowerCase();
+    }
+
+    private String normalizeName(String value, String fallback) {
+        if (value == null) {
+            return fallback;
+        }
+        String normalized = value.trim();
+        return normalized.isBlank() ? fallback : normalized;
     }
 }

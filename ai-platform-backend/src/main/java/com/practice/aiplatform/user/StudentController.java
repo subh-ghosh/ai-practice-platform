@@ -147,6 +147,7 @@ public class StudentController {
         return ResponseEntity.ok(self.getLeaderboardCached());
     }
 
+    @Cacheable(value = "LeaderboardCache", key = "'top10'", sync = true)
     public List<StudentResponseDTO> getLeaderboardCached() {
         List<Student> topStudents = studentRepository.findTop10ByOrderByTotalXpDesc();
 

@@ -22,10 +22,10 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 | `YouTubeService.searchVideos` | `YtSearchVideosCache` | `#query + '-' + #maxResults` | `12h` | TTL only |
 | `YouTubeService.searchPlaylists` | `YtSearchPlaylistsCache` | `#query + '-' + #maxResults` | `12h` | TTL only |
 | `YouTubeService.getPlaylistItems` | `YtPlaylistItemsCache` | `#playlistId + '-' + #maxResults` | `12h` | TTL only |
-| `StudyPlanService.getStudyPlans` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
-| `StudyPlanService.getStudyPlan` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `StudyPlanService.getStudyPlans` | `UserStudyPlansCache` | `#userEmail` | `5m` | study-plan mutation methods |
+| `StudyPlanService.getStudyPlan` | `StudyPlanByIdCache` | `#userEmail + '-' + #id` | `5m` | `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete` |
 | `StudyPlanService.getStats` | `UserStudyPlanStatsCache` | `#userEmail` | `3m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
-| `StudyPlanService.getQuizQuestions` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `StudyPlanService.getQuizQuestions` | `StudyPlanQuizQuestionsCache` | `#userEmail + '-' + #planId + '-' + #itemId` | `5m` | `submitQuizAnswers`, `deleteStudyPlan` |
 | `StudyPlanService.getSuggestedPracticeItem` | `UserSuggestedPracticeCache` | `#userEmail` | `2m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
 | `StudyPlanService.getActiveContext` | `UserActiveContextCache` | `#userEmail` | `2m` | `generateStudyPlan`, `submitQuizAnswers`, `markItemComplete`, `deleteStudyPlan`, `markExternalPracticeAsComplete`, `generateStudyPlanFromSyllabus` |
 | `RecommendationService.getRecommendations` | `UserRecommendationsCache` | `#userEmail` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer`, study-plan mutation methods above |
@@ -36,14 +36,18 @@ Redis caching is used on hot read paths to reduce DB/API/AI work. Cache invalida
 | `StatisticsService.getTimeSeriesStats` | `UserStatisticsTimeseriesCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
 | `StatisticsService.getSmartRecommendations` | `UserStatisticsRecommendationsCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer`, study-plan mutation methods above |
 | `PracticeController.getHistoryCached` | `UserPracticeHistoryCache` | `#email` | `2m` | `PracticeController.submitAnswer`, `PracticeController.getAnswer` |
-| `NotificationService.getAllNotifications` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
-| `NotificationService.getUnreadNotifications` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
-| `BadgeService.getUserBadges` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
-| `DailyChallengeService.getTodayChallenges` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
-| `XpService.getXpHistory` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `NotificationService.getAllNotifications` | `UserNotificationsAllCache` | `#studentId` | `1m` | `createNotification`, `markAsRead`, `markAllAsRead` |
+| `NotificationService.getUnreadNotifications` | `UserNotificationsUnreadCache` | `#studentId` | `1m` | `createNotification`, `markAsRead`, `markAllAsRead` |
+| `BadgeService.getUserBadges` | `UserBadgesCache` | `#studentId` | `10m` | `unlockBadge` |
+| `DailyChallengeService.getTodayChallenges` | `UserDailyChallengesCache` | `#studentId` | `2m` | `incrementProgress`, `claimReward` |
+| `XpService.getXpHistory` | `UserXpHistoryCache` | `#studentId` | `2m` | `awardXp` |
+| `AiService.generateQuestion` | `AiQuestionCache` | `subject|difficulty|topic|previousQuestion|previousStatus` | `10m` | TTL only |
+| `AiService.getHint` | `AiHintCache` | `subject|topic|difficulty|questionText` | `10m` | TTL only |
+| `AiService.getCorrectAnswer` | `AiAnswerCache` | `subject|topic|difficulty|questionText` | `10m` | TTL only |
+| `AiService.evaluateAnswer` | `AiEvaluateCache` | `subject|topic|difficulty|questionText|answerText` | `5m` | TTL only |
 | `CourseController.getMyCoursesCached` | `UserCoursesCache` | `#email` | `10m` | `CourseController.generateCourse`, `CourseController.deleteCourse` |
 | `StudentController.getProfileCached` | `UserProfileCache` | `#email` | `5m` | `StudentController.updateProfile`, `StudentController.changePassword`, `StudentController.deleteAccount`, `XpService.awardXp` |
-| `StudentController.getLeaderboardCached` | _not cached_ | _n/a_ | _n/a_ | _n/a_ |
+| `StudentController.getLeaderboardCached` | `LeaderboardCache` | `'top10'` | `1m` | `awardXp`, `updateProfile`, `deleteAccount`, study-plan mutations |
 | `UsageService.hasActionsRemaining` | `UserUsageRemainingCache` | `#userEmail` | `30s` | `UsageService.canPerformAction`, `StudentController.changePassword`, `StudentController.deleteAccount` |
 
 ## Manual targeted evictions
