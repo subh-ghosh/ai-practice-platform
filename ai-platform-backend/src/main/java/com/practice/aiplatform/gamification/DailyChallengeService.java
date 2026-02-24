@@ -42,6 +42,7 @@ public class DailyChallengeService {
         this.xpService = xpService;
         this.cacheManager = cacheManager;
         this.localChallengesCache = Caffeine.newBuilder()
+                .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(30))
                 .maximumSize(2000)
                 .build();

@@ -56,6 +56,7 @@ public class StudentController {
         this.notificationService = notificationService;
         this.studentAccountService = studentAccountService;
         this.localProfileCache = Caffeine.newBuilder()
+                .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(15))
                 .maximumSize(2000)
                 .build();

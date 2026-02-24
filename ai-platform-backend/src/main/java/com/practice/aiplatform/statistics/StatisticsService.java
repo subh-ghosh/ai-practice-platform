@@ -32,6 +32,7 @@ public class StatisticsService {
         this.answerRepository = answerRepository;
         this.studentRepository = studentRepository;
         this.localSummaryCache = Caffeine.newBuilder()
+                .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(15))
                 .maximumSize(2000)
                 .build();

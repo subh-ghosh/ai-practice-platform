@@ -26,6 +26,7 @@ public class BadgeService {
     public BadgeService(UserBadgeRepository userBadgeRepository) {
         this.userBadgeRepository = userBadgeRepository;
         this.localBadgeCache = Caffeine.newBuilder()
+                .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(30))
                 .maximumSize(2000)
                 .build();

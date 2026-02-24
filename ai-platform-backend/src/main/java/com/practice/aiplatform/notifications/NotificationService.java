@@ -2,6 +2,7 @@ package com.practice.aiplatform.notifications;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,17 +16,24 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final CacheManager cacheManager;
+    private final MeterRegistry meterRegistry;
     private final Cache<Long, List<Notification>> localAllCache;
     private final Cache<Long, List<Notification>> localUnreadCache;
 
-    public NotificationService(NotificationRepository notificationRepository, CacheManager cacheManager) {
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            CacheManager cacheManager,
+            MeterRegistry meterRegistry) {
         this.notificationRepository = notificationRepository;
         this.cacheManager = cacheManager;
+        this.meterRegistry = meterRegistry;
         this.localAllCache = Caffeine.newBuilder()
+                .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(30))
                 .maximumSize(1000)
                 .build();
         this.localUnreadCache = Caffeine.newBuilder()
+                .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(30))
                 .maximumSize(1000)
                 .build();
@@ -42,8 +50,10 @@ public class NotificationService {
     public List<Notification> getAllNotifications(Long studentId) {
         List<Notification> cached = localAllCache.getIfPresent(studentId);
         if (cached != null) {
+            recordLayer("UserNotificationsAllCache", "l1", "hit");
             return cached;
         }
+        recordLayer("UserNotificationsAllCache", "l1", "miss");
 
         org.springframework.cache.Cache redisCache = cacheManager.getCache("UserNotificationsAllCache");
         if (redisCache != null) {
@@ -53,15 +63,19 @@ public class NotificationService {
                     @SuppressWarnings("unchecked")
                     List<Notification> value = (List<Notification>) wrapper.get();
                     if (value != null) {
+                        recordLayer("UserNotificationsAllCache", "l2", "hit");
                         localAllCache.put(studentId, value);
                         return value;
                     }
                 }
+                recordLayer("UserNotificationsAllCache", "l2", "miss");
             } catch (RuntimeException ignored) {
+                recordLayer("UserNotificationsAllCache", "l2", "error");
             }
         }
 
         List<Notification> value = notificationRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+        recordLayer("UserNotificationsAllCache", "db", "hit");
         if (redisCache != null) {
             try {
                 redisCache.put(studentId, value);
@@ -75,8 +89,10 @@ public class NotificationService {
     public List<Notification> getUnreadNotifications(Long studentId) {
         List<Notification> cached = localUnreadCache.getIfPresent(studentId);
         if (cached != null) {
+            recordLayer("UserNotificationsUnreadCache", "l1", "hit");
             return cached;
         }
+        recordLayer("UserNotificationsUnreadCache", "l1", "miss");
 
         org.springframework.cache.Cache redisCache = cacheManager.getCache("UserNotificationsUnreadCache");
         if (redisCache != null) {
@@ -86,15 +102,19 @@ public class NotificationService {
                     @SuppressWarnings("unchecked")
                     List<Notification> value = (List<Notification>) wrapper.get();
                     if (value != null) {
+                        recordLayer("UserNotificationsUnreadCache", "l2", "hit");
                         localUnreadCache.put(studentId, value);
                         return value;
                     }
                 }
+                recordLayer("UserNotificationsUnreadCache", "l2", "miss");
             } catch (RuntimeException ignored) {
+                recordLayer("UserNotificationsUnreadCache", "l2", "error");
             }
         }
 
         List<Notification> value = notificationRepository.findUnread(studentId);
+        recordLayer("UserNotificationsUnreadCache", "db", "hit");
         if (redisCache != null) {
             try {
                 redisCache.put(studentId, value);
@@ -145,5 +165,14 @@ public class NotificationService {
         if (unreadCache != null) {
             unreadCache.evict(studentId);
         }
+    }
+
+    private void recordLayer(String cacheName, String layer, String result) {
+        meterRegistry.counter(
+                "cache_layer_access_total",
+                "cache", cacheName,
+                "layer", layer,
+                "result", result
+        ).increment();
     }
 }
