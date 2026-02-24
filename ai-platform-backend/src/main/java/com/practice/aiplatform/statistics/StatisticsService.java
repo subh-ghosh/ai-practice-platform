@@ -3,6 +3,7 @@ package com.practice.aiplatform.statistics;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.practice.aiplatform.practice.Answer;
 import com.practice.aiplatform.practice.AnswerRepository;
 import com.practice.aiplatform.practice.PracticeHistoryDto;
@@ -22,6 +23,7 @@ public class StatisticsService {
 
     private final AnswerRepository answerRepository;
     private final StudentLookupService studentLookupService;
+    private final MeterRegistry meterRegistry;
     private final Cache<String, StatisticsDto> localSummaryCache;
     @Lazy
     @Autowired
@@ -29,9 +31,11 @@ public class StatisticsService {
 
     public StatisticsService(
             AnswerRepository answerRepository,
-            StudentLookupService studentLookupService) {
+            StudentLookupService studentLookupService,
+            MeterRegistry meterRegistry) {
         this.answerRepository = answerRepository;
         this.studentLookupService = studentLookupService;
+        this.meterRegistry = meterRegistry;
         this.localSummaryCache = Caffeine.newBuilder()
                 .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(15))
@@ -42,8 +46,10 @@ public class StatisticsService {
     public StatisticsDto getStatistics(String email) {
         StatisticsDto cached = localSummaryCache.getIfPresent(email);
         if (cached != null) {
+            recordL1("UserStatisticsSummaryLocalCache", "hit");
             return cached;
         }
+        recordL1("UserStatisticsSummaryLocalCache", "miss");
 
         StatisticsDto value = self.getStatisticsCached(email);
         localSummaryCache.put(email, value);
@@ -276,5 +282,14 @@ public class StatisticsService {
         }
 
         return new SmartRecommendationDto(recentTopics, weakTopics);
+    }
+
+    private void recordL1(String cacheName, String result) {
+        meterRegistry.counter(
+                "cache_layer_access_total",
+                "cache", cacheName,
+                "layer", "l1",
+                "result", result
+        ).increment();
     }
 }

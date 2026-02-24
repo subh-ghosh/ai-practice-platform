@@ -2,6 +2,7 @@ package com.practice.aiplatform.gamification;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.practice.aiplatform.user.Student;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -18,13 +19,15 @@ import java.util.List;
 public class BadgeService {
 
     private final UserBadgeRepository userBadgeRepository;
+    private final MeterRegistry meterRegistry;
     private final Cache<Long, List<UserBadge>> localBadgeCache;
     @Lazy
     @Autowired
     private BadgeService self;
 
-    public BadgeService(UserBadgeRepository userBadgeRepository) {
+    public BadgeService(UserBadgeRepository userBadgeRepository, MeterRegistry meterRegistry) {
         this.userBadgeRepository = userBadgeRepository;
+        this.meterRegistry = meterRegistry;
         this.localBadgeCache = Caffeine.newBuilder()
                 .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(30))
@@ -35,8 +38,10 @@ public class BadgeService {
     public List<UserBadge> getUserBadges(Long studentId) {
         List<UserBadge> cached = localBadgeCache.getIfPresent(studentId);
         if (cached != null) {
+            recordL1("UserBadgesLocalCache", "hit");
             return cached;
         }
+        recordL1("UserBadgesLocalCache", "miss");
 
         List<UserBadge> value = self.getUserBadgesCached(studentId);
         localBadgeCache.put(studentId, value);
@@ -79,5 +84,14 @@ public class BadgeService {
         if (student.getStreakDays() >= 7) {
             unlockBadge(student, Badge.STREAK_WARRIOR);
         }
+    }
+
+    private void recordL1(String cacheName, String result) {
+        meterRegistry.counter(
+                "cache_layer_access_total",
+                "cache", cacheName,
+                "layer", "l1",
+                "result", result
+        ).increment();
     }
 }

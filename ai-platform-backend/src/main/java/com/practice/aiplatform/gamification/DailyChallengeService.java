@@ -2,6 +2,7 @@ package com.practice.aiplatform.gamification;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.practice.aiplatform.studyplan.StudyPlan;
 import com.practice.aiplatform.studyplan.StudyPlanRepository;
 import com.practice.aiplatform.user.Student;
@@ -25,6 +26,7 @@ public class DailyChallengeService {
     private final StudyPlanRepository studyPlanRepository;
     private final XpService xpService;
     private final CacheManager cacheManager;
+    private final MeterRegistry meterRegistry;
     private final Cache<Long, List<DailyChallenge>> localChallengesCache;
     @Lazy
     @Autowired
@@ -35,12 +37,14 @@ public class DailyChallengeService {
             StudentRepository studentRepository,
             StudyPlanRepository studyPlanRepository,
             XpService xpService,
-            CacheManager cacheManager) {
+            CacheManager cacheManager,
+            MeterRegistry meterRegistry) {
         this.dailyChallengeRepository = dailyChallengeRepository;
         this.studentRepository = studentRepository;
         this.studyPlanRepository = studyPlanRepository;
         this.xpService = xpService;
         this.cacheManager = cacheManager;
+        this.meterRegistry = meterRegistry;
         this.localChallengesCache = Caffeine.newBuilder()
                 .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(30))
@@ -51,8 +55,10 @@ public class DailyChallengeService {
     public List<DailyChallenge> getTodayChallenges(Long studentId) {
         List<DailyChallenge> cached = localChallengesCache.getIfPresent(studentId);
         if (cached != null) {
+            recordL1("UserDailyChallengesLocalCache", "hit");
             return cached;
         }
+        recordL1("UserDailyChallengesLocalCache", "miss");
 
         List<DailyChallenge> value = self.getTodayChallengesCached(studentId);
         localChallengesCache.put(studentId, value);
@@ -148,5 +154,14 @@ public class DailyChallengeService {
         if (cache != null) {
             cache.evict(studentId);
         }
+    }
+
+    private void recordL1(String cacheName, String result) {
+        meterRegistry.counter(
+                "cache_layer_access_total",
+                "cache", cacheName,
+                "layer", "l1",
+                "result", result
+        ).increment();
     }
 }

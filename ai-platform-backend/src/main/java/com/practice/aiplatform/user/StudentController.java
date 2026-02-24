@@ -2,6 +2,7 @@ package com.practice.aiplatform.user;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import io.micrometer.core.instrument.MeterRegistry;
 import com.practice.aiplatform.notifications.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -41,6 +42,7 @@ public class StudentController {
     private final PasswordEncoder passwordEncoder;
     private final NotificationService notificationService;
     private final StudentAccountService studentAccountService;
+    private final MeterRegistry meterRegistry;
     private final Cache<String, StudentResponseDTO> localProfileCache;
     @Lazy
     @Autowired
@@ -50,11 +52,13 @@ public class StudentController {
             StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
             NotificationService notificationService,
-            StudentAccountService studentAccountService) {
+            StudentAccountService studentAccountService,
+            MeterRegistry meterRegistry) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.notificationService = notificationService;
         this.studentAccountService = studentAccountService;
+        this.meterRegistry = meterRegistry;
         this.localProfileCache = Caffeine.newBuilder()
                 .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(15))
@@ -71,8 +75,10 @@ public class StudentController {
         String email = principal.getName();
         StudentResponseDTO cached = localProfileCache.getIfPresent(email);
         if (cached != null) {
+            recordL1("UserProfileLocalCache", "hit");
             return ResponseEntity.ok(cached);
         }
+        recordL1("UserProfileLocalCache", "miss");
 
         StudentResponseDTO value = self.getProfileCached(email);
         localProfileCache.put(email, value);
@@ -177,5 +183,14 @@ public class StudentController {
         }
 
         return dtos;
+    }
+
+    private void recordL1(String cacheName, String result) {
+        meterRegistry.counter(
+                "cache_layer_access_total",
+                "cache", cacheName,
+                "layer", "l1",
+                "result", result
+        ).increment();
     }
 }
