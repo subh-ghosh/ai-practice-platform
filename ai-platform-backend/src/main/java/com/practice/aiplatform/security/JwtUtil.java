@@ -56,6 +56,19 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Long extractUserId(String token) {
+        return extractClaim(token, claims -> {
+            Object raw = claims.get("userId");
+            if (raw instanceof Number number) {
+                return number.longValue();
+            }
+            if (raw instanceof String str) {
+                return Long.parseLong(str);
+            }
+            throw new IllegalArgumentException("userId claim missing or invalid");
+        });
+    }
+
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }

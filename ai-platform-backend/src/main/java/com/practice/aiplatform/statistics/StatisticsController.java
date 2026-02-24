@@ -2,7 +2,7 @@ package com.practice.aiplatform.statistics;
 
 import com.practice.aiplatform.gamification.DailyXpHistory;
 import com.practice.aiplatform.gamification.XpService;
-import com.practice.aiplatform.user.StudentLookupService;
+import com.practice.aiplatform.security.CurrentUserResolver;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,15 +17,15 @@ import java.util.List;
 public class StatisticsController {
 
     private final StatisticsService statisticsService;
-    private final StudentLookupService studentLookupService;
+    private final CurrentUserResolver currentUserResolver;
     private final XpService xpService;
 
     public StatisticsController(
             StatisticsService statisticsService,
-            StudentLookupService studentLookupService,
+            CurrentUserResolver currentUserResolver,
             XpService xpService) {
         this.statisticsService = statisticsService;
-        this.studentLookupService = studentLookupService;
+        this.currentUserResolver = currentUserResolver;
         this.xpService = xpService;
     }
 
@@ -45,8 +45,7 @@ public class StatisticsController {
 
     @GetMapping("/xp-history")
     public ResponseEntity<List<DailyXpDto>> getXpHistory(Principal principal) {
-        String email = principal.getName();
-        Long studentId = studentLookupService.getRequiredStudentId(email);
+        Long studentId = currentUserResolver.getRequiredUserId(principal);
         List<DailyXpHistory> history = xpService.getXpHistory(studentId);
 
         List<DailyXpDto> response = new ArrayList<>();

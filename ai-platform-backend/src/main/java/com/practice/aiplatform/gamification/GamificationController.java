@@ -1,7 +1,6 @@
 package com.practice.aiplatform.gamification;
 
-import com.practice.aiplatform.user.Student;
-import com.practice.aiplatform.user.StudentRepository;
+import com.practice.aiplatform.security.CurrentUserResolver;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,15 +13,15 @@ import java.util.List;
 public class GamificationController {
 
         private final BadgeService badgeService;
-        private final StudentRepository studentRepository;
+        private final CurrentUserResolver currentUserResolver;
         private final DailyChallengeService dailyChallengeService;
 
         public GamificationController(
                 BadgeService badgeService,
-                StudentRepository studentRepository,
+                CurrentUserResolver currentUserResolver,
                 DailyChallengeService dailyChallengeService) {
                 this.badgeService = badgeService;
-                this.studentRepository = studentRepository;
+                this.currentUserResolver = currentUserResolver;
                 this.dailyChallengeService = dailyChallengeService;
         }
 
@@ -47,12 +46,8 @@ public class GamificationController {
 
         @GetMapping("/badges")
         public ResponseEntity<List<BadgeResponse>> getMyBadges(Principal principal) {
-                String email = principal.getName();
-
-                Student student = studentRepository.findByEmail(email)
-                        .orElseThrow(() -> new RuntimeException("Student not found"));
-
-                List<UserBadge> earnedBadges = badgeService.getUserBadges(student.getId());
+                Long studentId = currentUserResolver.getRequiredUserId(principal);
+                List<UserBadge> earnedBadges = badgeService.getUserBadges(studentId);
 
                 List<String> earnedCodes = new ArrayList<>();
                 for (UserBadge userBadge : earnedBadges) {
@@ -79,12 +74,8 @@ public class GamificationController {
 
         @GetMapping("/daily-challenges")
         public ResponseEntity<List<ChallengeResponse>> getDailyChallenges(Principal principal) {
-                String email = principal.getName();
-
-                Student student = studentRepository.findByEmail(email)
-                        .orElseThrow(() -> new RuntimeException("Student not found"));
-
-                List<DailyChallenge> challenges = dailyChallengeService.getTodayChallenges(student.getId());
+                Long studentId = currentUserResolver.getRequiredUserId(principal);
+                List<DailyChallenge> challenges = dailyChallengeService.getTodayChallenges(studentId);
 
                 List<ChallengeResponse> response = new ArrayList<>();
                 for (DailyChallenge challenge : challenges) {

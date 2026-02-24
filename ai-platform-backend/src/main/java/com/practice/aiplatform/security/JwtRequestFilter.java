@@ -36,11 +36,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String authorizationHeader = request.getHeader("Authorization");
         String jwt = null;
         String username = null;
+        Long userId = null;
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
                 username = jwtUtil.extractUsername(jwt);
+                userId = jwtUtil.extractUserId(jwt);
             } catch (Exception ex) {
                 log.debug("JWT parse failed for path {}: {}", request.getRequestURI(), ex.getMessage());
             }
@@ -50,9 +52,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 boolean isValid = jwtUtil.validateToken(jwt, username);
                 if (isValid) {
+                    AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(userId, username);
                     UsernamePasswordAuthenticationToken authToken =
                             new UsernamePasswordAuthenticationToken(
-                                    username,
+                                    principal,
                                     null,
                                     List.of(new SimpleGrantedAuthority("ROLE_USER"))
                             );
