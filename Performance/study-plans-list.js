@@ -5,7 +5,7 @@ import { options, BASE_URL, authHeaders, assert200 } from "./common.js";
 export { options };
 
 export default function () {
-  const res = http.get(BASE_URL + "/api/study-plans", { headers: authHeaders });
+  const res = http.get(BASE_URL + "/api/study-plans?summary=true", { headers: authHeaders });
   assert200(res, "study-plans-list");
   sleep(1);
 }

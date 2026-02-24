@@ -1,15 +1,19 @@
 package com.practice.aiplatform.gamification;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.practice.aiplatform.studyplan.StudyPlan;
 import com.practice.aiplatform.studyplan.StudyPlanRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
-import org.springframework.cache.Cache;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,6 +25,10 @@ public class DailyChallengeService {
     private final StudyPlanRepository studyPlanRepository;
     private final XpService xpService;
     private final CacheManager cacheManager;
+    private final Cache<Long, List<DailyChallenge>> localChallengesCache;
+    @Lazy
+    @Autowired
+    private DailyChallengeService self;
 
     public DailyChallengeService(
             DailyChallengeRepository dailyChallengeRepository,
@@ -33,10 +41,25 @@ public class DailyChallengeService {
         this.studyPlanRepository = studyPlanRepository;
         this.xpService = xpService;
         this.cacheManager = cacheManager;
+        this.localChallengesCache = Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofSeconds(30))
+                .maximumSize(2000)
+                .build();
+    }
+
+    public List<DailyChallenge> getTodayChallenges(Long studentId) {
+        List<DailyChallenge> cached = localChallengesCache.getIfPresent(studentId);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<DailyChallenge> value = self.getTodayChallengesCached(studentId);
+        localChallengesCache.put(studentId, value);
+        return value;
     }
 
     @Cacheable(value = "UserDailyChallengesCache", key = "#studentId", sync = true)
-    public List<DailyChallenge> getTodayChallenges(Long studentId) {
+    public List<DailyChallenge> getTodayChallengesCached(Long studentId) {
         LocalDate today = LocalDate.now();
         List<DailyChallenge> challenges = dailyChallengeRepository.findByStudentIdAndDate(studentId, today);
 
@@ -119,7 +142,8 @@ public class DailyChallengeService {
     }
 
     private void evictDailyChallengeCache(Long studentId) {
-        Cache cache = cacheManager.getCache("UserDailyChallengesCache");
+        localChallengesCache.invalidate(studentId);
+        org.springframework.cache.Cache cache = cacheManager.getCache("UserDailyChallengesCache");
         if (cache != null) {
             cache.evict(studentId);
         }
