@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -35,6 +37,7 @@ public class StudyPlanService {
     private final StudentRepository studentRepository;
     private final ObjectMapper objectMapper;
     private final CacheManager cacheManager;
+    private final MeterRegistry meterRegistry;
     @Lazy
     @Autowired
     private StudyPlanService self;
@@ -47,7 +50,8 @@ public class StudyPlanService {
             QuizQuestionRepository quizQuestionRepository,
             StudentRepository studentRepository,
             ObjectMapper objectMapper,
-            CacheManager cacheManager) {
+            CacheManager cacheManager,
+            MeterRegistry meterRegistry) {
         this.aiService = aiService;
         this.youTubeService = youTubeService;
         this.studyPlanRepository = studyPlanRepository;
@@ -56,6 +60,7 @@ public class StudyPlanService {
         this.studentRepository = studentRepository;
         this.objectMapper = objectMapper;
         this.cacheManager = cacheManager;
+        this.meterRegistry = meterRegistry;
     }
 
     @Caching(evict = {
@@ -68,25 +73,35 @@ public class StudyPlanService {
             @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail")
     })
     public StudyPlan generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        String status = "success";
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        enforceDailyLimitForFreeUsers(student);
+        try {
+            enforceDailyLimitForFreeUsers(student);
 
-        int maxVideos = Math.min(durationDays * 3, 25);
-        List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial", maxVideos);
+            int maxVideos = Math.min(durationDays * 3, 25);
+            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial", maxVideos);
 
-        if (videos.isEmpty()) {
-            throw new RuntimeException("No videos found for the topic: " + topic);
+            if (videos.isEmpty()) {
+                throw new RuntimeException("No videos found for the topic: " + topic);
+            }
+
+            String prompt = createPrompt(topic, difficulty, durationDays, videos);
+            String aiResponse = aiService.generateStudyPlanContent(prompt);
+
+            StudyPlan plan = parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
+            generateQuizQuestionsForPlan(plan, topic, difficulty);
+
+            return plan;
+        } catch (RuntimeException ex) {
+            status = "error";
+            throw ex;
+        } finally {
+            meterRegistry.counter("study_plan.generate.count", "status", status).increment();
+            sample.stop(meterRegistry.timer("study_plan.generate.duration", "status", status));
         }
-
-        String prompt = createPrompt(topic, difficulty, durationDays, videos);
-        String aiResponse = aiService.generateStudyPlanContent(prompt);
-
-        StudyPlan plan = parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
-        generateQuizQuestionsForPlan(plan, topic, difficulty);
-
-        return plan;
     }
 
     private void enforceDailyLimitForFreeUsers(Student student) {
@@ -649,20 +664,23 @@ public class StudyPlanService {
             @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail")
     })
     public StudyPlan generateStudyPlanFromSyllabus(String userEmail, MultipartFile file, int durationDays) {
+        Timer.Sample sample = Timer.start(meterRegistry);
+        String status = "success";
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        enforceDailyLimitForFreeUsers(student);
-
-        String mimeType = file.getContentType();
-        byte[] fileData;
         try {
-            fileData = file.getBytes();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to read uploaded file.", e);
-        }
+            enforceDailyLimitForFreeUsers(student);
 
-        String preAnalysisPrompt = """
+            String mimeType = file.getContentType();
+            byte[] fileData;
+            try {
+                fileData = file.getBytes();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to read uploaded file.", e);
+            }
+
+            String preAnalysisPrompt = """
                 Analyze this syllabus/document.
                 Return ONLY valid JSON:
                 {
@@ -671,25 +689,25 @@ public class StudyPlanService {
                 }
                 """;
 
-        String preAnalysisResponse = aiService.generateStudyPlanContent(preAnalysisPrompt, mimeType, fileData);
-        JsonNode preNode = parseJson(preAnalysisResponse);
+            String preAnalysisResponse = aiService.generateStudyPlanContent(preAnalysisPrompt, mimeType, fileData);
+            JsonNode preNode = parseJson(preAnalysisResponse);
 
-        String courseTitle = preNode.path("title").asText("Custom Course");
-        String playlistQuery = preNode.path("playlistQuery").asText(courseTitle);
+            String courseTitle = preNode.path("title").asText("Custom Course");
+            String playlistQuery = preNode.path("playlistQuery").asText(courseTitle);
 
-        List<Map<String, String>> playlistVideos = new ArrayList<>();
-        List<Map<String, String>> foundPlaylists = youTubeService.searchPlaylists(playlistQuery, 2);
-        if (!foundPlaylists.isEmpty()) {
-            playlistVideos = youTubeService.getPlaylistItems(foundPlaylists.get(0).get("playlistId"), 50);
-        }
+            List<Map<String, String>> playlistVideos = new ArrayList<>();
+            List<Map<String, String>> foundPlaylists = youTubeService.searchPlaylists(playlistQuery, 2);
+            if (!foundPlaylists.isEmpty()) {
+                playlistVideos = youTubeService.getPlaylistItems(foundPlaylists.get(0).get("playlistId"), 50);
+            }
 
-        StringBuilder videoList = new StringBuilder();
-        for (int i = 0; i < playlistVideos.size(); i++) {
-            Map<String, String> v = playlistVideos.get(i);
-            videoList.append(i + 1).append(". ").append(v.get("title")).append(" (videoId: ").append(v.get("videoId")).append(")\n");
-        }
+            StringBuilder videoList = new StringBuilder();
+            for (int i = 0; i < playlistVideos.size(); i++) {
+                Map<String, String> v = playlistVideos.get(i);
+                videoList.append(i + 1).append(". ").append(v.get("title")).append(" (videoId: ").append(v.get("videoId")).append(")\n");
+            }
 
-        String analysisPrompt = String.format(
+            String analysisPrompt = String.format(
                 """
                 Analyze this syllabus and create a %d-day complete study plan.
 
@@ -717,38 +735,38 @@ public class StudyPlanService {
                 }
                 """,
                 durationDays, videoList.toString(), courseTitle
-        );
+            );
 
-        String analysisResponse = aiService.generateStudyPlanContent(analysisPrompt, mimeType, fileData);
-        JsonNode root = parseJson(analysisResponse);
+            String analysisResponse = aiService.generateStudyPlanContent(analysisPrompt, mimeType, fileData);
+            JsonNode root = parseJson(analysisResponse);
 
-        String title = root.path("title").asText(courseTitle);
-        String description = root.path("description").asText("Generated from uploaded syllabus");
-        String difficulty = root.path("difficulty").asText("Intermediate");
-        JsonNode daysNode = root.path("days");
+            String title = root.path("title").asText(courseTitle);
+            String description = root.path("description").asText("Generated from uploaded syllabus");
+            String difficulty = root.path("difficulty").asText("Intermediate");
+            JsonNode daysNode = root.path("days");
 
-        if (!daysNode.isArray() || daysNode.isEmpty()) {
-            throw new RuntimeException("Could not extract a valid day-by-day schedule from the syllabus.");
-        }
-
-        Map<String, Map<String, String>> playlistVideoMap = new HashMap<>();
-        for (Map<String, String> v : playlistVideos) {
-            playlistVideoMap.put(v.get("videoId"), v);
-        }
-
-        Set<String> usedVideoIds = new HashSet<>();
-        List<StudyPlanItem> allItems = new ArrayList<>();
-
-        int itemOrder = 1;
-        int videoItemsAdded = 0;
-
-        for (JsonNode day : daysNode) {
-            int dayNumber = day.path("dayNumber").asInt();
-            JsonNode lessons = day.path("lessons");
-
-            if (!lessons.isArray()) {
-                continue;
+            if (!daysNode.isArray() || daysNode.isEmpty()) {
+                throw new RuntimeException("Could not extract a valid day-by-day schedule from the syllabus.");
             }
+
+            Map<String, Map<String, String>> playlistVideoMap = new HashMap<>();
+            for (Map<String, String> v : playlistVideos) {
+                playlistVideoMap.put(v.get("videoId"), v);
+            }
+
+            Set<String> usedVideoIds = new HashSet<>();
+            List<StudyPlanItem> allItems = new ArrayList<>();
+
+            int itemOrder = 1;
+            int videoItemsAdded = 0;
+
+            for (JsonNode day : daysNode) {
+                int dayNumber = day.path("dayNumber").asInt();
+                JsonNode lessons = day.path("lessons");
+
+                if (!lessons.isArray()) {
+                    continue;
+                }
 
             for (JsonNode lesson : lessons) {
                 String lessonTitle = normalizeAiField(lesson.path("title").asText(""));
@@ -808,12 +826,12 @@ public class StudyPlanService {
                 }
             }
 
-            StudyPlanItem practice = new StudyPlanItem();
-            practice.setItemType("PRACTICE");
-            practice.setDayNumber(dayNumber);
-            practice.setOrderIndex(itemOrder++);
-            practice.setTitle("Day " + dayNumber + " Checkpoint");
-            practice.setPracticeSubject(title);
+                StudyPlanItem practice = new StudyPlanItem();
+                practice.setItemType("PRACTICE");
+                practice.setDayNumber(dayNumber);
+                practice.setOrderIndex(itemOrder++);
+                practice.setTitle("Day " + dayNumber + " Checkpoint");
+                practice.setPracticeSubject(title);
 
             String lastLessonTitle = "General Review";
             if (lessons.size() > 0) {
@@ -825,32 +843,39 @@ public class StudyPlanService {
             practice.setXpReward(PRACTICE_XP);
             practice.setDescription("Test your knowledge on today's topics.");
 
-            allItems.add(practice);
+                allItems.add(practice);
+            }
+
+            if (videoItemsAdded == 0) {
+                throw new RuntimeException(
+                        "Could not map syllabus topics to YouTube videos. Try a different syllabus file or retry.");
+            }
+
+            StudyPlan plan = new StudyPlan();
+            plan.setTitle(title);
+            plan.setDescription(description);
+            plan.setTopic(title);
+            plan.setDifficulty(difficulty);
+            plan.setDurationDays(durationDays);
+            plan.setStudent(student);
+            plan.setCreatedAt(LocalDateTime.now());
+            plan.setItems(allItems);
+
+            for (StudyPlanItem item : allItems) {
+                item.setStudyPlan(plan);
+            }
+
+            StudyPlan savedPlan = studyPlanRepository.save(plan);
+            generateQuizQuestionsForPlan(savedPlan, title, difficulty);
+
+            return savedPlan;
+        } catch (RuntimeException ex) {
+            status = "error";
+            throw ex;
+        } finally {
+            meterRegistry.counter("study_plan.generate_from_syllabus.count", "status", status).increment();
+            sample.stop(meterRegistry.timer("study_plan.generate_from_syllabus.duration", "status", status));
         }
-
-        if (videoItemsAdded == 0) {
-            throw new RuntimeException(
-                    "Could not map syllabus topics to YouTube videos. Try a different syllabus file or retry.");
-        }
-
-        StudyPlan plan = new StudyPlan();
-        plan.setTitle(title);
-        plan.setDescription(description);
-        plan.setTopic(title);
-        plan.setDifficulty(difficulty);
-        plan.setDurationDays(durationDays);
-        plan.setStudent(student);
-        plan.setCreatedAt(LocalDateTime.now());
-        plan.setItems(allItems);
-
-        for (StudyPlanItem item : allItems) {
-            item.setStudyPlan(plan);
-        }
-
-        StudyPlan savedPlan = studyPlanRepository.save(plan);
-        generateQuizQuestionsForPlan(savedPlan, title, difficulty);
-
-        return savedPlan;
     }
 
     private JsonNode parseJson(String jsonResponse) {

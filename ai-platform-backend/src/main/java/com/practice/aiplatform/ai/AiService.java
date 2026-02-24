@@ -3,6 +3,8 @@ package com.practice.aiplatform.ai;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -21,16 +23,19 @@ public class AiService {
         private final String apiKey;
         private final String practiceModel;
         private final String studyPlanModel;
+        private final MeterRegistry meterRegistry;
 
         public AiService(
                 @Qualifier("aiWebClient") WebClient webClient,
                 @Value("${groq.api.key}") String apiKey,
                 @Value("${ai.model.practice:llama-3.1-8b-instant}") String practiceModel,
-                @Value("${ai.model.study-plan:llama-3.3-70b-versatile}") String studyPlanModel) {
+                @Value("${ai.model.study-plan:llama-3.3-70b-versatile}") String studyPlanModel,
+                MeterRegistry meterRegistry) {
                 this.webClient = webClient;
                 this.apiKey = apiKey;
                 this.practiceModel = practiceModel;
                 this.studyPlanModel = studyPlanModel;
+                this.meterRegistry = meterRegistry;
         }
 
         public String generateRawContent(String prompt) {
@@ -38,12 +43,12 @@ public class AiService {
         }
 
         public String generatePracticeContent(String prompt) {
-                AiResponse response = callAiApi(prompt, practiceModel);
+                AiResponse response = callAiApi(prompt, practiceModel, "practice");
                 return extractTextFromResponse(response);
         }
 
         public String generateStudyPlanContent(String prompt) {
-                AiResponse response = callAiApi(prompt, studyPlanModel);
+                AiResponse response = callAiApi(prompt, studyPlanModel, "study_plan");
                 return extractTextFromResponse(response);
         }
 
@@ -83,7 +88,7 @@ public class AiService {
                                 + "Return only question text.",
                         contextPrompt, difficulty, subject, topic);
 
-                AiResponse response = callAiApi(prompt, practiceModel);
+                AiResponse response = callAiApi(prompt, practiceModel, "question");
                 return extractTextFromResponse(response);
         }
 
@@ -103,7 +108,7 @@ public class AiService {
                                 + "If INCORRECT/CLOSE add [HINT] at end with a helpful hint.",
                         subject, topic, difficulty, questionText, answerText);
 
-                AiResponse response = callAiApi(prompt, practiceModel);
+                AiResponse response = callAiApi(prompt, practiceModel, "evaluate");
                 return extractTextFromResponse(response);
         }
 
@@ -119,7 +124,7 @@ public class AiService {
                                 + "Question: \"%s\"",
                         subject, topic, difficulty, questionText);
 
-                AiResponse response = callAiApi(prompt, practiceModel);
+                AiResponse response = callAiApi(prompt, practiceModel, "hint");
                 return extractTextFromResponse(response);
         }
 
@@ -135,7 +140,7 @@ public class AiService {
                                 + "Question: \"%s\"",
                         subject, topic, difficulty, questionText);
 
-                AiResponse response = callAiApi(prompt, practiceModel);
+                AiResponse response = callAiApi(prompt, practiceModel, "answer");
                 return extractTextFromResponse(response);
         }
 
@@ -159,7 +164,7 @@ public class AiService {
                         throw new RuntimeException("Only text and PDF files are supported.");
                 }
 
-                AiResponse response = callAiApi(finalPrompt, studyPlanModel);
+                AiResponse response = callAiApi(finalPrompt, studyPlanModel, "study_plan_file");
                 return extractTextFromResponse(response);
         }
 
@@ -172,26 +177,47 @@ public class AiService {
                 }
         }
 
-        private AiResponse callAiApi(String prompt, String model) {
+        private AiResponse callAiApi(String prompt, String model, String purpose) {
                 Map<String, Object> requestBody = Map.of(
                         "model", model,
                         "messages", List.of(Map.of("role", "user", "content", prompt)),
                         "temperature", 0.2
                 );
 
-                return webClient.post()
-                        .uri("/v1/chat/completions")
-                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                        .bodyValue(requestBody)
-                        .retrieve()
-                        .onStatus(
-                                status -> status.is4xxClientError() || status.is5xxServerError(),
-                                clientResponse -> clientResponse.bodyToMono(String.class).flatMap(errorBody ->
-                                        reactor.core.publisher.Mono.error(new RuntimeException("AI API Error: " + errorBody))
+                Timer.Sample sample = Timer.start(meterRegistry);
+                String status = "success";
+                try {
+                        return webClient.post()
+                                .uri("/v1/chat/completions")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
+                                .bodyValue(requestBody)
+                                .retrieve()
+                                .onStatus(
+                                        s -> s.is4xxClientError() || s.is5xxServerError(),
+                                        clientResponse -> clientResponse.bodyToMono(String.class).flatMap(errorBody ->
+                                                reactor.core.publisher.Mono.error(new RuntimeException("AI API Error: " + errorBody))
+                                        )
                                 )
-                        )
-                        .bodyToMono(AiResponse.class)
-                        .block();
+                                .bodyToMono(AiResponse.class)
+                                .block();
+                } catch (RuntimeException ex) {
+                        status = "error";
+                        throw ex;
+                } finally {
+                        meterRegistry.counter(
+                                        "ai.call.count",
+                                        "model", model,
+                                        "purpose", purpose,
+                                        "status", status
+                                )
+                                .increment();
+                        sample.stop(meterRegistry.timer(
+                                "ai.call.duration",
+                                "model", model,
+                                "purpose", purpose,
+                                "status", status
+                        ));
+                }
         }
 
         private String extractTextFromResponse(AiResponse response) {
