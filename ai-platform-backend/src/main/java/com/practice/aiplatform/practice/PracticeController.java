@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 record GetAnswerRequest(Long questionId) {
 }
@@ -157,12 +156,11 @@ public class PracticeController {
 
     @GetMapping("/history")
     public ResponseEntity<PracticeHistoryDto> getHistory(Principal principal) {
-        Optional<Student> studentOptional = studentRepository.findByEmail(principal.getName());
-        if (studentOptional.isEmpty()) {
+        try {
+            return ResponseEntity.ok(self.getHistoryCached(principal.getName()));
+        } catch (RuntimeException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
-
-        return ResponseEntity.ok(self.getHistoryCached(principal.getName()));
     }
 
     @Cacheable(value = "UserPracticeHistoryCache", key = "#email", sync = true)

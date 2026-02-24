@@ -2,8 +2,7 @@ package com.practice.aiplatform.statistics;
 
 import com.practice.aiplatform.gamification.DailyXpHistory;
 import com.practice.aiplatform.gamification.XpService;
-import com.practice.aiplatform.user.Student;
-import com.practice.aiplatform.user.StudentRepository;
+import com.practice.aiplatform.user.StudentLookupService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,15 +17,15 @@ import java.util.List;
 public class StatisticsController {
 
     private final StatisticsService statisticsService;
-    private final StudentRepository studentRepository;
+    private final StudentLookupService studentLookupService;
     private final XpService xpService;
 
     public StatisticsController(
             StatisticsService statisticsService,
-            StudentRepository studentRepository,
+            StudentLookupService studentLookupService,
             XpService xpService) {
         this.statisticsService = statisticsService;
-        this.studentRepository = studentRepository;
+        this.studentLookupService = studentLookupService;
         this.xpService = xpService;
     }
 
@@ -47,11 +46,8 @@ public class StatisticsController {
     @GetMapping("/xp-history")
     public ResponseEntity<List<DailyXpDto>> getXpHistory(Principal principal) {
         String email = principal.getName();
-
-        Student student = studentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        List<DailyXpHistory> history = xpService.getXpHistory(student.getId());
+        Long studentId = studentLookupService.getRequiredStudentId(email);
+        List<DailyXpHistory> history = xpService.getXpHistory(studentId);
 
         List<DailyXpDto> response = new ArrayList<>();
         for (DailyXpHistory item : history) {

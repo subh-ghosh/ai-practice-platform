@@ -58,7 +58,8 @@ public class CacheConfig {
                 .withCacheConfiguration("UserCoursesCache", buildConfig(Duration.ofMinutes(15)))
                 .withCacheConfiguration("UserProfileCache", buildConfig(Duration.ofMinutes(10)))
                 .withCacheConfiguration("LeaderboardCache", buildConfig(Duration.ofMinutes(2)))
-                .withCacheConfiguration("UserUsageRemainingCache", buildConfig(Duration.ofSeconds(30)));
+                .withCacheConfiguration("UserUsageRemainingCache", buildConfig(Duration.ofSeconds(30)))
+                .withCacheConfiguration("UserStudentIdCache", buildConfig(Duration.ofMinutes(10)));
     }
 
     private RedisCacheConfiguration buildConfig(Duration ttl) {

@@ -7,8 +7,7 @@ import com.practice.aiplatform.practice.Answer;
 import com.practice.aiplatform.practice.AnswerRepository;
 import com.practice.aiplatform.practice.PracticeHistoryDto;
 import com.practice.aiplatform.practice.Question;
-import com.practice.aiplatform.user.Student;
-import com.practice.aiplatform.user.StudentRepository;
+import com.practice.aiplatform.user.StudentLookupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -22,15 +21,17 @@ import java.util.*;
 public class StatisticsService {
 
     private final AnswerRepository answerRepository;
-    private final StudentRepository studentRepository;
+    private final StudentLookupService studentLookupService;
     private final Cache<String, StatisticsDto> localSummaryCache;
     @Lazy
     @Autowired
     private StatisticsService self;
 
-    public StatisticsService(AnswerRepository answerRepository, StudentRepository studentRepository) {
+    public StatisticsService(
+            AnswerRepository answerRepository,
+            StudentLookupService studentLookupService) {
         this.answerRepository = answerRepository;
-        this.studentRepository = studentRepository;
+        this.studentLookupService = studentLookupService;
         this.localSummaryCache = Caffeine.newBuilder()
                 .recordStats()
                 .expireAfterWrite(Duration.ofSeconds(15))
@@ -51,10 +52,8 @@ public class StatisticsService {
 
     @Cacheable(value = "UserStatisticsSummaryCache", key = "#email", sync = true)
     public StatisticsDto getStatisticsCached(String email) {
-        Student student = studentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        List<Answer> allAnswers = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
+        Long studentId = studentLookupService.getRequiredStudentId(email);
+        List<Answer> allAnswers = answerRepository.findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(studentId);
 
         long correctCount = 0;
         long revealedCount = 0;
@@ -145,11 +144,9 @@ public class StatisticsService {
 
     @Cacheable(value = "UserStatisticsTimeseriesCache", key = "#email", sync = true)
     public List<DailyStatDto> getTimeSeriesStats(String email) {
-        Student student = studentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        List<Answer> gradedAnswers = answerRepository.findAllByStudentAndEvaluationStatusInOrderBySubmittedAtAsc(
-                student,
+        Long studentId = studentLookupService.getRequiredStudentId(email);
+        List<Answer> gradedAnswers = answerRepository.findAllWithQuestionByStudentIdAndEvaluationStatusInOrderBySubmittedAtAsc(
+                studentId,
                 List.of("CORRECT", "INCORRECT", "CLOSE")
         );
 
@@ -215,10 +212,8 @@ public class StatisticsService {
 
     @Cacheable(value = "UserStatisticsRecommendationsCache", key = "#email", sync = true)
     public SmartRecommendationDto getSmartRecommendations(String email) {
-        Student student = studentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-
-        List<Answer> allAnswers = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
+        Long studentId = studentLookupService.getRequiredStudentId(email);
+        List<Answer> allAnswers = answerRepository.findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(studentId);
 
         List<String> recentTopics = new ArrayList<>();
         Set<String> seenRecentTopics = new HashSet<>();
