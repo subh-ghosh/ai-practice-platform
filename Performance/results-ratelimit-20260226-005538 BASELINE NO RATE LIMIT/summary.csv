@@ -1,0 +1,5 @@
+﻿"Endpoint","Avg","Min","Med","Max","P90","P95","Failed","ChecksSucceeded","Reqs","AvgMs","P95Ms"
+"rate-limit-ai-generate-question","289.37ms","76.2ms","211.55ms","1.13s","576.02ms","622.56ms","0.01%  1 out of 6114","99.98% 6113 out of 6114","6114   20.354227/s","289.37","622.56"
+"rate-limit-ai-get-answer","131.54ms","74.31ms","114.05ms","903.92ms","190.83ms","207.75ms","0.00%  0 out of 9031","100.00% 9030 out of 9030","9031   29.99206/s","131.54","207.75"
+"rate-limit-ai-get-hint","155.43ms","74.16ms","116.6ms","999.83ms","275.9ms","380.61ms","0.00%  0 out of 8426","100.00% 8425 out of 8425","8426   28.036291/s","155.43","380.61"
+"rate-limit-study-plans-generate","448.59ms","144.46ms","257.3ms","8.95s","532.08ms","757.04ms","96.41% 915 out of 949","3.58%  34 out of 949","949    5.175039/s","448.59","757.04"
