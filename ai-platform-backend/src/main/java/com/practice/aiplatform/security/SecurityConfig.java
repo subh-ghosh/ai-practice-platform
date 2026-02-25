@@ -22,9 +22,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtRequestFilter jwtRequestFilter;
+    private final RateLimitMetricsFilter rateLimitMetricsFilter;
 
-    public SecurityConfig(JwtRequestFilter jwtRequestFilter) {
+    public SecurityConfig(JwtRequestFilter jwtRequestFilter, RateLimitMetricsFilter rateLimitMetricsFilter) {
         this.jwtRequestFilter = jwtRequestFilter;
+        this.rateLimitMetricsFilter = rateLimitMetricsFilter;
     }
 
     @Bean
@@ -66,7 +68,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitMetricsFilter, JwtRequestFilter.class);
 
         return http.build();
     }
