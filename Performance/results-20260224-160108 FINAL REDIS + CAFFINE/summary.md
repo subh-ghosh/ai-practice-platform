@@ -1,6 +1,6 @@
-# K6 Results Summary
+﻿# K6 Results Summary
 
-Results folder: results-20260224-160108
+Results folder: results-20260224-160108 FINAL REDIS + CAFFINE
 
 | Endpoint | Avg | P95 | P90 | Med | Max | Failed | Checks Succeeded | Reqs |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
