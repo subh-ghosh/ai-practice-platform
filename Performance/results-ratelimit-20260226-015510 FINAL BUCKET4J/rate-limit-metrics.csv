@@ -1,0 +1,2 @@
+run_label,window,allowed_total,blocked_total,allowed_ai_generate_question,allowed_ai_get_hint,allowed_ai_get_answer,allowed_study_plan_generate,blocked_ai_generate_question,blocked_ai_get_hint,blocked_ai_get_answer,blocked_study_plan_generate
+after_bucket4j,15m,550,14687,1.07,136,259,0,0,8155,0,3748
