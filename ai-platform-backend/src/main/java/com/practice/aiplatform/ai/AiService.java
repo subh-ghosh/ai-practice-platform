@@ -24,13 +24,16 @@ import java.util.Map;
 
 @Service
 public class AiService {
+        public static final String PRACTICE_UNAVAILABLE_CODE = "AI_PRACTICE_UNAVAILABLE";
+        public static final String STUDY_PLAN_UNAVAILABLE_CODE = "STUDY_PLAN_AI_UNAVAILABLE";
 
         private final WebClient webClient;
         private final String apiKey;
         private final String practiceModel;
         private final String studyPlanModel;
         private final MeterRegistry meterRegistry;
-        private final Duration aiRequestTimeout;
+        private final Duration practiceRequestTimeout;
+        private final Duration studyPlanRequestTimeout;
         @Lazy
         @Autowired
         private AiService self;
@@ -40,14 +43,16 @@ public class AiService {
                 @Value("${groq.api.key}") String apiKey,
                 @Value("${ai.model.practice:llama-3.1-8b-instant}") String practiceModel,
                 @Value("${ai.model.study-plan:llama-3.3-70b-versatile}") String studyPlanModel,
-                @Value("${ai.request.timeout-seconds:20}") long aiRequestTimeoutSeconds,
+                @Value("${ai.request.timeout.practice-seconds:8}") long practiceTimeoutSeconds,
+                @Value("${ai.request.timeout.study-plan-seconds:6}") long studyPlanTimeoutSeconds,
                 MeterRegistry meterRegistry) {
                 this.webClient = webClient;
                 this.apiKey = apiKey;
                 this.practiceModel = practiceModel;
                 this.studyPlanModel = studyPlanModel;
                 this.meterRegistry = meterRegistry;
-                this.aiRequestTimeout = Duration.ofSeconds(aiRequestTimeoutSeconds);
+                this.practiceRequestTimeout = Duration.ofSeconds(practiceTimeoutSeconds);
+                this.studyPlanRequestTimeout = Duration.ofSeconds(studyPlanTimeoutSeconds);
         }
 
         public String generateRawContent(String prompt) {
@@ -55,12 +60,12 @@ public class AiService {
         }
 
         public String generatePracticeContent(String prompt) {
-                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "practice");
+                AiResponse response = self.executePracticeCompletion(prompt, practiceModel, "practice");
                 return extractTextFromResponse(response);
         }
 
         public String generateStudyPlanContent(String prompt) {
-                AiResponse response = self.executeChatCompletion(prompt, studyPlanModel, "study_plan");
+                AiResponse response = self.executeStudyPlanCompletion(prompt, studyPlanModel, "study_plan");
                 return extractTextFromResponse(response);
         }
 
@@ -100,7 +105,7 @@ public class AiService {
                                 + "Return only question text.",
                         contextPrompt, difficulty, subject, topic);
 
-                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "question");
+                AiResponse response = self.executePracticeCompletion(prompt, practiceModel, "question");
                 return extractTextFromResponse(response);
         }
 
@@ -120,7 +125,7 @@ public class AiService {
                                 + "If INCORRECT/CLOSE add [HINT] at end with a helpful hint.",
                         subject, topic, difficulty, questionText, answerText);
 
-                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "evaluate");
+                AiResponse response = self.executePracticeCompletion(prompt, practiceModel, "evaluate");
                 return extractTextFromResponse(response);
         }
 
@@ -136,7 +141,7 @@ public class AiService {
                                 + "Question: \"%s\"",
                         subject, topic, difficulty, questionText);
 
-                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "hint");
+                AiResponse response = self.executePracticeCompletion(prompt, practiceModel, "hint");
                 return extractTextFromResponse(response);
         }
 
@@ -152,7 +157,7 @@ public class AiService {
                                 + "Question: \"%s\"",
                         subject, topic, difficulty, questionText);
 
-                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "answer");
+                AiResponse response = self.executePracticeCompletion(prompt, practiceModel, "answer");
                 return extractTextFromResponse(response);
         }
 
@@ -176,7 +181,7 @@ public class AiService {
                         throw new RuntimeException("Only text and PDF files are supported.");
                 }
 
-                AiResponse response = self.executeChatCompletion(finalPrompt, studyPlanModel, "study_plan_file");
+                AiResponse response = self.executeStudyPlanCompletion(finalPrompt, studyPlanModel, "study_plan_file");
                 return extractTextFromResponse(response);
         }
 
@@ -189,10 +194,21 @@ public class AiService {
                 }
         }
 
-        @Retry(name = "aiProvider", fallbackMethod = "chatCompletionFallback")
-        @CircuitBreaker(name = "aiProvider", fallbackMethod = "chatCompletionFallback")
-        @Bulkhead(name = "aiProvider", type = Bulkhead.Type.SEMAPHORE, fallbackMethod = "chatCompletionFallback")
-        public AiResponse executeChatCompletion(String prompt, String model, String purpose) {
+        @Retry(name = "aiPractice", fallbackMethod = "practiceCompletionFallback")
+        @CircuitBreaker(name = "aiPractice", fallbackMethod = "practiceCompletionFallback")
+        @Bulkhead(name = "aiPractice", type = Bulkhead.Type.SEMAPHORE, fallbackMethod = "practiceCompletionFallback")
+        public AiResponse executePracticeCompletion(String prompt, String model, String purpose) {
+                return callAiApi(prompt, model, purpose, practiceRequestTimeout);
+        }
+
+        @Retry(name = "aiStudyPlan", fallbackMethod = "studyPlanCompletionFallback")
+        @CircuitBreaker(name = "aiStudyPlan", fallbackMethod = "studyPlanCompletionFallback")
+        @Bulkhead(name = "aiStudyPlan", type = Bulkhead.Type.SEMAPHORE, fallbackMethod = "studyPlanCompletionFallback")
+        public AiResponse executeStudyPlanCompletion(String prompt, String model, String purpose) {
+                return callAiApi(prompt, model, purpose, studyPlanRequestTimeout);
+        }
+
+        private AiResponse callAiApi(String prompt, String model, String purpose, Duration timeout) {
                 Map<String, Object> requestBody = Map.of(
                         "model", model,
                         "messages", List.of(Map.of("role", "user", "content", prompt)),
@@ -214,7 +230,7 @@ public class AiService {
                                         )
                                 )
                                 .bodyToMono(AiResponse.class)
-                                .block(aiRequestTimeout);
+                                .block(timeout);
                 } catch (RuntimeException ex) {
                         status = "error";
                         throw ex;
@@ -235,14 +251,24 @@ public class AiService {
                 }
         }
 
-        private AiResponse chatCompletionFallback(String prompt, String model, String purpose, Throwable throwable) {
+        private AiResponse practiceCompletionFallback(String prompt, String model, String purpose, Throwable throwable) {
                 meterRegistry.counter(
                                 "ai.call.count",
                                 "model", model,
                                 "purpose", purpose,
                                 "status", "fallback")
                         .increment();
-                throw new RuntimeException("AI service temporarily unavailable. Please retry in a moment.");
+                throw new RuntimeException(PRACTICE_UNAVAILABLE_CODE + ": AI service temporarily unavailable. Please retry in a moment.");
+        }
+
+        private AiResponse studyPlanCompletionFallback(String prompt, String model, String purpose, Throwable throwable) {
+                meterRegistry.counter(
+                                "ai.call.count",
+                                "model", model,
+                                "purpose", purpose,
+                                "status", "fallback")
+                        .increment();
+                throw new RuntimeException(STUDY_PLAN_UNAVAILABLE_CODE + ": AI service temporarily unavailable. Please retry in a moment.");
         }
 
         private String extractTextFromResponse(AiResponse response) {

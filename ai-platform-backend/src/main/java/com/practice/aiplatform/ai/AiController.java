@@ -129,7 +129,7 @@ public class AiController {
 
     private ResponseEntity<String> aiFailureResponse(Exception e) {
         String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
-        if (message.contains("temporarily unavailable")) {
+        if (message.contains(AiService.PRACTICE_UNAVAILABLE_CODE) || message.contains("temporarily unavailable")) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Error: " + message);
         }
         return ResponseEntity.internalServerError().body("Error: " + message);

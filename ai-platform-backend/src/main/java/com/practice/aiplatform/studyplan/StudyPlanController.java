@@ -1,5 +1,6 @@
 package com.practice.aiplatform.studyplan;
 
+import com.practice.aiplatform.ai.AiService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,8 +38,13 @@ public class StudyPlanController {
             StudyPlan plan = studyPlanService.generateStudyPlan(email, request.topic(), request.difficulty(), duration);
             return ResponseEntity.ok(plan);
         } catch (Exception e) {
+            String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
+            if (message.contains(AiService.STUDY_PLAN_UNAVAILABLE_CODE) || message.contains("temporarily unavailable")) {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(Map.of("error", "Study plan generation temporarily unavailable. Please retry in a moment."));
+            }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Study plan generation failed: " + e.getMessage()));
+                    .body(Map.of("error", "Study plan generation failed: " + message));
         }
     }
 
@@ -58,8 +64,13 @@ public class StudyPlanController {
             StudyPlan plan = studyPlanService.generateStudyPlanFromSyllabus(email, file, durationDays);
             return ResponseEntity.ok(plan);
         } catch (Exception e) {
+            String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
+            if (message.contains(AiService.STUDY_PLAN_UNAVAILABLE_CODE) || message.contains("temporarily unavailable")) {
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(Map.of("error", "Study plan generation temporarily unavailable. Please retry in a moment."));
+            }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Study plan generation failed: " + e.getMessage()));
+                    .body(Map.of("error", "Study plan generation failed: " + message));
         }
     }
 

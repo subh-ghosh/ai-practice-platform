@@ -25,8 +25,8 @@ const payload = JSON.stringify({
 export default function () {
   const res = http.post(`${BASE_URL}/api/study-plans/generate`, payload, { headers });
   check(res, {
-    "study-plans-generate status 200/403/429": (r) =>
-      r.status === 200 || r.status === 403 || r.status === 429,
+    "study-plans-generate status 200/403/429/503": (r) =>
+      r.status === 200 || r.status === 403 || r.status === 429 || r.status === 503,
   });
   sleep(0.5);
 }
