@@ -5,6 +5,11 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
+import io.github.resilience4j.bulkhead.annotation.Bulkhead;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -12,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +30,24 @@ public class AiService {
         private final String practiceModel;
         private final String studyPlanModel;
         private final MeterRegistry meterRegistry;
+        private final Duration aiRequestTimeout;
+        @Lazy
+        @Autowired
+        private AiService self;
 
         public AiService(
                 @Qualifier("aiWebClient") WebClient webClient,
                 @Value("${groq.api.key}") String apiKey,
                 @Value("${ai.model.practice:llama-3.1-8b-instant}") String practiceModel,
                 @Value("${ai.model.study-plan:llama-3.3-70b-versatile}") String studyPlanModel,
+                @Value("${ai.request.timeout-seconds:20}") long aiRequestTimeoutSeconds,
                 MeterRegistry meterRegistry) {
                 this.webClient = webClient;
                 this.apiKey = apiKey;
                 this.practiceModel = practiceModel;
                 this.studyPlanModel = studyPlanModel;
                 this.meterRegistry = meterRegistry;
+                this.aiRequestTimeout = Duration.ofSeconds(aiRequestTimeoutSeconds);
         }
 
         public String generateRawContent(String prompt) {
@@ -43,12 +55,12 @@ public class AiService {
         }
 
         public String generatePracticeContent(String prompt) {
-                AiResponse response = callAiApi(prompt, practiceModel, "practice");
+                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "practice");
                 return extractTextFromResponse(response);
         }
 
         public String generateStudyPlanContent(String prompt) {
-                AiResponse response = callAiApi(prompt, studyPlanModel, "study_plan");
+                AiResponse response = self.executeChatCompletion(prompt, studyPlanModel, "study_plan");
                 return extractTextFromResponse(response);
         }
 
@@ -88,7 +100,7 @@ public class AiService {
                                 + "Return only question text.",
                         contextPrompt, difficulty, subject, topic);
 
-                AiResponse response = callAiApi(prompt, practiceModel, "question");
+                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "question");
                 return extractTextFromResponse(response);
         }
 
@@ -108,7 +120,7 @@ public class AiService {
                                 + "If INCORRECT/CLOSE add [HINT] at end with a helpful hint.",
                         subject, topic, difficulty, questionText, answerText);
 
-                AiResponse response = callAiApi(prompt, practiceModel, "evaluate");
+                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "evaluate");
                 return extractTextFromResponse(response);
         }
 
@@ -124,7 +136,7 @@ public class AiService {
                                 + "Question: \"%s\"",
                         subject, topic, difficulty, questionText);
 
-                AiResponse response = callAiApi(prompt, practiceModel, "hint");
+                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "hint");
                 return extractTextFromResponse(response);
         }
 
@@ -140,7 +152,7 @@ public class AiService {
                                 + "Question: \"%s\"",
                         subject, topic, difficulty, questionText);
 
-                AiResponse response = callAiApi(prompt, practiceModel, "answer");
+                AiResponse response = self.executeChatCompletion(prompt, practiceModel, "answer");
                 return extractTextFromResponse(response);
         }
 
@@ -164,7 +176,7 @@ public class AiService {
                         throw new RuntimeException("Only text and PDF files are supported.");
                 }
 
-                AiResponse response = callAiApi(finalPrompt, studyPlanModel, "study_plan_file");
+                AiResponse response = self.executeChatCompletion(finalPrompt, studyPlanModel, "study_plan_file");
                 return extractTextFromResponse(response);
         }
 
@@ -177,7 +189,10 @@ public class AiService {
                 }
         }
 
-        private AiResponse callAiApi(String prompt, String model, String purpose) {
+        @Retry(name = "aiProvider", fallbackMethod = "chatCompletionFallback")
+        @CircuitBreaker(name = "aiProvider", fallbackMethod = "chatCompletionFallback")
+        @Bulkhead(name = "aiProvider", type = Bulkhead.Type.SEMAPHORE, fallbackMethod = "chatCompletionFallback")
+        public AiResponse executeChatCompletion(String prompt, String model, String purpose) {
                 Map<String, Object> requestBody = Map.of(
                         "model", model,
                         "messages", List.of(Map.of("role", "user", "content", prompt)),
@@ -199,7 +214,7 @@ public class AiService {
                                         )
                                 )
                                 .bodyToMono(AiResponse.class)
-                                .block();
+                                .block(aiRequestTimeout);
                 } catch (RuntimeException ex) {
                         status = "error";
                         throw ex;
@@ -218,6 +233,16 @@ public class AiService {
                                 "status", status
                         ));
                 }
+        }
+
+        private AiResponse chatCompletionFallback(String prompt, String model, String purpose, Throwable throwable) {
+                meterRegistry.counter(
+                                "ai.call.count",
+                                "model", model,
+                                "purpose", purpose,
+                                "status", "fallback")
+                        .increment();
+                throw new RuntimeException("AI service temporarily unavailable. Please retry in a moment.");
         }
 
         private String extractTextFromResponse(AiResponse response) {

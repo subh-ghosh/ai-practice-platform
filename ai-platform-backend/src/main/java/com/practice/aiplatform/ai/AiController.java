@@ -4,6 +4,7 @@ import com.practice.aiplatform.practice.Question;
 import com.practice.aiplatform.practice.QuestionRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -74,7 +75,7 @@ public class AiController {
             return ResponseEntity.ok(saved);
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            return aiFailureResponse(e);
         }
     }
 
@@ -98,7 +99,7 @@ public class AiController {
             return ResponseEntity.ok(hint);
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            return aiFailureResponse(e);
         }
     }
 
@@ -122,7 +123,15 @@ public class AiController {
             return ResponseEntity.ok(answer);
 
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Error: " + e.getMessage());
+            return aiFailureResponse(e);
         }
+    }
+
+    private ResponseEntity<String> aiFailureResponse(Exception e) {
+        String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
+        if (message.contains("temporarily unavailable")) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body("Error: " + message);
+        }
+        return ResponseEntity.internalServerError().body("Error: " + message);
     }
 }
