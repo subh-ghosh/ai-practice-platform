@@ -1,5 +1,0 @@
-endpoint,avg_ms,p95_ms,max_ms,http_req_failed_percent,checks_failed_percent,checks_passed,requests
-ai-generate-question,1080.00,812.92,25790.00,0.00,0.00,80/80,80
-ai-get-hint,287.26,557.31,972.23,1.23,0.00,80/80,81
-ai-get-answer,244.48,421.46,1160.00,3.70,0.00,80/80,81
-study-plans-generate,2160.00,7620.00,8620.00,70.00,40.00,6/10,10
