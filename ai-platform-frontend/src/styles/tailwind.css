@@ -7,6 +7,7 @@
     /* Default (light) mode colors */
     @apply bg-gray-50 text-blue-gray-900;
   }
+
   html.dark {
     /* Dark mode colors */
     @apply bg-gray-900 text-blue-gray-50;
@@ -14,6 +15,7 @@
 }
 
 @layer components {
+
   /* ============================================================
      🔹 BASE STRUCTURE + CARD STYLING
   ============================================================ */
@@ -36,12 +38,15 @@
   .dark .dashboard-content [class*="text-gray-900"] {
     color: theme('colors.white');
   }
+
   .dark .dashboard-content [class*="text-blue-gray-600"] {
     color: theme('colors.gray.300');
   }
+
   .dark .dashboard-content [class*="text-blue-gray-500"] {
     color: theme('colors.gray.400');
   }
+
   .dark .dashboard-content [class*="text-blue-gray-400"] {
     color: theme('colors.gray.500');
   }
@@ -72,13 +77,16 @@
   .dark .dashboard-content .mt-tabs-header {
     background-color: theme('colors.gray.700') !important;
   }
+
   .dark .dashboard-content .mt-tab {
     color: theme('colors.gray.300') !important;
   }
+
   .dark .dashboard-content .mt-tab-indicator {
     background-color: theme('colors.white') !important;
     color: theme('colors.gray.900') !important;
   }
+
   .dark .dashboard-content .mt-tab.mt-tab-active {
     color: theme('colors.gray.900') !important;
   }
@@ -93,14 +101,14 @@
   }
 
   .dark .dashboard-content .mt-input,
-  .dark .dashboard-content .mt-textarea > textarea,
-  .dark .dashboard-content .mt-select > button {
+  .dark .dashboard-content .mt-textarea>textarea,
+  .dark .dashboard-content .mt-select>button {
     border-color: theme('colors.gray.600') !important;
     color: theme('colors.white') !important;
   }
 
   .dark .dashboard-content .mt-input::placeholder,
-  .dark .dashboard-content .mt-textarea > textarea::placeholder {
+  .dark .dashboard-content .mt-textarea>textarea::placeholder {
     color: theme('colors.gray.400') !important;
   }
 
@@ -110,10 +118,12 @@
   .dark .dashboard-content .mt-input-label-white {
     color: theme('colors.gray.400');
   }
+
   .dark .dashboard-content .mt-input-white {
     border-color: theme('colors.gray.600');
     color: theme('colors.white');
   }
+
   .dark .dashboard-content .mt-radio label {
     color: theme('colors.gray.200') !important;
   }
@@ -124,6 +134,7 @@
   .dark .dashboard-content .prose {
     color: theme('colors.gray.200');
   }
+
   .dark .dashboard-content [class*="bg-blue-gray-50"] {
     background-color: theme('colors.gray.700');
   }
@@ -134,13 +145,16 @@
   .dark .dashboard-content .mt-card-body [class*="text-blue-gray"] {
     color: theme('colors.gray.300');
   }
+
   .dark .dashboard-content .mt-card-body [class*="text-gray"] {
     color: theme('colors.gray.400');
   }
-  .dark .dashboard-content .mt-card-body > div[key] {
+
+  .dark .dashboard-content .mt-card-body>div[key] {
     background-color: theme('colors.gray.700');
     border-color: theme('colors.gray.600');
   }
+
   .dark .dashboard-content .apexcharts-legend-text {
     color: theme('colors.gray.200') !important;
   }
@@ -172,13 +186,16 @@
   .dark .mt-dialog {
     background-color: theme('colors.gray.800') !important;
   }
+
   .dark .mt-dialog-header {
     color: theme('colors.white') !important;
   }
+
   .dark .mt-dialog-body {
     border-color: theme('colors.gray.700') !important;
     color: theme('colors.gray.200') !important;
   }
+
   .dark .mt-dialog-footer {
     border-color: theme('colors.gray.700') !important;
   }
@@ -189,12 +206,15 @@
   .dark .mt-menu-list [class*="text-blue-gray-500"] {
     color: theme('colors.gray.400') !important;
   }
+
   .dark .mt-menu-list [class*="text-blue-gray-400"] {
     color: theme('colors.gray.500') !important;
   }
+
   .dark .mt-menu-list [class*="text-blue-gray-900"] {
     color: theme('colors.gray.100') !important;
   }
+
   .dark .mt-menu-list .mt-menu-item a {
     color: theme('colors.blue.400') !important;
   }
@@ -225,10 +245,12 @@
     background: transparent !important;
     box-shadow: none !important;
   }
+
   /* --- Fix Question / Markdown text colors in dark mode --- */
   .dark .dashboard-content .prose,
   .dark .prose {
-    color: theme('colors.gray.300') !important; /* main text */
+    color: theme('colors.gray.300') !important;
+    /* main text */
   }
 
   .dark .prose strong,
@@ -253,26 +275,31 @@
   .dark .prose h4 {
     color: theme('colors.gray.100') !important;
   }
+
   /* === Fix list numbers and bullets in dark mode === */
-  .dark .dashboard-content .prose ol > li::marker,
-  .dark .dashboard-content .prose ul > li::marker {
-    color: theme('colors.gray.200') !important; /* makes numbers/bullets light gray */
+  .dark .dashboard-content .prose ol>li::marker,
+  .dark .dashboard-content .prose ul>li::marker {
+    color: theme('colors.gray.200') !important;
+    /* makes numbers/bullets light gray */
   }
 
   /* Optional: ensure nested list markers are consistent */
-  .dark .dashboard-content .prose ol ol > li::marker,
-  .dark .dashboard-content .prose ul ul > li::marker {
+  .dark .dashboard-content .prose ol ol>li::marker,
+  .dark .dashboard-content .prose ul ul>li::marker {
     color: theme('colors.gray.300') !important;
   }
+
   /* === Fix Markdown list markers globally in dark mode (including modals) === */
-  .dark .prose ol > li::marker,
-  .dark .prose ul > li::marker {
-    color: theme('colors.gray.200') !important; /* make list numbers/bullets light gray */
+  .dark .prose ol>li::marker,
+  .dark .prose ul>li::marker {
+    color: theme('colors.gray.200') !important;
+    /* make list numbers/bullets light gray */
   }
 
-  .dark .prose ol ol > li::marker,
-  .dark .prose ul ul > li::marker {
-    color: theme('colors.gray.300') !important; /* nested lists slightly dimmer */
+  .dark .prose ol ol>li::marker,
+  .dark .prose ul ul>li::marker {
+    color: theme('colors.gray.300') !important;
+    /* nested lists slightly dimmer */
   }
 
   /* Ensure paragraph text inside markdown is also light enough */
@@ -303,6 +330,7 @@
     border-color: theme('colors.gray.700') !important;
     color: theme('colors.gray.100') !important;
   }
+
   .dark .dashboard-content .apexcharts-tooltip-title {
     background: theme('colors.gray.900') !important;
     border-color: theme('colors.gray.700') !important;
@@ -314,4 +342,45 @@
     box-shadow: none !important;
   }
 
+}
+
+/* ============================================================
+   🎨 PREMIUM DARK SCROLLBARS — Global (raw CSS, outside @layer)
+   ============================================================ */
+
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0d0f;
+  box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.22) 0%,
+      rgba(255, 255, 255, 0.10) 100%);
+  border-radius: 99px;
+  border: 2px solid #0d0d0f;
+  background-clip: padding-box;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+      rgba(59, 130, 246, 0.9) 0%,
+      rgba(99, 102, 241, 0.75) 100%);
+  box-shadow:
+    0 0 14px rgba(59, 130, 246, 0.65),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) #0d0d0f;
 }
