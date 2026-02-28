@@ -23,6 +23,16 @@ We have created an exhaustive suite of technical documentation for developers, a
 
 ---
 
+## ⚡ Performance & Resilience Engineering
+
+**Engineered fault-tolerance for upstream AI APIs using Resilience4J (Circuit Breakers & Bulkheads). Eliminated 20% HTTP failure rates under stress and dropped extreme-load P95 latency by 98% (6.5s to 128ms) via Fast-Fail semantics.**
+
+The system is fully resilient against external AI provider degradation, ensuring the core platform remains functional under extreme concurrency using strictly tuned thread isolation and bulkheading.
+
+> *For full load-testing and performance metric data, review the [Unified Resilience Results](./Performance/UNIFIED_RESILIENCE_RESULTS.md).*
+
+---
+
 ## 🚀 Core Features
 * **Dynamic Question Generation:** Questions are generated on-demand by the **Google Gemini API**.
 * **AI-Powered Evaluation:** Context-aware feedback on every answer.
