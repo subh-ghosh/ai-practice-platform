@@ -20,10 +20,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
+@Slf4j
 @Service
 public class StudyPlanService {
 
@@ -90,6 +92,7 @@ public class StudyPlanService {
 
             StudyPlan plan = parseAndSavePlan(aiResponse, student, topic, difficulty, durationDays, videos);
             generateQuizQuestionsForPlan(plan, topic, difficulty);
+            studyPlanRepository.save(plan); // 👈 Save after attaching questions
 
             return plan;
         } catch (RuntimeException ex) {
@@ -141,12 +144,10 @@ public class StudyPlanService {
         return saved;
     }
 
-    @Transactional
+    // --- REFACTOR: Moved AI calls outside of @Transactional to prevent DB
+    // connection starvation ---
     public void completeAsyncStudyPlan(Long planId, String userEmail, String topic, String difficulty,
             int durationDays) {
-        StudyPlan plan = studyPlanRepository.findById(planId)
-                .orElseThrow(() -> new RuntimeException("Study Plan shell not found"));
-
         try {
             int maxVideos = Math.min(durationDays * 3, 25);
             List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial",
@@ -159,23 +160,40 @@ public class StudyPlanService {
             String prompt = createPrompt(topic, difficulty, durationDays, videos);
             String aiResponse = aiService.generateStudyPlanContent(prompt);
 
-            // Directly parsing and updating the existing shell
-            updateExistingPlan(plan, aiResponse, topic, difficulty, durationDays, videos);
-            generateQuizQuestionsForPlan(plan, topic, difficulty);
-
-            plan.setGenerating(false);
-            studyPlanRepository.save(plan);
-
-            // Evict caches after completion
-            evictAllUserCaches(userEmail);
-            evictOwnedStudyPlanByIdCache(userEmail, planId);
+            // Persist the results in a short-lived transaction
+            self.saveAndFinalizePlan(planId, aiResponse, topic, difficulty, durationDays, videos);
 
         } catch (Exception e) {
+            log.error("Failed async study plan for {}: {}", userEmail, e.getMessage());
+            self.markPlanAsFailed(planId, e.getMessage());
+        } finally {
+            // Evict caches after completion (success or failure)
+            evictAllUserCaches(userEmail);
+            evictOwnedStudyPlanByIdCache(userEmail, planId);
+        }
+    }
+
+    @Transactional
+    public void saveAndFinalizePlan(Long planId, String aiResponse, String topic, String difficulty,
+            int durationDays, List<Map<String, String>> videos) {
+        StudyPlan plan = studyPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Study Plan shell not found"));
+
+        updateExistingPlan(plan, aiResponse, topic, difficulty, durationDays, videos);
+        generateQuizQuestionsForPlan(plan, topic, difficulty);
+
+        plan.setGenerating(false);
+        studyPlanRepository.save(plan);
+    }
+
+    @Transactional
+    public void markPlanAsFailed(Long planId, String errorMessage) {
+        studyPlanRepository.findById(planId).ifPresent(plan -> {
             plan.setGenerating(false);
             plan.setTitle("Generation Failed");
-            plan.setDescription("We encountered an error while generating this plan: " + e.getMessage());
+            plan.setDescription("We encountered an error while generating this plan: " + errorMessage);
             studyPlanRepository.save(plan);
-        }
+        });
     }
 
     private void updateExistingPlan(StudyPlan plan, String aiResponse, String topic, String difficulty,
@@ -191,6 +209,7 @@ public class StudyPlanService {
 
             plan.setTitle(root.path("title").asText("Study Plan: " + topic));
             plan.setDescription(root.path("description").asText(""));
+            plan.getItems().clear(); // 👈 Prevent duplicates if this is a retry
 
             int globalOrder = 1;
             JsonNode days = root.path("days");
@@ -292,8 +311,7 @@ public class StudyPlanService {
 
                 List<QuizQuestion> questions = parseQuizQuestions(quizResponse, item);
                 if (!questions.isEmpty()) {
-                    quizQuestionRepository.saveAll(questions);
-                    item.getQuizQuestions().addAll(questions);
+                    item.getQuizQuestions().addAll(questions); // 👈 Let JPA cascade save
                 }
             } catch (Exception e) {
                 System.err.println("Failed to generate quiz for item " + item.getId() + ": " + e.getMessage());
