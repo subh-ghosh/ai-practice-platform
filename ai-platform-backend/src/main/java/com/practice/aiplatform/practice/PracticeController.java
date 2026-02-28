@@ -2,6 +2,8 @@ package com.practice.aiplatform.practice;
 
 import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.studyplan.StudyPlanService;
+import com.practice.aiplatform.event.RecoveryPlanEvent;
+import com.practice.aiplatform.event.RecoveryPlanEventPublisher;
 import com.practice.aiplatform.event.GamificationEventPublisher;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
@@ -42,6 +44,8 @@ public class PracticeController {
 
     @Autowired
     private StudyPlanService studyPlanService;
+    @Autowired
+    private RecoveryPlanEventPublisher recoveryPlanEventPublisher;
     @Lazy
     @Autowired
     private PracticeController self;
@@ -91,12 +95,14 @@ public class PracticeController {
         String finalFeedback = parsedFeedback.feedbackText;
 
         if ("INCORRECT".equals(parsedFeedback.status) && !"Beginner".equalsIgnoreCase(question.getDifficulty())) {
-            finalFeedback += "\n\n[The Healer] We detected difficulty. A simple 1-day recovery plan was created.";
-            studyPlanService.generateStudyPlan(
-                    student.getEmail(),
-                    question.getTopic() + " Recovery",
-                    "Beginner",
-                    1);
+            finalFeedback += "\n\n[The Healer] We detected difficulty. A simple 1-day recovery plan is being generated in the background.";
+            recoveryPlanEventPublisher.publishRecoveryPlanEvent(
+                    RecoveryPlanEvent.builder()
+                            .userEmail(student.getEmail())
+                            .topic(question.getTopic())
+                            .difficulty("Beginner")
+                            .days(1)
+                            .build());
         }
 
         savedAnswer.setFeedback(finalFeedback);
