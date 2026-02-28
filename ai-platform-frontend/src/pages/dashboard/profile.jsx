@@ -576,8 +576,8 @@ export function Profile() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`relative flex-1 py-4 px-2 text-sm font-bold transition-colors ${activeTab === tab.id
-                  ? "text-blue-500"
-                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                ? "text-blue-500"
+                : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                 }`}
             >
               {tab.label}
@@ -594,21 +594,18 @@ export function Profile() {
         </div>
       </div>
 
-      {/* 3. Content Area */}
-      <AnimatePresence mode="wait">
+      <div className="w-full mt-4">
 
         {/* VIEW 1: OVERVIEW */}
         {activeTab === "profile" && (
           <motion.div
             key="profile"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
             {/* Left Column: Bio & Info & Chart */}
-            <motion.div variants={itemVariants} className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 space-y-6">
               <div className="bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 rounded-2xl p-6 shadow-sm">
                 <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold mb-4">
                   About Me
@@ -667,10 +664,10 @@ export function Profile() {
                   </div>
                 )}
               </div>
-            </motion.div>
+            </div>
 
             {/* Right Column: Stats & Socials */}
-            <motion.div variants={itemVariants} className="space-y-6">
+            <div className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
                 <StatCard icon={BoltIcon} title="Total XP" value={user?.totalXp || 0} color="yellow" />
                 <StatCard icon={FireIcon} title="Streak" value={`${user?.streakDays || 0} Days`} color="orange" />
@@ -709,41 +706,43 @@ export function Profile() {
                   )}
                 </div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
 
         {/* VIEW 2: EDIT */}
         {activeTab === "edit" && (
-          <EditForm
-            key="edit"
-            formData={formData}
-            setFormData={setFormData}
-            onSubmit={handleProfileUpdate}
-            saving={savingProfile}
-            error={editError}
-            success={editSuccess}
-          />
+          <motion.div key="edit" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <EditForm
+              formData={formData}
+              setFormData={setFormData}
+              onSubmit={handleProfileUpdate}
+              saving={savingProfile}
+              error={editError}
+              success={editSuccess}
+            />
+          </motion.div>
         )}
 
         {/* VIEW 3: SECURITY */}
         {activeTab === "security" && (
-          <SecurityPanel
-            key="security"
-            oldPassword={oldPassword}
-            newPassword={newPassword}
-            setOldPassword={setOldPassword}
-            setNewPassword={setNewPassword}
-            onChangePassword={handlePasswordChange}
-            changing={changingPassword}
-            onDeleteAccount={handleDeleteAccount}
-            deleting={deletingAccount}
-            error={secError}
-            success={secSuccess}
-          />
+          <motion.div key="security" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+            <SecurityPanel
+              oldPassword={oldPassword}
+              newPassword={newPassword}
+              setOldPassword={setOldPassword}
+              setNewPassword={setNewPassword}
+              onChangePassword={handlePasswordChange}
+              changing={changingPassword}
+              onDeleteAccount={handleDeleteAccount}
+              deleting={deletingAccount}
+              error={secError}
+              success={secSuccess}
+            />
+          </motion.div>
         )}
 
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
