@@ -6,37 +6,38 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Pageable; // 👈 Add this
 import java.util.List;
 // -------------------------
 
 @Repository
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
-    List<Answer> findAllByStudentOrderBySubmittedAtDesc(Student student);
+        List<Answer> findAllByStudentOrderBySubmittedAtDesc(Student student, Pageable pageable);
 
-    /**
-     * Finds all "gradable" answers for a student, ordered by submission time
-     * ascending.
-     * We get them in ASC order to build the timeline from start to finish.
-     */
-    List<Answer> findAllByStudentAndEvaluationStatusInOrderBySubmittedAtAsc(Student student, List<String> statuses);
+        /**
+         * Finds all "gradable" answers for a student, ordered by submission time
+         * ascending.
+         * We get them in ASC order to build the timeline from start to finish.
+         */
+        List<Answer> findAllByStudentAndEvaluationStatusInOrderBySubmittedAtAsc(Student student, List<String> statuses);
 
-    List<Answer> findTop20ByStudentOrderBySubmittedAtDesc(Student student);
+        List<Answer> findTop20ByStudentOrderBySubmittedAtDesc(Student student);
 
-    @Query("select a from Answer a join fetch a.question q where a.student.id = :studentId order by a.submittedAt desc")
-    List<Answer> findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(@Param("studentId") Long studentId);
+        @Query("select a from Answer a join fetch a.question q where a.student.id = :studentId order by a.submittedAt desc")
+        List<Answer> findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(@Param("studentId") Long studentId,
+                        Pageable pageable);
 
-    @Query("""
-            select a from Answer a
-            join fetch a.question q
-            where a.student.id = :studentId and a.evaluationStatus in :statuses
-            order by a.submittedAt asc
-            """)
-    List<Answer> findAllWithQuestionByStudentIdAndEvaluationStatusInOrderBySubmittedAtAsc(
-            @Param("studentId") Long studentId,
-            @Param("statuses") List<String> statuses
-    );
+        @Query("""
+                        select a from Answer a
+                        join fetch a.question q
+                        where a.student.id = :studentId and a.evaluationStatus in :statuses
+                        order by a.submittedAt asc
+                        """)
+        List<Answer> findAllWithQuestionByStudentIdAndEvaluationStatusInOrderBySubmittedAtAsc(
+                        @Param("studentId") Long studentId,
+                        @Param("statuses") List<String> statuses);
 
-    long deleteByStudentId(Long studentId);
+        long deleteByStudentId(Long studentId);
 
 }

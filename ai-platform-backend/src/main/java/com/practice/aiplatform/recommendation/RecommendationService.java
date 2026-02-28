@@ -10,6 +10,7 @@ import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.PageRequest;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -53,7 +54,7 @@ public class RecommendationService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
+        List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student, PageRequest.of(0, 50));
         if (history.isEmpty()) {
             List<EnhancedRecommendation> fallback = new ArrayList<>();
             fallback.add(new EnhancedRecommendation(
@@ -244,7 +245,7 @@ public class RecommendationService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
+        List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student, PageRequest.of(0, 50));
 
         List<Answer> topicHistory = new ArrayList<>();
         for (Answer answer : history) {
@@ -292,8 +293,8 @@ public class RecommendationService {
             Map<String, List<Answer>> topicStats,
             List<EnhancedRecommendation> recommendations) {
         try {
-            List<StudyPlanItem> activePlanItems =
-                    studyPlanItemRepository.findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(student.getId());
+            List<StudyPlanItem> activePlanItems = studyPlanItemRepository
+                    .findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(student.getId());
 
             Set<String> practicedTopicsLower = new HashSet<>();
             for (String topic : topicStats.keySet()) {
@@ -433,12 +434,18 @@ public class RecommendationService {
     }
 
     private int getPriority(String type) {
-        if ("WEAKNESS".equals(type)) return 0;
-        if ("DECLINING".equals(type)) return 1;
-        if ("STALE".equals(type)) return 2;
-        if ("PLAN_GAP".equals(type)) return 3;
-        if ("READY_TO_ADVANCE".equals(type)) return 4;
-        if ("MASTERED".equals(type)) return 5;
+        if ("WEAKNESS".equals(type))
+            return 0;
+        if ("DECLINING".equals(type))
+            return 1;
+        if ("STALE".equals(type))
+            return 2;
+        if ("PLAN_GAP".equals(type))
+            return 3;
+        if ("READY_TO_ADVANCE".equals(type))
+            return 4;
+        if ("MASTERED".equals(type))
+            return 5;
         return 99;
     }
 
@@ -447,12 +454,18 @@ public class RecommendationService {
     }
 
     private String getNextDifficulty(String current) {
-        if ("School".equals(current)) return "High School";
-        if ("High School".equals(current)) return "Graduation";
-        if ("Graduation".equals(current)) return "Post Graduation";
-        if ("Post Graduation".equals(current)) return "Research";
-        if ("Beginner".equals(current)) return "Intermediate";
-        if ("Intermediate".equals(current)) return "Advanced";
+        if ("School".equals(current))
+            return "High School";
+        if ("High School".equals(current))
+            return "Graduation";
+        if ("Graduation".equals(current))
+            return "Post Graduation";
+        if ("Post Graduation".equals(current))
+            return "Research";
+        if ("Beginner".equals(current))
+            return "Intermediate";
+        if ("Intermediate".equals(current))
+            return "Advanced";
         return "Hard";
     }
 

@@ -13,6 +13,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -173,7 +174,7 @@ public class PracticeController {
     public PracticeHistoryDto getHistoryCached(String email) {
         Student student = studentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
-        List<Answer> answers = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student);
+        List<Answer> answers = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student, PageRequest.of(0, 50));
 
         List<PracticeHistoryDto.QuestionAnswerDto> historyList = new ArrayList<>();
         for (Answer answer : answers) {

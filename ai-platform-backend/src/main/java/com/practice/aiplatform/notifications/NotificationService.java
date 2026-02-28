@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,7 +75,8 @@ public class NotificationService {
             }
         }
 
-        List<Notification> value = notificationRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
+        List<Notification> value = notificationRepository.findByStudentIdOrderByCreatedAtDesc(studentId,
+                PageRequest.of(0, 50));
         recordLayer("UserNotificationsAllCache", "db", "hit");
         if (redisCache != null) {
             try {
@@ -113,7 +115,7 @@ public class NotificationService {
             }
         }
 
-        List<Notification> value = notificationRepository.findUnread(studentId);
+        List<Notification> value = notificationRepository.findUnread(studentId, PageRequest.of(0, 20));
         recordLayer("UserNotificationsUnreadCache", "db", "hit");
         if (redisCache != null) {
             try {
@@ -172,7 +174,6 @@ public class NotificationService {
                 "cache_layer_access_total",
                 "cache", cacheName,
                 "layer", layer,
-                "result", result
-        ).increment();
+                "result", result).increment();
     }
 }

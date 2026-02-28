@@ -1,6 +1,5 @@
 package com.practice.aiplatform.user;
 
-import com.practice.aiplatform.course.Course;
 import com.practice.aiplatform.course.CourseRepository;
 import com.practice.aiplatform.gamification.DailyChallengeRepository;
 import com.practice.aiplatform.gamification.DailyXpHistoryRepository;
@@ -68,10 +67,7 @@ public class StudentAccountService {
         questionRepository.deleteByStudentId(studentId);
         userBadgeRepository.deleteByStudentId(studentId);
 
-        List<Course> courses = courseRepository.findByStudentId(studentId);
-        if (!courses.isEmpty()) {
-            courseRepository.deleteAll(courses);
-        }
+        courseRepository.deleteByStudentId(studentId);
 
         List<StudyPlan> studyPlans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
         if (!studyPlans.isEmpty()) {

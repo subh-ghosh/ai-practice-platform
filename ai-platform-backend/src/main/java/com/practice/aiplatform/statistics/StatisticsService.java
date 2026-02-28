@@ -12,6 +12,7 @@ import com.practice.aiplatform.user.StudentLookupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -59,7 +60,8 @@ public class StatisticsService {
     @Cacheable(value = "UserStatisticsSummaryCache", key = "#email", sync = true)
     public StatisticsDto getStatisticsCached(String email) {
         Long studentId = studentLookupService.getRequiredStudentId(email);
-        List<Answer> allAnswers = answerRepository.findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(studentId);
+        List<Answer> allAnswers = answerRepository.findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(studentId,
+                PageRequest.of(0, 100));
 
         long correctCount = 0;
         long revealedCount = 0;
@@ -96,7 +98,8 @@ public class StatisticsService {
                 continue;
             }
 
-            if (answer.getQuestion() == null || answer.getQuestion().getGeneratedAt() == null || answer.getSubmittedAt() == null) {
+            if (answer.getQuestion() == null || answer.getQuestion().getGeneratedAt() == null
+                    || answer.getSubmittedAt() == null) {
                 continue;
             }
 
@@ -131,8 +134,7 @@ public class StatisticsService {
                     answer.getEvaluationStatus(),
                     answer.getHint(),
                     answer.getFeedback(),
-                    answer.getSubmittedAt()
-            );
+                    answer.getSubmittedAt());
 
             recentActivityList.add(dto);
         }
@@ -144,17 +146,16 @@ public class StatisticsService {
                 revealedCount,
                 accuracyPercentage,
                 averageAnswerTimeSeconds,
-                recentActivityList
-        );
+                recentActivityList);
     }
 
     @Cacheable(value = "UserStatisticsTimeseriesCache", key = "#email", sync = true)
     public List<DailyStatDto> getTimeSeriesStats(String email) {
         Long studentId = studentLookupService.getRequiredStudentId(email);
-        List<Answer> gradedAnswers = answerRepository.findAllWithQuestionByStudentIdAndEvaluationStatusInOrderBySubmittedAtAsc(
-                studentId,
-                List.of("CORRECT", "INCORRECT", "CLOSE")
-        );
+        List<Answer> gradedAnswers = answerRepository
+                .findAllWithQuestionByStudentIdAndEvaluationStatusInOrderBySubmittedAtAsc(
+                        studentId,
+                        List.of("CORRECT", "INCORRECT", "CLOSE"));
 
         Map<LocalDate, List<Answer>> answersByDay = new HashMap<>();
 
@@ -193,11 +194,13 @@ public class StatisticsService {
             double speedTotal = 0.0;
 
             for (Answer answer : dailyAnswers) {
-                if (answer.getQuestion() == null || answer.getQuestion().getGeneratedAt() == null || answer.getSubmittedAt() == null) {
+                if (answer.getQuestion() == null || answer.getQuestion().getGeneratedAt() == null
+                        || answer.getSubmittedAt() == null) {
                     continue;
                 }
 
-                long seconds = Duration.between(answer.getQuestion().getGeneratedAt(), answer.getSubmittedAt()).toSeconds();
+                long seconds = Duration.between(answer.getQuestion().getGeneratedAt(), answer.getSubmittedAt())
+                        .toSeconds();
                 if (seconds > 0) {
                     speedTotal += seconds;
                     speedCount++;
@@ -219,7 +222,8 @@ public class StatisticsService {
     @Cacheable(value = "UserStatisticsRecommendationsCache", key = "#email", sync = true)
     public SmartRecommendationDto getSmartRecommendations(String email) {
         Long studentId = studentLookupService.getRequiredStudentId(email);
-        List<Answer> allAnswers = answerRepository.findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(studentId);
+        List<Answer> allAnswers = answerRepository.findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(studentId,
+                PageRequest.of(0, 50));
 
         List<String> recentTopics = new ArrayList<>();
         Set<String> seenRecentTopics = new HashSet<>();
@@ -289,7 +293,6 @@ public class StatisticsService {
                 "cache_layer_access_total",
                 "cache", cacheName,
                 "layer", "l1",
-                "result", result
-        ).increment();
+                "result", result).increment();
     }
 }
