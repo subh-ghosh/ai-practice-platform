@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,7 +91,8 @@ public class DailyChallengeService {
     }
 
     private void createPlanBasedChallenge(Student student) {
-        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId(),
+                PageRequest.of(0, 1));
 
         if (!plans.isEmpty() && !plans.get(0).isCompleted()) {
             StudyPlan activePlan = plans.get(0);
@@ -99,8 +101,7 @@ public class DailyChallengeService {
                     "Focus: " + activePlan.getTopic(),
                     "Complete 2 items in '" + activePlan.getTitle() + "'",
                     60,
-                    2
-            );
+                    2);
         } else {
             createChallenge(student, "Dedication", "Open and review your study plan", 20, 1);
         }
@@ -113,8 +114,7 @@ public class DailyChallengeService {
 
     @Transactional
     public void incrementProgress(Long studentId, String challengeTitle, int amount) {
-        List<DailyChallenge> challenges =
-                dailyChallengeRepository.findByStudentIdAndDate(studentId, LocalDate.now());
+        List<DailyChallenge> challenges = dailyChallengeRepository.findByStudentIdAndDate(studentId, LocalDate.now());
 
         for (DailyChallenge challenge : challenges) {
             if (!challenge.isClaimed() && challenge.getTitle().equalsIgnoreCase(challengeTitle)) {
@@ -161,7 +161,6 @@ public class DailyChallengeService {
                 "cache_layer_access_total",
                 "cache", cacheName,
                 "layer", "l1",
-                "result", result
-        ).increment();
+                "result", result).increment();
     }
 }

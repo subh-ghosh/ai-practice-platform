@@ -8,9 +8,8 @@ import com.practice.aiplatform.studyplan.StudyPlanItemRepository;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
 import org.springframework.data.domain.PageRequest;
+import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -294,7 +293,7 @@ public class RecommendationService {
             List<EnhancedRecommendation> recommendations) {
         try {
             List<StudyPlanItem> activePlanItems = studyPlanItemRepository
-                    .findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(student.getId());
+                    .findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(student.getId(), PageRequest.of(0, 100));
 
             Set<String> practicedTopicsLower = new HashSet<>();
             for (String topic : topicStats.keySet()) {

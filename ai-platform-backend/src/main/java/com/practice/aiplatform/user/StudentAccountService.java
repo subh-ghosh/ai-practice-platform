@@ -8,14 +8,13 @@ import com.practice.aiplatform.notifications.NotificationRepository;
 import com.practice.aiplatform.practice.AnswerRepository;
 import com.practice.aiplatform.practice.QuestionRepository;
 import com.practice.aiplatform.security.RefreshTokenService;
-import com.practice.aiplatform.studyplan.StudyPlan;
 import com.practice.aiplatform.studyplan.StudyPlanRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
+@RequiredArgsConstructor
 public class StudentAccountService {
 
     private final StudentRepository studentRepository;
@@ -28,29 +27,6 @@ public class StudentAccountService {
     private final CourseRepository courseRepository;
     private final StudyPlanRepository studyPlanRepository;
     private final RefreshTokenService refreshTokenService;
-
-    public StudentAccountService(
-            StudentRepository studentRepository,
-            NotificationRepository notificationRepository,
-            DailyChallengeRepository dailyChallengeRepository,
-            DailyXpHistoryRepository dailyXpHistoryRepository,
-            UserBadgeRepository userBadgeRepository,
-            AnswerRepository answerRepository,
-            QuestionRepository questionRepository,
-            CourseRepository courseRepository,
-            StudyPlanRepository studyPlanRepository,
-            RefreshTokenService refreshTokenService) {
-        this.studentRepository = studentRepository;
-        this.notificationRepository = notificationRepository;
-        this.dailyChallengeRepository = dailyChallengeRepository;
-        this.dailyXpHistoryRepository = dailyXpHistoryRepository;
-        this.userBadgeRepository = userBadgeRepository;
-        this.answerRepository = answerRepository;
-        this.questionRepository = questionRepository;
-        this.courseRepository = courseRepository;
-        this.studyPlanRepository = studyPlanRepository;
-        this.refreshTokenService = refreshTokenService;
-    }
 
     @Transactional
     public void deleteAccountByEmail(String email) {
@@ -69,10 +45,7 @@ public class StudentAccountService {
 
         courseRepository.deleteByStudentId(studentId);
 
-        List<StudyPlan> studyPlans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(studentId);
-        if (!studyPlans.isEmpty()) {
-            studyPlanRepository.deleteAll(studyPlans);
-        }
+        studyPlanRepository.deleteByStudentId(studentId);
 
         studentRepository.delete(student);
     }

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -528,7 +529,8 @@ public class StudyPlanService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId(),
+                PageRequest.of(0, 50));
 
         int active = 0;
         int completed = 0;
@@ -574,7 +576,7 @@ public class StudyPlanService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+        return studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId(), PageRequest.of(0, 50));
     }
 
     @Cacheable(value = "UserStudyPlanSummariesCache", key = "#userEmail", sync = true)
@@ -582,7 +584,7 @@ public class StudyPlanService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        return studyPlanRepository.findSummariesByStudentId(student.getId());
+        return studyPlanRepository.findSummariesByStudentId(student.getId(), PageRequest.of(0, 50));
     }
 
     @Cacheable(value = "StudyPlanByIdCache", key = "#userEmail + '-' + #id", sync = true)
@@ -1075,7 +1077,8 @@ public class StudyPlanService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId());
+        List<StudyPlan> plans = studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(student.getId(),
+                PageRequest.of(0, 20));
 
         StudyPlan activePlan = null;
         for (StudyPlan plan : plans) {

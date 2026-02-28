@@ -1,6 +1,5 @@
 package com.practice.aiplatform.user;
 
-import com.practice.aiplatform.course.Course;
 import com.practice.aiplatform.course.CourseRepository;
 import com.practice.aiplatform.gamification.DailyChallengeRepository;
 import com.practice.aiplatform.gamification.DailyXpHistoryRepository;
@@ -9,7 +8,6 @@ import com.practice.aiplatform.notifications.NotificationRepository;
 import com.practice.aiplatform.practice.AnswerRepository;
 import com.practice.aiplatform.practice.QuestionRepository;
 import com.practice.aiplatform.security.RefreshTokenService;
-import com.practice.aiplatform.studyplan.StudyPlan;
 import com.practice.aiplatform.studyplan.StudyPlanRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +16,6 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -76,12 +73,7 @@ class StudentAccountServiceTest {
         student.setId(studentId);
         student.setEmail(email);
 
-        Course course = new Course();
-        StudyPlan studyPlan = new StudyPlan();
-
         when(studentRepository.findByEmail(email)).thenReturn(Optional.of(student));
-        when(courseRepository.findByStudentId(studentId)).thenReturn(List.of(course));
-        when(studyPlanRepository.findByStudentIdOrderByCreatedAtDesc(studentId)).thenReturn(List.of(studyPlan));
 
         service.deleteAccountByEmail(email);
 
@@ -104,10 +96,8 @@ class StudentAccountServiceTest {
         ordered.verify(answerRepository).deleteByStudentId(studentId);
         ordered.verify(questionRepository).deleteByStudentId(studentId);
         ordered.verify(userBadgeRepository).deleteByStudentId(studentId);
-        ordered.verify(courseRepository).findByStudentId(studentId);
-        ordered.verify(courseRepository).deleteAll(List.of(course));
-        ordered.verify(studyPlanRepository).findByStudentIdOrderByCreatedAtDesc(studentId);
-        ordered.verify(studyPlanRepository).deleteAll(List.of(studyPlan));
+        ordered.verify(courseRepository).deleteByStudentId(studentId);
+        ordered.verify(studyPlanRepository).deleteByStudentId(studentId);
         ordered.verify(studentRepository).delete(student);
     }
 

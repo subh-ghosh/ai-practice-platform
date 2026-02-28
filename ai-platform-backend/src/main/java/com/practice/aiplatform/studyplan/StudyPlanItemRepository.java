@@ -3,6 +3,7 @@ package com.practice.aiplatform.studyplan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -17,5 +18,6 @@ public interface StudyPlanItemRepository extends JpaRepository<StudyPlanItem, Lo
 
     // Find all items from active (non-completed) plans for a student
     @Query("SELECT i FROM StudyPlanItem i JOIN i.studyPlan p WHERE p.student.id = :studentId AND p.isCompleted = false")
-    List<StudyPlanItem> findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(@Param("studentId") Long studentId);
+    List<StudyPlanItem> findAllByStudyPlanStudentIdAndStudyPlanIsCompletedFalse(@Param("studentId") Long studentId,
+            Pageable pageable);
 }
