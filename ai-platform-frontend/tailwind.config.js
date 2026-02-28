@@ -79,27 +79,37 @@ export default withMT({
         },
       });
 
-      // Aggressive Global Scrollbars injected into Tailwind Base
+      // Premium modern dark scrollbars injected into Tailwind Base
       addBase({
+        // Size
         "html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar": {
-          width: "10px",
-          height: "10px",
+          width: "7px",
+          height: "7px",
         },
+        // Track: deep charcoal with a faint inner edge glow
         "html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, *::-webkit-scrollbar-track": {
-          background: "#0a0a0c",
+          background: "#0d0d0f",
+          borderLeft: "1px solid rgba(255, 255, 255, 0.04)",
         },
+        // Thumb: semi-transparent white pill with outer fade border
         "html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, *::-webkit-scrollbar-thumb": {
-          backgroundColor: "rgba(255, 255, 255, 0.15)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.10) 100%)",
           borderRadius: "99px",
-          border: "2px solid #0a0a0c",
+          border: "2px solid #0d0d0f",
           backgroundClip: "padding-box",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.15), 0 0 0 1px rgba(255,255,255,0.05)",
+          transition: "background 0.2s ease, box-shadow 0.2s ease",
         },
+        // Hover: electric blue glow
         "html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover, *::-webkit-scrollbar-thumb:hover": {
-          backgroundColor: "rgba(59, 130, 246, 0.5)",
+          background: "linear-gradient(180deg, rgba(59,130,246,0.85) 0%, rgba(99,102,241,0.7) 100%)",
+          boxShadow: "0 0 12px rgba(59,130,246,0.6), inset 0 1px 0 rgba(255,255,255,0.25)",
+          border: "2px solid rgba(0,0,0,0.5)",
         },
+        // Firefox
         "html, body, *": {
           scrollbarWidth: "thin",
-          scrollbarColor: "rgba(255, 255, 255, 0.15) #0a0a0c",
+          scrollbarColor: "rgba(255,255,255,0.2) #0d0d0f",
         },
       });
     },
