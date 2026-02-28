@@ -68,8 +68,7 @@ export function Contact() {
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Main Content Section */}
-      {/* ADJUSTED: pt-32 (more top space) pb-12 (less bottom) to center visually while accounting for navbar */}
-      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-32 pb-12 min-h-screen">
+      <section className="relative z-10 w-full pt-36 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
           <motion.div
             initial="hidden"
