@@ -101,6 +101,7 @@ export const RecommendationCard = ({ recommendation, compact = false, onAction }
     if (compact) {
         return (
             <button
+                type="button"
                 onClick={handleAction}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${config.border}
                     bg-gradient-to-r ${config.gradient} backdrop-blur-sm

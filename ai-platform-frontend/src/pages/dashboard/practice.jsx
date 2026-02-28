@@ -563,6 +563,7 @@ export function Practice() {
                       placeholder="e.g. Java, DBMS"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
+                      crossOrigin="anonymous"
                       color="blue"
                       className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500 placeholder:opacity-50"
                       labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
@@ -577,6 +578,7 @@ export function Practice() {
                       placeholder="e.g. Inheritance"
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
+                      crossOrigin="anonymous"
                       color="blue"
                       className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500 placeholder:opacity-50"
                       labelProps={{ className: "!text-blue-gray-500 dark:!text-gray-400" }}
@@ -704,7 +706,7 @@ export function Practice() {
                 {/* Feedback Area */}
                 {(feedback || isPolling) && (
                   <Card className={`border shadow-sm animate-slide-up bg-white dark:bg-gray-900 ${feedback?.evaluationStatus === 'CORRECT' ? 'border-green-200' :
-                      feedback?.evaluationStatus === 'CLOSE' ? 'border-orange-200' : 'border-red-200'
+                    feedback?.evaluationStatus === 'CLOSE' ? 'border-orange-200' : 'border-red-200'
                     }`}>
                     <CardBody className="p-6">
                       {isPolling ? (

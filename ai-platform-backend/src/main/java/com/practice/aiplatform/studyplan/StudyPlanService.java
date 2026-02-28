@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.aiplatform.ai.AiService;
+import com.practice.aiplatform.event.GamificationEventPublisher;
+import com.practice.aiplatform.event.PracticeCompletedEvent;
 import com.practice.aiplatform.event.RecoveryPlanEvent;
 import com.practice.aiplatform.event.RecoveryPlanEventPublisher;
 import com.practice.aiplatform.user.Student;
@@ -44,6 +46,7 @@ public class StudyPlanService {
     private final CacheManager cacheManager;
     private final MeterRegistry meterRegistry;
     private final RecoveryPlanEventPublisher recoveryPlanEventPublisher;
+    private final GamificationEventPublisher eventPublisher;
     @Lazy
     @Autowired
     private StudyPlanService self;
@@ -58,7 +61,8 @@ public class StudyPlanService {
             ObjectMapper objectMapper,
             CacheManager cacheManager,
             MeterRegistry meterRegistry,
-            RecoveryPlanEventPublisher recoveryPlanEventPublisher) {
+            RecoveryPlanEventPublisher recoveryPlanEventPublisher,
+            GamificationEventPublisher eventPublisher) {
         this.aiService = aiService;
         this.youTubeService = youTubeService;
         this.studyPlanRepository = studyPlanRepository;
@@ -69,6 +73,7 @@ public class StudyPlanService {
         this.cacheManager = cacheManager;
         this.meterRegistry = meterRegistry;
         this.recoveryPlanEventPublisher = recoveryPlanEventPublisher;
+        this.eventPublisher = eventPublisher;
     }
 
     public StudyPlan generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
@@ -448,6 +453,16 @@ public class StudyPlanService {
 
             recalculateProgress(plan);
             studyPlanRepository.save(plan);
+
+            PracticeCompletedEvent event = PracticeCompletedEvent.builder()
+                    .userEmail(userEmail)
+                    .practiceSessionId(itemId)
+                    .scoreEarned(xpEarned)
+                    .totalQuestions(questions.size())
+                    .subject(item.getPracticeSubject() != null ? item.getPracticeSubject() : plan.getTopic())
+                    .completedAt(LocalDateTime.now())
+                    .build();
+            eventPublisher.publishPracticeCompletedEvent(event);
         }
 
         return new QuizResult(questions.size(), correctCount, xpEarned, passed, results);

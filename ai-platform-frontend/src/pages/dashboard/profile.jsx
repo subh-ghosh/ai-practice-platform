@@ -565,22 +565,34 @@ export function Profile() {
       </div>
 
       {/* 2. Navigation Tabs */}
-      <Tabs value={activeTab} className="w-full">
-        <TabsHeader
-          className="bg-transparent border-b border-blue-gray-100 dark:border-white/10 p-0 rounded-none w-full md:w-1/2"
-          indicatorProps={{ className: "bg-transparent border-b-2 border-blue-500 shadow-none rounded-none" }}
-        >
-          <Tab value="profile" onClick={() => setActiveTab("profile")} className={`text-sm font-bold py-4 ${activeTab === 'profile' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}>
-            Overview
-          </Tab>
-          <Tab value="edit" onClick={() => setActiveTab("edit")} className={`text-sm font-bold py-4 ${activeTab === 'edit' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}>
-            Edit Profile
-          </Tab>
-          <Tab value="security" onClick={() => setActiveTab("security")} className={`text-sm font-bold py-4 ${activeTab === 'security' ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400'}`}>
-            Security
-          </Tab>
-        </TabsHeader>
-      </Tabs>
+      <div className="w-full border-b border-blue-gray-100 dark:border-white/10">
+        <div className="flex w-full md:w-1/2 relative">
+          {[
+            { id: "profile", label: "Overview" },
+            { id: "edit", label: "Edit Profile" },
+            { id: "security", label: "Security" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`relative flex-1 py-4 px-2 text-sm font-bold transition-colors ${activeTab === tab.id
+                  ? "text-blue-500"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="activeProfileTab"
+                  className="absolute bottom-[-1px] left-0 right-0 h-0.5 bg-blue-500"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* 3. Content Area */}
       <AnimatePresence mode="wait">
