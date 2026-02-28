@@ -14,4 +14,5 @@ public class RecoveryPlanEvent {
     private String topic;
     private String difficulty;
     private int days;
+    private Long planId;
 }

@@ -15,15 +15,25 @@ public class RecoveryPlanEventListener {
 
     @KafkaListener(topics = "recoveryplan.events", groupId = "practiceflow-studyplan-group")
     public void consumeRecoveryPlanEvent(RecoveryPlanEvent event) {
-        log.info("🎧 Received Kafka Event: Starting heavy background AI generations for a 1-day Recovery Plan for {}",
-                event.getUserEmail());
+        log.info("🎧 Received Kafka Event: Starting heavy background AI generations for {} (Plan ID: {})",
+                event.getUserEmail(), event.getPlanId() != null ? event.getPlanId() : "NEW");
         try {
-            // This normally takes 5-10 seconds of LLM + YouTube API time!
-            studyPlanService.generateStudyPlan(
-                    event.getUserEmail(),
-                    event.getTopic() + " Recovery",
-                    event.getDifficulty(),
-                    event.getDays());
+            if (event.getPlanId() != null) {
+                // Main Study Plan Generation (Async)
+                studyPlanService.completeAsyncStudyPlan(
+                        event.getPlanId(),
+                        event.getUserEmail(),
+                        event.getTopic(),
+                        event.getDifficulty(),
+                        event.getDays());
+            } else {
+                // Automatic Recovery Plan (Synchronous fallback within listener)
+                studyPlanService.generateStudyPlan(
+                        event.getUserEmail(),
+                        event.getTopic() + " Recovery",
+                        event.getDifficulty(),
+                        event.getDays());
+            }
             log.info("✅ Asynchronously finished AI Study Plan for {} via Kafka.", event.getUserEmail());
         } catch (Exception e) {
             log.error("❌ Failed to process Kafka recovery plan event for {}: {}", event.getUserEmail(), e.getMessage());

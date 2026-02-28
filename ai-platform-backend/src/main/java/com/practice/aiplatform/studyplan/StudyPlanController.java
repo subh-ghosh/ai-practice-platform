@@ -35,13 +35,16 @@ public class StudyPlanController {
         int duration = request.durationDays() > 0 ? request.durationDays() : 7;
 
         try {
-            StudyPlan plan = studyPlanService.generateStudyPlan(email, request.topic(), request.difficulty(), duration);
+            StudyPlan plan = studyPlanService.initiateAsyncStudyPlan(email, request.topic(), request.difficulty(),
+                    duration);
             return ResponseEntity.ok(plan);
         } catch (Exception e) {
             String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
-            if (message.contains(AiService.STUDY_PLAN_UNAVAILABLE_CODE) || message.contains("temporarily unavailable")) {
+            if (message.contains(AiService.STUDY_PLAN_UNAVAILABLE_CODE)
+                    || message.contains("temporarily unavailable")) {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body(Map.of("error", "Study plan generation temporarily unavailable. Please retry in a moment."));
+                        .body(Map.of("error",
+                                "Study plan generation temporarily unavailable. Please retry in a moment."));
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Study plan generation failed: " + message));
@@ -65,9 +68,11 @@ public class StudyPlanController {
             return ResponseEntity.ok(plan);
         } catch (Exception e) {
             String message = e.getMessage() == null ? "Unknown error" : e.getMessage();
-            if (message.contains(AiService.STUDY_PLAN_UNAVAILABLE_CODE) || message.contains("temporarily unavailable")) {
+            if (message.contains(AiService.STUDY_PLAN_UNAVAILABLE_CODE)
+                    || message.contains("temporarily unavailable")) {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                        .body(Map.of("error", "Study plan generation temporarily unavailable. Please retry in a moment."));
+                        .body(Map.of("error",
+                                "Study plan generation temporarily unavailable. Please retry in a moment."));
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Study plan generation failed: " + message));
@@ -99,7 +104,8 @@ public class StudyPlanController {
     }
 
     @PatchMapping("/{planId}/items/{itemId}/complete")
-    public ResponseEntity<?> markItemComplete(@PathVariable Long planId, @PathVariable Long itemId, Principal principal) {
+    public ResponseEntity<?> markItemComplete(@PathVariable Long planId, @PathVariable Long itemId,
+            Principal principal) {
         try {
             StudyPlanItem item = studyPlanService.markItemComplete(planId, itemId, principal.getName());
             return ResponseEntity.ok(item);
@@ -110,7 +116,8 @@ public class StudyPlanController {
     }
 
     @GetMapping("/{planId}/items/{itemId}/quiz")
-    public ResponseEntity<?> getQuizQuestions(@PathVariable Long planId, @PathVariable Long itemId, Principal principal) {
+    public ResponseEntity<?> getQuizQuestions(@PathVariable Long planId, @PathVariable Long itemId,
+            Principal principal) {
         try {
             List<QuizQuestion> questions = studyPlanService.getQuizQuestions(planId, itemId, principal.getName());
             return ResponseEntity.ok(questions);
@@ -127,8 +134,8 @@ public class StudyPlanController {
             @RequestBody QuizSubmission submission,
             Principal principal) {
         try {
-            StudyPlanService.QuizResult result =
-                    studyPlanService.submitQuizAnswers(planId, itemId, submission.answers(), principal.getName());
+            StudyPlanService.QuizResult result = studyPlanService.submitQuizAnswers(planId, itemId,
+                    submission.answers(), principal.getName());
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

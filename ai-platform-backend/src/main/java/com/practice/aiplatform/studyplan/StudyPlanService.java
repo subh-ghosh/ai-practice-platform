@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.practice.aiplatform.ai.AiService;
+import com.practice.aiplatform.event.RecoveryPlanEvent;
+import com.practice.aiplatform.event.RecoveryPlanEventPublisher;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -38,6 +40,7 @@ public class StudyPlanService {
     private final ObjectMapper objectMapper;
     private final CacheManager cacheManager;
     private final MeterRegistry meterRegistry;
+    private final RecoveryPlanEventPublisher recoveryPlanEventPublisher;
     @Lazy
     @Autowired
     private StudyPlanService self;
@@ -51,7 +54,8 @@ public class StudyPlanService {
             StudentRepository studentRepository,
             ObjectMapper objectMapper,
             CacheManager cacheManager,
-            MeterRegistry meterRegistry) {
+            MeterRegistry meterRegistry,
+            RecoveryPlanEventPublisher recoveryPlanEventPublisher) {
         this.aiService = aiService;
         this.youTubeService = youTubeService;
         this.studyPlanRepository = studyPlanRepository;
@@ -61,17 +65,9 @@ public class StudyPlanService {
         this.objectMapper = objectMapper;
         this.cacheManager = cacheManager;
         this.meterRegistry = meterRegistry;
+        this.recoveryPlanEventPublisher = recoveryPlanEventPublisher;
     }
 
-    @Caching(evict = {
-            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
-            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
-            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
-            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
-            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
-            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
-            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail")
-    })
     public StudyPlan generateStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
         Timer.Sample sample = Timer.start(meterRegistry);
         String status = "success";
@@ -82,7 +78,8 @@ public class StudyPlanService {
             enforceDailyLimitForFreeUsers(student);
 
             int maxVideos = Math.min(durationDays * 3, 25);
-            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial", maxVideos);
+            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial",
+                    maxVideos);
 
             if (videos.isEmpty()) {
                 throw new RuntimeException("No videos found for the topic: " + topic);
@@ -102,6 +99,165 @@ public class StudyPlanService {
             meterRegistry.counter("study_plan.generate.count", "status", status).increment();
             sample.stop(meterRegistry.timer("study_plan.generate.duration", "status", status));
         }
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "UserStudyPlansCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanSummariesCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStudyPlanStatsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserSuggestedPracticeCache", key = "#userEmail"),
+            @CacheEvict(value = "UserActiveContextCache", key = "#userEmail"),
+            @CacheEvict(value = "UserRecommendationsCache", key = "#userEmail"),
+            @CacheEvict(value = "UserStatisticsRecommendationsCache", key = "#userEmail")
+    })
+    public StudyPlan initiateAsyncStudyPlan(String userEmail, String topic, String difficulty, int durationDays) {
+        Student student = studentRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        enforceDailyLimitForFreeUsers(student);
+
+        StudyPlan shell = new StudyPlan();
+        shell.setTopic(topic);
+        shell.setDifficulty(difficulty);
+        shell.setDurationDays(durationDays);
+        shell.setStudent(student);
+        shell.setGenerating(true);
+        shell.setTitle("Generating: " + topic + "...");
+        shell.setDescription(
+                "Our AI is currently curating your personalized study plan. This usually takes 30-60 seconds.");
+        shell.setCreatedAt(LocalDateTime.now());
+
+        StudyPlan saved = studyPlanRepository.save(shell);
+
+        // Notify Kafka to handle the heavy lifting
+        recoveryPlanEventPublisher.publishRecoveryPlanEvent(RecoveryPlanEvent.builder()
+                .userEmail(userEmail)
+                .topic(topic)
+                .difficulty(difficulty)
+                .days(durationDays)
+                .planId(saved.getId())
+                .build());
+
+        return saved;
+    }
+
+    @Transactional
+    public void completeAsyncStudyPlan(Long planId, String userEmail, String topic, String difficulty,
+            int durationDays) {
+        StudyPlan plan = studyPlanRepository.findById(planId)
+                .orElseThrow(() -> new RuntimeException("Study Plan shell not found"));
+
+        try {
+            int maxVideos = Math.min(durationDays * 3, 25);
+            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial",
+                    maxVideos);
+
+            if (videos.isEmpty()) {
+                throw new RuntimeException("No videos found for the topic: " + topic);
+            }
+
+            String prompt = createPrompt(topic, difficulty, durationDays, videos);
+            String aiResponse = aiService.generateStudyPlanContent(prompt);
+
+            // Directly parsing and updating the existing shell
+            updateExistingPlan(plan, aiResponse, topic, difficulty, durationDays, videos);
+            generateQuizQuestionsForPlan(plan, topic, difficulty);
+
+            plan.setGenerating(false);
+            studyPlanRepository.save(plan);
+
+            // Evict caches after completion
+            evictAllUserCaches(userEmail);
+            evictOwnedStudyPlanByIdCache(userEmail, planId);
+
+        } catch (Exception e) {
+            plan.setGenerating(false);
+            plan.setTitle("Generation Failed");
+            plan.setDescription("We encountered an error while generating this plan: " + e.getMessage());
+            studyPlanRepository.save(plan);
+        }
+    }
+
+    private void updateExistingPlan(StudyPlan plan, String aiResponse, String topic, String difficulty,
+            int durationDays, List<Map<String, String>> videos) {
+        try {
+            String cleanJson = aiResponse.replace("```json", "").replace("```", "").trim();
+            JsonNode root = objectMapper.readTree(cleanJson);
+
+            Map<String, Map<String, String>> videoMap = new HashMap<>();
+            for (Map<String, String> video : videos) {
+                videoMap.put(video.get("videoId"), video);
+            }
+
+            plan.setTitle(root.path("title").asText("Study Plan: " + topic));
+            plan.setDescription(root.path("description").asText(""));
+
+            int globalOrder = 1;
+            JsonNode days = root.path("days");
+
+            if (days.isArray()) {
+                for (JsonNode day : days) {
+                    int dayNumber = day.path("dayNumber").asInt(1);
+                    JsonNode dayItems = day.path("items");
+
+                    if (!dayItems.isArray())
+                        continue;
+
+                    for (JsonNode itemNode : dayItems) {
+                        StudyPlanItem item = new StudyPlanItem();
+                        String type = itemNode.path("type").asText("VIDEO");
+
+                        item.setItemType(type);
+                        item.setDayNumber(dayNumber);
+                        item.setOrderIndex(globalOrder++);
+                        item.setDescription(itemNode.path("description").asText(""));
+
+                        if ("VIDEO".equals(type)) {
+                            String videoId = itemNode.path("videoId").asText("");
+                            Map<String, String> videoData = videoMap.get(videoId);
+                            if (videoData == null)
+                                continue;
+
+                            item.setVideoId(videoId);
+                            item.setTitle(videoData.get("title"));
+                            item.setVideoUrl("https://www.youtube.com/watch?v=" + videoId);
+                            item.setThumbnailUrl(videoData.get("thumbnailUrl"));
+                            item.setChannelName(videoData.get("channelTitle"));
+                            item.setVideoDuration(videoData.get("duration"));
+                            item.setPracticeTopic(itemNode.path("practiceTopic").asText(topic));
+                            item.setPracticeSubject(topic);
+                            item.setPracticeDifficulty(difficulty);
+                            item.setXpReward(VIDEO_XP);
+                        } else if ("PRACTICE".equals(type)) {
+                            item.setTitle("Checkpoint: " + itemNode.path("practiceTopic").asText(topic));
+                            item.setPracticeSubject(itemNode.path("practiceSubject").asText(topic));
+                            item.setPracticeTopic(itemNode.path("practiceTopic").asText(topic));
+                            item.setPracticeDifficulty(itemNode.path("practiceDifficulty").asText(difficulty));
+                            item.setXpReward(PRACTICE_XP);
+                        }
+                        plan.addItem(item);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update study plan: " + e.getMessage(), e);
+        }
+    }
+
+    private void evictAllUserCaches(String userEmail) {
+        Cache plansCache = cacheManager.getCache("UserStudyPlansCache");
+        Cache summariesCache = cacheManager.getCache("UserStudyPlanSummariesCache");
+        Cache statsCache = cacheManager.getCache("UserStudyPlanStatsCache");
+        Cache activeContextCache = cacheManager.getCache("UserActiveContextCache");
+
+        if (plansCache != null)
+            plansCache.evict(userEmail);
+        if (summariesCache != null)
+            summariesCache.evict(userEmail);
+        if (statsCache != null)
+            statsCache.evict(userEmail);
+        if (activeContextCache != null)
+            activeContextCache.evict(userEmail);
     }
 
     private void enforceDailyLimitForFreeUsers(Student student) {
@@ -148,31 +304,30 @@ public class StudyPlanService {
     private String createQuizPrompt(String subject, String practiceTopic, String difficulty) {
         return String.format(
                 """
-                Generate exactly %d multiple choice questions for a %s level student on the subject of %s, specifically on the topic: %s.
+                        Generate exactly %d multiple choice questions for a %s level student on the subject of %s, specifically on the topic: %s.
 
-                Return ONLY valid JSON with this exact structure:
-                {
-                  "questions": [
-                    {
-                      "question": "The question text",
-                      "optionA": "First option",
-                      "optionB": "Second option",
-                      "optionC": "Third option",
-                      "optionD": "Fourth option",
-                      "correctOption": "A"
-                    }
-                  ]
-                }
+                        Return ONLY valid JSON with this exact structure:
+                        {
+                          "questions": [
+                            {
+                              "question": "The question text",
+                              "optionA": "First option",
+                              "optionB": "Second option",
+                              "optionC": "Third option",
+                              "optionD": "Fourth option",
+                              "correctOption": "A"
+                            }
+                          ]
+                        }
 
-                Rules:
-                - Generate exactly %d questions
-                - Each question must have exactly 4 options (A, B, C, D)
-                - correctOption must be one of: "A", "B", "C", "D"
-                - Questions should test understanding
-                - Do not include Markdown formatting
-                """,
-                QUESTIONS_PER_PRACTICE, difficulty, subject, practiceTopic, QUESTIONS_PER_PRACTICE
-        );
+                        Rules:
+                        - Generate exactly %d questions
+                        - Each question must have exactly 4 options (A, B, C, D)
+                        - correctOption must be one of: "A", "B", "C", "D"
+                        - Questions should test understanding
+                        - Do not include Markdown formatting
+                        """,
+                QUESTIONS_PER_PRACTICE, difficulty, subject, practiceTopic, QUESTIONS_PER_PRACTICE);
     }
 
     private List<QuizQuestion> parseQuizQuestions(String jsonResponse, StudyPlanItem item) {
@@ -431,39 +586,38 @@ public class StudyPlanService {
 
         return String.format(
                 """
-                You are an expert curriculum designer. Create a structured study plan for a "%s" level student learning "%s" over %d days.
+                        You are an expert curriculum designer. Create a structured study plan for a "%s" level student learning "%s" over %d days.
 
-                Here are videos available for this topic:
-                %s
+                        Here are videos available for this topic:
+                        %s
 
-                Return ONLY valid JSON with this structure:
-                {
-                  "title": "Study Plan Title",
-                  "description": "Brief description",
-                  "days": [
-                    {
-                      "dayNumber": 1,
-                      "items": [
+                        Return ONLY valid JSON with this structure:
                         {
-                          "type": "VIDEO",
-                          "videoId": "video_id",
-                          "description": "what to focus on",
-                          "practiceTopic": "topic"
-                        },
-                        {
-                          "type": "PRACTICE",
-                          "practiceSubject": "subject",
-                          "practiceTopic": "topic",
-                          "practiceDifficulty": "%s",
-                          "description": "practice description"
+                          "title": "Study Plan Title",
+                          "description": "Brief description",
+                          "days": [
+                            {
+                              "dayNumber": 1,
+                              "items": [
+                                {
+                                  "type": "VIDEO",
+                                  "videoId": "video_id",
+                                  "description": "what to focus on",
+                                  "practiceTopic": "topic"
+                                },
+                                {
+                                  "type": "PRACTICE",
+                                  "practiceSubject": "subject",
+                                  "practiceTopic": "topic",
+                                  "practiceDifficulty": "%s",
+                                  "description": "practice description"
+                                }
+                              ]
+                            }
+                          ]
                         }
-                      ]
-                    }
-                  ]
-                }
-                """,
-                difficulty, topic, durationDays, videoList.toString(), difficulty
-        );
+                        """,
+                difficulty, topic, durationDays, videoList.toString(), difficulty);
     }
 
     private StudyPlan parseAndSavePlan(
@@ -589,8 +743,7 @@ public class StudyPlanService {
                 nextItem.getPracticeSubject(),
                 nextItem.getPracticeDifficulty(),
                 nextItem.getStudyPlan().getId(),
-                nextItem.getId()
-        );
+                nextItem.getId());
     }
 
     @Caching(evict = {
@@ -681,13 +834,13 @@ public class StudyPlanService {
             }
 
             String preAnalysisPrompt = """
-                Analyze this syllabus/document.
-                Return ONLY valid JSON:
-                {
-                  "title": "Clear Course Title",
-                  "playlistQuery": "Search query for a comprehensive playlist"
-                }
-                """;
+                    Analyze this syllabus/document.
+                    Return ONLY valid JSON:
+                    {
+                      "title": "Clear Course Title",
+                      "playlistQuery": "Search query for a comprehensive playlist"
+                    }
+                    """;
 
             String preAnalysisResponse = aiService.generateStudyPlanContent(preAnalysisPrompt, mimeType, fileData);
             JsonNode preNode = parseJson(preAnalysisResponse);
@@ -704,38 +857,38 @@ public class StudyPlanService {
             StringBuilder videoList = new StringBuilder();
             for (int i = 0; i < playlistVideos.size(); i++) {
                 Map<String, String> v = playlistVideos.get(i);
-                videoList.append(i + 1).append(". ").append(v.get("title")).append(" (videoId: ").append(v.get("videoId")).append(")\n");
+                videoList.append(i + 1).append(". ").append(v.get("title")).append(" (videoId: ")
+                        .append(v.get("videoId")).append(")\n");
             }
 
             String analysisPrompt = String.format(
-                """
-                Analyze this syllabus and create a %d-day complete study plan.
+                    """
+                            Analyze this syllabus and create a %d-day complete study plan.
 
-                Playlist videos:
-                %s
+                            Playlist videos:
+                            %s
 
-                Return ONLY valid JSON:
-                {
-                  "title": "%s",
-                  "description": "Description",
-                  "difficulty": "Intermediate",
-                  "days": [
-                    {
-                      "dayNumber": 1,
-                      "lessons": [
-                        {
-                          "title": "Topic",
-                          "videoId": "id_or_null",
-                          "searchQuery": "query_if_needed",
-                          "description": "lesson description"
-                        }
-                      ]
-                    }
-                  ]
-                }
-                """,
-                durationDays, videoList.toString(), courseTitle
-            );
+                            Return ONLY valid JSON:
+                            {
+                              "title": "%s",
+                              "description": "Description",
+                              "difficulty": "Intermediate",
+                              "days": [
+                                {
+                                  "dayNumber": 1,
+                                  "lessons": [
+                                    {
+                                      "title": "Topic",
+                                      "videoId": "id_or_null",
+                                      "searchQuery": "query_if_needed",
+                                      "description": "lesson description"
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                            """,
+                    durationDays, videoList.toString(), courseTitle);
 
             String analysisResponse = aiService.generateStudyPlanContent(analysisPrompt, mimeType, fileData);
             JsonNode root = parseJson(analysisResponse);
@@ -768,63 +921,67 @@ public class StudyPlanService {
                     continue;
                 }
 
-            for (JsonNode lesson : lessons) {
-                String lessonTitle = normalizeAiField(lesson.path("title").asText(""));
-                String videoId = normalizeAiField(lesson.path("videoId").asText(""));
-                String searchQuery = normalizeAiField(lesson.path("searchQuery").asText(""));
-                String lessonDesc = lesson.path("description").asText("");
+                for (JsonNode lesson : lessons) {
+                    String lessonTitle = normalizeAiField(lesson.path("title").asText(""));
+                    String videoId = normalizeAiField(lesson.path("videoId").asText(""));
+                    String searchQuery = normalizeAiField(lesson.path("searchQuery").asText(""));
+                    String lessonDesc = lesson.path("description").asText("");
 
-                Map<String, String> videoData = null;
+                    Map<String, String> videoData = null;
 
-                if (!videoId.isEmpty() && playlistVideoMap.containsKey(videoId) && !usedVideoIds.contains(videoId)) {
-                    videoData = playlistVideoMap.get(videoId);
-                }
+                    if (!videoId.isEmpty() && playlistVideoMap.containsKey(videoId)
+                            && !usedVideoIds.contains(videoId)) {
+                        videoData = playlistVideoMap.get(videoId);
+                    }
 
-                if (videoData == null) {
-                    List<String> fallbackQueries = new ArrayList<>();
-                    if (!searchQuery.isEmpty()) fallbackQueries.add(searchQuery);
-                    if (!lessonTitle.isEmpty()) fallbackQueries.add(lessonTitle + " " + title + " tutorial");
-                    if (!lessonTitle.isEmpty()) fallbackQueries.add(lessonTitle + " tutorial for beginners");
-                    fallbackQueries.add(title + " " + difficulty + " tutorial");
+                    if (videoData == null) {
+                        List<String> fallbackQueries = new ArrayList<>();
+                        if (!searchQuery.isEmpty())
+                            fallbackQueries.add(searchQuery);
+                        if (!lessonTitle.isEmpty())
+                            fallbackQueries.add(lessonTitle + " " + title + " tutorial");
+                        if (!lessonTitle.isEmpty())
+                            fallbackQueries.add(lessonTitle + " tutorial for beginners");
+                        fallbackQueries.add(title + " " + difficulty + " tutorial");
 
-                    for (String query : fallbackQueries) {
-                        List<Map<String, String>> results = youTubeService.searchVideos(query, 5);
-                        for (Map<String, String> r : results) {
-                            String candidateId = r.get("videoId");
-                            if (candidateId != null && !usedVideoIds.contains(candidateId)) {
-                                videoData = r;
+                        for (String query : fallbackQueries) {
+                            List<Map<String, String>> results = youTubeService.searchVideos(query, 5);
+                            for (Map<String, String> r : results) {
+                                String candidateId = r.get("videoId");
+                                if (candidateId != null && !usedVideoIds.contains(candidateId)) {
+                                    videoData = r;
+                                    break;
+                                }
+                            }
+                            if (videoData != null) {
                                 break;
                             }
                         }
-                        if (videoData != null) {
-                            break;
-                        }
+                    }
+
+                    if (videoData != null) {
+                        usedVideoIds.add(videoData.get("videoId"));
+
+                        StudyPlanItem item = new StudyPlanItem();
+                        item.setItemType("VIDEO");
+                        item.setDayNumber(dayNumber);
+                        item.setOrderIndex(itemOrder++);
+                        item.setDescription(lessonDesc);
+                        item.setVideoId(videoData.get("videoId"));
+                        item.setTitle(lessonTitle);
+                        item.setVideoUrl("https://www.youtube.com/watch?v=" + videoData.get("videoId"));
+                        item.setThumbnailUrl(videoData.get("thumbnailUrl"));
+                        item.setChannelName(videoData.get("channelTitle"));
+                        item.setVideoDuration(videoData.get("duration"));
+                        item.setXpReward(VIDEO_XP);
+                        item.setPracticeTopic(lessonTitle);
+                        item.setPracticeSubject(title);
+                        item.setPracticeDifficulty(difficulty);
+
+                        allItems.add(item);
+                        videoItemsAdded++;
                     }
                 }
-
-                if (videoData != null) {
-                    usedVideoIds.add(videoData.get("videoId"));
-
-                    StudyPlanItem item = new StudyPlanItem();
-                    item.setItemType("VIDEO");
-                    item.setDayNumber(dayNumber);
-                    item.setOrderIndex(itemOrder++);
-                    item.setDescription(lessonDesc);
-                    item.setVideoId(videoData.get("videoId"));
-                    item.setTitle(lessonTitle);
-                    item.setVideoUrl("https://www.youtube.com/watch?v=" + videoData.get("videoId"));
-                    item.setThumbnailUrl(videoData.get("thumbnailUrl"));
-                    item.setChannelName(videoData.get("channelTitle"));
-                    item.setVideoDuration(videoData.get("duration"));
-                    item.setXpReward(VIDEO_XP);
-                    item.setPracticeTopic(lessonTitle);
-                    item.setPracticeSubject(title);
-                    item.setPracticeDifficulty(difficulty);
-
-                    allItems.add(item);
-                    videoItemsAdded++;
-                }
-            }
 
                 StudyPlanItem practice = new StudyPlanItem();
                 practice.setItemType("PRACTICE");
@@ -833,15 +990,15 @@ public class StudyPlanService {
                 practice.setTitle("Day " + dayNumber + " Checkpoint");
                 practice.setPracticeSubject(title);
 
-            String lastLessonTitle = "General Review";
-            if (lessons.size() > 0) {
-                lastLessonTitle = lessons.get(lessons.size() - 1).path("title").asText("Day Review");
-            }
+                String lastLessonTitle = "General Review";
+                if (lessons.size() > 0) {
+                    lastLessonTitle = lessons.get(lessons.size() - 1).path("title").asText("Day Review");
+                }
 
-            practice.setPracticeTopic(lastLessonTitle);
-            practice.setPracticeDifficulty(difficulty);
-            practice.setXpReward(PRACTICE_XP);
-            practice.setDescription("Test your knowledge on today's topics.");
+                practice.setPracticeTopic(lastLessonTitle);
+                practice.setPracticeDifficulty(difficulty);
+                practice.setXpReward(PRACTICE_XP);
+                practice.setDescription("Test your knowledge on today's topics.");
 
                 allItems.add(practice);
             }
@@ -933,8 +1090,7 @@ public class StudyPlanService {
                         item.isCompleted(),
                         item.getPracticeTopic(),
                         item.getPracticeSubject(),
-                        item.getPracticeDifficulty()
-                ));
+                        item.getPracticeDifficulty()));
             }
         }
 
@@ -947,8 +1103,7 @@ public class StudyPlanService {
                 currentDay,
                 totalDays,
                 todayItems,
-                nextPractice
-        );
+                nextPractice);
     }
 
     private StudyPlan getOwnedStudyPlan(Long planId, String userEmail) {
@@ -1017,8 +1172,7 @@ public class StudyPlanService {
                                 q.getOptionA(),
                                 q.getOptionB(),
                                 q.getOptionC(),
-                                q.getOptionD()
-                        ));
+                                q.getOptionD()));
                     }
                 }
 
@@ -1039,28 +1193,27 @@ public class StudyPlanService {
                         item.getOrderIndex(),
                         item.getXpReward(),
                         questions,
-                        item.isCompleted()
-                ));
+                        item.isCompleted()));
             }
         }
 
         Student student = plan.getStudent();
-        StudyPlanDetailStudentDto studentDto = student == null ? null : new StudyPlanDetailStudentDto(
-                student.getId(),
-                student.getFirstName(),
-                student.getLastName(),
-                student.getGender(),
-                student.getBio(),
-                student.getHeadline(),
-                student.getAvatarUrl(),
-                student.getGithubUrl(),
-                student.getLinkedinUrl(),
-                student.getWebsiteUrl(),
-                student.getSubscriptionStatus(),
-                student.getTotalXp(),
-                student.getStreakDays(),
-                student.getLastLoginDate() == null ? null : student.getLastLoginDate().toString()
-        );
+        StudyPlanDetailStudentDto studentDto = student == null ? null
+                : new StudyPlanDetailStudentDto(
+                        student.getId(),
+                        student.getFirstName(),
+                        student.getLastName(),
+                        student.getGender(),
+                        student.getBio(),
+                        student.getHeadline(),
+                        student.getAvatarUrl(),
+                        student.getGithubUrl(),
+                        student.getLinkedinUrl(),
+                        student.getWebsiteUrl(),
+                        student.getSubscriptionStatus(),
+                        student.getTotalXp(),
+                        student.getStreakDays(),
+                        student.getLastLoginDate() == null ? null : student.getLastLoginDate().toString());
 
         return new StudyPlanDetailDto(
                 plan.getId(),
@@ -1073,8 +1226,8 @@ public class StudyPlanService {
                 studentDto,
                 items,
                 plan.getCreatedAt(),
-                plan.isCompleted()
-        );
+                plan.isCompleted(),
+                plan.isGenerating());
     }
 
     private void evictOwnedStudyPlanByIdCache(String userEmail, Long planId) {

@@ -58,14 +58,31 @@ const StudyPlanViewerPage = () => {
         fetchPlan();
     }, [id]);
 
-    const fetchPlan = async () => {
+    useEffect(() => {
+        let interval;
+        if (plan?.isGenerating) {
+            interval = setInterval(() => {
+                fetchPlan(true); // silent fetch
+            }, 3000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [plan?.isGenerating, id]);
+
+    const fetchPlan = async (isSilent = false) => {
+        if (!isSilent) setLoading(true);
         try {
             const response = await api.get(`/study-plans/${id}`);
             setPlan(response.data);
+            if (response.data.isGenerating === false && plan?.isGenerating === true) {
+                // Just finished!
+                console.log("Study plan generation complete!");
+            }
         } catch (err) {
-            setError("Failed to load study plan.");
+            if (!isSilent) setError("Failed to load study plan.");
         } finally {
-            setLoading(false);
+            if (!isSilent) setLoading(false);
         }
     };
 
@@ -245,18 +262,35 @@ const StudyPlanViewerPage = () => {
                 </div>
             </div>
 
-            {/* Progress */}
+            {/* Progress / Generating State */}
             <Card className="mb-8 border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900/50 backdrop-blur-md">
                 <CardBody className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                        <Typography variant="small" className="font-bold text-blue-gray-700 dark:text-gray-300">
-                            Overall Progress
-                        </Typography>
-                        <Typography variant="small" className="font-bold text-blue-500">
-                            {plan.progress}%
-                        </Typography>
-                    </div>
-                    <Progress value={plan.progress} size="lg" color="blue" className="bg-blue-gray-50 dark:bg-gray-800 h-2.5" />
+                    {plan.isGenerating ? (
+                        <div className="flex flex-col items-center py-4">
+                            <Spinner className="h-12 w-12 text-blue-500 mb-4" />
+                            <Typography variant="h5" color="blue-gray" className="mb-2 dark:text-white text-center">
+                                AI is curating your personalized plan...
+                            </Typography>
+                            <Typography className="text-blue-gray-500 dark:text-gray-400 text-center max-w-md">
+                                We are searching YouTube for the best tutorials and generating quiz checkpoints. This will be ready in a few moments.
+                            </Typography>
+                            <div className="w-full mt-6">
+                                <Progress value={45} size="lg" color="blue" className="bg-blue-gray-50 dark:bg-gray-800 h-2.5 animate-pulse" />
+                            </div>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="flex items-center justify-between mb-2">
+                                <Typography variant="small" className="font-bold text-blue-gray-700 dark:text-gray-300">
+                                    Overall Progress
+                                </Typography>
+                                <Typography variant="small" className="font-bold text-blue-500">
+                                    {plan.progress}%
+                                </Typography>
+                            </div>
+                            <Progress value={plan.progress} size="lg" color="blue" className="bg-blue-gray-50 dark:bg-gray-800 h-2.5" />
+                        </>
+                    )}
                 </CardBody>
             </Card>
 

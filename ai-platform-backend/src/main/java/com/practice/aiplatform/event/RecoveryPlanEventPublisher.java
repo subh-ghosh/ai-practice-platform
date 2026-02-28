@@ -15,7 +15,8 @@ public class RecoveryPlanEventPublisher {
     private static final String TOPIC_NAME = "recoveryplan.events";
 
     public void publishRecoveryPlanEvent(RecoveryPlanEvent event) {
-        log.info("📢 Broadcasting AI Recovery Plan Event to Kafka for user: {}", event.getUserEmail());
+        log.info("📢 Broadcasting AI Recovery Plan Event to Kafka (Plan ID: {}) for user: {}",
+                event.getPlanId() != null ? event.getPlanId() : "NEW", event.getUserEmail());
         kafkaTemplate.send(TOPIC_NAME, event.getUserEmail(), event);
     }
 }
