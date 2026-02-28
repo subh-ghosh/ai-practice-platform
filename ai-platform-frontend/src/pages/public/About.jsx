@@ -40,8 +40,7 @@ export function About() {
       <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
       {/* Main Content Section */}
-      {/* ADJUSTED: pt-32 and min-h-[103vh] for a tight, high-end feel */}
-      <section className="relative z-10 flex-1 w-full flex items-center justify-center pt-32 pb-16 min-h-[103vh]">
+      <section className="relative z-10 w-full pt-36 pb-16">
         <div className="container mx-auto px-4 max-w-xl">
 
           <motion.div initial="hidden" animate="visible" variants={fadeInUp}>
