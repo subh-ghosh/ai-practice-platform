@@ -2,6 +2,7 @@ package com.practice.aiplatform.practice;
 
 import com.practice.aiplatform.ai.AiService;
 import com.practice.aiplatform.studyplan.StudyPlanService;
+import com.practice.aiplatform.event.GamificationEventPublisher;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import com.practice.aiplatform.user.UsageService;
@@ -35,8 +36,10 @@ public class PracticeController {
     private AiService aiService;
     @Autowired
     private UsageService usageService;
+
     @Autowired
-    private com.practice.aiplatform.gamification.XpService xpService;
+    private GamificationEventPublisher eventPublisher;
+
     @Autowired
     private StudyPlanService studyPlanService;
     @Lazy
@@ -78,8 +81,7 @@ public class PracticeController {
                 savedAnswer.getAnswerText(),
                 question.getSubject(),
                 question.getTopic(),
-                question.getDifficulty()
-        );
+                question.getDifficulty());
 
         ParsedFeedback parsedFeedback = parseFeedback(aiFeedback);
 
@@ -94,8 +96,7 @@ public class PracticeController {
                     student.getEmail(),
                     question.getTopic() + " Recovery",
                     "Beginner",
-                    1
-            );
+                    1);
         }
 
         savedAnswer.setFeedback(finalFeedback);
@@ -138,8 +139,7 @@ public class PracticeController {
                 question.getQuestionText(),
                 question.getSubject(),
                 question.getTopic(),
-                question.getDifficulty()
-        );
+                question.getDifficulty());
 
         Answer answer = new Answer();
         answer.setAnswerText(answerText);
@@ -185,8 +185,7 @@ public class PracticeController {
                     answer.getEvaluationStatus(),
                     answer.getHint(),
                     answer.getFeedback(),
-                    answer.getSubmittedAt()
-            );
+                    answer.getSubmittedAt());
 
             historyList.add(item);
         }
@@ -194,16 +193,15 @@ public class PracticeController {
         PracticeHistoryDto historyDto = new PracticeHistoryDto(
                 student.getId(),
                 student.getFirstName(),
-                historyList
-        );
+                historyList);
 
         return historyDto;
     }
 
     @GetMapping("/suggestion")
     public ResponseEntity<StudyPlanService.SuggestedPracticeDto> getSuggestion(Principal principal) {
-        StudyPlanService.SuggestedPracticeDto suggestion =
-                studyPlanService.getSuggestedPracticeItem(principal.getName());
+        StudyPlanService.SuggestedPracticeDto suggestion = studyPlanService
+                .getSuggestedPracticeItem(principal.getName());
         return ResponseEntity.ok(suggestion);
     }
 
@@ -217,17 +215,31 @@ public class PracticeController {
 
     private int handleXpAndPlanProgress(Student student, Question question, String status) {
         int planItemsCompleted = 0;
+        int scoreEarned = 0;
 
         if ("CORRECT".equals(status)) {
-            xpService.awardXp(student, 10);
+            scoreEarned = 10;
             planItemsCompleted = studyPlanService.markExternalPracticeAsComplete(
                     student.getEmail(),
                     question.getTopic(),
-                    question.getDifficulty()
-            );
+                    question.getDifficulty());
         } else if ("CLOSE".equals(status)) {
-            xpService.awardXp(student, 5);
+            scoreEarned = 5;
         }
+
+        // 🚀 FIRE AND FORGET: Broadcast the result to Kafka for Gamification/Stats to
+        // pick up asynchronously!
+        com.practice.aiplatform.event.PracticeCompletedEvent event = com.practice.aiplatform.event.PracticeCompletedEvent
+                .builder()
+                .userEmail(student.getEmail())
+                .practiceSessionId(question.getId())
+                .scoreEarned(scoreEarned)
+                .totalQuestions(1) // Single practice question flow
+                .subject(question.getSubject())
+                .completedAt(java.time.LocalDateTime.now())
+                .build();
+
+        eventPublisher.publishPracticeCompletedEvent(event);
 
         return planItemsCompleted;
     }
