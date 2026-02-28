@@ -18,9 +18,9 @@ export default withMT({
         ring: "rgb(var(--ring) / <alpha-value>)",
         // Glass Colors
         glass: {
-            100: "rgba(255, 255, 255, 0.1)",
-            200: "rgba(255, 255, 255, 0.2)",
-            300: "rgba(255, 255, 255, 0.3)",
+          100: "rgba(255, 255, 255, 0.1)",
+          200: "rgba(255, 255, 255, 0.2)",
+          300: "rgba(255, 255, 255, 0.3)",
         }
       },
       fontFamily: {
@@ -28,7 +28,7 @@ export default withMT({
         mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo"],
       },
       borderRadius: { xl: "0.9rem", "2xl": "1.25rem" },
-      boxShadow: { 
+      boxShadow: {
         soft: "0 1px 2px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.06)",
         // New Shadows for Glass effect
         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
@@ -76,6 +76,30 @@ export default withMT({
           "--border": "38 38 42",
           "--card": "17 17 19",
           "--ring": "99 102 241",
+        },
+      });
+
+      // Aggressive Global Scrollbars injected into Tailwind Base
+      addBase({
+        "html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar": {
+          width: "10px",
+          height: "10px",
+        },
+        "html::-webkit-scrollbar-track, body::-webkit-scrollbar-track, *::-webkit-scrollbar-track": {
+          background: "#0a0a0c",
+        },
+        "html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb, *::-webkit-scrollbar-thumb": {
+          backgroundColor: "rgba(255, 255, 255, 0.15)",
+          borderRadius: "99px",
+          border: "2px solid #0a0a0c",
+          backgroundClip: "padding-box",
+        },
+        "html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover, *::-webkit-scrollbar-thumb:hover": {
+          backgroundColor: "rgba(59, 130, 246, 0.5)",
+        },
+        "html, body, *": {
+          scrollbarWidth: "thin",
+          scrollbarColor: "rgba(255, 255, 255, 0.15) #0a0a0c",
         },
       });
     },
