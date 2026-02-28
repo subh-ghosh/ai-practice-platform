@@ -1,6 +1,7 @@
 package com.practice.aiplatform.user;
 
-import com.practice.aiplatform.notifications.NotificationService;
+import com.practice.aiplatform.event.NotificationEvent;
+import com.practice.aiplatform.event.NotificationEventPublisher;
 import com.practice.aiplatform.security.JwtUtil;
 import com.practice.aiplatform.security.RefreshToken;
 import com.practice.aiplatform.security.RefreshTokenService;
@@ -28,7 +29,7 @@ public class StudentAuthController {
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final NotificationService notificationService;
+    private final NotificationEventPublisher notificationEventPublisher;
     private final GoogleAuthService googleAuthService;
     private final RefreshTokenService refreshTokenService;
 
@@ -36,13 +37,13 @@ public class StudentAuthController {
             StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
-            NotificationService notificationService,
+            NotificationEventPublisher notificationEventPublisher,
             GoogleAuthService googleAuthService,
             RefreshTokenService refreshTokenService) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
-        this.notificationService = notificationService;
+        this.notificationEventPublisher = notificationEventPublisher;
         this.googleAuthService = googleAuthService;
         this.refreshTokenService = refreshTokenService;
     }
@@ -81,7 +82,12 @@ public class StudentAuthController {
             Student savedStudent = studentRepository.save(student);
 
             try {
-                notificationService.createNotification(savedStudent.getId(), "REGISTER", "Welcome! Registration successful.");
+                notificationEventPublisher.publishNotificationEvent(
+                        NotificationEvent.builder()
+                                .studentId(savedStudent.getId())
+                                .type("REGISTER")
+                                .message("Welcome! Registration successful.")
+                                .build());
             } catch (Exception ignored) {
             }
 
@@ -133,7 +139,12 @@ public class StudentAuthController {
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(student.getId());
 
             try {
-                notificationService.createNotification(student.getId(), "LOGIN", "New login detected.");
+                notificationEventPublisher.publishNotificationEvent(
+                        NotificationEvent.builder()
+                                .studentId(student.getId())
+                                .type("LOGIN")
+                                .message("New login detected.")
+                                .build());
             } catch (Exception ignored) {
             }
 
@@ -238,8 +249,7 @@ public class StudentAuthController {
                 })
                 .orElseThrow(() -> new TokenRefreshException(
                         requestRefreshToken,
-                        "Refresh token is not in database!"
-                ));
+                        "Refresh token is not in database!"));
     }
 
     private void updateStreak(Student student) {

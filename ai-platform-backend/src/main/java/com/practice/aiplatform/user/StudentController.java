@@ -3,7 +3,8 @@ package com.practice.aiplatform.user;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.MeterRegistry;
-import com.practice.aiplatform.notifications.NotificationService;
+import com.practice.aiplatform.event.NotificationEvent;
+import com.practice.aiplatform.event.NotificationEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -40,7 +41,7 @@ public class StudentController {
 
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
-    private final NotificationService notificationService;
+    private final NotificationEventPublisher notificationEventPublisher;
     private final StudentAccountService studentAccountService;
     private final MeterRegistry meterRegistry;
     private final Cache<String, StudentResponseDTO> localProfileCache;
@@ -51,12 +52,12 @@ public class StudentController {
     public StudentController(
             StudentRepository studentRepository,
             PasswordEncoder passwordEncoder,
-            NotificationService notificationService,
+            NotificationEventPublisher notificationEventPublisher,
             StudentAccountService studentAccountService,
             MeterRegistry meterRegistry) {
         this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
-        this.notificationService = notificationService;
+        this.notificationEventPublisher = notificationEventPublisher;
         this.studentAccountService = studentAccountService;
         this.meterRegistry = meterRegistry;
         this.localProfileCache = Caffeine.newBuilder()
@@ -105,20 +106,34 @@ public class StudentController {
         Student student = studentRepository.findByEmail(principal.getName())
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        if (req.firstName() != null) student.setFirstName(req.firstName().trim());
-        if (req.lastName() != null) student.setLastName(req.lastName().trim());
-        if (req.gender() != null) student.setGender(req.gender().trim().toLowerCase());
-        if (req.bio() != null) student.setBio(req.bio().trim());
-        if (req.headline() != null) student.setHeadline(req.headline().trim());
-        if (req.avatarUrl() != null) student.setAvatarUrl(req.avatarUrl().trim());
-        if (req.githubUrl() != null) student.setGithubUrl(req.githubUrl().trim());
-        if (req.linkedinUrl() != null) student.setLinkedinUrl(req.linkedinUrl().trim());
-        if (req.websiteUrl() != null) student.setWebsiteUrl(req.websiteUrl().trim());
+        if (req.firstName() != null)
+            student.setFirstName(req.firstName().trim());
+        if (req.lastName() != null)
+            student.setLastName(req.lastName().trim());
+        if (req.gender() != null)
+            student.setGender(req.gender().trim().toLowerCase());
+        if (req.bio() != null)
+            student.setBio(req.bio().trim());
+        if (req.headline() != null)
+            student.setHeadline(req.headline().trim());
+        if (req.avatarUrl() != null)
+            student.setAvatarUrl(req.avatarUrl().trim());
+        if (req.githubUrl() != null)
+            student.setGithubUrl(req.githubUrl().trim());
+        if (req.linkedinUrl() != null)
+            student.setLinkedinUrl(req.linkedinUrl().trim());
+        if (req.websiteUrl() != null)
+            student.setWebsiteUrl(req.websiteUrl().trim());
 
         studentRepository.save(student);
         localProfileCache.invalidate(principal.getName());
 
-        notificationService.createNotification(student.getId(), "PROFILE_UPDATED", "Your profile was updated.");
+        notificationEventPublisher.publishNotificationEvent(
+                NotificationEvent.builder()
+                        .studentId(student.getId())
+                        .type("PROFILE_UPDATED")
+                        .message("Your profile was updated.")
+                        .build());
 
         return ResponseEntity.ok(StudentResponseDTO.fromEntity(student));
     }
@@ -190,7 +205,6 @@ public class StudentController {
                 "cache_layer_access_total",
                 "cache", cacheName,
                 "layer", "l1",
-                "result", result
-        ).increment();
+                "result", result).increment();
     }
 }
