@@ -858,16 +858,16 @@ export function Practice() {
             <Typography variant="h5" className="font-bold leading-snug break-words pr-8">
               {selectedHistory?.questionText}
             </Typography>
-            <IconButton variant="text" size="sm" onClick={() => setSelectedHistory(null)} className="absolute top-4 right-4 text-gray-400 hover:text-white shrink-0">
+            <button type="button" onClick={() => setSelectedHistory(null)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white shrink-0 z-50">
               <XMarkIcon className="h-6 w-6" />
-            </IconButton>
+            </button>
           </DialogHeader>
           <DialogBody className="h-[25rem] overflow-y-scroll bg-gray-900/40 p-6 custom-scroll">
             {selectedHistory && (
               <div className="space-y-6">
                 <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">
                   <Typography className="font-black text-[10px] uppercase text-gray-500 tracking-widest mb-3">Your Answer</Typography>
-                  <div className="prose prose-invert max-w-none text-gray-200">
+                  <div className="prose prose-invert max-w-none text-gray-200 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {selectedHistory.answerText}
                     </ReactMarkdown>
@@ -878,7 +878,7 @@ export function Practice() {
                     <SparklesIcon className="h-4 w-4 text-blue-400" />
                     <Typography className="font-black text-[10px] uppercase text-blue-400 tracking-widest">Feedback</Typography>
                   </div>
-                  <div className="prose prose-invert max-w-none text-gray-300">
+                  <div className="prose prose-invert max-w-none text-gray-300 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.feedback}</ReactMarkdown>
                   </div>
                 </div>

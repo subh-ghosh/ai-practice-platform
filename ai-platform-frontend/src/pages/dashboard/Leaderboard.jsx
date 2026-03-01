@@ -99,22 +99,22 @@ const Leaderboard = () => {
                     animate="visible"
                     className="flex flex-col gap-6"
                 >
-                    {/* Top 3 Podium (Visible on larger screens) */}
-                    <div className="hidden lg:flex justify-center items-end gap-6 mb-8 px-4">
+                    {/* Top 3 Podium (Visible on all screens now) */}
+                    <div className="flex justify-center items-end gap-2 sm:gap-6 mb-8 px-2 sm:px-4 mt-6">
                         {/* 2nd Place */}
                         {leaders[1] && (
                             <motion.div variants={itemVariants} className="flex flex-col items-center">
                                 <Avatar
                                     src={getAvatar(leaders[1])}
                                     alt="2nd"
-                                    size="xl"
-                                    className="border-4 border-gray-300 shadow-lg mb-[-16px] z-10 bg-white"
+                                    size="lg"
+                                    className="border-4 border-gray-300 shadow-lg mb-[-12px] sm:mb-[-16px] z-10 bg-white md:w-16 md:h-16 h-12 w-12"
                                 />
-                                <div className="bg-white/70 dark:bg-gray-500/10 backdrop-blur-md w-32 h-40 rounded-t-2xl flex flex-col justify-start pt-6 items-center shadow-md border border-blue-100/60 dark:border-gray-800">
-                                    <Typography variant="h4" className="font-bold text-gray-500 dark:text-gray-300">2</Typography>
-                                    <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-2 truncate w-full">{leaders[1].firstName}</Typography>
-                                    <div className="mt-2 flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
-                                        <BoltIcon className="h-3 w-3" /> {leaders[1].totalXp} XP
+                                <div className="bg-white/70 dark:bg-gray-500/10 backdrop-blur-md w-24 sm:w-32 h-32 sm:h-40 rounded-t-2xl flex flex-col justify-start pt-4 sm:pt-6 items-center shadow-md border border-blue-100/60 dark:border-gray-800">
+                                    <Typography variant="h4" className="font-bold text-gray-500 dark:text-gray-300 text-lg sm:text-2xl">2</Typography>
+                                    <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-1 sm:px-2 truncate w-full text-[10px] sm:text-sm">{leaders[1].firstName}</Typography>
+                                    <div className="mt-1 sm:mt-2 flex items-center gap-1 text-[9px] sm:text-xs font-bold text-amber-500 bg-amber-500/10 px-1.5 sm:px-2 py-0.5 rounded-full">
+                                        <BoltIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> <span className="truncate">{leaders[1].totalXp} XP</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -124,19 +124,19 @@ const Leaderboard = () => {
                         {leaders[0] && (
                             <motion.div variants={itemVariants} className="flex flex-col items-center">
                                 <div className="relative">
-                                    <TrophyIcon className="h-8 w-8 text-yellow-400 absolute -top-10 left-1/2 -translate-x-1/2 drop-shadow-lg animate-bounce" />
+                                    <TrophyIcon className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-400 absolute -top-8 sm:-top-10 left-1/2 -translate-x-1/2 drop-shadow-lg animate-bounce" />
                                     <Avatar
                                         src={getAvatar(leaders[0])}
                                         alt="1st"
-                                        size="xxl"
-                                        className="border-4 border-yellow-400 shadow-xl mb-[-20px] z-10 bg-white ring-4 ring-yellow-400/20"
+                                        size="xl"
+                                        className="border-4 border-yellow-400 shadow-xl mb-[-16px] sm:mb-[-20px] z-10 bg-white ring-4 ring-yellow-400/20 md:w-20 md:h-20 h-16 w-16"
                                     />
                                 </div>
-                                <div className="bg-white/70 dark:bg-yellow-500/10 backdrop-blur-md w-40 h-52 rounded-t-2xl flex flex-col justify-start pt-8 items-center shadow-lg border border-yellow-200/50 dark:border-yellow-700/50">
-                                    <Typography variant="h3" className="font-bold text-yellow-600 dark:text-yellow-400">1</Typography>
-                                    <Typography variant="h6" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-2 truncate w-full">{leaders[0].firstName}</Typography>
-                                    <div className="mt-2 flex items-center gap-1 text-xs font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-400/20 px-3 py-1 rounded-full">
-                                        <BoltIcon className="h-3.5 w-3.5" /> {leaders[0].totalXp} XP
+                                <div className="bg-white/70 dark:bg-yellow-500/10 backdrop-blur-md w-28 sm:w-40 h-40 sm:h-52 rounded-t-2xl flex flex-col justify-start pt-6 sm:pt-8 items-center shadow-lg border border-yellow-200/50 dark:border-yellow-700/50">
+                                    <Typography variant="h3" className="font-bold text-yellow-600 dark:text-yellow-400 text-xl sm:text-3xl">1</Typography>
+                                    <Typography variant="h6" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-1 sm:px-2 truncate w-full text-xs sm:text-base">{leaders[0].firstName}</Typography>
+                                    <div className="mt-1 sm:mt-2 flex items-center gap-1 text-[10px] sm:text-xs font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-400/20 px-2 sm:px-3 py-1 rounded-full">
+                                        <BoltIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="truncate">{leaders[0].totalXp} XP</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -148,14 +148,14 @@ const Leaderboard = () => {
                                 <Avatar
                                     src={getAvatar(leaders[2])}
                                     alt="3rd"
-                                    size="xl"
-                                    className="border-4 border-orange-300 shadow-lg mb-[-16px] z-10 bg-white"
+                                    size="lg"
+                                    className="border-4 border-orange-300 shadow-lg mb-[-12px] sm:mb-[-16px] z-10 bg-white md:w-16 md:h-16 h-12 w-12"
                                 />
-                                <div className="bg-white/70 dark:bg-orange-500/10 backdrop-blur-md w-32 h-32 rounded-t-2xl flex flex-col justify-start pt-6 items-center shadow-md border border-orange-200/50 dark:border-orange-700/50">
-                                    <Typography variant="h4" className="font-bold text-orange-500 dark:text-orange-300">3</Typography>
-                                    <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-2 truncate w-full">{leaders[2].firstName}</Typography>
-                                    <div className="mt-2 flex items-center gap-1 text-xs font-bold text-orange-500 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
-                                        <BoltIcon className="h-3 w-3" /> {leaders[2].totalXp} XP
+                                <div className="bg-white/70 dark:bg-orange-500/10 backdrop-blur-md w-24 sm:w-32 h-28 sm:h-32 rounded-t-2xl flex flex-col justify-start pt-4 sm:pt-6 items-center shadow-md border border-orange-200/50 dark:border-orange-700/50">
+                                    <Typography variant="h4" className="font-bold text-orange-500 dark:text-orange-300 text-lg sm:text-2xl">3</Typography>
+                                    <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-1 sm:px-2 truncate w-full text-[10px] sm:text-sm">{leaders[2].firstName}</Typography>
+                                    <div className="mt-1 sm:mt-2 flex items-center gap-1 text-[9px] sm:text-xs font-bold text-orange-500 dark:text-orange-400 bg-orange-500/10 px-1.5 sm:px-2 py-0.5 rounded-full">
+                                        <BoltIcon className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> <span className="truncate">{leaders[2].totalXp} XP</span>
                                     </div>
                                 </div>
                             </motion.div>
@@ -169,8 +169,8 @@ const Leaderboard = () => {
                                 <thead className="bg-gray-50/50 dark:bg-white/5">
                                     <tr>
                                         {["Rank", "Learner", "Level & Stats", "Streak"].map((el) => (
-                                            <th key={el} className="border-b border-blue-gray-50 dark:border-white/10 py-4 px-6">
-                                                <Typography variant="small" className="text-[11px] font-bold uppercase text-blue-gray-400 dark:text-gray-500">
+                                            <th key={el} className="border-b border-blue-gray-50 dark:border-white/10 py-3 px-2 sm:py-4 sm:px-6">
+                                                <Typography variant="small" className="text-[10px] sm:text-[11px] font-bold uppercase text-blue-gray-400 dark:text-gray-500">
                                                     {el}
                                                 </Typography>
                                             </th>
@@ -189,13 +189,13 @@ const Leaderboard = () => {
                                                 variants={itemVariants}
                                                 className={`hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors border-b border-blue-gray-50 dark:border-white/5 last:border-none ${isCurrentUser ? "bg-blue-50/30 dark:bg-blue-900/10" : ""}`}
                                             >
-                                                <td className="py-4 px-6 w-16 text-center">
-                                                    <Typography variant="h6" className={`font-bold ${rankColor}`}>
+                                                <td className="py-3 px-2 sm:py-4 sm:px-6 w-8 sm:w-16 text-center">
+                                                    <Typography variant="h6" className={`font-bold ${rankColor} text-sm sm:text-base`}>
                                                         {index + 1}
                                                     </Typography>
                                                 </td>
-                                                <td className="py-4 px-6">
-                                                    <div className="flex items-center gap-4">
+                                                <td className="py-3 px-2 sm:py-4 sm:px-6">
+                                                    <div className="flex items-center gap-2 sm:gap-4">
                                                         <Avatar
                                                             src={getAvatar(student)}
                                                             alt={student.firstName}
@@ -203,28 +203,28 @@ const Leaderboard = () => {
                                                             className={`border-2 ${isTop3 ? "border-" + (index === 0 ? "yellow" : index === 1 ? "gray" : "orange") + "-400" : "border-transparent"} shadow-sm bg-white`}
                                                         />
                                                         <div>
-                                                            <Typography variant="small" color="blue-gray" className="font-bold dark:text-white flex items-center gap-2">
-                                                                {student.firstName} {student.lastName}
-                                                                {isCurrentUser && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">You</span>}
+                                                            <Typography variant="small" color="blue-gray" className="font-bold dark:text-white flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                                                                {student.firstName} <span className="hidden sm:inline">{student.lastName}</span>
+                                                                {isCurrentUser && <span className="text-[9px] sm:text-[10px] bg-blue-100 text-blue-700 px-1 sm:px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">You</span>}
                                                             </Typography>
-                                                            <Typography variant="small" className="text-gray-400 text-xs font-medium">
+                                                            <Typography variant="small" className="text-gray-400 text-[10px] sm:text-xs font-medium">
                                                                 {student.headline || "Aspiring Engineer"}
                                                             </Typography>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-6">
+                                                <td className="py-3 px-2 sm:py-4 sm:px-6">
                                                     <div className="flex flex-col gap-1">
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                                                             <div className="text-xs font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
                                                                 Lvl {getLevel(student.totalXp)}
                                                             </div>
                                                             <div className="flex items-center gap-1 text-sm font-bold text-blue-gray-700 dark:text-gray-300">
-                                                                <BoltIcon className="h-4 w-4 text-yellow-500" />
+                                                                <BoltIcon className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-500" />
                                                                 {student.totalXp?.toLocaleString()} XP
                                                             </div>
                                                         </div>
-                                                        <div className="w-24 h-1 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
+                                                        <div className="w-16 sm:w-24 h-1 bg-gray-100 dark:bg-white/10 rounded-full overflow-hidden">
                                                             <div
                                                                 className="h-full bg-blue-500 rounded-full"
                                                                 style={{ width: `${((student.totalXp % 1000) / 1000) * 100}%` }}
@@ -232,11 +232,11 @@ const Leaderboard = () => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="py-4 px-6">
+                                                <td className="py-3 px-2 sm:py-4 sm:px-6">
                                                     {student.streakDays > 0 ? (
                                                         <Tooltip content={`${student.streakDays} Day Streak!`}>
-                                                            <div className="flex items-center gap-1.5 font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/10 px-3 py-1.5 rounded-full w-fit border border-orange-100 dark:border-orange-800/30">
-                                                                <FireIcon className="h-4 w-4 animate-pulse" />
+                                                            <div className="flex items-center gap-1 sm:gap-1.5 font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/10 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full w-fit border border-orange-100 dark:border-orange-800/30 text-[10px] sm:text-sm">
+                                                                <FireIcon className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" />
                                                                 {student.streakDays}
                                                             </div>
                                                         </Tooltip>
