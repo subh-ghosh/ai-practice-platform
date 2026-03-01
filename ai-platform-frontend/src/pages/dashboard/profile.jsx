@@ -63,7 +63,7 @@ function StatCard({ icon: Icon, title, value, color, delay }) {
   return (
     <motion.div
       variants={itemVariants}
-      className={`relative overflow-hidden rounded-2xl bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 p-6 shadow-sm group`}
+      className={`relative overflow-hidden rounded-2xl bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 p-6 shadow-sm group`}
     >
       <div className={`absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity`}>
         <Icon className={`h-24 w-24 text-${color}-500`} />
@@ -110,7 +110,7 @@ function EditForm({
     >
       {/* 1. Public Profile Card */}
       <motion.div variants={itemVariants}>
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 shadow-sm rounded-2xl p-6">
+        <div className="flex flex-col h-full bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 shadow-sm rounded-2xl p-6">
           <div className="mb-6 pb-4 border-b border-gray-100 dark:border-white/5">
             <Typography variant="h6" color="blue-gray" className="dark:text-white flex items-center gap-2">
               <UserCircleIcon className="h-5 w-5 text-blue-500" /> Public Profile
@@ -178,7 +178,7 @@ function EditForm({
 
       {/* 2. Social & Settings Card */}
       <motion.div variants={itemVariants}>
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 shadow-sm rounded-2xl p-6">
+        <div className="flex flex-col h-full bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 shadow-sm rounded-2xl p-6">
           <div className="mb-6 pb-4 border-b border-gray-100 dark:border-white/5">
             <Typography variant="h6" color="blue-gray" className="dark:text-white flex items-center gap-2">
               <GlobeAltIcon className="h-5 w-5 text-purple-500" /> Social & Settings
@@ -299,7 +299,7 @@ function SecurityPanel({
       className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4"
     >
       <motion.div variants={itemVariants}>
-        <div className="flex flex-col h-full bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 shadow-sm rounded-2xl p-6">
+        <div className="flex flex-col h-full bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 shadow-sm rounded-2xl p-6">
           <div className="mb-6 pb-4 border-b border-gray-100 dark:border-white/5">
             <Typography variant="h6" color="blue-gray" className="dark:text-white flex items-center gap-2">
               <ShieldCheckIcon className="h-5 w-5 text-green-500" /> Password
@@ -356,7 +356,7 @@ function SecurityPanel({
       </motion.div>
 
       <motion.div variants={itemVariants}>
-        <div className="flex flex-col h-full bg-red-50/50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-2xl p-6">
+        <div className="flex flex-col h-full bg-red-50/50 dark:bg-red-900/10 backdrop-blur-md border border-red-100 dark:border-red-900/30 rounded-2xl p-6">
           <div className="mb-6 pb-4 border-b border-red-100 dark:border-red-900/30">
             <Typography variant="h6" color="red" className="flex items-center gap-2 font-bold">
               <ExclamationTriangleIcon className="h-5 w-5" /> Danger Zone
@@ -520,7 +520,7 @@ export function Profile() {
     <div className="relative mt-2 mb-8 w-full min-h-[calc(100vh-100px)] flex flex-col gap-6">
 
       {/* 1. Header Profile Banner */}
-      <div className="relative w-full rounded-3xl bg-gradient-to-r from-blue-900 to-blue-600 p-8 shadow-xl overflow-hidden">
+      <div className="relative w-full rounded-3xl bg-gradient-to-r from-blue-900 to-blue-600 p-8 shadow-xl overflow-hidden backdrop-blur-md">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
           <div className="relative group">
@@ -606,7 +606,7 @@ export function Profile() {
           >
             {/* Left Column: Bio & Info & Chart */}
             <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
                 <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold mb-4">
                   About Me
                 </Typography>
@@ -627,7 +627,7 @@ export function Profile() {
               </div>
 
               {/* XP History Chart */}
-              <div className="bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
                 <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold mb-4">
                   XP Activity (Last 30 Days)
                 </Typography>
@@ -677,7 +677,7 @@ export function Profile() {
               {/* Achievements Section */}
               <BadgesSection />
 
-              <div className="bg-white dark:bg-[#0a0a0c] border border-blue-gray-50 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
                 <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold mb-4">
                   Connect
                 </Typography>

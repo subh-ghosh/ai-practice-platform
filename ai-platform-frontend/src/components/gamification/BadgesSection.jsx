@@ -26,7 +26,7 @@ const BadgesSection = () => {
     const earnedCount = badges.filter(b => b.earned).length;
 
     return (
-        <Card className="border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900">
+        <Card className="border border-blue-100/60 dark:border-gray-800 shadow-sm bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
             <CardBody className="p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
