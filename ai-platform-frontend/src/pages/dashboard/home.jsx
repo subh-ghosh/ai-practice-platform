@@ -335,15 +335,7 @@ export function Home() {
           </div>
         </motion.div>
 
-        {/* Section Header: Study Progress */}
-        <motion.div variants={itemVariants} className="mb-6">
-          <Typography variant="h4" color="blue-gray" className="font-bold flex items-center">
-            <ChartBarIcon className="h-7 w-7 mr-3 text-blue-500" />
-            Study Progress
-          </Typography>
-        </motion.div>
-
-        {/* Row 1: Study Plan Stats (Moved from 1.5) */}
+        {/* Row 1.5: Study Plan Stats - NOW AT TOP */}
         {studyPlanStats && (
           <motion.div variants={itemVariants} className="mb-12">
             <Typography variant="h6" color="blue-gray" className="mb-4 font-semibold flex items-center">
@@ -381,7 +373,15 @@ export function Home() {
           </motion.div>
         )}
 
-        {/* Row 2: General Stat cards (Moved from Row 1) */}
+        {/* Practice Progress Heading */}
+        <motion.div variants={itemVariants} className="mb-4">
+          <Typography variant="h6" color="blue-gray" className="font-semibold flex items-center">
+            <ChartBarIcon className="h-5 w-5 mr-2 text-blue-500" />
+            Practice Progress
+          </Typography>
+        </motion.div>
+
+        {/* Row 1: Stat cards - Staggered */}
         <motion.div
           variants={itemVariants}
           className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
