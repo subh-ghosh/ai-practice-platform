@@ -528,10 +528,10 @@ export function Practice() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+        <div className="flex flex-col gap-8">
 
-          {/* Left Column: Generator & AI Coach */}
-          <div className="lg:col-span-3 space-y-6">
+          {/* Generator & AI Coach Area (Full Width) */}
+          <div className="space-y-6">
 
             {/* Generator Card */}
             <Card className="overflow-visible relative z-20 border border-blue-100/60 dark:border-gray-700 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-sm animate-slide-up">
@@ -740,7 +740,14 @@ export function Practice() {
               </div>
             )}
 
-            {/* Empty State Illustration */}
+            {/* Question & Feedback Area (Full Width) */}
+            {question && (
+              <div className="space-y-6 animate-slide-up">
+                {/* ... existing question card code ... */}
+              </div>
+            )}
+
+            {/* Empty State */}
             {!question && !generating && (
               <div className="flex flex-col items-center justify-center py-12 px-4 text-center opacity-60">
                 <div className="w-48 h-48 bg-blue-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
@@ -752,47 +759,79 @@ export function Practice() {
                 </Typography>
               </div>
             )}
-
           </div>
 
-          {/* Right Column: History (unchanged mostly, just wrapped) */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-blue-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm h-fit sticky top-24">
-              <Typography variant="h6" color="blue-gray" className="mb-4 px-2 font-bold flex items-center gap-2">
-                <div className="w-2 h-6 bg-blue-500 rounded-full" /> Recent Activity
+          {/* Bottom Section: Recent Activity (Refactored to Grid) */}
+          <div className="space-y-6">
+            <div>
+              <Typography variant="h5" color="blue-gray" className="mb-1 dark:text-white">
+                Recent Activity
               </Typography>
+              <Typography variant="small" className="font-normal text-blue-gray-600 dark:text-gray-400">
+                Review your latest practice sessions
+              </Typography>
+            </div>
 
-              {/* Search & history list implementation remains similar but compacted */}
-              <div className="space-y-3">
+            {loadingHistory ? (
+              <div className="flex justify-center py-12">
+                <Spinner className="h-8 w-8 text-blue-gray-900 dark:text-white" />
+              </div>
+            ) : allHistory.length === 0 ? (
+              <Card className="border border-blue-gray-100 dark:border-gray-700 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
+                <CardBody className="text-center py-12">
+                  <BookOpenIcon className="h-12 w-12 text-blue-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                  <Typography color="blue-gray" variant="h6" className="dark:text-white">
+                    No activity yet
+                  </Typography>
+                  <Typography color="gray" className="font-normal mt-1 dark:text-gray-400">
+                    Your practice history will appear here.
+                  </Typography>
+                </CardBody>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {visibleHistory.map((item) => (
-                  <div key={item.id}
+                  <Card
+                    key={item.id}
                     onClick={() => setSelectedHistory(item)}
-                    className="p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:shadow-md transition-all cursor-pointer group">
-                    <div className="flex justify-between items-start mb-1">
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${item.evaluationStatus === 'CORRECT' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                        {item.evaluationStatus === 'CORRECT' ? 'WIN' : 'LOSS'}
-                      </span>
-                      <span className="text-[10px] text-gray-400">
-                        {new Date(item.submittedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <Typography className="text-sm font-semibold text-gray-800 dark:text-gray-200 line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
-                      {item.questionText}
-                    </Typography>
-                    <Typography className="text-xs text-gray-500 mt-1">
-                      {item.topic}
-                    </Typography>
-                  </div>
+                    className="cursor-pointer border border-blue-gray-100 dark:border-gray-700 hover:shadow-md transition-all group bg-white/80 dark:bg-gray-900/80 backdrop-blur-md"
+                  >
+                    <CardBody className="p-5 relative">
+                      <div className="flex justify-between items-start mb-3">
+                        {getStatusChip(item.evaluationStatus)}
+                        <span className="text-[10px] text-gray-400">
+                          {new Date(item.submittedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white line-clamp-1 pr-4">
+                        {item.questionText}
+                      </Typography>
+                      <Typography className="text-xs text-gray-500 line-clamp-1">
+                        {item.subject} • {item.topic}
+                      </Typography>
+                      <div className="mt-4 pt-4 border-t border-blue-gray-50 dark:border-gray-800 flex justify-between items-center text-xs">
+                        <Typography variant="small" className="text-gray-400 font-medium">Click to view feedback</Typography>
+                        <ChevronRightIcon className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </CardBody>
+                  </Card>
                 ))}
               </div>
+            )}
 
-              <Button variant="text" size="sm" fullWidth className="mt-2" onClick={() => setItemsToShow(n => n + 5)}>
-                Load More
-              </Button>
-            </div>
+            {visibleHistory.length < allHistory.length && (
+              <div className="flex justify-center mt-6">
+                <Button
+                  variant="outlined"
+                  size="sm"
+                  className="rounded-full px-8"
+                  onClick={() => setItemsToShow(n => n + 6)}
+                >
+                  Load More Activity
+                </Button>
+              </div>
+            )}
           </div>
-
         </div>
 
         {/* History Detail Dialog (unchanged logic) */}
