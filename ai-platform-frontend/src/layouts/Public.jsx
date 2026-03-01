@@ -5,11 +5,13 @@ import { PublicNavbar } from "@/widgets/layout"; // Import from the main widget 
 export function Public() {
   return (
     // A simple wrapper for public pages
-    <div className="public-layout min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="public-layout min-h-screen bg-white dark:bg-[#050505]">
       <style>{`
-        .public-layout,
-        .public-layout * {
-          cursor: none !important;
+        @media (min-width: 768px) {
+          .public-layout,
+          .public-layout * {
+            cursor: none !important;
+          }
         }
       `}</style>
       <PublicNavbar />

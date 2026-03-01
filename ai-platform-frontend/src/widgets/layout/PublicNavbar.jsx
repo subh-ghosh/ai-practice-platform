@@ -24,32 +24,34 @@ export function PublicNavbar() {
     window.addEventListener("resize", () => window.innerWidth >= 960 && setOpenNav(false));
   }, []);
 
+  const closeNav = () => setOpenNav(false);
+
   const navList = (
-    <ul className="no-cursor-effects mt-2 mb-4 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
+    <ul className="no-cursor-effects mt-2 mb-4 flex flex-col gap-1 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
       <Typography
         as="li"
         variant="small"
-        className="p-1 font-medium text-gray-700 dark:text-gray-200"
+        className="font-medium text-gray-700 dark:text-gray-200"
       >
-        <Link to="/" className="flex items-center hover:text-blue-500 transition-colors">
+        <Link to="/" onClick={closeNav} className="flex items-center py-3 px-2 hover:text-blue-500 transition-colors rounded-lg hover:bg-white/5">
           Home
         </Link>
       </Typography>
       <Typography
         as="li"
         variant="small"
-        className="p-1 font-medium text-gray-700 dark:text-gray-200"
+        className="font-medium text-gray-700 dark:text-gray-200"
       >
-        <Link to="/about" className="flex items-center hover:text-blue-500 transition-colors">
+        <Link to="/about" onClick={closeNav} className="flex items-center py-3 px-2 hover:text-blue-500 transition-colors rounded-lg hover:bg-white/5">
           About Us
         </Link>
       </Typography>
       <Typography
         as="li"
         variant="small"
-        className="p-1 font-medium text-gray-700 dark:text-gray-200"
+        className="font-medium text-gray-700 dark:text-gray-200"
       >
-        <Link to="/contact" className="flex items-center hover:text-blue-500 transition-colors">
+        <Link to="/contact" onClick={closeNav} className="flex items-center py-3 px-2 hover:text-blue-500 transition-colors rounded-lg hover:bg-white/5">
           Contact
         </Link>
       </Typography>
@@ -78,13 +80,13 @@ export function PublicNavbar() {
             variant="h6"
             className="mr-4 cursor-pointer py-1.5 text-gray-900 dark:text-white font-bold tracking-tight"
           >
-                    Asphalt Prep
+            Asphalt Prep
           </Typography>
         </Link>
 
         <div className="hidden lg:block">{navList}</div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="hidden lg:flex gap-2">
             <MagneticButton className="rounded-full">
               <Button
@@ -112,9 +114,18 @@ export function PublicNavbar() {
             {/* ThemeToggle removed */}
           </div>
 
+          {/* Mobile: compact Sign In text link visible without opening menu */}
+          <button
+            onClick={() => navigate(loginTarget)}
+            className="lg:hidden text-sm font-semibold text-gray-700 dark:text-gray-300 hover:text-blue-500 transition-colors px-2 py-1"
+          >
+            {user ? "Dashboard" : "Sign In"}
+          </button>
+
+          {/* Hamburger — bigger touch target */}
           <IconButton
             variant="text"
-            className="ml-auto h-6 w-6 text-gray-900 dark:text-white hover:bg-transparent focus:bg-transparent active:bg-transparent lg:hidden"
+            className="h-10 w-10 text-gray-900 dark:text-white hover:bg-gray-100/10 dark:hover:bg-white/10 focus:bg-transparent active:bg-transparent lg:hidden rounded-lg"
             ripple={false}
             onClick={() => setOpenNav(!openNav)}
           >
@@ -125,24 +136,20 @@ export function PublicNavbar() {
             )}
           </IconButton>
 
-          <div className="lg:hidden">
-            {/* ThemeToggle removed */}
-          </div>
-
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Dropdown */}
       <Collapse open={openNav}>
-        <div className="container mx-auto mt-3 border-t border-gray-200 dark:border-gray-800 pt-4">
+        <div className="mt-2 border-t border-gray-200 dark:border-white/10 pt-2 pb-4">
           {navList}
-          <div className="flex flex-col gap-2 mt-4">
+          <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-white/5">
             <Button
               variant="text"
               size="sm"
               fullWidth
-              onClick={() => navigate(loginTarget)}
-              className="text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10"
+              onClick={() => { navigate(loginTarget); closeNav(); }}
+              className="text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 py-3 text-sm font-semibold"
             >
               {user ? "Dashboard" : "Sign In"}
             </Button>
@@ -152,10 +159,10 @@ export function PublicNavbar() {
               color="blue"
               size="sm"
               fullWidth
-              className="rounded-lg"
-              onClick={() => navigate("/auth/sign-up")}
+              className="rounded-xl py-3 text-sm font-bold"
+              onClick={() => { navigate("/auth/sign-up"); closeNav(); }}
             >
-              Sign Up
+              Sign Up Free →
             </Button>
           </div>
         </div>

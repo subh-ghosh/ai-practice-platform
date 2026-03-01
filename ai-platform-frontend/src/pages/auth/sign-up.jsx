@@ -137,11 +137,11 @@ export function SignUp() {
   };
 
   return (
-    <div className="relative w-full overflow-hidden bg-[#050505] min-h-screen flex flex-col font-sans selection:bg-blue-500/30 -mt-24">
+    <div className="relative w-full overflow-hidden bg-[#050505] min-h-[calc(100vh+6rem)] flex flex-col font-sans selection:bg-blue-500/30 -mt-24">
       <CustomCursor />
 
       <FlashlightBackground className="flex-grow">
-        <section className="relative min-h-[110vh] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden pt-32">
+        <section className="relative min-h-screen flex flex-col md:flex-row md:items-center md:justify-center gap-6 px-4 md:px-10 overflow-hidden pt-36 md:pt-32 pb-24 md:pb-0">
 
           {/* === Autofill Fix Style Block === */}
           <style>{`
@@ -173,7 +173,7 @@ export function SignUp() {
           </motion.div>
 
           {/* Right Form */}
-          <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
+          <div className="w-full lg:w-3/5 flex flex-col items-center justify-center py-8 lg:py-0 z-10">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}

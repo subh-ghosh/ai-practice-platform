@@ -12,32 +12,29 @@ export function Footer({ brandName, brandLink }) {
   ];
 
   return (
-    // 👇 REMOVED 'mt-auto' to fix the gap issue
-    <footer className="w-full py-6 px-4 md:px-8 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
-      <div className="container mx-auto flex flex-col items-center justify-center gap-6 md:flex-row md:justify-between">
-        
+    <footer className="w-full py-8 px-5 md:px-8 bg-white dark:bg-[#030303] border-t border-gray-200 dark:border-white/5">
+      <div className="container mx-auto flex flex-col items-center gap-5 md:flex-row md:justify-between">
+
         {/* Copyright Section */}
-        <Typography variant="small" className="font-normal text-gray-600 dark:text-gray-400 text-center md:text-left">
+        <Typography variant="small" className="font-normal text-gray-500 dark:text-slate-500 text-center md:text-left text-xs">
           &copy; {year}, made by{" "}
           <a
             href={brandLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="transition-colors hover:text-blue-500 font-bold text-gray-800 dark:text-gray-200"
+            className="transition-colors hover:text-blue-500 font-bold text-gray-700 dark:text-slate-400"
           >
             {brandName}
           </a>
         </Typography>
 
         {/* Links Section */}
-        {/* 👇 MOBILE FIX: 'flex-col' for vertical stack on mobile, 'md:flex-row' for desktop */}
-        <ul className="flex flex-col items-center gap-2 md:flex-row md:gap-8">
+        <ul className="flex flex-row items-center gap-6 md:gap-8">
           {footerRoutes.map(({ name, path }) => (
             <li key={name}>
               <Link
                 to={path}
-                // 👇 MOBILE FIX: Added 'py-2' for easier clicking on mobile
-                className="block py-2 md:py-0 font-medium text-sm text-gray-600 transition-colors hover:text-blue-500 dark:text-gray-400 dark:hover:text-blue-400"
+                className="block py-2 font-medium text-sm text-gray-500 transition-colors hover:text-blue-500 dark:text-slate-500 dark:hover:text-blue-400"
               >
                 {name}
               </Link>

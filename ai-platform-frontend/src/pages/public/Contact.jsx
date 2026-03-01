@@ -68,7 +68,7 @@ export function Contact() {
 
       {/* Main Content Section */}
       <FlashlightBackground className="flex-grow">
-        <section className="relative z-10 w-full pt-36 pb-20 min-h-[108vh]">
+        <section className="relative z-10 w-full pt-36 pb-20 min-h-screen">
           <div className="container mx-auto px-4 max-w-5xl">
             <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
               {/* Header */}
