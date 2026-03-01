@@ -86,7 +86,7 @@ public class StudyPlanService {
             enforceDailyLimitForFreeUsers(student);
 
             int maxVideos = Math.min(durationDays * 3, 25);
-            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial",
+            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty,
                     maxVideos);
 
             if (videos.isEmpty()) {
@@ -156,7 +156,7 @@ public class StudyPlanService {
             int durationDays) {
         try {
             int maxVideos = Math.min(durationDays * 3, 25);
-            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty + " tutorial",
+            List<Map<String, String>> videos = youTubeService.searchVideos(topic + " " + difficulty,
                     maxVideos);
 
             if (videos.isEmpty()) {
@@ -982,7 +982,7 @@ public class StudyPlanService {
                         fallbackQueries.add(title + " " + difficulty + " tutorial");
 
                         for (String query : fallbackQueries) {
-                            List<Map<String, String>> results = youTubeService.searchVideos(query, 5);
+                            List<Map<String, String>> results = youTubeService.searchVideos(query, 15);
                             for (Map<String, String> r : results) {
                                 String candidateId = r.get("videoId");
                                 if (candidateId != null && !usedVideoIds.contains(candidateId)) {
