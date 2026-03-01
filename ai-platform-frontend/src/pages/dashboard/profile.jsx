@@ -48,6 +48,30 @@ const containerVariants = {
   exit: { opacity: 0, transition: { duration: 0.2 } }
 };
 
+const lineChartOptions = {
+  ...chartsConfig,
+  chart: { ...chartsConfig.chart, type: "line" },
+  stroke: { lineCap: "round", curve: "smooth" },
+  markers: { size: 5 },
+  xaxis: {
+    ...chartsConfig.xaxis,
+    type: "category",
+    labels: {
+      ...chartsConfig.xaxis.labels,
+      style: { ...chartsConfig.xaxis.labels.style, colors: "#37474f" },
+    },
+  },
+  yaxis: {
+    ...chartsConfig.yaxis,
+    labels: {
+      ...chartsConfig.yaxis.labels,
+      style: { ...chartsConfig.yaxis.labels.style, colors: "#37474f" },
+    },
+  },
+  grid: { ...chartsConfig.grid, borderColor: "#e0e0e0" },
+  tooltip: { ...chartsConfig.tooltip, theme: "dark", x: { format: "dd MMM yyyy" } },
+};
+
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
@@ -644,17 +668,14 @@ export function Profile() {
                 {xpHistory ? (
                   <StatisticsChart
                     chart={{
-                      type: "bar",
+                      type: "line",
                       height: 220,
                       series: [{ name: "XP Earned", data: xpHistory.map(d => d.xp) }],
                       options: {
-                        ...chartsConfig,
+                        ...lineChartOptions,
                         colors: ["#3b82f6"],
-                        plotOptions: {
-                          bar: { columnWidth: "50%", borderRadius: 4 },
-                        },
                         xaxis: {
-                          ...chartsConfig.xaxis,
+                          ...lineChartOptions.xaxis,
                           categories: xpHistory.map(d => new Date(d.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })),
                         },
                       },
