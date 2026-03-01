@@ -835,34 +835,51 @@ export function Practice() {
         </div>
 
         {/* History Detail Dialog (unchanged logic) */}
-        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg">
-          <DialogHeader>{selectedHistory?.questionText}</DialogHeader>
-          <DialogBody divider className="h-[20rem] overflow-y-scroll">
+        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-gray-900 dark:bg-gray-950 border border-gray-800 shadow-2xl outline-none">
+          <DialogHeader className="text-gray-100 font-bold border-b border-gray-800 p-6">
+            <Typography variant="h5" className="font-bold leading-snug">
+              {selectedHistory?.questionText}
+            </Typography>
+          </DialogHeader>
+          <DialogBody className="h-[25rem] overflow-y-scroll bg-gray-900/40 p-6 custom-scroll">
             {selectedHistory && (
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <Typography className="font-bold text-xs uppercase text-gray-500 mb-1">Your Answer</Typography>
-                  <Typography>{selectedHistory.answerText}</Typography>
+              <div className="space-y-6">
+                <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">
+                  <Typography className="font-black text-[10px] uppercase text-gray-500 tracking-widest mb-3">Your Answer</Typography>
+                  <Typography className="text-gray-200 leading-relaxed text-lg">{selectedHistory.answerText}</Typography>
                 </div>
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <Typography className="font-bold text-xs uppercase text-blue-500 mb-1">Feedback</Typography>
-                  <ReactMarkdown>{selectedHistory.feedback}</ReactMarkdown>
+                <div className="p-5 bg-blue-900/10 border border-blue-800/20 rounded-2xl shadow-inner">
+                  <div className="flex items-center gap-2 mb-3">
+                    <SparklesIcon className="h-4 w-4 text-blue-400" />
+                    <Typography className="font-black text-[10px] uppercase text-blue-400 tracking-widest">AI Feedback</Typography>
+                  </div>
+                  <div className="prose prose-invert max-w-none text-gray-300">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.feedback}</ReactMarkdown>
+                  </div>
                 </div>
               </div>
             )}
           </DialogBody>
-          <DialogFooter>
-            <Button variant="text" onClick={() => setSelectedHistory(null)}>Close</Button>
+          <DialogFooter className="border-t border-gray-800 p-4">
+            <Button variant="text" color="blue-gray" onClick={() => setSelectedHistory(null)} className="text-gray-400 hover:text-white transition-colors">
+              Close
+            </Button>
           </DialogFooter>
         </Dialog>
 
         {/* Give Up Popover (unchanged logic) */}
-        <Dialog open={openPopover} handler={() => setOpenPopover(false)} size="xs">
-          <DialogHeader>Reveal Answer?</DialogHeader>
-          <DialogBody>Are you sure? Does not count towards streak.</DialogBody>
-          <DialogFooter>
-            <Button variant="text" onClick={() => setOpenPopover(false)} className="mr-2">Cancel</Button>
-            <Button color="red" onClick={confirmGetAnswer}>Reveal</Button>
+        <Dialog open={openPopover} handler={() => setOpenPopover(false)} size="xs" className="bg-gray-900 border border-gray-800 shadow-xl">
+          <DialogHeader className="text-gray-100 text-lg font-bold">Reveal Answer?</DialogHeader>
+          <DialogBody className="text-gray-400 py-2 px-6">
+            Are you sure? This session will not count towards your daily streak.
+          </DialogBody>
+          <DialogFooter className="gap-3">
+            <Button variant="text" color="white" onClick={() => setOpenPopover(false)} className="text-gray-400 hover:text-white">
+              Cancel
+            </Button>
+            <Button color="red" variant="gradient" onClick={confirmGetAnswer} className="rounded-xl shadow-red-500/20">
+              Reveal Answer
+            </Button>
           </DialogFooter>
         </Dialog>
 
