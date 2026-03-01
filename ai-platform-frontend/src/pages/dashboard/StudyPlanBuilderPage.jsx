@@ -302,7 +302,7 @@ const StudyPlanBuilderPage = () => {
                                             <div className="border-2 border-dashed border-blue-gray-200 dark:border-gray-700 rounded-xl p-8 text-center hover:bg-blue-50/50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer relative group">
                                                 <input
                                                     type="file"
-                                                    accept=".pdf,image/*"
+                                                    accept=".pdf"
                                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                                     onChange={handleFileChange}
                                                 />
@@ -315,7 +315,7 @@ const StudyPlanBuilderPage = () => {
                                                             {selectedFile ? selectedFile.name : "Click or Drag to Upload Syllabus"}
                                                         </Typography>
                                                         <Typography variant="small" className="text-gray-500 dark:text-gray-400 font-normal mt-1">
-                                                            Supports PDF, PNG, JPG (Max 5MB)
+                                                            Supports PDF only (Max 10MB)
                                                         </Typography>
                                                     </div>
                                                 </div>
