@@ -55,7 +55,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
       </div>
 
       {/* NAV LINKS */}
-      <div className="m-4 h-[calc(100vh-140px)] overflow-hidden">
+      <div className="m-4 h-[calc(100vh-140px)] overflow-y-auto custom-scroll">
         {routes.map(({ layout, title, pages }, key) => {
 
           // 🛑 FILTER: Skip the "auth" section entirely
