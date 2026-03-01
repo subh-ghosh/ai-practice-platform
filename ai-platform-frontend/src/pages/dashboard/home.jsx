@@ -531,7 +531,7 @@ export function Home() {
               </Link>
             </CardHeader>
 
-            <CardBody className="overflow-x-auto hide-scrollbar px-0 pt-0 pb-0">
+            <CardBody className="overflow-x-hidden hide-scrollbar px-0 pt-0 pb-0">
               <table className="w-full table-auto">
                 <thead>
                   <tr>

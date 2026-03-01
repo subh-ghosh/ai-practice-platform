@@ -37,7 +37,8 @@ import {
   FireIcon,
   CheckCircleIcon,
   BookOpenIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  XMarkIcon
 } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
 import RecommendationCard from "../../components/RecommendationCard";
@@ -608,7 +609,7 @@ export function Practice() {
                 {recommendations && recommendations.length > 0 && (
                   <div className="mt-6">
                     <Typography variant="small" className="text-gray-500 mb-2 font-medium ml-1">Recommended for you</Typography>
-                    <div className="flex gap-3 overflow-x-auto pb-4 px-1 -mx-1 custom-scroll snap-x">
+                    <div className="flex gap-3 overflow-x-auto pb-4 px-1 pr-4 -mx-1 custom-scroll snap-x">
                       {recommendations.map((rec, idx) => (
                         <RecommendationCard
                           key={idx}
@@ -853,10 +854,13 @@ export function Practice() {
 
         {/* History Detail Dialog (unchanged logic) */}
         <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-gray-900 dark:bg-gray-950 border border-gray-800 shadow-2xl outline-none">
-          <DialogHeader className="text-gray-100 font-bold border-b border-gray-800 p-6">
-            <Typography variant="h5" className="font-bold leading-snug">
+          <DialogHeader className="text-gray-100 font-bold border-b border-gray-800 p-6 flex justify-between items-start relative">
+            <Typography variant="h5" className="font-bold leading-snug break-words pr-8">
               {selectedHistory?.questionText}
             </Typography>
+            <IconButton variant="text" size="sm" onClick={() => setSelectedHistory(null)} className="absolute top-4 right-4 text-gray-400 hover:text-white shrink-0">
+              <XMarkIcon className="h-6 w-6" />
+            </IconButton>
           </DialogHeader>
           <DialogBody className="h-[25rem] overflow-y-scroll bg-gray-900/40 p-6 custom-scroll">
             {selectedHistory && (

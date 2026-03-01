@@ -164,8 +164,8 @@ const Leaderboard = () => {
 
                     {/* List View */}
                     <Card className="border border-blue-100/60 dark:border-gray-800 shadow-sm overflow-hidden bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
-                        <CardBody className="p-0">
-                            <table className="w-full min-w-[640px] table-auto text-left">
+                        <CardBody className="p-0 overflow-x-hidden">
+                            <table className="w-full table-auto text-left break-words">
                                 <thead className="bg-gray-50/50 dark:bg-white/5">
                                     <tr>
                                         {["Rank", "Learner", "Level & Stats", "Streak"].map((el) => (
@@ -208,7 +208,7 @@ const Leaderboard = () => {
                                                                 {isCurrentUser && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">You</span>}
                                                             </Typography>
                                                             <Typography variant="small" className="text-gray-400 text-xs font-medium">
-                    {student.headline || "Aspiring Engineer"}
+                                                                {student.headline || "Aspiring Engineer"}
                                                             </Typography>
                                                         </div>
                                                     </div>
