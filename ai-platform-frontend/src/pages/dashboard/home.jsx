@@ -461,7 +461,7 @@ export function Home() {
           <DailyChallengesCard />
 
           {/* Submission Overview */}
-          <Card className="h-full border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+          <Card className="h-full border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm">
             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 p-6">
               <Typography variant="h6" color="blue-gray" className="mb-2">
                 Submission Overview
@@ -503,9 +503,8 @@ export function Home() {
           </Card>
         </motion.div>
 
-        {/* Row 4: Recent Activity — full width */}
         <motion.div variants={itemVariants} className="mb-4">
-          <Card className="overflow-hidden border border-blue-100/60 dark:border-gray-700 bg-white/90 dark:bg-gray-800/80 backdrop-blur-md shadow-sm">
+          <Card className="overflow-hidden border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm">
             <CardHeader floated={false} shadow={false} color="transparent" className="m-0 flex items-center justify-between p-6">
               <div>
                 <Typography variant="h6" color="blue-gray" className="mb-1">

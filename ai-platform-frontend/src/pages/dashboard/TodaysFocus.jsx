@@ -32,7 +32,7 @@ const TodaysFocus = ({ user }) => {
     }, []);
 
     if (loading) return (
-        <Card className="h-full border border-blue-gray-100 dark:border-gray-800 shadow-sm animate-pulse">
+        <Card className="h-full border border-blue-100/60 dark:border-gray-800 shadow-sm bg-white/90 dark:bg-gray-900/60 backdrop-blur-md animate-pulse">
             <CardBody className="h-48 flex items-center justify-center">
                 <ArrowPathIcon className="h-6 w-6 text-gray-300 animate-spin" />
             </CardBody>
@@ -42,7 +42,7 @@ const TodaysFocus = ({ user }) => {
     // Empty State (No Active Plan)
     if (!context || !context.planId) {
         return (
-            <Card className="h-full border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+            <Card className="h-full border border-blue-100/60 dark:border-gray-800 shadow-sm bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
                 <CardBody className="flex flex-col items-center justify-center text-center h-full p-8">
                     <div className="p-4 bg-white dark:bg-gray-800 rounded-full shadow-sm mb-4">
                         <CalendarDaysIcon className="h-8 w-8 text-blue-500" />
@@ -67,10 +67,10 @@ const TodaysFocus = ({ user }) => {
     const isDayComplete = totalToday > 0 && completedToday === totalToday;
 
     return (
-        <Card className="h-full border border-blue-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
+        <Card className="h-full border border-blue-100/60 dark:border-gray-800 shadow-sm bg-white/90 dark:bg-gray-900/60 backdrop-blur-md overflow-hidden">
+            {/* Header - Glassy Dark Style */}
+            <div className="bg-blue-600/10 dark:bg-blue-500/5 p-6 border-b border-blue-100/20 dark:border-white/5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-5 dark:opacity-10">
                     <CalendarDaysIcon className="h-32 w-32 transform rotate-12 -translate-y-8 translate-x-8" />
                 </div>
 
@@ -88,7 +88,7 @@ const TodaysFocus = ({ user }) => {
                         </Typography>
                     </div>
 
-                    <Typography variant="h4" className="mb-1 font-bold tracking-tight">
+                    <Typography variant="h4" color="blue-gray" className="mb-1 font-bold tracking-tight dark:text-white">
                         {planTitle}
                     </Typography>
 
@@ -107,7 +107,7 @@ const TodaysFocus = ({ user }) => {
             </div>
 
             {/* Body */}
-            <CardBody className="p-0 flex flex-col h-full bg-white dark:bg-gray-900">
+            <CardBody className="p-0 flex flex-col h-full bg-white/50 dark:bg-transparent">
                 <div className="p-6 flex-grow">
                     <div className="flex justify-between items-center mb-4">
                         <Typography variant="h6" color="blue-gray" className="dark:text-white">
@@ -136,7 +136,7 @@ const TodaysFocus = ({ user }) => {
                                     )}
                                 </div>
                                 <div className="flex-grow min-w-0">
-                                    <Typography variant="small" color="blue-gray" className={`font-semibold truncate ${item.isCompleted ? 'line-through opacity-70' : ''} dark:text-gray-200`}>
+                                    <Typography variant="small" color="blue-gray" className={`font-semibold truncate ${item.isCompleted ? 'line-through opacity-50' : ''} dark:text-gray-200`}>
                                         {item.title}
                                     </Typography>
                                     <Typography variant="small" color="gray" className="text-[10px] uppercase font-bold dark:text-gray-500">
@@ -149,7 +149,7 @@ const TodaysFocus = ({ user }) => {
                 </div>
 
                 {/* Footer Action */}
-                <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <div className="p-4 border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-white/5">
                     {isDayComplete ? (
                         <div className="text-center py-2">
                             <Typography color="green" className="font-bold flex items-center justify-center gap-2">

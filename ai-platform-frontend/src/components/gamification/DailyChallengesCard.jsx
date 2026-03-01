@@ -49,7 +49,7 @@ const DailyChallengesCard = () => {
     };
 
     if (loading) return (
-        <Card className="h-full border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-[#0a0a0c]">
+        <Card className="h-full border border-blue-100/60 dark:border-gray-800 shadow-sm bg-white/90 dark:bg-gray-900/60 backdrop-blur-md animate-pulse">
             <CardBody className="flex items-center justify-center p-8">
                 <Spinner className="h-6 w-6 text-blue-500" />
             </CardBody>
@@ -57,7 +57,7 @@ const DailyChallengesCard = () => {
     );
 
     return (
-        <Card className="h-full border border-blue-gray-100 dark:border-gray-800 shadow-sm bg-white dark:bg-[#0a0a0c] overflow-hidden relative">
+        <Card className="h-full border border-blue-100/60 dark:border-gray-800 shadow-sm bg-white/90 dark:bg-gray-900/60 backdrop-blur-md overflow-hidden relative">
             {/* Background Effects */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-[40px] rounded-full pointer-events-none" />
 
@@ -80,7 +80,7 @@ const DailyChallengesCard = () => {
 
                 <div className="flex flex-col gap-4 flex-1">
                     {challenges.map((challenge) => (
-                        <div key={challenge.id} className="group relative p-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5 hover:border-orange-200 dark:hover:border-orange-900/30 transition-all">
+                        <div key={challenge.id} className="group relative p-3 rounded-xl bg-gray-50/50 dark:bg-white/5 border border-gray-100/50 dark:border-white/5 hover:border-orange-200 dark:hover:border-orange-900/30 transition-all">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-white mb-1">
