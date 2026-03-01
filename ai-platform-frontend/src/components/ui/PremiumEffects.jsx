@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { motion, useTransform, useSpring, useMotionValue } from "framer-motion";
+import { motion, useTransform, useMotionValue } from "framer-motion";
 
 /**
  * Custom Magnetic Button component that reacts to mouse proximity.
@@ -31,7 +31,7 @@ export const MagneticButton = ({ children, onClick, className }) => {
             onMouseDown={() => setIsPressed(true)}
             onMouseUp={() => setIsPressed(false)}
             animate={{ x, y, scale: isPressed ? 0.95 : 1 }}
-            transition={{ type: "spring", stiffness: 150, damping: 15, mass: 0.1 }}
+            transition={{ type: "spring", stiffness: 360, damping: 24, mass: 0.08 }}
             onClick={onClick}
             className={`magnetic-btn-target ${className}`}
         >
@@ -46,8 +46,6 @@ export const MagneticButton = ({ children, onClick, className }) => {
 export const CustomCursor = () => {
     const cursorX = useMotionValue(-100);
     const cursorY = useMotionValue(-100);
-    const trailX = useSpring(cursorX, { stiffness: 400, damping: 28, mass: 0.5 });
-    const trailY = useSpring(cursorY, { stiffness: 400, damping: 28, mass: 0.5 });
 
     const [isHoveringText, setIsHoveringText] = useState(false);
     const [isHoveringMagnetic, setIsHoveringMagnetic] = useState(false);
@@ -92,30 +90,9 @@ export const CustomCursor = () => {
 
     useEffect(() => {
         const moveCursor = (e) => {
-            if (!isHoveringMagnetic) {
-                cursorX.set(e.clientX);
-                cursorY.set(e.clientY);
-            } else {
-                // Subtle magnetic pull toward the center of the hovered element
-                const { x, y, width, height } = magneticOrigin.current;
-                const centerX = x + width / 2;
-                const centerY = y + height / 2;
-
-                // Buttons should snap directly to center.
-                if (isButtonMagnetic.current) {
-                    cursorX.set(centerX);
-                    cursorY.set(centerY);
-                    return;
-                }
-
-                // Follow mouse but bound tightly to the element
-                const boundedX = Math.max(x, Math.min(e.clientX, x + width));
-                const boundedY = Math.max(y, Math.min(e.clientY, y + height));
-
-                // Mix actual position with center pull
-                cursorX.set(boundedX * 0.4 + centerX * 0.6);
-                cursorY.set(boundedY * 0.4 + centerY * 0.6);
-            }
+            // Keep cursor position locked to the real pointer for zero-lag feel.
+            cursorX.set(e.clientX);
+            cursorY.set(e.clientY);
         };
 
         const handleMouseOver = (e) => {
@@ -275,10 +252,10 @@ export const CustomCursor = () => {
                     backgroundColor: isHoveringText ? "rgba(255, 255, 255, 0.4)" : accentColor.dot,
                     boxShadow: `0 0 20px 5px ${accentColor.dotShadow}`
                 }}
-                transition={{ type: "spring", stiffness: 500, damping: 25, mass: 0.1 }}
-                style={{
-                    x: useTransform(trailX, x => x - (isHoveringText ? 12 : 6)),
-                    y: useTransform(trailY, y => y - (isHoveringText ? 12 : 6)),
+                transition={{ type: "spring", stiffness: 900, damping: 40, mass: 0.08 }}
+            style={{
+                    x: useTransform(cursorX, x => x - (isHoveringText ? 12 : 6)),
+                    y: useTransform(cursorY, y => y - (isHoveringText ? 12 : 6)),
                 }}
             />
 
@@ -316,9 +293,9 @@ export const CustomCursor = () => {
                 // Faster spring for snappy magnetic feel, softer for liquid feel
                 transition={{
                     type: "spring",
-                    stiffness: (isHoveringMagnetic || isClicked) ? 400 : 350,
-                    damping: (isHoveringMagnetic || isClicked) ? 30 : 25,
-                    mass: isHoveringMagnetic ? 0.4 : 0.6
+                    stiffness: (isHoveringMagnetic || isClicked) ? 950 : 820,
+                    damping: (isHoveringMagnetic || isClicked) ? 42 : 36,
+                    mass: isHoveringMagnetic ? 0.22 : 0.26
                 }}
                 style={{
                     // When magnetic, we center the box over the element precisely.
@@ -339,7 +316,7 @@ export const CustomCursor = () => {
                         x: (isHoveringText || isHoveringMagnetic) ? "-50%" : 0,
                         opacity: (isHoveringText || isHoveringMagnetic || isClicked) ? 0 : 0.6
                     }}
-                    transition={{ duration: 0.3 }}
+                    transition={{ duration: 0.12 }}
                 />
                 {/* Chromatic Edge simulation on Text Hover */}
                 <motion.div
@@ -353,7 +330,7 @@ export const CustomCursor = () => {
                         className="absolute inset-0 rounded-full border border-blue-400/50"
                         initial={{ scale: 0.8, opacity: 1 }}
                         animate={{ scale: 2, opacity: 0 }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        transition={{ duration: 0.2, ease: "easeOut" }}
                     />
                 )}
             </motion.div>

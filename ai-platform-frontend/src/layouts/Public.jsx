@@ -5,7 +5,13 @@ import { PublicNavbar } from "@/widgets/layout"; // Import from the main widget 
 export function Public() {
   return (
     // A simple wrapper for public pages
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="public-layout min-h-screen bg-gray-50 dark:bg-gray-900">
+      <style>{`
+        .public-layout,
+        .public-layout * {
+          cursor: none !important;
+        }
+      `}</style>
       <PublicNavbar />
 
       {/* This is where the child page (like the landing page) will be rendered */}

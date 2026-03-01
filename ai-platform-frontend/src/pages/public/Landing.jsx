@@ -50,7 +50,7 @@ const HeroScrollDemo = () => {
            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-sm font-semibold tracking-wide shadow-[0_0_15px_rgba(59,130,246,0.15)] mb-8 backdrop-blur-md"
         >
           <SparklesIcon className="w-4 h-4 text-blue-400 animate-pulse" />
-          <span>Adaptive Learning Platform</span>
+          <span>Your Pit Stop for Smarter Prep</span>
         </motion.div>
 
         <motion.h1
@@ -290,7 +290,7 @@ const BentoGrid = () => {
               </div>
             </div>
 
-            <div className="relative z-20 h-full flex flex-col justify-end mt-10">
+            <div className="relative z-20 h-full flex flex-col justify-end">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6 text-amber-500 group-hover:scale-110 transition-transform duration-300">
                 <TrophyIcon className="w-7 h-7" />
               </div>
