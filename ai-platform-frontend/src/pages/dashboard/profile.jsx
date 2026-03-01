@@ -58,17 +58,17 @@ const lineChartOptions = {
     type: "category",
     labels: {
       ...chartsConfig.xaxis.labels,
-      style: { ...chartsConfig.xaxis.labels.style, colors: "#37474f" },
+      style: { ...chartsConfig.xaxis.labels.style, colors: "#94a3b8" },
     },
   },
   yaxis: {
     ...chartsConfig.yaxis,
     labels: {
       ...chartsConfig.yaxis.labels,
-      style: { ...chartsConfig.yaxis.labels.style, colors: "#37474f" },
+      style: { ...chartsConfig.yaxis.labels.style, colors: "#94a3b8" },
     },
   },
-  grid: { ...chartsConfig.grid, borderColor: "#e0e0e0" },
+  grid: { ...chartsConfig.grid, borderColor: "rgba(255, 255, 255, 0.1)" },
   tooltip: { ...chartsConfig.tooltip, theme: "dark", x: { format: "dd MMM yyyy" } },
 };
 
@@ -667,6 +667,9 @@ export function Profile() {
                 </Typography>
                 {xpHistory ? (
                   <StatisticsChart
+                    key="xp-chart"
+                    color="transparent"
+                    className="!bg-transparent !shadow-none !border-none"
                     chart={{
                       type: "line",
                       height: 220,

@@ -8,11 +8,11 @@ import {
 import PropTypes from "prop-types";
 import Chart from "react-apexcharts"; // This is the chart library
 
-export function StatisticsChart({ color, chart, title, description, footer }) {
+export function StatisticsChart({ color, chart, title, description, footer, className }) {
   return (
     // --- THIS IS THE FIX ---
-    <Card className="border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
-    {/* --- END OF FIX --- */}
+    <Card className={`border border-blue-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700 ${className}`}>
+      {/* --- END OF FIX --- */}
       <CardHeader variant="gradient" color={color} floated={false} shadow={false}>
         <Chart {...chart} />
       </CardHeader>
@@ -21,7 +21,7 @@ export function StatisticsChart({ color, chart, title, description, footer }) {
           {title}
         </Typography>
         <Typography variant="small"
-className="font-normal text-blue-gray-600">
+          className="font-normal text-blue-gray-600">
           {description}
         </Typography>
       </CardBody>
@@ -64,7 +64,7 @@ StatisticsChart.propTypes = {
   ]),
   chart: PropTypes.object.isRequired,
 
- title: PropTypes.node.isRequired,
+  title: PropTypes.node.isRequired,
   description: PropTypes.node.isRequired,
   footer: PropTypes.node,
 };
