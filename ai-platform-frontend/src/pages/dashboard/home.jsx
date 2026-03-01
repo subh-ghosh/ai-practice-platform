@@ -363,7 +363,12 @@ export function Home() {
               <AcademicCapIcon className="h-5 w-5 mr-2 text-purple-500" />
               Study Plan Progress
             </Typography>
-            <div className="grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
+            >
               {[
                 { title: "Active Plans", icon: BookOpenIcon, color: "purple", value: studyPlanStats.activePlans, label: "in progress" },
                 { title: "Completed Plans", icon: CheckCircleIcon, color: "green", value: studyPlanStats.completedPlans, label: "finished" },
@@ -372,8 +377,9 @@ export function Home() {
               ].map(({ icon, title, color, value, label }) => (
                 <motion.div
                   key={title}
+                  variants={itemVariants}
                   whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                  className="rounded-2xl border border-purple-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
+                  className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
                 >
                   <StatisticsCard
                     color={color}
@@ -384,7 +390,7 @@ export function Home() {
                   />
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
