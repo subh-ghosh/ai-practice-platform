@@ -639,7 +639,7 @@ export function Profile() {
             className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
             {/* Left Column: Bio & Info & Chart */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-2 flex flex-col gap-6">
               <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
                 <Typography variant="h5" color="blue-gray" className="dark:text-white font-bold mb-4">
                   About Me
@@ -661,7 +661,7 @@ export function Profile() {
               </div>
 
               {/* XP History Chart */}
-              <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex-1 flex flex-col">
                 <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold mb-4">
                   XP Activity (Last 30 Days)
                 </Typography>
@@ -701,7 +701,7 @@ export function Profile() {
             </div>
 
             {/* Right Column: Stats & Socials */}
-            <div className="space-y-6">
+            <div className="flex flex-col gap-6">
               <div className="grid grid-cols-1 gap-4">
                 <StatCard icon={BoltIcon} title="Total XP" value={user?.totalXp || 0} color="yellow" />
                 <StatCard icon={FireIcon} title="Streak" value={`${user?.streakDays || 0} Days`} color="orange" />
@@ -711,11 +711,11 @@ export function Profile() {
               {/* Achievements Section */}
               <BadgesSection />
 
-              <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white/90 dark:bg-gray-900/60 backdrop-blur-md border border-blue-100/60 dark:border-gray-800 rounded-2xl p-6 shadow-sm flex-1 flex flex-col">
                 <Typography variant="h6" color="blue-gray" className="dark:text-white font-bold mb-4">
                   Connect
                 </Typography>
-                <div className="space-y-3">
+                <div className="space-y-3 flex-1">
                   {user?.githubUrl && (
                     <a href={user.githubUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
                       <div className="p-2 bg-gray-100 dark:bg-white/10 rounded-lg group-hover:bg-white dark:group-hover:bg-black transition-colors">
