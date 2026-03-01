@@ -21,7 +21,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
     <aside
       className={`
         ${glassClasses}
-        fixed inset-y-0 left-0 z-50 m-4 w-72 rounded-2xl 
+        fixed inset-y-0 left-0 z-50 m-4 flex w-72 flex-col rounded-2xl 
         transition-transform duration-300 ease-in-out
         ${openSidenav ? "translate-x-0" : "-translate-x-[120%]"} 
         xl:translate-x-0
@@ -55,7 +55,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
       </div>
 
       {/* NAV LINKS */}
-      <div className="m-4 h-[calc(100vh-140px)] overflow-y-auto custom-scroll">
+      <div className="m-4 flex-1 overflow-y-auto custom-scroll">
         {routes.map(({ layout, title, pages }, key) => {
 
           // 🛑 FILTER: Skip the "auth" section entirely

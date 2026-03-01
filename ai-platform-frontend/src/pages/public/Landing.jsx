@@ -703,7 +703,7 @@ const BigCTA = () => {
 export function Landing() {
   return (
     // Pure Dark Mode Base
-    <div className="min-h-screen bg-[#050505] text-slate-200 font-sans tracking-tight selection:bg-blue-500/40 selection:text-white cursor-default">
+    <div className="min-h-screen bg-[#050505] text-slate-200 font-sans tracking-tight selection:bg-blue-500/40 selection:text-white cursor-default overflow-x-hidden">
       <CustomCursor />
 
       {/* 1. Hero with Scroll Zoom Effect */}
