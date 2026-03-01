@@ -204,7 +204,7 @@ const Leaderboard = () => {
                                                         />
                                                         <div>
                                                             <Typography variant="small" color="blue-gray" className="font-bold dark:text-white flex flex-wrap items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                                                                {student.firstName} <span className="hidden sm:inline">{student.lastName}</span>
+                                                                {student.firstName} <span>{student.lastName}</span>
                                                                 {isCurrentUser && <span className="text-[9px] sm:text-[10px] bg-blue-100 text-blue-700 px-1 sm:px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">You</span>}
                                                             </Typography>
                                                             <Typography variant="small" className="text-gray-400 text-[10px] sm:text-xs font-medium">

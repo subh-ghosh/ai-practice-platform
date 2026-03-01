@@ -12,7 +12,7 @@ export function Footer({ brandName, brandLink }) {
   ];
 
   return (
-    <footer className="w-full py-8 px-5 md:px-8 bg-white dark:bg-[#030303] border-t border-gray-200 dark:border-white/5">
+    <footer className="w-full py-8 px-5 md:px-8 bg-transparent border-t border-gray-200 dark:border-white/5 relative z-10">
       <div className="container mx-auto flex flex-col items-center gap-5 md:flex-row md:justify-between">
 
         {/* Copyright Section */}
