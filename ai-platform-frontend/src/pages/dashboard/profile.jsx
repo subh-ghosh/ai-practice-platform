@@ -125,51 +125,56 @@ function EditForm({
               <Input
                 name="firstName"
                 label="First Name"
+                placeholder="First Name"
                 value={formData.firstName}
                 onChange={handleChange}
                 color="blue"
-                className="dark:text-white"
-                labelProps={{ className: "dark:text-gray-400" }}
+                className="dark:text-white dark:placeholder:text-white"
+                labelProps={{ className: "dark:text-white" }}
               />
               <Input
                 name="lastName"
                 label="Last Name"
+                placeholder="Last Name"
                 value={formData.lastName}
                 onChange={handleChange}
                 color="blue"
-                className="dark:text-white"
-                labelProps={{ className: "dark:text-gray-400" }}
+                className="dark:text-white dark:placeholder:text-white"
+                labelProps={{ className: "dark:text-white" }}
               />
             </div>
 
             <Input
               name="headline"
               label="Headline (e.g. Student at MIT)"
+              placeholder="Headline (e.g. Student at MIT)"
               value={formData.headline}
               onChange={handleChange}
               color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
             />
 
             <Textarea
               name="bio"
               label="Bio"
+              placeholder="Tell us about yourself..."
               value={formData.bio}
               onChange={handleChange}
               color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
             />
 
             <Input
               name="avatarUrl"
               label="Avatar URL"
+              placeholder="Avatar URL"
               value={formData.avatarUrl}
               onChange={handleChange}
               color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
               icon={<GlobeAltIcon className="h-4 w-4 text-blue-gray-400" />}
             />
           </div>
@@ -192,29 +197,32 @@ function EditForm({
             <Input
               name="githubUrl"
               label="GitHub URL"
+              placeholder="GitHub URL"
               value={formData.githubUrl}
               onChange={handleChange}
               color="purple"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
             />
             <Input
               name="linkedinUrl"
               label="LinkedIn URL"
+              placeholder="LinkedIn URL"
               value={formData.linkedinUrl}
               onChange={handleChange}
               color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
             />
             <Input
               name="websiteUrl"
               label="Portfolio / Website"
+              placeholder="Portfolio / Website"
               value={formData.websiteUrl}
               onChange={handleChange}
               color="teal"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
             />
 
             <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/5">
@@ -310,22 +318,24 @@ function SecurityPanel({
             <Input
               type="password"
               label="Current Password"
+              placeholder="Current Password"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               required
               color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
             />
             <Input
               type="password"
               label="New Password"
+              placeholder="New Password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
               color="blue"
-              className="dark:text-white"
-              labelProps={{ className: "dark:text-gray-400" }}
+              className="dark:text-white dark:placeholder:text-white"
+              labelProps={{ className: "dark:text-white" }}
             />
 
             <AnimatePresence>
