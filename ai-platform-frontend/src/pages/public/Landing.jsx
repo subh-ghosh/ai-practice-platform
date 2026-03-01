@@ -51,10 +51,9 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-sm font-medium mb-8"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-sm font-semibold tracking-wide shadow-[0_0_15px_rgba(59,130,246,0.15)] mb-8 backdrop-blur-md"
         >
-          <SparklesIcon className="w-4 h-4" />
-          {/* REQ 4: Updated Badge Text */}
+          <SparklesIcon className="w-4 h-4 text-blue-400 animate-pulse" />
           <span>The Smart Way to Study</span>
         </motion.div>
 
@@ -62,10 +61,10 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-5xl md:text-8xl font-black tracking-tight text-white mb-8"
+          className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[1.1]"
         >
           Master Tech with <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 bg-[length:200%_auto] animate-gradient-x drop-shadow-sm">
             Intelligent Guidance
           </span>
         </motion.h1>
@@ -74,7 +73,7 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
+          className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed font-medium"
         >
           Not just an editor. A complete ecosystem to generate challenges,
           track mastery, and visualize your growth in real-time.
@@ -84,19 +83,20 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-col sm:flex-row gap-5 justify-center"
+          className="flex flex-col sm:flex-row gap-5 justify-center items-center"
         >
           <button
             onClick={() => navigate("/auth/sign-up")}
-            className="px-8 py-4 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg hover:scale-105 hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all duration-300"
+            className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(37,99,235,0.5)] ring-1 ring-white/20"
           >
-            Start Learning Free
+            <div className="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-colors duration-300" />
+            <span className="relative z-10">Start Learning Free</span>
+            <ArrowRightIcon className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
           </button>
 
           <button
             onClick={() => navigate("/auth/sign-in")}
-            // Removed light mode styles
-            className="px-8 py-4 rounded-full border border-white/10 text-slate-300 font-medium text-lg hover:bg-white/5 hover:text-white transition-colors"
+            className="px-8 py-4 rounded-full border border-white/10 bg-[#0a0a0c]/60 backdrop-blur-md text-slate-300 font-medium text-lg hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300 shadow-xl"
           >
             View Dashboard
           </button>
@@ -210,14 +210,14 @@ const BentoGrid = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-sm font-bold mb-6 tracking-wide uppercase"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-400 text-sm font-bold mb-6 tracking-wide uppercase shadow-[0_0_15px_rgba(6,182,212,0.15)]"
           >
-            <BoltIcon className="w-4 h-4" /> Power Your Growth
+            <BoltIcon className="w-4 h-4 text-cyan-400 animate-pulse" /> Power Your Growth
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
-            An Ecosystem Built for <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Excellence</span>
+            An Ecosystem Built for <br className="hidden md:block" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 drop-shadow-sm">Excellence</span>
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
             Stop jumping between tutorials and IDEs. We’ve unified the entire learning lifecycle into one seamless, intelligent platform.
           </p>
         </div>
@@ -229,10 +229,10 @@ const BentoGrid = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.01 }}
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 md:p-10 hover:border-blue-500/30 transition-all duration-500 shadow-lg"
+            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] p-8 md:p-10 hover:bg-white/[0.04] hover:border-blue-500/40 transition-all duration-500 shadow-2xl"
           >
             {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 via-transparent to-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -275,7 +275,7 @@ const BentoGrid = () => {
             whileHover={{ scale: 1.02 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 hover:border-amber-500/30 transition-all duration-500 shadow-lg"
+            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] p-8 hover:bg-white/[0.04] hover:border-amber-500/40 transition-all duration-500 shadow-2xl"
           >
             {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-bl from-amber-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -313,7 +313,7 @@ const BentoGrid = () => {
             whileHover={{ scale: 1.02 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 hover:border-purple-500/30 transition-all duration-500 shadow-lg flex flex-col justify-between"
+            className="md:col-span-1 group relative rounded-[2rem] overflow-hidden bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] p-8 hover:bg-white/[0.04] hover:border-purple-500/40 transition-all duration-500 shadow-2xl flex flex-col justify-between"
           >
             {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-t from-purple-500/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -344,10 +344,10 @@ const BentoGrid = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.01 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3, type: "spring", stiffness: 300, damping: 20 }}
-            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-[#0a0a0c] border border-white/10 p-8 md:p-10 hover:border-indigo-500/30 transition-all duration-500 shadow-lg"
+            className="md:col-span-2 group relative rounded-[2rem] overflow-hidden bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] p-8 md:p-10 hover:bg-white/[0.04] hover:border-indigo-500/40 transition-all duration-500 shadow-2xl"
           >
             {/* NEON GLOW EFFECT */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-indigo-600/10 opacity-50 group-hover:opacity-100 transition-opacity duration-500" />
@@ -468,8 +468,8 @@ const ModularStudyJourney = () => {
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative">
-            <div className="aspect-square rounded-[3rem] bg-[#0a0a0c] border border-blue-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(37,99,235,0.15)] group">
-              <div className="absolute inset-0 bg-[linear-gradient(to_br,rgba(37,99,235,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="aspect-square rounded-[3rem] bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(37,99,235,0.15)] group hover:bg-white/[0.04] hover:border-blue-500/40 transition-all duration-500">
+              <div className="absolute inset-0 bg-[linear-gradient(to_br,rgba(37,99,235,0.15),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               {/* Abstract Calendar Mockup */}
               <div className="w-full h-full bg-[#0f1115] rounded-2xl border border-white/5 p-6 flex flex-col gap-4 relative z-10">
                 <div className="h-8 w-1/2 bg-blue-500/20 rounded-lg animate-pulse mb-4" />
@@ -489,8 +489,8 @@ const ModularStudyJourney = () => {
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative order-2 md:order-1">
-            <div className="aspect-square rounded-[3rem] bg-[#0a0a0c] border border-purple-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(168,85,247,0.15)] group">
-              <div className="absolute inset-0 bg-[linear-gradient(to_bl,rgba(168,85,247,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="aspect-square rounded-[3rem] bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(168,85,247,0.15)] group hover:bg-white/[0.04] hover:border-purple-500/40 transition-all duration-500">
+              <div className="absolute inset-0 bg-[linear-gradient(to_bl,rgba(168,85,247,0.15),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               {/* Split Screen Mockup */}
               <div className="w-full h-full flex gap-4 relative z-10">
                 <div className="flex-1 bg-[#0f1115] rounded-2xl border border-white/5 flex items-center justify-center">
@@ -531,8 +531,8 @@ const ModularStudyJourney = () => {
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative">
-            <div className="aspect-square rounded-[3rem] bg-[#0a0a0c] border border-green-500/20 overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(34,197,94,0.15)] group">
-              <div className="absolute inset-0 bg-[linear-gradient(to_tr,rgba(34,197,94,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="aspect-square rounded-[3rem] bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] overflow-hidden relative flex items-center justify-center p-12 shadow-[0_0_60px_rgba(34,197,94,0.15)] group hover:bg-white/[0.04] hover:border-green-500/40 transition-all duration-500">
+              <div className="absolute inset-0 bg-[linear-gradient(to_tr,rgba(34,197,94,0.15),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
               {/* Trophy/Mastery Mockup */}
               <div className="relative z-10 flex flex-col items-center">
                 <TrophyIcon className="w-40 h-40 text-green-500 drop-shadow-[0_0_30px_rgba(34,197,94,0.5)] mb-6" />
@@ -558,14 +558,14 @@ const BigCTA = () => {
 
       <div className="max-w-4xl mx-auto relative z-10 text-center">
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           whileInView={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 20 }}
           viewport={{ once: true }}
-          className="bg-[#0a0a0c]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-12 md:p-20 shadow-2xl relative overflow-hidden group"
+          className="bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] rounded-[3rem] p-12 md:p-20 shadow-2xl relative overflow-hidden group hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-700"
         >
           {/* Inner Glow on Hover */}
-          <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
           <div className="relative z-10">
             <AcademicCapIcon className="w-16 h-16 text-blue-500 mx-auto mb-8 drop-shadow-[0_0_15px_rgba(59,130,246,0.6)]" />
