@@ -854,7 +854,11 @@ export function Practice() {
               <div className="space-y-6">
                 <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">
                   <Typography className="font-black text-[10px] uppercase text-gray-500 tracking-widest mb-3">Your Answer</Typography>
-                  <Typography className="text-gray-200 leading-relaxed text-lg">{selectedHistory.answerText}</Typography>
+                  <div className="prose prose-invert max-w-none text-gray-200">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {selectedHistory.answerText}
+                    </ReactMarkdown>
+                  </div>
                 </div>
                 <div className="p-5 bg-blue-900/10 border border-blue-800/20 rounded-2xl shadow-inner">
                   <div className="flex items-center gap-2 mb-3">
