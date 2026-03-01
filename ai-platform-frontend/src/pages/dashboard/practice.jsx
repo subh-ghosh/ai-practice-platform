@@ -667,7 +667,7 @@ export function Practice() {
                     <Textarea
                       rows={textareaRows}
                       placeholder="Type your answer here..."
-                      className="!border-blue-gray-200 focus:!border-blue-500 text-lg"
+                      className="!text-blue-gray-900 dark:!text-white !bg-white dark:!bg-gray-800 !border-blue-gray-200 focus:!border-blue-500 text-lg"
                       value={currentAnswer}
                       onChange={handleAnswerChange}
                       disabled={submitting}
@@ -690,9 +690,9 @@ export function Practice() {
                     </div>
 
                     {hint && (
-                      <Alert className="mt-4 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl animate-fade-in">
+                      <Alert className="mt-4 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-900/50 rounded-xl animate-fade-in">
                         <div className="flex gap-3">
-                          <InformationCircleIcon className="h-6 w-6 text-amber-500" />
+                          <InformationCircleIcon className="h-6 w-6 text-amber-500 dark:text-amber-400" />
                           <div>
                             <Typography className="font-bold text-sm">Hint</Typography>
                             <Typography className="text-sm opacity-90">{hint}</Typography>
@@ -727,9 +727,17 @@ export function Practice() {
                               <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wide mb-2">
                                 Correct Answer
                               </Typography>
-                              <Typography className="font-medium text-gray-900 dark:text-gray-100">
-                                {feedback.answerText || "See explanation above"}
-                              </Typography>
+                              <div className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-100">
+                                {feedback.answerText ? (
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {formatMarkdownText(feedback.answerText)}
+                                  </ReactMarkdown>
+                                ) : (
+                                  <Typography className="font-medium">
+                                    See explanation above
+                                  </Typography>
+                                )}
+                              </div>
                             </div>
                           )}
                         </>
