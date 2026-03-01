@@ -17,7 +17,7 @@ import Spline from "@splinetool/react-spline";
 
 export function SignUp() {
   const location = useLocation();
-  const googleData = location.state?.googleData;
+  const routeGoogleData = location.state?.googleData;
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -33,13 +33,23 @@ export function SignUp() {
   const from = location.state?.from?.pathname || "/dashboard/home";
 
   useEffect(() => {
+    let pendingGoogleData = null;
+    try {
+      pendingGoogleData = JSON.parse(sessionStorage.getItem("pendingGoogleRegistration") || "null");
+    } catch (_) {
+      pendingGoogleData = null;
+    }
+
+    const googleData = routeGoogleData || pendingGoogleData;
+
     if (googleData) {
       setFirstName(googleData.firstName || "");
       setLastName(googleData.lastName || "");
       setEmail(googleData.email || "");
       setIsGoogleRegister(true);
+      sessionStorage.removeItem("pendingGoogleRegistration");
     }
-  }, [googleData]);
+  }, [routeGoogleData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -196,8 +206,8 @@ export function SignUp() {
               {error && <Alert color="red">{error}</Alert>}
 
               {isGoogleRegister && (
-                <Alert color="blue">
-                  We've pre-filled your details from Google. Just set a password!
+                <Alert color="amber" className="text-amber-900">
+                  Please complete registration by setting a password. Your details are pre-filled.
                 </Alert>
               )}
 

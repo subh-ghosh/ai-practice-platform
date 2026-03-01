@@ -100,7 +100,24 @@ export function AuthProvider({ children }) {
         return { success: true, status: "LOGIN_SUCCESS" };
       }
 
-      return response.data;
+      if (response.data.status === "NEEDS_REGISTRATION") {
+        try {
+          sessionStorage.setItem(
+            "pendingGoogleRegistration",
+            JSON.stringify(response.data.registrationData || {})
+          );
+        } catch (_) {
+          // no-op
+        }
+        return {
+          success: true,
+          status: "NEEDS_REGISTRATION",
+          registrationData: response.data.registrationData || {},
+          message: response.data.message
+        };
+      }
+
+      return { success: false, message: response.data?.message || "Google login failed" };
 
     } catch (error) {
       console.error("Google Auth Error:", error);
