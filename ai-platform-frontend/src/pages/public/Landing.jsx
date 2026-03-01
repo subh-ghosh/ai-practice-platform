@@ -1,6 +1,6 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
 import {
   SparklesIcon,
   BoltIcon,
@@ -18,8 +18,11 @@ import {
   CheckCircleIcon
 } from "@heroicons/react/24/solid";
 import { Footer } from "@/widgets/layout";
+import { MagneticButton, CustomCursor } from "@/components/ui/PremiumEffects";
+import { FlashlightBackground } from "@/components/ui/FlashlightBackground";
 
-// --- COMPONENTS ---
+// --- PAGE SECTIONS ---
+
 
 // 1. Hero Section (Pure Dark Mode)
 const HeroScrollDemo = () => {
@@ -37,21 +40,14 @@ const HeroScrollDemo = () => {
   const opacity = useTransform(scrollYProgress, [0, 0.2], [0.8, 1]);
 
   return (
-    <div
-      ref={containerRef}
-      className="relative flex flex-col items-center justify-start -mt-16 pt-28 md:pt-40 min-h-[125vh] bg-[#050505] overflow-hidden"
-    >
-      {/* Checkered Background & Overhead Glow (Dark Mode Only) */}
-      <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-      <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
-
+    <FlashlightBackground className="min-h-[125vh] -mt-16 pt-28 md:pt-40 flex flex-col items-center justify-start text-center">
       {/* Hero Content */}
-      <div className="relative z-10 max-w-5xl mx-auto text-center px-4 mb-16">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 mb-16">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-sm font-semibold tracking-wide shadow-[0_0_15px_rgba(59,130,246,0.15)] mb-8 backdrop-blur-md"
+           initial={{ opacity: 0, y: 20 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.5 }}
+           className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-sm font-semibold tracking-wide shadow-[0_0_15px_rgba(59,130,246,0.15)] mb-8 backdrop-blur-md"
         >
           <SparklesIcon className="w-4 h-4 text-blue-400 animate-pulse" />
           <span>The Smart Way to Study</span>
@@ -83,23 +79,23 @@ const HeroScrollDemo = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-col sm:flex-row gap-5 justify-center items-center"
+          className="flex flex-col sm:flex-row gap-5 justify-center flex-wrap md:flex-nowrap items-center"
         >
-          <button
+          <MagneticButton
             onClick={() => navigate("/auth/sign-up")}
             className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(37,99,235,0.5)] ring-1 ring-white/20"
           >
             <div className="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-colors duration-300" />
             <span className="relative z-10">Start Learning Free</span>
             <ArrowRightIcon className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-          </button>
+          </MagneticButton>
 
-          <button
+          <MagneticButton
             onClick={() => navigate("/auth/sign-in")}
             className="px-8 py-4 rounded-full border border-white/10 bg-[#0a0a0c]/60 backdrop-blur-md text-slate-300 font-medium text-lg hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300 shadow-xl"
           >
             View Dashboard
-          </button>
+          </MagneticButton>
         </motion.div>
       </div>
 
@@ -160,9 +156,10 @@ const HeroScrollDemo = () => {
         {/* Glow Under Dashboard */}
         <div className="absolute -inset-10 bg-blue-600/20 blur-[100px] -z-10 rounded-[3rem]" />
       </motion.div>
-    </div>
+    </FlashlightBackground>
   );
 };
+
 
 // 2. Infinite Marquee (Pure Dark Mode)
 const SubjectMarquee = () => {
@@ -397,9 +394,48 @@ const ResourceParallax = () => {
   const scale = useTransform(scrollYProgress, [0, 0.5], [0.8, 1]);
   const opacity = useTransform(scrollYProgress, [0, 0.3], [0, 1]);
 
+  // Mouse Tracking for Shadows
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const smoothX = useSpring(mouseX, { stiffness: 100, damping: 25, mass: 0.2 });
+  const smoothY = useSpring(mouseY, { stiffness: 100, damping: 25, mass: 0.2 });
+
+  const handleMouseMove = (e) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const getDynamicBoxShadow = (x, y) => {
+    // 1. Inverse shadow: move away from cursor (creates depth)
+    const moveX = useTransform(x, val => -val * 0.15);
+    const moveY = useTransform(y, val => -val * 0.15);
+
+    // 2. Inner glow: move toward cursor (creates light hit)
+    const hitX = useTransform(x, val => val * 0.05);
+    const hitY = useTransform(y, val => val * 0.05);
+
+    return useTransform([moveX, moveY, hitX, hitY], ([mx, my, hx, hy]) => {
+      return `
+        ${mx}px ${my}px 60px rgba(0,0,0,1),
+        inset ${hx}px ${hy}px 25px rgba(255,255,255,0.1),
+        0 0 20px rgba(59,130,246,0.05)
+      `;
+    });
+  };
+
+  const dynamicShadow = getDynamicBoxShadow(smoothX, smoothY);
+
   return (
-    <section ref={containerRef} className="py-32 min-h-[90vh] bg-[#050505] relative overflow-hidden flex items-center justify-center">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_70%)]" />
+    <section
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      className="py-32 min-h-[90vh] bg-[#050505] relative overflow-hidden flex items-center justify-center group/parallax"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.12),transparent_70%)]" />
 
       <div className="relative z-10 text-center max-w-5xl px-4">
         <motion.div style={{ scale, opacity }} className="mb-12">
@@ -414,32 +450,58 @@ const ResourceParallax = () => {
         <div className="relative h-[400px] w-full mt-20 perspective-[1000px]">
           {/* Center Card */}
           <motion.div
-            initial={{ rotateX: 20 }}
-            whileInView={{ rotateX: 0 }}
-            transition={{ duration: 1 }}
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-80 bg-[#0a0a0c] border border-white/10 rounded-3xl z-20 shadow-2xl flex flex-col items-center justify-center gap-4"
+            style={{
+              y: useTransform(scrollYProgress, [0, 1], [0, -300]),
+              boxShadow: dynamicShadow
+            }}
+            className="absolute left-[calc(50%-3.5rem)] top-[calc(50%-3.5rem)] w-28 h-28 bg-[#121215] border border-white/5 rounded-3xl flex items-center justify-center z-20 transition-transform duration-500 hover:scale-110 shadow-2xl"
           >
-            <div className="w-20 h-20 rounded-full bg-blue-600/20 flex items-center justify-center animate-pulse">
-              <AcademicCapIcon className="w-10 h-10 text-blue-500" />
-            </div>
-            <div className="text-white font-bold text-xl">Study Plan</div>
+            <AcademicCapIcon className="w-12 h-12 text-blue-500" />
           </motion.div>
 
           {/* Floating Icons (Parallax) */}
-          <motion.div style={{ y: y1, x: -200 }} className="absolute left-1/2 top-1/2 w-24 h-24 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
-            <BookOpenIcon className="w-10 h-10 text-purple-500" />
+          <motion.div
+            style={{
+              y: y1,
+              x: -220,
+              boxShadow: dynamicShadow
+            }}
+            className="absolute left-1/2 top-1/2 -translate-y-1/2 w-28 h-28 bg-[#121215] border border-white/5 rounded-3xl flex items-center justify-center z-10 transition-transform duration-500 hover:scale-110 shadow-2xl"
+          >
+            <BookOpenIcon className="w-12 h-12 text-purple-500" />
           </motion.div>
 
-          <motion.div style={{ y: y2, x: 200 }} className="absolute left-1/2 top-1/2 w-28 h-28 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-10">
+          <motion.div
+            style={{
+              y: y2,
+              x: 220,
+              boxShadow: dynamicShadow
+            }}
+            className="absolute left-1/2 top-1/2 -translate-y-1/2 w-28 h-28 bg-[#121215] border border-white/5 rounded-3xl flex items-center justify-center z-10 transition-transform duration-500 hover:scale-110 shadow-2xl"
+          >
             <VideoCameraIcon className="w-12 h-12 text-red-500" />
           </motion.div>
 
-          <motion.div style={{ y: y1, x: 150 }} className="absolute left-1/2 top-[80%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-30">
-            <ClockIcon className="w-8 h-8 text-amber-500" />
+          <motion.div
+            style={{
+              y: y1,
+              x: 140,
+              boxShadow: dynamicShadow
+            }}
+            className="absolute left-1/2 top-[80%] -translate-y-1/2 w-24 h-24 bg-[#121215] border border-white/5 rounded-3xl flex items-center justify-center z-30 transition-transform duration-500 hover:scale-110 shadow-2xl"
+          >
+            <ClockIcon className="w-10 h-10 text-amber-500" />
           </motion.div>
 
-          <motion.div style={{ y: y2, x: -180 }} className="absolute left-1/2 top-[20%] w-20 h-20 bg-[#121215] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl z-0">
-            <DocumentTextIcon className="w-8 h-8 text-green-500" />
+          <motion.div
+            style={{
+              y: y2,
+              x: -160,
+              boxShadow: dynamicShadow
+            }}
+            className="absolute left-1/2 top-[20%] -translate-y-1/2 w-24 h-24 bg-[#121215] border border-white/5 rounded-3xl flex items-center justify-center z-0 transition-transform duration-500 hover:scale-110 shadow-2xl"
+          >
+            <DocumentTextIcon className="w-10 h-10 text-green-500" />
           </motion.div>
         </div>
       </div>
@@ -447,13 +509,61 @@ const ResourceParallax = () => {
   );
 };
 
-// --- 5. NEW: MODULAR STUDY JOURNEY (Pure Dark Mode) ---
+// --- 5. MODULAR STUDY JOURNEY (Sticky Progress Flow) ---
 const ModularStudyJourney = () => {
+  const containerRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  });
+
+  const progressLineHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
+  // Transform colors based on progress
+  const step1Color = useTransform(scrollYProgress, [0, 0.25, 0.35], ["#3b82f6", "#3b82f6", "#1e293b"]);
+  const step2Color = useTransform(scrollYProgress, [0.35, 0.45, 0.75, 0.85], ["#1e293b", "#a855f7", "#a855f7", "#1e293b"]);
+  const step3Color = useTransform(scrollYProgress, [0.85, 0.95, 1], ["#1e293b", "#22c55e", "#22c55e"]);
+
+  const step1Glow = useTransform(scrollYProgress, [0, 0.28, 0.38], ["0 0 20px rgba(59,130,246,0.5)", "0 0 20px rgba(59,130,246,0.5)", "0 0 0px transparent"]);
+  const step2Glow = useTransform(scrollYProgress, [0.28, 0.38, 0.62, 0.72], ["0 0 0px transparent", "0 0 20px rgba(168,85,247,0.5)", "0 0 20px rgba(168,85,247,0.5)", "0 0 0px transparent"]);
+  const step3Glow = useTransform(scrollYProgress, [0.62, 0.72, 1], ["0 0 0px transparent", "0 0 20px rgba(34,197,94,0.5)", "0 0 20px rgba(34,197,94,0.5)"]);
+
   return (
-    <section className="bg-[#050505] relative overflow-hidden">
+    <section ref={containerRef} className="bg-[#050505] relative border-t border-white/5">
+
+      {/* Sticky Sidebar Progress */}
+      <div className="absolute left-8 md:left-20 top-0 bottom-0 w-16 hidden lg:block z-50 pointer-events-none">
+        <div className="sticky top-0 h-screen flex flex-col items-center justify-center">
+          <div className="h-[450px] flex flex-col items-center justify-between py-10 relative pointer-events-auto">
+            {/* Background Track */}
+            <div className="absolute inset-0 left-1/2 -translate-x-1/2 w-[2px] bg-white/10 rounded-full" />
+
+            {/* Progress Line */}
+            <motion.div
+              style={{ height: progressLineHeight }}
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-[2px] bg-gradient-to-b from-blue-500 via-purple-500 to-green-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+            />
+
+            {/* Step Nodes */}
+            {[
+              { icon: CalendarDaysIcon, color: step1Color, glow: step1Glow },
+              { icon: VideoCameraIcon, color: step2Color, glow: step2Glow },
+              { icon: TrophyIcon, color: step3Color, glow: step3Glow }
+            ].map((step, i) => (
+              <motion.div
+                key={i}
+                style={{ color: step.color, boxShadow: step.glow, borderColor: step.color }}
+                className="relative z-10 w-11 h-11 rounded-full bg-[#050505] border-2 flex items-center justify-center transition-all duration-300"
+              >
+                <step.icon className="w-5 h-5" />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* STEP 1: PLAN (Blue Theme) */}
-      <div className="py-32 px-4 relative border-t border-white/5">
+      <div className="py-48 px-4 lg:pl-64 relative border-t border-white/5">
         <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
@@ -485,7 +595,7 @@ const ModularStudyJourney = () => {
       </div>
 
       {/* STEP 2: ABSORB (Purple Theme) - Layout Flipped */}
-      <div className="py-32 px-4 relative border-t border-white/5">
+      <div className="py-48 px-4 lg:pl-64 relative border-t border-white/5">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-600/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative order-2 md:order-1">
@@ -518,7 +628,7 @@ const ModularStudyJourney = () => {
       </div>
 
       {/* STEP 3: RETAIN (Green Theme) */}
-      <div className="py-32 px-4 relative border-t border-white/5">
+      <div className="py-48 px-4 lg:pl-64 relative border-t border-white/5">
         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none" />
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
@@ -557,11 +667,7 @@ const BigCTA = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none" />
 
       <div className="max-w-4xl mx-auto relative z-10 text-center">
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          whileInView={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, type: "spring", stiffness: 200, damping: 20 }}
-          viewport={{ once: true }}
+        <div
           className="bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] rounded-[3rem] p-12 md:p-20 shadow-2xl relative overflow-hidden group hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-700"
         >
           {/* Inner Glow on Hover */}
@@ -581,15 +687,15 @@ const BigCTA = () => {
               Join thousands of developers mastering Data Structures and Algorithms with our intelligent platform.
             </p>
 
-            <button
+            <MagneticButton
               onClick={() => navigate("/auth/sign-up")}
               className="group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(37,99,235,0.4)]"
             >
               <span>Launch Study Plan</span>
               <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </MagneticButton>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )
@@ -600,7 +706,8 @@ const BigCTA = () => {
 export function Landing() {
   return (
     // Pure Dark Mode Base
-    <div className="min-h-screen bg-[#050505] text-slate-200 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#050505] text-slate-200 font-sans tracking-tight selection:bg-blue-500/40 selection:text-white cursor-default">
+      <CustomCursor />
 
       {/* 1. Hero with Scroll Zoom Effect */}
       <HeroScrollDemo />

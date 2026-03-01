@@ -10,6 +10,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import { motion } from "framer-motion";
+import { MagneticButton, CustomCursor } from "@/components/ui/PremiumEffects";
+import { FlashlightBackground } from "@/components/ui/FlashlightBackground";
+import Spline from "@splinetool/react-spline";
 
 export function SignIn() {
   const [email, setEmail] = useState("");
@@ -90,10 +93,14 @@ export function SignIn() {
   };
 
   return (
-    <section className="relative min-h-[110vh] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden bg-[#050505] -mt-24 pt-32">
+    <div className="relative w-full overflow-hidden bg-[#050505] min-h-screen flex flex-col font-sans selection:bg-blue-500/30 -mt-24">
+      <CustomCursor />
 
-      {/* === Autofill Fix Style Block === */}
-      <style>{`
+      <FlashlightBackground className="flex-grow">
+        <section className="relative min-h-[110vh] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden pt-32">
+
+          {/* === Autofill Fix Style Block === */}
+          <style>{`
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
@@ -104,136 +111,139 @@ export function SignIn() {
         }
       `}</style>
 
-      {/* === Background Gradients & Grid === */}
-      <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0"></div>
-      <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
-      {/* Left Form */}
-      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-6"
-        >
-          <Typography
-            variant="h2"
-            className="font-bold mb-2 text-3xl md:text-4xl text-white tracking-tight"
-          >
-            Sign In
-          </Typography>
-          <Typography
-            variant="paragraph"
-            className="text-lg font-medium text-slate-400 opacity-90"
-          >
-            Enter your email and password to sign in.
-          </Typography>
-        </motion.div>
-
-        <motion.form
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          onSubmit={handleSubmit}
-          className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-[#0a0a0c]/80 border border-white/5 rounded-2xl p-6 shadow-2xl"
-        >
-          {success && <Alert color="green">{success}</Alert>}
-          {error && <Alert color="red">{error}</Alert>}
-
-          <div className="flex flex-col gap-4">
-            <Input
-              size="lg"
-              type="email"
-              label="Your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              color="white"
-              autoComplete="email"
-              className="!bg-transparent focus:!border-white/20 !text-white"
-              labelProps={{
-                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
-              }}
-            />
-
-            <Input
-              size="lg"
-              type="password"
-              label="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              color="white"
-              autoComplete="current-password"
-              className="!bg-transparent focus:!border-white/20 !text-white"
-              labelProps={{
-                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
-              }}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="mt-3 bg-white text-black hover:scale-[1.02] shadow-none hover:shadow-lg transition-all"
-            fullWidth
-            disabled={submitting || googleSubmitting}
-          >
-            {submitting ? "Signing in..." : "Sign In"}
-          </Button>
-
-          <div className="relative flex py-2 items-center">
-            <div className="flex-grow border-t border-white/10"></div>
-            <span className="flex-shrink mx-4 text-slate-500 text-sm">OR</span>
-            <div className="flex-grow border-t border-white/10"></div>
-          </div>
-
-          <div className="flex justify-center">
-            {googleSubmitting ? (
-              <Spinner className="h-8 w-8 text-white" />
-            ) : (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  theme="filled_black"
-                  shape="pill"
-                  width="280px"
-                  text="signin_with"
-                />
-              </motion.div>
-            )}
-          </div>
-
-          <Typography
-            variant="paragraph"
-            className="text-center font-medium mt-2 text-slate-400"
-          >
-            Not registered?
-            <Link
-              to="/auth/sign-up"
-              className="text-blue-400 hover:text-blue-300 ml-1 transition-colors"
+          {/* Left Form */}
+          <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-6"
             >
-              Create account
-            </Link>
-          </Typography>
-        </motion.form>
-      </div>
+              <Typography
+                variant="h2"
+                className="font-bold mb-2 text-3xl md:text-4xl text-white tracking-tight"
+              >
+                Sign In
+              </Typography>
+              <Typography
+                variant="paragraph"
+                className="text-lg font-medium text-slate-400 opacity-90"
+              >
+                Enter your email and password to sign in.
+              </Typography>
+            </motion.div>
 
-      {/* Right Image */}
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8 }}
-        className="hidden lg:flex w-2/5 justify-center"
-      >
-        <div className="relative w-full h-[80vh] rounded-[2rem] overflow-hidden shadow-2xl border border-white/5">
-          <img
-            src="/img/pattern.png"
-            alt="Pattern"
-            className="w-full h-full object-cover opacity-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent/10" />
-        </div>
-      </motion.div>
-    </section>
+            <motion.form
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              onSubmit={handleSubmit}
+              className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-[#0a0a0c]/80 border border-white/5 rounded-2xl p-6 shadow-2xl"
+            >
+              {success && <Alert color="green">{success}</Alert>}
+              {error && <Alert color="red">{error}</Alert>}
+
+              <div className="flex flex-col gap-4">
+                <Input
+                  size="lg"
+                  type="email"
+                  label="Your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  color="white"
+                  autoComplete="email"
+                  className="!bg-transparent focus:!border-white/20 !text-white"
+                  labelProps={{
+                    className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+                  }}
+                />
+
+                <Input
+                  size="lg"
+                  type="password"
+                  label="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  color="white"
+                  autoComplete="current-password"
+                  className="!bg-transparent focus:!border-white/20 !text-white"
+                  labelProps={{
+                    className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+                  }}
+                />
+              </div>
+
+              <MagneticButton
+                onClick={() => { }}
+                className="mt-3 w-full rounded-full"
+              >
+                <Button
+                  type="submit"
+                  className="bg-white text-black hover:scale-[1.02] shadow-none hover:shadow-lg transition-all w-full rounded-full"
+                  fullWidth
+                  disabled={submitting || googleSubmitting}
+                >
+                  {submitting ? "Signing in..." : "Sign In"}
+                </Button>
+              </MagneticButton>
+
+              <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-white/10"></div>
+                <span className="flex-shrink mx-4 text-slate-500 text-sm">OR</span>
+                <div className="flex-grow border-t border-white/10"></div>
+              </div>
+
+              <div className="flex justify-center">
+                {googleSubmitting ? (
+                  <Spinner className="h-8 w-8 text-white" />
+                ) : (
+                  <MagneticButton className="rounded-full">
+                    <GoogleLogin
+                      onSuccess={handleGoogleSuccess}
+                      onError={handleGoogleError}
+                      theme="filled_black"
+                      shape="pill"
+                      width="280px"
+                      text="signin_with"
+                    />
+                  </MagneticButton>
+                )}
+              </div>
+
+              <Typography
+                variant="paragraph"
+                className="text-center font-medium mt-2 text-slate-400"
+              >
+                Not registered?
+                <Link
+                  to="/auth/sign-up"
+                  className="text-blue-400 hover:text-blue-300 ml-1 transition-colors"
+                >
+                  Create account
+                </Link>
+              </Typography>
+            </motion.form>
+          </div>
+
+          {/* Right Image */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="hidden lg:flex w-2/5 justify-center"
+          >
+            <div className="relative w-full h-[80vh] rounded-[2rem] overflow-hidden shadow-2xl border border-white/5 bg-[#050505]">
+              <Spline
+                scene="https://prod.spline.design/V74KBkG7UbSNupbi/scene.splinecode"
+                className="scale-[1.2] transform-gpu origin-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent/10 pointer-events-none" />
+            </div>
+          </motion.div>
+        </section>
+      </FlashlightBackground>
+    </div>
   );
 }
 

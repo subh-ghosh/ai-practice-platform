@@ -10,6 +10,7 @@ import {
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { useTheme } from "@/context/ThemeContext";
 import { useAuth } from "@/context/AuthContext";
+import { MagneticButton } from "@/components/ui/PremiumEffects";
 // import { ThemeToggle } from "./ThemeToggle";
 
 export function PublicNavbar() {
@@ -85,24 +86,28 @@ export function PublicNavbar() {
 
         <div className="flex items-center gap-4">
           <div className="hidden lg:flex gap-2">
-            <Button
-              variant="text"
-              size="sm"
-              onClick={() => navigate(loginTarget)}
-              className="text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10"
-            >
-              {user ? "Dashboard" : "Sign In"}
-            </Button>
+            <MagneticButton className="rounded-full">
+              <Button
+                variant="text"
+                size="sm"
+                onClick={() => navigate(loginTarget)}
+                className="text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full"
+              >
+                {user ? "Dashboard" : "Sign In"}
+              </Button>
+            </MagneticButton>
 
-            <Button
-              variant="gradient"
-              color="blue"
-              size="sm"
-              className="hidden lg:inline-block rounded-full"
-              onClick={() => navigate("/auth/sign-up")}
-            >
-              Sign Up
-            </Button>
+            <MagneticButton className="rounded-full">
+              <Button
+                variant="gradient"
+                color="blue"
+                size="sm"
+                className="hidden lg:inline-block rounded-full"
+                onClick={() => navigate("/auth/sign-up")}
+              >
+                Sign Up
+              </Button>
+            </MagneticButton>
 
             {/* ThemeToggle removed */}
           </div>

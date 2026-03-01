@@ -11,6 +11,9 @@ import api from "@/api";
 import { useAuth } from "@/context/AuthContext";
 import { GoogleLogin } from "@react-oauth/google";
 import { motion } from "framer-motion";
+import { MagneticButton, CustomCursor } from "@/components/ui/PremiumEffects";
+import { FlashlightBackground } from "@/components/ui/FlashlightBackground";
+import Spline from "@splinetool/react-spline";
 
 export function SignUp() {
   const location = useLocation();
@@ -114,10 +117,14 @@ export function SignUp() {
   };
 
   return (
-    <section className="relative min-h-[110vh] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden bg-[#050505] -mt-24 pt-32">
+    <div className="relative w-full overflow-hidden bg-[#050505] min-h-screen flex flex-col font-sans selection:bg-blue-500/30 -mt-24">
+      <CustomCursor />
 
-      {/* === Autofill Fix Style Block === */}
-      <style>{`
+      <FlashlightBackground className="flex-grow">
+        <section className="relative min-h-[110vh] flex items-center justify-center gap-6 px-6 md:px-10 overflow-hidden pt-32">
+
+          {/* === Autofill Fix Style Block === */}
+          <style>{`
         input:-webkit-autofill,
         input:-webkit-autofill:hover, 
         input:-webkit-autofill:focus, 
@@ -128,180 +135,183 @@ export function SignUp() {
         }
       `}</style>
 
-      {/* === Background Gradients & Grid === */}
-      <div className="absolute inset-0 w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-0"></div>
-      <div className="absolute top-0 z-0 h-screen w-screen bg-transparent bg-[radial-gradient(ellipse_60%_50%_at_50%_0%,rgba(0,163,255,0.15),transparent)] pointer-events-none" />
 
-      {/* Left Image (Hidden on mobile) */}
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.8 }}
-        className="hidden lg:flex w-2/5 justify-center"
-      >
-        <div className="relative w-full h-[80vh] rounded-[2rem] overflow-hidden shadow-2xl border border-white/5">
-          <img
-            src="/img/pattern.png"
-            className="w-full h-full object-cover opacity-80"
-            alt="Pattern"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent/10" />
-        </div>
-      </motion.div>
-
-      {/* Right Form */}
-      <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-6"
-        >
-          <Typography
-            variant="h2"
-            className="font-bold mb-2 text-3xl md:text-4xl text-white tracking-tight"
+          {/* Left Image (Hidden on mobile) */}
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="hidden lg:flex w-2/5 justify-center"
           >
-            {isGoogleRegister ? "Complete Your Registration" : "Join Us Today"}
-          </Typography>
-          <Typography
-            variant="paragraph"
-            className="text-lg font-medium text-slate-400 opacity-90"
-          >
-            {isGoogleRegister
-              ? "Please set a password for your account."
-              : "Enter your details to register."}
-          </Typography>
-        </motion.div>
+            <div className="relative w-full h-[80vh] rounded-[2rem] overflow-hidden shadow-2xl border border-white/5 bg-[#050505]">
+              <Spline
+                scene="https://prod.spline.design/V74KBkG7UbSNupbi/scene.splinecode"
+                className="scale-[1.2] transform-gpu origin-center"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent/10 pointer-events-none" />
+            </div>
+          </motion.div>
 
-        <motion.form
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-[#0a0a0c]/80 border border-white/5 rounded-2xl p-6 shadow-2xl"
-          onSubmit={handleSubmit}
-        >
-          {error && <Alert color="red">{error}</Alert>}
-
-          {isGoogleRegister && (
-            <Alert color="blue">
-              We've pre-filled your details from Google. Just set a password!
-            </Alert>
-          )}
-
-          <div className="flex flex-col gap-3">
-            <Input
-              size="lg"
-              label="First Name"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              color="white"
-              disabled={isGoogleRegister}
-              className="!bg-transparent focus:!border-white/20 !text-white"
-              labelProps={{
-                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
-              }}
-            />
-
-            <Input
-              size="lg"
-              label="Last Name"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              color="white"
-              disabled={isGoogleRegister}
-              className="!bg-transparent focus:!border-white/20 !text-white"
-              labelProps={{
-                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
-              }}
-            />
-
-            <Input
-              size="lg"
-              type="email"
-              label="Your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              color="white"
-              disabled={isGoogleRegister}
-              autoComplete="email"
-              className="!bg-transparent focus:!border-white/20 !text-white"
-              labelProps={{
-                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
-              }}
-            />
-
-            <Input
-              type="password"
-              size="lg"
-              label="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              color="white"
-              autoComplete="new-password"
-              className="!bg-transparent focus:!border-white/20 !text-white"
-              labelProps={{
-                className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
-              }}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="mt-3 bg-white text-black hover:scale-[1.02] shadow-none hover:shadow-lg transition-all"
-            fullWidth
-            disabled={submitting || googleSubmitting}
-          >
-            {isGoogleRegister
-              ? submitting
-                ? "Completing..."
-                : "Complete Registration"
-              : submitting
-                ? "Registering..."
-                : "Register Now"}
-          </Button>
-
-          {!isGoogleRegister && (
-            <>
-              <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-white/10"></div>
-                <span className="flex-shrink mx-4 text-slate-500 text-sm">OR</span>
-                <div className="flex-grow border-t border-white/10"></div>
-              </div>
-
-              <div className="flex justify-center">
-                {googleSubmitting ? (
-                  <Spinner className="h-8 w-8 text-white" />
-                ) : (
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <GoogleLogin
-                      onSuccess={handleGoogleSuccess}
-                      onError={handleGoogleError}
-                      theme="filled_black"
-                      shape="pill"
-                      width="280px"
-                      text="signup_with"
-                    />
-                  </motion.div>
-                )}
-              </div>
-
+          {/* Right Form */}
+          <div className="w-full lg:w-3/5 flex flex-col items-center justify-center h-[80vh] z-10">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center mb-6"
+            >
+              <Typography
+                variant="h2"
+                className="font-bold mb-2 text-3xl md:text-4xl text-white tracking-tight"
+              >
+                {isGoogleRegister ? "Complete Your Registration" : "Join Us Today"}
+              </Typography>
               <Typography
                 variant="paragraph"
-                className="text-center font-medium mt-2 text-slate-400"
+                className="text-lg font-medium text-slate-400 opacity-90"
               >
-                Already have an account?
-                <Link
-                  to="/auth/sign-in"
-                  className="text-blue-400 hover:text-blue-300 ml-1 transition-colors"
-                >
-                  Sign in
-                </Link>
+                {isGoogleRegister
+                  ? "Please set a password for your account."
+                  : "Enter your details to register."}
               </Typography>
-            </>
-          )}
-        </motion.form>
-      </div>
-    </section>
+            </motion.div>
+
+            <motion.form
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="w-full max-w-[420px] flex flex-col gap-4 backdrop-blur-xl bg-[#0a0a0c]/80 border border-white/5 rounded-2xl p-6 shadow-2xl"
+              onSubmit={handleSubmit}
+            >
+              {error && <Alert color="red">{error}</Alert>}
+
+              {isGoogleRegister && (
+                <Alert color="blue">
+                  We've pre-filled your details from Google. Just set a password!
+                </Alert>
+              )}
+
+              <div className="flex flex-col gap-3">
+                <Input
+                  size="lg"
+                  label="First Name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  color="white"
+                  disabled={isGoogleRegister}
+                  className="!bg-transparent focus:!border-white/20 !text-white"
+                  labelProps={{
+                    className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+                  }}
+                />
+
+                <Input
+                  size="lg"
+                  label="Last Name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  color="white"
+                  disabled={isGoogleRegister}
+                  className="!bg-transparent focus:!border-white/20 !text-white"
+                  labelProps={{
+                    className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+                  }}
+                />
+
+                <Input
+                  size="lg"
+                  type="email"
+                  label="Your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  color="white"
+                  disabled={isGoogleRegister}
+                  autoComplete="email"
+                  className="!bg-transparent focus:!border-white/20 !text-white"
+                  labelProps={{
+                    className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+                  }}
+                />
+
+                <Input
+                  type="password"
+                  size="lg"
+                  label="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  color="white"
+                  autoComplete="new-password"
+                  className="!bg-transparent focus:!border-white/20 !text-white"
+                  labelProps={{
+                    className: "text-slate-400 peer-placeholder-shown:text-slate-400 peer-focus:text-white"
+                  }}
+                />
+              </div>
+
+              <MagneticButton
+                onClick={() => { }}
+                className="mt-3 w-full rounded-full"
+              >
+                <Button
+                  type="submit"
+                  className="bg-white text-black hover:scale-[1.02] shadow-none hover:shadow-lg transition-all w-full rounded-full"
+                  fullWidth
+                  disabled={submitting || googleSubmitting}
+                >
+                  {isGoogleRegister
+                    ? submitting
+                      ? "Completing..."
+                      : "Complete Registration"
+                    : submitting
+                      ? "Registering..."
+                      : "Register Now"}
+                </Button>
+              </MagneticButton>
+
+              {!isGoogleRegister && (
+                <>
+                  <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-white/10"></div>
+                    <span className="flex-shrink mx-4 text-slate-500 text-sm">OR</span>
+                    <div className="flex-grow border-t border-white/10"></div>
+                  </div>
+
+                  <div className="flex justify-center">
+                    {googleSubmitting ? (
+                      <Spinner className="h-8 w-8 text-white" />
+                    ) : (
+                      <MagneticButton className="rounded-full">
+                        <GoogleLogin
+                          onSuccess={handleGoogleSuccess}
+                          onError={handleGoogleError}
+                          theme="filled_black"
+                          shape="pill"
+                          width="280px"
+                          text="signup_with"
+                        />
+                      </MagneticButton>
+                    )}
+                  </div>
+
+                  <Typography
+                    variant="paragraph"
+                    className="text-center font-medium mt-2 text-slate-400"
+                  >
+                    Already have an account?
+                    <Link
+                      to="/auth/sign-in"
+                      className="text-blue-400 hover:text-blue-300 ml-1 transition-colors"
+                    >
+                      Sign in
+                    </Link>
+                  </Typography>
+                </>
+              )}
+            </motion.form>
+          </div>
+        </section>
+      </FlashlightBackground>
+    </div>
   );
 }
 
