@@ -36,9 +36,9 @@ public class YouTubeService {
                     .uri(uriBuilder -> uriBuilder
                             .path("/search")
                             .queryParam("part", "snippet")
-                            .queryParam("q", query + " tutorial educational")
+                            .queryParam("q", query + " full lecture class whiteboard screen")
                             .queryParam("type", "video")
-                            .queryParam("videoDuration", "medium")
+                            .queryParam("videoDuration", "long")
                             .queryParam("relevanceLanguage", "en")
                             .queryParam("order", "relevance")
                             .queryParam("maxResults", maxResults)

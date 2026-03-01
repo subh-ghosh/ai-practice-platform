@@ -622,6 +622,7 @@ public class StudyPlanService {
         return String.format(
                 """
                         You are an expert curriculum designer. Create a structured study plan for a "%s" level student learning "%s" over %d days.
+                        Strongly prefer longer, in-depth lectures and whiteboard sessions. If the same channel/creator has multiple relevant videos, strongly prefer clustering their videos together to provide a consistent learning experience.
 
                         Here are videos available for this topic:
                         %s
@@ -899,6 +900,7 @@ public class StudyPlanService {
             String analysisPrompt = String.format(
                     """
                             Analyze this syllabus and create a %d-day complete study plan.
+                            Strongly prefer longer, in-depth lectures and whiteboard sessions. If the same channel/creator has multiple relevant videos, strongly prefer clustering their videos together to provide a consistent learning experience.
 
                             Playlist videos:
                             %s
