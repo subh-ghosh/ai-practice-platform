@@ -89,7 +89,7 @@ const CourseGeneratorPage = () => {
         <div className="mt-12 space-y-8">
             <div className="mb-6 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                 <Typography variant="h6" color="blue-gray" className="dark:text-white">
-                    AI Course Generator
+                    Course Generator
                 </Typography>
             </div>
 
@@ -100,7 +100,7 @@ const CourseGeneratorPage = () => {
                             Generate a New Course
                         </Typography>
                         <Typography variant="small" className="font-normal text-blue-gray-600 dark:text-gray-400">
-                            Enter a topic and let AI create a personalized verified course for you.
+                            Enter a topic and get a personalized verified course for you.
                         </Typography>
                     </div>
 

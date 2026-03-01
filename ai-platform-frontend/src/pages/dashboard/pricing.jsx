@@ -112,7 +112,7 @@ export function Pricing() {
         key: orderData.keyId,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "AI Practice Platform",
+      name: "Asphalt Prep",
         description: "Premium Plan Upgrade",
         order_id: orderData.orderId,
 
@@ -199,7 +199,7 @@ export function Pricing() {
       id: "premium",
       name: "Pro Scholar",
       price: { monthly: 199, yearly: 1999 },
-      description: "Advanced AI tools for serious prep.",
+        description: "Advanced tools for serious prep.",
       features: [
         { text: "Unlimited Generations", included: true },
         { text: "Unlimited Evaluations", included: true },

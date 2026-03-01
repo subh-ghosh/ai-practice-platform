@@ -212,7 +212,7 @@ public class AiService {
                                                         clientResponse -> clientResponse.bodyToMono(String.class)
                                                                         .flatMap(errorBody -> reactor.core.publisher.Mono
                                                                                         .error(new RuntimeException(
-                                                                                                        "AI API Error: " + errorBody))))
+                                                                                                        "Generation API Error: " + errorBody))))
                                         .bodyToMono(AiResponse.class)
                                         .block(timeout);
                 } catch (RuntimeException ex) {
@@ -242,7 +242,7 @@ public class AiService {
                                 "status", "fallback")
                                 .increment();
                 throw new RuntimeException(PRACTICE_UNAVAILABLE_CODE
-                                + ": AI service temporarily unavailable. Please retry in a moment.");
+                                + ": Generation service temporarily unavailable. Please retry in a moment.");
         }
 
         private AiResponse studyPlanCompletionFallback(String prompt, String model, String purpose,
@@ -254,14 +254,14 @@ public class AiService {
                                 "status", "fallback")
                                 .increment();
                 throw new RuntimeException(STUDY_PLAN_UNAVAILABLE_CODE
-                                + ": AI service temporarily unavailable. Please retry in a moment.");
+                                + ": Generation service temporarily unavailable. Please retry in a moment.");
         }
 
         private String extractTextFromResponse(AiResponse response) {
                 try {
                         return response.choices().get(0).message().content();
                 } catch (Exception e) {
-                        return "Error: Could not parse AI response.";
+                        return "Error: Could not parse generated response.";
                 }
         }
 }

@@ -13,8 +13,7 @@
 - **Bucket4j 7.6.0**: Implements the Token Bucket algorithm for rate limiting, protecting high-cost AI endpoints.
 
 ### AI & External Integrations
-- **Google AI Client Libraries 2.2.0**: Facilitates robust communication with Google services.
-- **Google Gemini API**: Orchestrates dynamic question generation and intelligent answer evaluation.
+- **Groq API (OpenAI-compatible)**: Orchestrates dynamic question generation and intelligent answer evaluation.
 - **Spring WebFlux (WebClient)**: Used for non-blocking HTTP requests to external AI and YouTube metadata APIs.
 - **YouTube Data API**: Scraped/Queried to fetch relevant educational content for Study Plans.
 
@@ -34,11 +33,11 @@
 ## Mission Critical Engineering Insights
 
 ### 1. AI Orchestration: Solving Non-Determinism
-**Problem:** Generative AI (Gemini) can be unpredictable. It might return conversational text, incorrect formatting, or even refuse a request if the safety filters are too strict.
+**Problem:** Generative AI can be unpredictable. It might return conversational text, incorrect formatting, or partial responses.
 **Solution:** 
 - **Prompt Engineering:** We use highly specific, instruction-heavy prompts that mandate JSON serialization.
-- **Fail-Safe Parsing:** The `GeminiService` uses custom logic (line-by-line evaluation, string cleanup) to sanitize raw AI output.
-- **Why Gemini?** We chose Gemini Pro for its superior reasoning in educational contexts and its massive context window (2M tokens), which is essential for analyzing large syllabus PDFs.
+- **Fail-Safe Parsing:** The `AiService` uses custom logic (line-by-line evaluation, string cleanup) to sanitize raw AI output.
+- **Why Groq?** We chose Groq-hosted models for fast inference and reliable structured generation for educational prompts.
 
 ### 2. Syllabus-to-Plan Pipeline: Complexity Management
 **Problem:** Converting a raw PDF syllabus into a structured, day-by-day study plan with video links is a multi-step process that can easily hang the application.
@@ -106,7 +105,7 @@ graph LR
 ## Testing Strategy
 - **Unit Testing:** Using **JUnit 5** and **Mockito** for service-layer logic.
 - **Integration Testing:** We use an in-memory **H2 Database** for repository tests to ensure production-like behavior without polluting the real database.
-- **Mocking AI:** Gemini calls are abstracted via the `GeminiService` interface, allowing us to simulate or record AI responses for deterministic testing.
+- **Mocking AI:** AI calls are abstracted via the `AiService`, allowing us to simulate or record AI responses for deterministic testing.
 
 ## Project Structure
 The backend follows a strict modular structure to separate concerns:

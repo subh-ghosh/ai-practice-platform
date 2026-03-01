@@ -530,7 +530,7 @@ export function Practice() {
 
         <div className="flex flex-col gap-8">
 
-          {/* Generator & AI Coach Area (Full Width) */}
+            {/* Generator & Coach Area (Full Width) */}
           <div className="space-y-6">
 
             {/* Generator Card */}
@@ -541,8 +541,8 @@ export function Practice() {
                     <SparklesIcon className="h-6 w-6 text-white animate-pulse" />
                   </div>
                   <div>
-                    <Typography variant="h5" color="white" className="font-bold tracking-tight">AI Question Generator</Typography>
-                    <Typography variant="small" color="white" className="opacity-90 font-normal">Select a topic and let AI craft a question for you.</Typography>
+                    <Typography variant="h5" color="white" className="font-bold tracking-tight">Question Generator</Typography>
+                    <Typography variant="small" color="white" className="opacity-90 font-normal">Select a topic and generate a practice question.</Typography>
                   </div>
                 </div>
                 {streak > 1 && (
@@ -641,14 +641,14 @@ export function Practice() {
                       disabled={generating || submitting}
                       className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40"
                     >
-                      {generating ? "Crafting..." : "Generate AI Question"}
+                      {generating ? "Crafting..." : "Generate Question"}
                     </Button>
                   </div>
                 </div>
               </CardBody>
             </Card>
 
-            {/* AI Coach Card */}
+            {/* Coach Card */}
             <AICoachCard />
 
             {/* Question & Feedback Area (Existing implementation optimized) */}
@@ -763,7 +763,7 @@ export function Practice() {
                 </div>
                 <Typography variant="h5" color="blue-gray" className="mb-2 font-bold">Ready to Practice?</Typography>
                 <Typography className="max-w-md text-gray-500">
-                  Select a topic from your study plan or enter a custom one above to start your AI-powered session.
+                  Select a topic from your study plan or enter a custom one above to start your practice session.
                 </Typography>
               </div>
             )}
@@ -863,7 +863,7 @@ export function Practice() {
                 <div className="p-5 bg-blue-900/10 border border-blue-800/20 rounded-2xl shadow-inner">
                   <div className="flex items-center gap-2 mb-3">
                     <SparklesIcon className="h-4 w-4 text-blue-400" />
-                    <Typography className="font-black text-[10px] uppercase text-blue-400 tracking-widest">AI Feedback</Typography>
+                    <Typography className="font-black text-[10px] uppercase text-blue-400 tracking-widest">Feedback</Typography>
                   </div>
                   <div className="prose prose-invert max-w-none text-gray-300">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.feedback}</ReactMarkdown>

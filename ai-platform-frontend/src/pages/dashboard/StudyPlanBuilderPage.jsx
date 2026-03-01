@@ -182,7 +182,7 @@ const StudyPlanBuilderPage = () => {
                                 <SparklesIcon className="h-6 w-6 text-white animate-pulse" />
                             </div>
                             <div>
-                                <Typography variant="h5" color="white" className="font-bold tracking-tight">AI Study Plan Builder</Typography>
+                                <Typography variant="h5" color="white" className="font-bold tracking-tight">Study Plan Builder</Typography>
                                 <Typography variant="small" color="white" className="opacity-90 font-normal">Enter a topic and we'll curate a schedule for you.</Typography>
                             </div>
                         </div>

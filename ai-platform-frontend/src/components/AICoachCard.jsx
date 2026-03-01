@@ -44,7 +44,7 @@ const AICoachCard = () => {
                 </div>
                 <div>
                     <Typography variant="small" className="font-bold text-blue-900 dark:text-blue-200 tracking-tight">
-                        AI Coach
+                        Performance Coach
                     </Typography>
                     <Typography variant="small" className="font-normal text-[10px] text-blue-700/60 dark:text-blue-400/60 leading-tight">
                         Personalized insight

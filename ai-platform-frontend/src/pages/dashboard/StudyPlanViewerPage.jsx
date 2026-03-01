@@ -269,7 +269,7 @@ const StudyPlanViewerPage = () => {
                         <div className="flex flex-col items-center py-4">
                             <Spinner className="h-12 w-12 text-blue-500 mb-4" />
                             <Typography variant="h5" color="blue-gray" className="mb-2 dark:text-white text-center">
-                                AI is curating your personalized plan...
+                                Preparing your personalized plan...
                             </Typography>
                             <Typography className="text-blue-gray-500 dark:text-gray-400 text-center max-w-md">
                                 We are searching YouTube for the best tutorials and generating quiz checkpoints. This will be ready in a few moments.

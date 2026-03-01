@@ -20,7 +20,7 @@ The **AI Practice Platform** is a modern, full-stack educational tool designed t
 | **Backend** | Spring Boot | 3.3.0 | Application Framework |
 | **Language** | Java (JDK) | 17 | Core Logic |
 | **Database** | PostgreSQL | 15 | Persistent Storage |
-| **AI Integration** | Gemini API | Latest | Logic & Evaluation |
+| **AI Integration** | Groq API | Latest | Logic & Evaluation |
 | **Security** | Spring Security | 6.x | Auth & JWT |
 | **Rate Limiting** | Bucket4j | 7.6.0 | API Protection |
 | **Deployment** | Docker | 3.8 | Containerization |
@@ -34,7 +34,7 @@ graph TD
     Client[Frontend: React/Vite/Tailwind]
     API[Backend: Spring Boot 3.3]
     DB[(PostgreSQL 15)]
-    AI[Google Gemini AI]
+    AI[Groq AI]
     YT[YouTube Data API]
     RP[Razorpay SDK]
 
@@ -51,7 +51,7 @@ graph TD
 sequenceDiagram
     participant U as User
     participant B as Backend
-    participant A as Gemini AI
+    participant A as Groq AI
     participant Y as YouTube API
     
     U->>B: Upload Syllabus / Give Topic

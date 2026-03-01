@@ -50,7 +50,7 @@ const HeroScrollDemo = () => {
            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-sm font-semibold tracking-wide shadow-[0_0_15px_rgba(59,130,246,0.15)] mb-8 backdrop-blur-md"
         >
           <SparklesIcon className="w-4 h-4 text-blue-400 animate-pulse" />
-          <span>The Smart Way to Study</span>
+          <span>Adaptive Learning Platform</span>
         </motion.div>
 
         <motion.h1
@@ -59,9 +59,9 @@ const HeroScrollDemo = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tighter text-white mb-8 leading-[1.1]"
         >
-          Master Tech with <br />
+          Master Skills with <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 bg-[length:200%_auto] animate-gradient-x drop-shadow-sm">
-            Intelligent Guidance
+            Asphalt Prep
           </span>
         </motion.h1>
 
@@ -71,8 +71,8 @@ const HeroScrollDemo = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed font-medium"
         >
-          Not just an editor. A complete ecosystem to generate challenges,
-          track mastery, and visualize your growth in real-time.
+          Generate personalized questions, get instant feedback, follow smart study plans,
+          and track XP, streaks, and progress in one place.
         </motion.p>
 
         <motion.div
@@ -86,7 +86,7 @@ const HeroScrollDemo = () => {
             className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(37,99,235,0.5)] ring-1 ring-white/20"
           >
             <div className="absolute inset-0 bg-white/20 group-hover:bg-transparent transition-colors duration-300" />
-            <span className="relative z-10">Start Learning Free</span>
+            <span className="relative z-10">Start Practice Free</span>
             <ArrowRightIcon className="w-5 h-5 relative z-10 group-hover:translate-x-1 transition-transform" />
           </MagneticButton>
 
@@ -94,7 +94,7 @@ const HeroScrollDemo = () => {
             onClick={() => navigate("/auth/sign-in")}
             className="px-8 py-4 rounded-full border border-white/10 bg-[#0a0a0c]/60 backdrop-blur-md text-slate-300 font-medium text-lg hover:bg-white/10 hover:text-white hover:border-white/20 transition-all duration-300 shadow-xl"
           >
-            View Dashboard
+            Sign In
           </MagneticButton>
         </motion.div>
       </div>
@@ -164,9 +164,9 @@ const HeroScrollDemo = () => {
 // 2. Infinite Marquee (Pure Dark Mode)
 const SubjectMarquee = () => {
   const subjects = [
-    "Python Automation", "Java OOP", "Data Structures", "React Hooks",
-    "System Design", "SQL & Databases", "Algorithms", "Machine Learning Basics",
-    "REST APIs", "Docker", "Next.js", "TypeScript"
+    "Data Structures", "Algorithms", "System Design", "Operating Systems",
+    "DBMS", "OOP", "Java", "Python",
+    "SQL", "Computer Networks", "React", "Interview Prep"
   ];
 
   return (
@@ -209,13 +209,13 @@ const BentoGrid = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-cyan-500/20 bg-cyan-500/10 text-cyan-400 text-sm font-bold mb-6 tracking-wide uppercase shadow-[0_0_15px_rgba(6,182,212,0.15)]"
           >
-            <BoltIcon className="w-4 h-4 text-cyan-400 animate-pulse" /> Power Your Growth
+            <BoltIcon className="w-4 h-4 text-cyan-400 animate-pulse" /> Built for Results
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-black text-white mb-6 tracking-tight">
-            An Ecosystem Built for <br className="hidden md:block" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 drop-shadow-sm">Excellence</span>
+            Everything You Need to <br className="hidden md:block" /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-400 to-indigo-400 drop-shadow-sm">Practice Smarter</span>
           </h2>
           <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
-            Stop jumping between tutorials and IDEs. We’ve unified the entire learning lifecycle into one seamless, intelligent platform.
+            From questions to feedback, study plans, and gamified progress, your full learning loop runs in one platform.
           </p>
         </div>
 
@@ -245,7 +245,7 @@ const BentoGrid = () => {
               <div className="p-4 font-mono text-sm text-blue-400/80 leading-relaxed">
                 <p><span className="text-purple-400">class</span> <span className="text-yellow-300">Solution</span> {'{'}</p>
                 <p className="pl-4"><span className="text-purple-400">def</span> solve(self):</p>
-                {/* REQ 3: AI replaced with Neural */}
+                {/* REQ 3: replaced with Neural */}
                 <p className="pl-8 text-slate-500"># Neural suggestions active</p>
                 <p className="pl-8 text-green-400">return "Optimized"</p>
                 <p className="pl-4">{'}'}</p>
@@ -257,9 +257,9 @@ const BentoGrid = () => {
                 <CodeBracketIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-3xl font-bold text-white mb-3 drop-shadow-md">Smart Code Evaluator</h3>
+                <h3 className="text-3xl font-bold text-white mb-3 drop-shadow-md">Question + Feedback</h3>
                 <p className="text-slate-400 text-lg leading-relaxed">
-                  Write Java or Python directly in the browser. Our neural engine analyzes logic and OOP principles instantly.
+                  Generate topic-based practice questions and get instant, actionable feedback on every answer.
                 </p>
               </div>
             </div>
@@ -295,9 +295,9 @@ const BentoGrid = () => {
                 <TrophyIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-3">Global Rank</h3>
+                <h3 className="text-2xl font-bold text-white mb-3">Streaks & Leaderboard</h3>
                 <p className="text-slate-400 leading-relaxed text-sm">
-                  Compete with peers, maintain your streak, and climb the ranks.
+                  Stay consistent with daily streaks, earn XP, and climb with consistent practice.
                 </p>
               </div>
             </div>
@@ -329,9 +329,9 @@ const BentoGrid = () => {
                 <ChartBarIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-3">Analytics</h3>
+                <h3 className="text-2xl font-bold text-white mb-3">Progress Analytics</h3>
                 <p className="text-slate-400 leading-relaxed text-sm">
-                  Visualize your mastery with interactive charts.
+                  Track accuracy, improvement trends, and weak areas with interactive insights.
                 </p>
               </div>
             </div>
@@ -365,10 +365,9 @@ const BentoGrid = () => {
                 <SparklesIcon className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-3xl font-bold text-white mb-3">Infinite Practice</h3>
+                <h3 className="text-3xl font-bold text-white mb-3">Unlimited Practice Flow</h3>
                 <p className="text-slate-400 text-lg leading-relaxed group-hover:text-slate-300 transition-colors">
-                  {/* REQ 3: AI replaced with Our engine */}
-                  Never run out of material. Our engine generates unique scenarios on any topic, tailored to your skill level.
+                  Never run out of questions. Practice by topic and difficulty, then level up with adaptive guidance.
                 </p>
               </div>
             </div>
@@ -440,10 +439,10 @@ const ResourceParallax = () => {
       <div className="relative z-10 text-center max-w-5xl px-4">
         <motion.div style={{ scale, opacity }} className="mb-12">
           <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-6">
-            More Than Just Code.
+            More Than Just Question Banks.
           </h2>
           <p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto">
-            A complete study sanctuary. Plan your week, watch curated tutorials, take smart notes, and verify your knowledge.
+            Plan your roadmap, practice daily, get feedback, and build measurable mastery over time.
           </p>
         </motion.div>
 
@@ -568,13 +567,11 @@ const ModularStudyJourney = () => {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-bold mb-6 tracking-wide uppercase">
-              <CalendarDaysIcon className="w-4 h-4" /> Step 01: Plan
+              <CalendarDaysIcon className="w-4 h-4" /> Step 01: Personalize
             </div>
-            {/* REQ 3: AI replaced with Neural-Driven */}
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Neural-Driven <br /><span className="text-blue-500">Curriculum</span></h2>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Build Your <br /><span className="text-blue-500">Study Plan</span></h2>
             <p className="text-lg text-slate-400 leading-relaxed max-w-xl">
-              {/* REQ 3: AI replaced with our system */}
-              Stop searching for "what to learn". Enter your goal, and our system builds a structured week-by-week plan with the best YouTube videos and docs pre-selected for you.
+              Choose your goal and schedule. PracticeFlow creates a structured plan with daily targets and recommended resources.
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative">
@@ -617,11 +614,11 @@ const ModularStudyJourney = () => {
           </motion.div>
           <motion.div initial={{ opacity: 0, x: 50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="order-1 md:order-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-400 text-sm font-bold mb-6 tracking-wide uppercase">
-              <ViewColumnsIcon className="w-4 h-4" /> Step 02: Absorb
+              <ViewColumnsIcon className="w-4 h-4" /> Step 02: Practice
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Deep Focus <br /><span className="text-purple-500">Interface</span></h2>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Practice with <br /><span className="text-purple-500">Guided Support</span></h2>
             <p className="text-lg text-slate-400 leading-relaxed max-w-xl">
-              Watch tutorials and take notes side-by-side in a unified, distraction-free environment. No alt-tabbing. Just pure flow state as you absorb complex concepts.
+              Generate questions by topic and difficulty, submit answers, and get clear feedback with hints and corrections.
             </p>
           </motion.div>
         </div>
@@ -633,11 +630,11 @@ const ModularStudyJourney = () => {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center relative z-10">
           <motion.div initial={{ opacity: 0, x: -50 }} whileInView={{ opacity: 1, x: 0 }} transition={{ duration: 0.7 }} viewport={{ once: true }}>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-green-500/30 bg-green-500/10 text-green-400 text-sm font-bold mb-6 tracking-wide uppercase">
-              <CheckCircleIcon className="w-4 h-4" /> Step 03: Retain
+              <CheckCircleIcon className="w-4 h-4" /> Step 03: Improve
             </div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Verify & <br /><span className="text-green-500">Master</span></h2>
+            <h2 className="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">Track, Adapt & <br /><span className="text-green-500">Master</span></h2>
             <p className="text-lg text-slate-400 leading-relaxed max-w-xl">
-              We don't just show you content; we ensure you remember it. Smart quizzes and spaced repetition checkpoints verify your knowledge before moving forward.
+              Monitor XP, streaks, and performance trends. Use recommendations to focus on weak areas and improve faster.
             </p>
           </motion.div>
           <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 0.7 }} viewport={{ once: true }} className="relative">
@@ -679,19 +676,19 @@ const BigCTA = () => {
             <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight">
               Start your <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">
-                7-Day Streak
+                First Practice Session
               </span>
             </h2>
 
             <p className="text-xl text-slate-400 mb-10 max-w-xl mx-auto">
-              Join thousands of developers mastering Data Structures and Algorithms with our intelligent platform.
+              Create your free account and start practicing with generated questions in minutes.
             </p>
 
             <MagneticButton
               onClick={() => navigate("/auth/sign-up")}
               className="group relative inline-flex items-center justify-center gap-2 px-10 py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full font-bold text-lg overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_40px_rgba(37,99,235,0.4)]"
             >
-              <span>Launch Study Plan</span>
+              <span>Create Free Account</span>
               <ArrowRightIcon className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </MagneticButton>
           </div>

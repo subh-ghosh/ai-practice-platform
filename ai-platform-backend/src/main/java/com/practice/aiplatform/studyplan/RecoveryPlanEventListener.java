@@ -15,7 +15,7 @@ public class RecoveryPlanEventListener {
 
     @KafkaListener(topics = "recoveryplan.events", groupId = "practiceflow-studyplan-group", concurrency = "1")
     public void consumeRecoveryPlanEvent(RecoveryPlanEvent event) {
-        log.info("🎧 Received Kafka Event: Starting heavy background AI generations for {} (Plan ID: {})",
+        log.info("🎧 Received Kafka Event: Starting heavy background plan generations for {} (Plan ID: {})",
                 event.getUserEmail(), event.getPlanId() != null ? event.getPlanId() : "NEW");
         try {
             if (event.getPlanId() != null) {
@@ -34,7 +34,7 @@ public class RecoveryPlanEventListener {
                         event.getDifficulty(),
                         event.getDays());
             }
-            log.info("✅ Asynchronously finished AI Study Plan for {} via Kafka.", event.getUserEmail());
+            log.info("✅ Asynchronously finished study plan generation for {} via Kafka.", event.getUserEmail());
         } catch (Exception e) {
             log.error("❌ Failed to process Kafka recovery plan event for {}: {}", event.getUserEmail(), e.getMessage());
         }

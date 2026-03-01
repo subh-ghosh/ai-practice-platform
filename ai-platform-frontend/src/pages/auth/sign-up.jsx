@@ -29,7 +29,7 @@ export function SignUp() {
   const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
-  const { loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const from = location.state?.from?.pathname || "/dashboard/home";
 
   useEffect(() => {
@@ -61,6 +61,16 @@ export function SignUp() {
         email,
         password,
       });
+
+      // For Google-first users, immediately sign them in after password setup.
+      if (isGoogleRegister) {
+        const loginResult = await login(email, password);
+        if (loginResult?.success) {
+          navigate(from, { replace: true });
+          return;
+        }
+      }
+
       navigate("/auth/sign-in", {
         state: {
           success: true,

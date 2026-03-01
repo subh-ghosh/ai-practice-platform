@@ -573,7 +573,7 @@ export function Profile() {
               {user?.firstName} {user?.lastName}
             </Typography>
             <Typography variant="lead" className="text-blue-100 font-medium opacity-90">
-              {user?.headline || "AI Scholar & Tech Enthusiast"}
+                  {user?.headline || "Scholar & Tech Enthusiast"}
             </Typography>
             <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
               <div className="px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2">

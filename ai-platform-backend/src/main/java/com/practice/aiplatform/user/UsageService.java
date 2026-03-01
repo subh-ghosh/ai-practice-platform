@@ -18,7 +18,7 @@ public class UsageService {
     }
 
     /**
-     * Checks if a user can perform a metered action (like AI generation or evaluation).
+ * Checks if a user can perform a metered action (like question generation or evaluation).
      * If the user is on a free plan and within their limit, this method will
      * also INCREMENT their usage count.
      *

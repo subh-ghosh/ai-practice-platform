@@ -40,7 +40,7 @@ export function About() {
 
       {/* Main Content Section */}
       <FlashlightBackground className="flex-grow">
-        <section className="relative z-10 w-full pt-36 pb-16">
+        <section className="relative z-10 w-full pt-36 pb-20 min-h-[108vh]">
           <div className="container mx-auto px-4 max-w-xl">
 
             <motion.div initial="hidden" animate="visible" variants={fadeInUp}>

@@ -97,7 +97,7 @@ export function Navbar({ brandName, routes, action }) {
 }
 
 Navbar.defaultProps = {
-  brandName: "AI Practice Platform",
+        brandName: "Asphalt Prep",
   action: (
     <Link to="/auth/sign-in">
       <Button variant="gradient" size="sm" fullWidth className="from-blue-600 to-blue-400 shadow-blue-500/20">

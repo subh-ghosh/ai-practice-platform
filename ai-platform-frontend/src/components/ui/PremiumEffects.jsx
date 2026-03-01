@@ -57,6 +57,7 @@ export const CustomCursor = () => {
     const lastPos = useRef({ x: 0, y: 0 });
     const lastTime = useRef(Date.now());
     const magneticOrigin = useRef({ x: 0, y: 0, width: 0, height: 0, borderRadius: '50%' });
+    const isButtonMagnetic = useRef(false);
 
     useEffect(() => {
         let animationFrameId;
@@ -100,6 +101,13 @@ export const CustomCursor = () => {
                 const centerX = x + width / 2;
                 const centerY = y + height / 2;
 
+                // Buttons should snap directly to center.
+                if (isButtonMagnetic.current) {
+                    cursorX.set(centerX);
+                    cursorY.set(centerY);
+                    return;
+                }
+
                 // Follow mouse but bound tightly to the element
                 const boundedX = Math.max(x, Math.min(e.clientX, x + width));
                 const boundedY = Math.max(y, Math.min(e.clientY, y + height));
@@ -113,6 +121,14 @@ export const CustomCursor = () => {
         const handleMouseOver = (e) => {
             const el = e.target;
             const tagName = el.tagName?.toLowerCase();
+
+            // Opt-out zone for UI areas that should not get cursor hover morph effects.
+            if (el.closest('.no-cursor-effects')) {
+                setIsHoveringText(false);
+                setIsHoveringMagnetic(false);
+                isButtonMagnetic.current = false;
+                return;
+            }
 
             // Color Adaptation Logic
             if (el.closest('.hover\\:border-purple-500\\/40') || el.closest('.text-purple-500') || el.closest('.bg-purple-600\\/10')) {
@@ -138,6 +154,7 @@ export const CustomCursor = () => {
                 const targetEl = el.closest('.group.relative.rounded-\\[2rem\\]') ||
                     el.closest('.magnetic-btn-target') ||
                     el;
+                isButtonMagnetic.current = !!el.closest('.magnetic-btn-target');
 
                 const rect = targetEl.getBoundingClientRect();
                 const computedStyle = window.getComputedStyle(targetEl);
@@ -156,11 +173,13 @@ export const CustomCursor = () => {
             else if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'strong', 'li'].includes(tagName) || el.closest('.glass-zoom')) {
                 setIsHoveringText(true);
                 setIsHoveringMagnetic(false);
+                isButtonMagnetic.current = false;
                 el.classList.add('glass-hover-active');
             }
             else {
                 setIsHoveringText(false);
                 setIsHoveringMagnetic(false);
+                isButtonMagnetic.current = false;
             }
         };
 
@@ -169,6 +188,7 @@ export const CustomCursor = () => {
                 e.target.classList.remove('glass-hover-active');
             }
             setIsHoveringMagnetic(false); // Reset magnetic state just in case
+            isButtonMagnetic.current = false;
         };
 
         const handleMouseDown = () => setIsClicked(true);
@@ -191,7 +211,6 @@ export const CustomCursor = () => {
 
     // Calculate dynamic rotation and squash/stretch based on velocity
     const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
-    const angle = Math.atan2(velocity.y, velocity.x) * (180 / Math.PI);
     const stretchX = isHoveringText || isHoveringMagnetic ? 1 : 1 + Math.min(speed / 40, 0.4);
     const stretchY = isHoveringText || isHoveringMagnetic ? 1 : 1 - Math.min(speed / 80, 0.2);
 
@@ -292,7 +311,7 @@ export const CustomCursor = () => {
                     // Apply velocity stretching
                     scaleX: isHoveringMagnetic ? 1 : stretchX,
                     scaleY: isHoveringMagnetic ? 1 : stretchY,
-                    rotate: isHoveringMagnetic || isHoveringText ? 0 : angle
+                    rotate: 0
                 }}
                 // Faster spring for snappy magnetic feel, softer for liquid feel
                 transition={{

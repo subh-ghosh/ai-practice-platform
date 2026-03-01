@@ -133,7 +133,7 @@ public class StudyPlanService {
         shell.setGenerating(true);
         shell.setTitle("Generating: " + topic + "...");
         shell.setDescription(
-                "Our AI is currently curating your personalized study plan. This usually takes 30-60 seconds.");
+                "We are currently curating your personalized study plan. This usually takes 30-60 seconds.");
         shell.setCreatedAt(LocalDateTime.now());
 
         StudyPlan saved = studyPlanRepository.save(shell);
@@ -150,7 +150,7 @@ public class StudyPlanService {
         return saved;
     }
 
-    // --- REFACTOR: Moved AI calls outside of @Transactional to prevent DB
+    // --- REFACTOR: Moved generation calls outside of @Transactional to prevent DB
     // connection starvation ---
     public void completeAsyncStudyPlan(Long planId, String userEmail, String topic, String difficulty,
             int durationDays) {
@@ -1075,7 +1075,7 @@ public class StudyPlanService {
             String cleanJson = jsonResponse.replace("```json", "").replace("```", "").trim();
             return objectMapper.readTree(cleanJson);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse AI response: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to parse generated response: " + e.getMessage(), e);
         }
     }
 

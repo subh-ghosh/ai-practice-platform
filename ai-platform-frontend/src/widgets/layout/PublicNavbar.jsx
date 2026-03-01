@@ -25,7 +25,7 @@ export function PublicNavbar() {
   }, []);
 
   const navList = (
-    <ul className="mt-2 mb-4 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
+    <ul className="no-cursor-effects mt-2 mb-4 flex flex-col gap-2 lg:mb-0 lg:mt-0 lg:flex-row lg:items-center lg:gap-6">
       <Typography
         as="li"
         variant="small"
@@ -78,7 +78,7 @@ export function PublicNavbar() {
             variant="h6"
             className="mr-4 cursor-pointer py-1.5 text-gray-900 dark:text-white font-bold tracking-tight"
           >
-            AI Practice Platform
+                    Asphalt Prep
           </Typography>
         </Link>
 

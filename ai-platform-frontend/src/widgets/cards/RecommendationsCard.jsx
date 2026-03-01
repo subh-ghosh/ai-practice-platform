@@ -42,7 +42,7 @@ export function RecommendationsCard() {
                 <LightBulbIcon className="h-6 w-6 text-purple-500" />
                 <div>
                     <Typography variant="h6" color="blue-gray" className="mb-1">
-                        AI Recommendations
+                        Smart Recommendations
                     </Typography>
                     <Typography variant="small" className="font-normal text-blue-gray-600">
                         Personalized for you based on performance.

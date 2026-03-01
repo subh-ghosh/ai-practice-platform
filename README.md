@@ -34,7 +34,7 @@ The system is fully resilient against external AI provider degradation, ensuring
 ---
 
 ## 🚀 Core Features
-* **Dynamic Question Generation:** Questions are generated on-demand by the **Google Gemini API**.
+* **Dynamic Question Generation:** Questions are generated on-demand by the **Groq API**.
 * **AI-Powered Evaluation:** Context-aware feedback on every answer.
 * **Intelligent Study Plans:** Automatic day-by-day learning paths with YouTube integration.
 * **Gamification:** XP, Badges, and Daily Challenges to drive motivation.
@@ -43,14 +43,14 @@ The system is fully resilient against external AI provider degradation, ensuring
 ## 💻 Tech Stack
 - **Backend:** Spring Boot 3, Java 17, PostgreSQL, JPA/Hibernate.
 - **Frontend:** React 18, Vite, Material Tailwind, Framer Motion.
-- **AI:** Google Gemini Pro (Text reasoning & JSON orchestration).
+- **AI:** Groq LLMs (Text reasoning & JSON orchestration).
 - **Infra:** Docker (Multi-stage), GitHub Actions, Vercel/Render.
 
 ---
 
 ## 🛠️ Getting Started (Quick Setup)
 1. **Clone the repo.**
-2. **Backend:** Set `GEMINI_API_KEY` and `SPRING_DATASOURCE_URL`. Run `./mvnw spring-boot:run`.
+2. **Backend:** Set `GROQ_API_KEY` and `SPRING_DATASOURCE_URL`. Run `./mvnw spring-boot:run`.
 3. **Frontend:** `npm install` and `npm run dev`.
 4. **Docker:** `docker-compose up --build`.
 

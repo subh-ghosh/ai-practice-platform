@@ -12,8 +12,8 @@ const fadeInUp = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
-  }
+    transition: { duration: 0.6, ease: "easeOut" },
+  },
 };
 
 const staggerContainer = {
@@ -21,9 +21,9 @@ const staggerContainer = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
-    }
-  }
+      staggerChildren: 0.1,
+    },
+  },
 };
 
 export function Contact() {
@@ -48,7 +48,7 @@ export function Contact() {
       title: "Report a bug",
       icon: BugAntIcon,
       color: "red",
-      content: "If something doesn’t work, tell us what happened.",
+      content: "If something does not work, tell us what happened.",
       action: "Open a GitHub issue",
       href: "https://github.com/subh-ghosh/ai-practice-platform/issues",
     },
@@ -68,41 +68,36 @@ export function Contact() {
 
       {/* Main Content Section */}
       <FlashlightBackground className="flex-grow">
-        <section className="relative z-10 w-full pt-36 pb-16">
-          <div className="container mx-auto px-4 max-w-6xl">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={staggerContainer}
-            >
+        <section className="relative z-10 w-full pt-36 pb-20 min-h-[108vh]">
+          <div className="container mx-auto px-4 max-w-5xl">
+            <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
               {/* Header */}
-              <motion.div variants={fadeInUp} className="mb-8 md:mb-10 text-center max-w-2xl mx-auto">
-                {/* Pill Badge */}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-[10px] font-bold mb-4 tracking-wide uppercase">
+              <motion.div variants={fadeInUp} className="mb-6 md:mb-7 text-center max-w-2xl mx-auto">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/10 text-blue-400 text-[10px] font-bold mb-3 tracking-wide uppercase">
                   <EnvelopeIcon className="w-3 h-3" /> Get in Touch
                 </div>
 
-                <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tight">
+                <h1 className="text-2xl md:text-4xl font-black text-white mb-3 tracking-tight">
                   Contact & Support
                 </h1>
-                <p className="text-sm md:text-base text-slate-400 leading-relaxed font-medium">
-                  Questions, feature requests, or just want to say hi? We're here to help.
+                <p className="text-xs md:text-sm text-slate-400 leading-relaxed font-medium">
+                  Questions, feature requests, or just want to say hi? We are here to help.
                 </p>
               </motion.div>
 
               {/* Support policy */}
-              <motion.div variants={fadeInUp} className="max-w-3xl mx-auto mb-8">
+              <motion.div variants={fadeInUp} className="max-w-3xl mx-auto mb-6">
                 <Card className="rounded-[2rem] border border-white/5 bg-[#0a0a0c]/80 backdrop-blur-2xl shadow-2xl overflow-hidden">
-                  <CardBody className="p-6 md:p-8 text-center">
-                    <div className="mx-auto w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center mb-3">
-                      <LightBulbIcon className="w-5 h-5 text-blue-400" />
+                  <CardBody className="p-5 md:p-6 text-center">
+                    <div className="mx-auto w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center mb-2.5">
+                      <LightBulbIcon className="w-4 h-4 text-blue-400" />
                     </div>
-                    <Typography variant="h5" className="mb-2 text-white font-bold">
+                    <Typography variant="h6" className="mb-1.5 text-white font-bold">
                       Support Policy
                     </Typography>
-                    <div className="space-y-1 text-sm text-slate-400 font-medium">
+                    <div className="space-y-0.5 text-xs text-slate-400 font-medium">
                       <p>Made for students who want quick, clear practice.</p>
-                      <p>We usually reply within 48 hours (Mon–Fri, IST).</p>
+                      <p>We usually reply within 48 hours (Mon-Fri, IST).</p>
                       <p>Please share what you tried, what you saw, and a screenshot if you can.</p>
                     </div>
                   </CardBody>
@@ -110,39 +105,31 @@ export function Contact() {
               </motion.div>
 
               {/* Cards Grid */}
-              <motion.div
-                variants={staggerContainer}
-                className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
-              >
+              <motion.div variants={staggerContainer} className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
                 {contactCards.map((item, index) => (
                   <motion.div key={index} variants={fadeInUp} whileHover={{ y: -5 }}>
                     <Card className="h-full rounded-[2rem] border border-white/5 bg-[#0a0a0c]/60 backdrop-blur-xl hover:bg-[#0a0a0c]/80 transition-all duration-300">
-                      <CardBody className="p-5 flex flex-col h-full items-center text-center">
-                        <div className={`mb-3 p-2.5 rounded-2xl bg-${item.color}-500/10 border border-${item.color}-500/20`}>
-                          <item.icon className={`h-5 w-5 text-${item.color}-400`} />
+                      <CardBody className="p-4 flex flex-col h-full items-center text-center">
+                        <div className={`mb-2.5 p-2 rounded-2xl bg-${item.color}-500/10 border border-${item.color}-500/20`}>
+                          <item.icon className={`h-4 w-4 text-${item.color}-400`} />
                         </div>
-                        <Typography variant="h6" className="text-white mb-1.5 font-bold">
+                        <Typography variant="small" className="text-white mb-1.5 font-bold text-sm">
                           {item.title}
                         </Typography>
-                        <Typography className="text-xs text-slate-400 mb-4 flex-grow font-medium leading-relaxed">
+                        <Typography className="text-[11px] text-slate-400 mb-3 flex-grow font-medium leading-relaxed">
                           {item.content}
                         </Typography>
 
                         {item.href ? (
-                          <a
-                            href={item.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full"
-                          >
-                            <MagneticButton className={`w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-${item.color}-400 text-xs font-bold transition-all border border-white/5 hover:border-white/10`}>
+                          <a href={item.href} target="_blank" rel="noopener noreferrer" className="w-full">
+                            <MagneticButton className={`w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-${item.color}-400 text-[11px] font-bold transition-all border border-white/5 hover:border-white/10`}>
                               {item.action}
                             </MagneticButton>
                           </a>
                         ) : (
                           <MagneticButton
                             onClick={item.onClick}
-                            className={`w-full py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-${item.color}-400 text-xs font-bold transition-all border border-white/5 hover:border-white/10 normal-case`}
+                            className={`w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 text-${item.color}-400 text-[11px] font-bold transition-all border border-white/5 hover:border-white/10 normal-case`}
                           >
                             {item.action}
                           </MagneticButton>
@@ -161,7 +148,7 @@ export function Contact() {
       <div className="relative z-20 mt-auto">
         <Footer />
       </div>
-    </div >
+    </div>
   );
 }
 

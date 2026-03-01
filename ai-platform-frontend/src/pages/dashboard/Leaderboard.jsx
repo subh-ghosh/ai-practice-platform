@@ -208,7 +208,7 @@ const Leaderboard = () => {
                                                                 {isCurrentUser && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide">You</span>}
                                                             </Typography>
                                                             <Typography variant="small" className="text-gray-400 text-xs font-medium">
-                                                                {student.headline || "Aspiring AI Engineer"}
+                    {student.headline || "Aspiring Engineer"}
                                                             </Typography>
                                                         </div>
                                                     </div>

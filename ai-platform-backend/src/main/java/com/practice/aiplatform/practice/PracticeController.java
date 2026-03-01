@@ -154,7 +154,7 @@ public class PracticeController {
         answer.setStudent(student);
         answer.setIsCorrect(false);
         answer.setEvaluationStatus("REVEALED");
-        answer.setFeedback("This is the AI-generated correct answer.");
+        answer.setFeedback("This is the generated correct answer.");
         answer.setHint(null);
 
         Answer savedAnswer = answerRepository.save(answer);
@@ -253,7 +253,7 @@ public class PracticeController {
 
     private ParsedFeedback parseFeedback(String rawFeedback) {
         if (rawFeedback == null || rawFeedback.trim().isEmpty()) {
-            return new ParsedFeedback("INCORRECT", "No response from AI.", null);
+            return new ParsedFeedback("INCORRECT", "No response from the generation service.", null);
         }
 
         String status = "INCORRECT";

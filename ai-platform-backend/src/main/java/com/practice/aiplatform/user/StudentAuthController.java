@@ -65,7 +65,19 @@ public class StudentAuthController {
         }
 
         try {
-            if (studentRepository.findByEmail(email).isPresent()) {
+            Optional<Student> existingStudent = studentRepository.findByEmail(email);
+            if (existingStudent.isPresent()) {
+                Student student = existingStudent.get();
+
+                // Google-first accounts are created without a password and must complete registration here.
+                if (hasNoPassword(student)) {
+                    student.setFirstName(firstName);
+                    student.setLastName(lastName);
+                    student.setPassword(passwordEncoder.encode(password));
+                    studentRepository.save(student);
+                    return ResponseEntity.ok(Map.of("message", "Google registration completed successfully"));
+                }
+
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", "Email already exists"));
             }
 
@@ -179,6 +191,10 @@ public class StudentAuthController {
     public ResponseEntity<?> handleGoogleLogin(@RequestBody Map<String, String> request) {
         try {
             String idToken = request.get("token");
+            if (idToken == null || idToken.isBlank()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Google token is required"));
+            }
+
             var payload = googleAuthService.verifyToken(idToken);
 
             if (payload == null) {
@@ -191,15 +207,36 @@ public class StudentAuthController {
             Student student;
             if (existing.isPresent()) {
                 student = existing.get();
+                if (hasNoPassword(student)) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("status", "NEEDS_REGISTRATION");
+                    response.put("registrationData", Map.of(
+                            "email", student.getEmail(),
+                            "firstName", normalizeName(student.getFirstName(), (String) payload.get("given_name")),
+                            "lastName", normalizeName(student.getLastName(), (String) payload.get("family_name"))));
+                    response.put("message", "Please complete registration by setting a password.");
+                    return ResponseEntity.ok(response);
+                }
             } else {
                 student = new Student();
                 student.setEmail(email);
-                student.setFirstName((String) payload.get("given_name"));
-                student.setLastName((String) payload.get("family_name"));
+                student.setFirstName(normalizeName((String) payload.get("given_name"), "Student"));
+                student.setLastName(normalizeName((String) payload.get("family_name"), ""));
                 student.setPassword("");
                 student.setSubscriptionStatus("FREE");
                 student.setFreeActionsUsed(0);
+                student.setTotalXp(0);
+                student.setStreakDays(1);
                 studentRepository.save(student);
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("status", "NEEDS_REGISTRATION");
+                response.put("registrationData", Map.of(
+                        "email", student.getEmail(),
+                        "firstName", student.getFirstName(),
+                        "lastName", student.getLastName()));
+                response.put("message", "Please complete registration by setting a password.");
+                return ResponseEntity.ok(response);
             }
 
             updateStreak(student);
@@ -292,5 +329,9 @@ public class StudentAuthController {
         }
         String normalized = value.trim();
         return normalized.isBlank() ? fallback : normalized;
+    }
+
+    private boolean hasNoPassword(Student student) {
+        return student.getPassword() == null || student.getPassword().isBlank();
     }
 }
