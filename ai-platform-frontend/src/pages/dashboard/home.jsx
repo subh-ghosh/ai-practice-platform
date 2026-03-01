@@ -335,28 +335,15 @@ export function Home() {
           </div>
         </motion.div>
 
-        {/* Row 1: Stat cards - Staggered */}
-        <motion.div
-          variants={itemVariants}
-          className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
-        >
-          {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
-            <motion.div
-              key={title}
-              whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
-            >
-              <StatisticsCard
-                {...rest}
-                title={title}
-                icon={React.createElement(icon, { className: "w-6 h-6 text-white" })}
-                footer={<Typography className="font-normal text-blue-gray-600">{footer.label}</Typography>}
-              />
-            </motion.div>
-          ))}
+        {/* Section Header: Study Progress */}
+        <motion.div variants={itemVariants} className="mb-6">
+          <Typography variant="h4" color="blue-gray" className="font-bold flex items-center">
+            <ChartBarIcon className="h-7 w-7 mr-3 text-blue-500" />
+            Study Progress
+          </Typography>
         </motion.div>
 
-        {/* Row 1.5: Study Plan Stats */}
+        {/* Row 1: Study Plan Stats (Moved from 1.5) */}
         {studyPlanStats && (
           <motion.div variants={itemVariants} className="mb-12">
             <Typography variant="h6" color="blue-gray" className="mb-4 font-semibold flex items-center">
@@ -393,6 +380,27 @@ export function Home() {
             </motion.div>
           </motion.div>
         )}
+
+        {/* Row 2: General Stat cards (Moved from Row 1) */}
+        <motion.div
+          variants={itemVariants}
+          className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
+        >
+          {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
+            <motion.div
+              key={title}
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+              className="rounded-2xl border border-blue-100/60 dark:border-gray-800 bg-white/90 dark:bg-gray-900/60 backdrop-blur-md shadow-sm"
+            >
+              <StatisticsCard
+                {...rest}
+                title={title}
+                icon={React.createElement(icon, { className: "w-6 h-6 text-white" })}
+                footer={<Typography className="font-normal text-blue-gray-600">{footer.label}</Typography>}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
 
         {/* Row 2: Charts */}
         <motion.div variants={itemVariants} className="mb-8 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
