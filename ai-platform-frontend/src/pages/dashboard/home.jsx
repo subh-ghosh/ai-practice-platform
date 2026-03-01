@@ -316,13 +316,13 @@ export function Home() {
         animate="visible"
       >
         {/* Welcome header */}
-        <motion.div variants={itemVariants} className="mb-8">
-          <div className="rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-6 py-5 shadow-sm">
-            <div className="flex flex-wrap items-baseline gap-3">
-              <Typography variant="h4" color="blue-gray" className="font-normal">
+        <motion.div variants={itemVariants} className="mb-6 md:mb-8">
+          <div className="rounded-[1.5rem] md:rounded-3xl border border-blue-100/60 dark:border-gray-800 bg-white/70 dark:bg-gray-900/50 backdrop-blur-md px-4 py-4 md:px-6 md:py-5 shadow-sm">
+            <div className="flex flex-wrap items-baseline gap-2 md:gap-3">
+              <Typography variant="h4" color="blue-gray" className="font-normal text-xl md:text-2xl">
                 Welcome,
               </Typography>
-              <Typography variant="h1" color="blue-gray" className="font-bold">
+              <Typography variant="h1" color="blue-gray" className="font-bold text-2xl md:text-4xl">
                 {user.firstName}
               </Typography>
               <Chip
@@ -346,7 +346,7 @@ export function Home() {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-              className="grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
+              className="grid gap-y-6 md:gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
             >
               {[
                 { title: "Active Plans", icon: BookOpenIcon, color: "purple", value: studyPlanStats.activePlans, label: "in progress" },
@@ -384,7 +384,7 @@ export function Home() {
         {/* Row 1: Stat cards - Staggered */}
         <motion.div
           variants={itemVariants}
-          className="mb-12 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
+          className="mb-8 md:mb-12 grid gap-y-6 md:gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4"
         >
           {statisticsCardsData.map(({ icon, title, footer, ...rest }) => (
             <motion.div

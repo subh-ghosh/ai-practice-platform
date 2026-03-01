@@ -40,7 +40,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
             {brandName}
           </Typography>
         </Link>
-        
+
         {/* Close button for mobile */}
         <IconButton
           variant="text"
@@ -57,7 +57,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
       {/* NAV LINKS */}
       <div className="m-4 h-[calc(100vh-140px)] overflow-hidden">
         {routes.map(({ layout, title, pages }, key) => {
-          
+
           // 🛑 FILTER: Skip the "auth" section entirely
           if (layout === "auth") return null;
 
@@ -76,7 +76,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
 
               {pages.map(({ icon, name, path }) => (
                 <li key={name}>
-                  <NavLink to={`/${layout}${path}`}>
+                  <NavLink to={`/${layout}${path}`} onClick={() => setOpenSidenav(dispatch, false)}>
                     {({ isActive }) => (
                       <div
                         className={`
@@ -89,7 +89,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
                       >
                         {/* Icon */}
                         <div className={`grid place-items-center mr-2 ${isActive ? "opacity-100" : "opacity-70"}`}>
-                           {icon}
+                          {icon}
                         </div>
 
                         <Typography color="inherit" className="font-medium capitalize">
@@ -110,7 +110,7 @@ export function Sidenav({ brandImg, brandName, routes }) {
 
 Sidenav.defaultProps = {
   brandImg: "/img/logo-ct.png",
-        brandName: "Asphalt Prep",
+  brandName: "Asphalt Prep",
 };
 
 Sidenav.propTypes = {

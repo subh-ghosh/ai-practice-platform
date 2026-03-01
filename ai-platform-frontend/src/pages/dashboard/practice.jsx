@@ -530,7 +530,7 @@ export function Practice() {
 
         <div className="flex flex-col gap-8">
 
-            {/* Generator & Coach Area (Full Width) */}
+          {/* Generator & Coach Area (Full Width) */}
           <div className="space-y-6">
 
             {/* Generator Card */}
@@ -553,7 +553,7 @@ export function Practice() {
                 )}
               </CardHeader>
 
-              <CardBody className="p-6 md:p-8 overflow-visible">
+              <CardBody className="p-4 md:p-8 overflow-visible">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                   {/* Subject Input */}
                   <div className="w-full">
@@ -608,7 +608,7 @@ export function Practice() {
                 {recommendations && recommendations.length > 0 && (
                   <div className="mt-6">
                     <Typography variant="small" className="text-gray-500 mb-2 font-medium ml-1">Recommended for you</Typography>
-                    <div className="flex gap-3 overflow-x-auto pb-2 custom-scroll">
+                    <div className="flex gap-3 overflow-x-auto pb-4 px-1 -mx-1 custom-scroll snap-x">
                       {recommendations.map((rec, idx) => (
                         <RecommendationCard
                           key={idx}

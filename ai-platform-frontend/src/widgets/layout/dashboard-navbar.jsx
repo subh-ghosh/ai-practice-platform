@@ -86,7 +86,7 @@ export function DashboardNavbar() {
           <IconButton
             variant="text"
             color="blue-gray"
-            className="grid xl:hidden"
+            className="grid xl:hidden h-10 w-10"
             onClick={() => setOpenSidenav(dispatch, !openSidenav)}
           >
             <Bars3Icon strokeWidth={3} className="h-6 w-6 text-blue-gray-500 dark:text-white" />
@@ -116,13 +116,13 @@ export function DashboardNavbar() {
           {/* Notifications Menu (Glass Style) */}
           <Menu placement="bottom-end">
             <MenuHandler>
-              <div className="relative inline-flex items-center justify-center w-10 h-10 rounded-full hover:bg-white/20 dark:hover:bg-white/10 cursor-pointer text-blue-gray-500 dark:text-white transition-colors">
+              <div className="relative inline-flex items-center justify-center w-11 h-11 rounded-full hover:bg-white/20 dark:hover:bg-white/10 cursor-pointer text-blue-gray-500 dark:text-white transition-colors">
                 {unreadCount > 0 ? (
-                  <Badge content={unreadCount} withBorder className="bg-red-500 min-w-[18px] min-h-[18px] text-[10px] border-white dark:border-gray-900">
-                    <BellIcon className="h-5 w-5" />
+                  <Badge content={unreadCount} withBorder className="bg-red-500 min-w-[20px] min-h-[20px] text-[10px] border-white dark:border-gray-900">
+                    <BellIcon className="h-6 w-6" />
                   </Badge>
                 ) : (
-                  <BellIcon className="h-5 w-5" />
+                  <BellIcon className="h-6 w-6" />
                 )}
               </div>
             </MenuHandler>
@@ -205,9 +205,9 @@ export function DashboardNavbar() {
             color="red"
             onClick={logout}
             title="Log Out"
-            className="rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+            className="h-11 w-11 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
             </svg>
           </IconButton>

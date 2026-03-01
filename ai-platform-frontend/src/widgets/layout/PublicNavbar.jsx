@@ -141,7 +141,7 @@ export function PublicNavbar() {
 
       {/* Mobile Menu Dropdown */}
       <Collapse open={openNav}>
-        <div className="mt-2 border-t border-gray-200 dark:border-white/10 pt-2 pb-4">
+        <div className="mt-2 border-t border-gray-200 dark:border-white/10 pt-2 pb-4 bg-white dark:bg-[#050505]/95 rounded-xl px-2">
           {navList}
           <div className="flex flex-col gap-2 mt-3 pt-3 border-t border-gray-100 dark:border-white/5">
             <Button
