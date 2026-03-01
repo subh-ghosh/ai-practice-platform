@@ -20,7 +20,7 @@ import java.time.Duration;
 @Configuration
 public class CacheConfig {
 
-    private static final String CACHE_SCHEMA_PREFIX = "v2::";
+    private static final String CACHE_SCHEMA_PREFIX = "v3::";
 
     @Bean
     public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {

@@ -317,7 +317,7 @@ export function Practice() {
       await fetchHistory();
     } catch (err) {
       console.error("Error generating question:", err);
-      setError("Failed to generate question. Please try again.");
+      setError(err.response?.data?.message || err.response?.data?.error || "Failed to generate question. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -610,7 +610,16 @@ export function Practice() {
                     <Typography variant="small" className="text-gray-500 mb-2 font-medium ml-1">Recommended for you</Typography>
                     <div className="flex gap-3 overflow-x-auto pb-2 custom-scroll">
                       {recommendations.map((rec, idx) => (
-                        <RecommendationCard key={idx} recommendation={rec} compact />
+                        <RecommendationCard
+                          key={idx}
+                          recommendation={rec}
+                          compact
+                          onAction={(r) => {
+                            setSubject(r.subject || r.topic || "");
+                            setTopic(r.topic || "");
+                            setDifficulty(r.suggestedDifficulty || r.currentDifficulty || "Beginner");
+                          }}
+                        />
                       ))}
                     </div>
                   </div>

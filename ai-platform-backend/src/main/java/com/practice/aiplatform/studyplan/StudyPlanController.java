@@ -1,6 +1,7 @@
 package com.practice.aiplatform.studyplan;
 
 import com.practice.aiplatform.ai.AiService;
+import com.practice.aiplatform.moderation.PromptModerationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,9 +15,11 @@ import java.util.Map;
 public class StudyPlanController {
 
     private final StudyPlanService studyPlanService;
+    private final PromptModerationService promptModerationService;
 
-    public StudyPlanController(StudyPlanService studyPlanService) {
+    public StudyPlanController(StudyPlanService studyPlanService, PromptModerationService promptModerationService) {
         this.studyPlanService = studyPlanService;
+        this.promptModerationService = promptModerationService;
     }
 
     public record GenerateStudyPlanRequest(String topic, String difficulty, int durationDays) {
@@ -29,6 +32,9 @@ public class StudyPlanController {
     public ResponseEntity<?> generateStudyPlan(@RequestBody GenerateStudyPlanRequest request, Principal principal) {
         if (request.topic() == null || request.topic().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Topic is required"));
+        }
+        if (promptModerationService.isBlocked(request.topic(), request.difficulty())) {
+            return ResponseEntity.badRequest().body(Map.of("error", promptModerationService.warningMessage()));
         }
 
         String email = principal.getName();
@@ -59,6 +65,9 @@ public class StudyPlanController {
 
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "File is required"));
+        }
+        if (promptModerationService.isBlockedFile(file)) {
+            return ResponseEntity.badRequest().body(Map.of("error", promptModerationService.warningMessage()));
         }
 
         String email = principal.getName();

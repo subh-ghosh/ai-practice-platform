@@ -1,5 +1,6 @@
 package com.practice.aiplatform.ai;
 
+import com.practice.aiplatform.moderation.PromptModerationService;
 import com.practice.aiplatform.practice.Question;
 import com.practice.aiplatform.practice.QuestionRepository;
 import com.practice.aiplatform.user.Student;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -18,14 +20,17 @@ public class AiController {
     private final AiService aiService;
     private final QuestionRepository questionRepository;
     private final StudentRepository studentRepository;
+    private final PromptModerationService promptModerationService;
 
     public AiController(
             AiService aiService,
             QuestionRepository questionRepository,
-            StudentRepository studentRepository) {
+            StudentRepository studentRepository,
+            PromptModerationService promptModerationService) {
         this.aiService = aiService;
         this.questionRepository = questionRepository;
         this.studentRepository = studentRepository;
+        this.promptModerationService = promptModerationService;
     }
 
     public record GenerateQuestionRequest(
@@ -45,6 +50,13 @@ public class AiController {
     @PostMapping("/generate-question")
     public ResponseEntity<?> generateQuestion(@RequestBody GenerateQuestionRequest request, Principal principal) {
         try {
+            if (promptModerationService.isBlocked(
+                    request.subject(),
+                    request.topic(),
+                    request.difficulty())) {
+                return ResponseEntity.badRequest().body(Map.of("message", promptModerationService.warningMessage()));
+            }
+
             String email = principal.getName();
 
             Student student = studentRepository.findByEmail(email)

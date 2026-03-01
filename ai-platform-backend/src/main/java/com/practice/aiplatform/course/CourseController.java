@@ -1,5 +1,6 @@
 package com.practice.aiplatform.course;
 
+import com.practice.aiplatform.moderation.PromptModerationService;
 import com.practice.aiplatform.user.Student;
 import com.practice.aiplatform.user.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ public class CourseController {
     private final CourseGeneratorService courseGeneratorService;
     private final CourseRepository courseRepository;
     private final StudentRepository studentRepository;
+    private final PromptModerationService promptModerationService;
 
     @Lazy
     @Autowired
@@ -31,10 +33,12 @@ public class CourseController {
     public CourseController(
             CourseGeneratorService courseGeneratorService,
             CourseRepository courseRepository,
-            StudentRepository studentRepository) {
+            StudentRepository studentRepository,
+            PromptModerationService promptModerationService) {
         this.courseGeneratorService = courseGeneratorService;
         this.courseRepository = courseRepository;
         this.studentRepository = studentRepository;
+        this.promptModerationService = promptModerationService;
     }
 
     public record GenerateCourseRequest(String topic, String level) {
@@ -58,6 +62,9 @@ public class CourseController {
     public ResponseEntity<?> generateCourse(@RequestBody GenerateCourseRequest request, Principal principal) {
         if (request.topic() == null || request.topic().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Topic is required"));
+        }
+        if (promptModerationService.isBlocked(request.topic(), request.level())) {
+            return ResponseEntity.badRequest().body(Map.of("error", promptModerationService.warningMessage()));
         }
 
         try {

@@ -33,6 +33,7 @@ public class RecommendationService {
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
     public record EnhancedRecommendation(
             String type,
+            String subject,
             String topic,
             String currentDifficulty,
             String suggestedDifficulty,
@@ -57,7 +58,7 @@ public class RecommendationService {
         if (history.isEmpty()) {
             List<EnhancedRecommendation> fallback = new ArrayList<>();
             fallback.add(new EnhancedRecommendation(
-                    "READY_TO_ADVANCE", "Java", "Beginner", "Beginner",
+                    "READY_TO_ADVANCE", "Java", "Java", "Beginner", "Beginner",
                     0.0, "STABLE",
                     "Welcome! Start your learning journey.",
                     "Begin with a Beginner Java quiz",
@@ -110,53 +111,54 @@ public class RecommendationService {
 
             String trend = calculateTrend(answers);
             String commonDifficulty = findMostCommonDifficulty(answers);
+            String commonSubject = findMostCommonSubject(answers);
             LocalDateTime lastPracticed = findLastPracticedTime(answers);
             long daysSinceLastPractice = ChronoUnit.DAYS.between(lastPracticed, LocalDateTime.now());
 
             if (daysSinceLastPractice >= 7 && gradable >= 3) {
                 recommendations.add(new EnhancedRecommendation(
-                        "STALE", topic, commonDifficulty, commonDifficulty,
+                        "STALE", commonSubject, topic, commonDifficulty, commonDifficulty,
                         accuracy, trend,
                         "Last practiced " + daysSinceLastPractice + " days ago - time for a refresher!",
                         "Quick refresher session",
                         "PRACTICE",
-                        "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
+                        "/dashboard/practice?subject=" + encode(commonSubject) + "&topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
                 continue;
             }
 
             if (accuracy < 0.6 && gradable >= 3) {
                 recommendations.add(new EnhancedRecommendation(
-                        "WEAKNESS", topic, commonDifficulty, "School",
+                        "WEAKNESS", commonSubject, topic, commonDifficulty, "School",
                         accuracy, trend,
                         "Accuracy: " + Math.round(accuracy * 100) + "% - needs focused practice",
                         "Review basics and take a recovery quiz",
                         "PRACTICE",
-                        "/dashboard/practice?topic=" + encode(topic) + "&difficulty=School"));
+                        "/dashboard/practice?subject=" + encode(commonSubject) + "&topic=" + encode(topic) + "&difficulty=School"));
             } else if ("DECLINING".equals(trend) && gradable >= 6) {
                 recommendations.add(new EnhancedRecommendation(
-                        "DECLINING", topic, commonDifficulty, commonDifficulty,
+                        "DECLINING", commonSubject, topic, commonDifficulty, commonDifficulty,
                         accuracy, trend,
                         "Accuracy: " + Math.round(accuracy * 100) + "% but declining recently",
                         "Do a focused review before moving on",
                         "REVIEW",
-                        "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
+                        "/dashboard/practice?subject=" + encode(commonSubject) + "&topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
             } else if (accuracy > 0.9 && gradable >= 10) {
                 String nextDiff = getNextDifficulty(commonDifficulty);
                 recommendations.add(new EnhancedRecommendation(
-                        "MASTERED", topic, commonDifficulty, nextDiff,
+                        "MASTERED", commonSubject, topic, commonDifficulty, nextDiff,
                         accuracy, trend,
                         "Accuracy: " + Math.round(accuracy * 100) + "% - you have mastered this",
                         "Challenge yourself at " + nextDiff + " level",
                         "PRACTICE",
-                        "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(nextDiff)));
+                        "/dashboard/practice?subject=" + encode(commonSubject) + "&topic=" + encode(topic) + "&difficulty=" + encode(nextDiff)));
             } else if (accuracy >= 0.7 && accuracy <= 0.9 && gradable >= 5) {
                 recommendations.add(new EnhancedRecommendation(
-                        "READY_TO_ADVANCE", topic, commonDifficulty, commonDifficulty,
+                        "READY_TO_ADVANCE", commonSubject, topic, commonDifficulty, commonDifficulty,
                         accuracy, trend,
                         "Accuracy: " + Math.round(accuracy * 100) + "% - almost there",
                         "One more round to solidify your understanding",
                         "PRACTICE",
-                        "/dashboard/practice?topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
+                        "/dashboard/practice?subject=" + encode(commonSubject) + "&topic=" + encode(topic) + "&difficulty=" + encode(commonDifficulty)));
             }
         }
 
@@ -166,7 +168,7 @@ public class RecommendationService {
 
         if (recommendations.isEmpty()) {
             recommendations.add(new EnhancedRecommendation(
-                    "READY_TO_ADVANCE", "New Topic", "Beginner", "Beginner",
+                    "READY_TO_ADVANCE", "General", "New Topic", "Beginner", "Beginner",
                     0.0, "STABLE",
                     "You are doing great! Keep exploring.",
                     "Try a new topic to expand your skills",
@@ -318,12 +320,18 @@ public class RecommendationService {
                 }
 
                 recommendations.add(new EnhancedRecommendation(
-                        "PLAN_GAP", planTopic, "Beginner", "Beginner",
+                        "PLAN_GAP",
+                        item.getPracticeSubject() != null ? item.getPracticeSubject() : planTopic,
+                        planTopic,
+                        "Beginner",
+                        "Beginner",
                         0.0, "STABLE",
                         "This topic is in your study plan but has not been practiced yet",
                         "Start practicing to stay on track",
                         "PRACTICE",
-                        "/dashboard/practice?topic=" + encode(planTopic)));
+                        "/dashboard/practice?subject="
+                                + encode(item.getPracticeSubject() != null ? item.getPracticeSubject() : planTopic)
+                                + "&topic=" + encode(planTopic)));
 
                 alreadyAdded.add(lower);
                 added++;
@@ -407,6 +415,36 @@ public class RecommendationService {
         int bestCount = -1;
 
         for (Map.Entry<String, Integer> entry : countByDifficulty.entrySet()) {
+            if (entry.getValue() > bestCount) {
+                bestCount = entry.getValue();
+                best = entry.getKey();
+            }
+        }
+
+        return best;
+    }
+
+    private String findMostCommonSubject(List<Answer> answers) {
+        Map<String, Integer> countBySubject = new HashMap<>();
+
+        for (Answer answer : answers) {
+            if (answer.getQuestion() == null) {
+                continue;
+            }
+
+            String subject = answer.getQuestion().getSubject();
+            if (subject == null || subject.isBlank()) {
+                continue;
+            }
+
+            int current = countBySubject.getOrDefault(subject, 0);
+            countBySubject.put(subject, current + 1);
+        }
+
+        String best = "General";
+        int bestCount = -1;
+
+        for (Map.Entry<String, Integer> entry : countBySubject.entrySet()) {
             if (entry.getValue() > bestCount) {
                 bestCount = entry.getValue();
                 best = entry.getKey();
