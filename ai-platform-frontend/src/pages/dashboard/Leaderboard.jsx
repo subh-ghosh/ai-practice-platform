@@ -84,7 +84,7 @@ const Leaderboard = () => {
                     <Spinner className="h-12 w-12 text-blue-500" />
                 </div>
             ) : leaders.length === 0 ? (
-                <Card className="border border-blue-gray-100 dark:border-white/10 shadow-sm bg-white dark:bg-[#0a0a0c]">
+                <Card className="border border-blue-100/60 dark:border-gray-800 shadow-sm bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
                     <CardBody className="text-center py-16">
                         <TrophyIcon className="h-20 w-20 mx-auto mb-4 text-gray-300 dark:text-gray-700" />
                         <Typography variant="h6" color="blue-gray" className="dark:text-white">
@@ -110,7 +110,7 @@ const Leaderboard = () => {
                                     size="xl"
                                     className="border-4 border-gray-300 shadow-lg mb-[-16px] z-10 bg-white"
                                 />
-                                <div className="bg-gradient-to-t from-gray-100 to-white dark:from-gray-800 dark:to-gray-700 w-32 h-40 rounded-t-2xl flex flex-col justify-start pt-6 items-center shadow-md border border-gray-200 dark:border-gray-600">
+                                <div className="bg-white/70 dark:bg-gray-500/10 backdrop-blur-md w-32 h-40 rounded-t-2xl flex flex-col justify-start pt-6 items-center shadow-md border border-blue-100/60 dark:border-gray-800">
                                     <Typography variant="h4" className="font-bold text-gray-500 dark:text-gray-300">2</Typography>
                                     <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-2 truncate w-full">{leaders[1].firstName}</Typography>
                                     <div className="mt-2 flex items-center gap-1 text-xs font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
@@ -132,7 +132,7 @@ const Leaderboard = () => {
                                         className="border-4 border-yellow-400 shadow-xl mb-[-20px] z-10 bg-white ring-4 ring-yellow-400/20"
                                     />
                                 </div>
-                                <div className="bg-gradient-to-t from-yellow-50 to-white dark:from-yellow-900/30 dark:to-yellow-800/20 w-40 h-52 rounded-t-2xl flex flex-col justify-start pt-8 items-center shadow-lg border border-yellow-200 dark:border-yellow-700">
+                                <div className="bg-white/70 dark:bg-yellow-500/10 backdrop-blur-md w-40 h-52 rounded-t-2xl flex flex-col justify-start pt-8 items-center shadow-lg border border-yellow-200/50 dark:border-yellow-700/50">
                                     <Typography variant="h3" className="font-bold text-yellow-600 dark:text-yellow-400">1</Typography>
                                     <Typography variant="h6" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-2 truncate w-full">{leaders[0].firstName}</Typography>
                                     <div className="mt-2 flex items-center gap-1 text-xs font-bold text-yellow-600 dark:text-yellow-400 bg-yellow-400/20 px-3 py-1 rounded-full">
@@ -151,7 +151,7 @@ const Leaderboard = () => {
                                     size="xl"
                                     className="border-4 border-orange-300 shadow-lg mb-[-16px] z-10 bg-white"
                                 />
-                                <div className="bg-gradient-to-t from-orange-50 to-white dark:from-orange-900/30 dark:to-orange-800/20 w-32 h-32 rounded-t-2xl flex flex-col justify-start pt-6 items-center shadow-md border border-orange-200 dark:border-orange-700">
+                                <div className="bg-white/70 dark:bg-orange-500/10 backdrop-blur-md w-32 h-32 rounded-t-2xl flex flex-col justify-start pt-6 items-center shadow-md border border-orange-200/50 dark:border-orange-700/50">
                                     <Typography variant="h4" className="font-bold text-orange-500 dark:text-orange-300">3</Typography>
                                     <Typography variant="small" className="font-bold text-blue-gray-900 dark:text-white mt-1 text-center px-2 truncate w-full">{leaders[2].firstName}</Typography>
                                     <div className="mt-2 flex items-center gap-1 text-xs font-bold text-orange-500 dark:text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full">
@@ -163,7 +163,7 @@ const Leaderboard = () => {
                     </div>
 
                     {/* List View */}
-                    <Card className="border border-blue-gray-50 dark:border-white/10 shadow-sm overflow-hidden bg-white dark:bg-[#0a0a0c]">
+                    <Card className="border border-blue-100/60 dark:border-gray-800 shadow-sm overflow-hidden bg-white/90 dark:bg-gray-900/60 backdrop-blur-md">
                         <CardBody className="p-0">
                             <table className="w-full min-w-[640px] table-auto text-left">
                                 <thead className="bg-gray-50/50 dark:bg-white/5">
