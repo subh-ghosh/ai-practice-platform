@@ -531,12 +531,12 @@ export function Home() {
               </Link>
             </CardHeader>
 
-            <CardBody className="overflow-x-hidden hide-scrollbar px-0 pt-0 pb-0">
-              <table className="w-full table-auto">
+            <CardBody className="overflow-x-auto hide-scrollbar px-0 pt-0 pb-0">
+              <table className="w-full min-w-[680px] table-auto">
                 <thead>
                   <tr>
                     {["Question", "Subject", "Status", "Submitted"].map((el) => (
-                      <th key={el} className="border-b border-blue-gray-50 py-3 px-6 text-left">
+                      <th key={el} className="border-b border-blue-gray-50 py-3 px-3 sm:px-6 text-left">
                         <Typography variant="small" className="text-[11px] font-medium uppercase text-blue-gray-400">
                           {el}
                         </Typography>
@@ -546,7 +546,7 @@ export function Home() {
                 </thead>
                 <tbody>
                   {stats.recentActivity.map((item, key) => {
-                    const className = `py-3 px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
+                    const className = `py-3 px-3 sm:px-5 ${key === stats.recentActivity.length - 1 ? "" : "border-b border-blue-gray-50"}`;
                     const uniqueKey = `${item.questionId}-${item.submittedAt}`;
                     return (
                       <motion.tr
@@ -558,7 +558,7 @@ export function Home() {
                         className="hover:bg-gray-50/50 transition-colors"
                       >
                         <td className={className}>
-                          <Typography className="text-xs font-normal text-blue-gray-500">
+                          <Typography className="text-xs font-normal text-blue-gray-500 break-words max-w-[280px]">
                             {item.questionText.substring(0, 40)}...
                           </Typography>
                         </td>

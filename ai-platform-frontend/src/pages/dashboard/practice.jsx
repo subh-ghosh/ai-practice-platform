@@ -112,7 +112,7 @@ const CircularGauge = ({ value, loading }) => {
   if (loading) return <Spinner className="h-5 w-5" />;
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div className="relative inline-flex h-12 w-12 items-center justify-center shrink-0">
       <svg className="h-12 w-12 transform -rotate-90">
         <circle className="text-gray-200 dark:text-gray-700" strokeWidth="4" stroke="currentColor" fill="transparent" r={radius} cx="24" cy="24" />
         <circle
@@ -128,7 +128,9 @@ const CircularGauge = ({ value, loading }) => {
           cy="24"
         />
       </svg>
-      <span className={`absolute text-[10px] font-bold ${color}`}>{Math.round(value)}%</span>
+      <span className={`absolute inset-0 flex items-center justify-center text-[9px] leading-none font-bold tabular-nums ${color}`}>
+        {Math.round(value)}%
+      </span>
     </div>
   );
 };
@@ -880,29 +882,29 @@ export function Practice() {
           </DialogHeader>
           <DialogBody className="flex-1 min-h-0 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] bg-gray-900/40 p-4 sm:p-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] sm:pb-6 custom-scroll">
             {selectedHistory && (
-              <div className="space-y-6">
-                <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">
+              <div className="space-y-4">
+                <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner h-40 sm:h-48 flex flex-col">
                   <Typography className="font-black text-[10px] uppercase text-gray-500 tracking-widest mb-3">Question</Typography>
-                  <div className="prose prose-invert max-w-none text-gray-200 practice-safe-wrap [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words">
+                  <div className="prose prose-invert max-w-none text-gray-200 practice-safe-wrap [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words flex-1 min-h-0 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] custom-scroll pr-1">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {formatMarkdownText(selectedHistory.questionText)}
                     </ReactMarkdown>
                   </div>
                 </div>
-                <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">
+                <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner h-56 sm:h-64 flex flex-col">
                   <Typography className="font-black text-[10px] uppercase text-gray-500 tracking-widest mb-3">Your Answer</Typography>
-                  <div className="prose prose-invert max-w-none text-gray-200 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words">
+                  <div className="prose prose-invert max-w-none text-gray-200 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words flex-1 min-h-0 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] custom-scroll pr-1">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {selectedHistory.answerText}
                     </ReactMarkdown>
                   </div>
                 </div>
-                <div className="p-5 bg-blue-900/10 border border-blue-800/20 rounded-2xl shadow-inner">
+                <div className="p-5 bg-blue-900/10 border border-blue-800/20 rounded-2xl shadow-inner h-56 sm:h-64 flex flex-col">
                   <div className="flex items-center gap-2 mb-3">
                     <SparklesIcon className="h-4 w-4 text-blue-400" />
                     <Typography className="font-black text-[10px] uppercase text-blue-400 tracking-widest">Feedback</Typography>
                   </div>
-                  <div className="prose prose-invert max-w-none text-gray-300 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words">
+                  <div className="prose prose-invert max-w-none text-gray-300 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words flex-1 min-h-0 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] custom-scroll pr-1">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedHistory.feedback}</ReactMarkdown>
                   </div>
                 </div>
