@@ -101,7 +101,7 @@ const getStatusChip = (status) => {
 
 // Circular Progress Gauge
 const CircularGauge = ({ value, loading }) => {
-  const radius = 18;
+  const radius = 17;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
 
@@ -112,8 +112,8 @@ const CircularGauge = ({ value, loading }) => {
   if (loading) return <Spinner className="h-5 w-5" />;
 
   return (
-    <div className="relative inline-flex h-12 w-12 items-center justify-center shrink-0">
-      <svg className="h-12 w-12 transform -rotate-90">
+    <div className={`relative inline-flex h-12 w-12 items-center justify-center shrink-0 ${color}`}>
+      <svg className="h-12 w-12 transform -rotate-90 overflow-visible">
         <circle className="text-gray-200 dark:text-gray-700" strokeWidth="4" stroke="currentColor" fill="transparent" r={radius} cx="24" cy="24" />
         <circle
           className={`${color} transition-all duration-1000 ease-out`}
@@ -127,10 +127,17 @@ const CircularGauge = ({ value, loading }) => {
           cx="24"
           cy="24"
         />
+        <text
+          x="24"
+          y="24"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="fill-current text-[10px] font-bold tabular-nums"
+          transform="rotate(90 24 24)"
+        >
+          {Math.round(value)}%
+        </text>
       </svg>
-      <span className={`absolute inset-0 flex items-center justify-center text-[9px] leading-none font-bold tabular-nums ${color}`}>
-        {Math.round(value)}%
-      </span>
     </div>
   );
 };
@@ -817,22 +824,22 @@ export function Practice() {
                   <Card
                     key={item.id}
                     onClick={() => setSelectedHistory(item)}
-                    className="cursor-pointer border border-blue-gray-100 dark:border-gray-700 hover:shadow-md transition-all group bg-white/80 dark:bg-gray-900/80 backdrop-blur-md"
+                    className="cursor-pointer border border-blue-gray-100 dark:border-gray-700 hover:shadow-md transition-all group bg-white/80 dark:bg-gray-900/80 backdrop-blur-md h-[220px] sm:h-[230px]"
                   >
-                    <CardBody className="p-5 relative">
+                    <CardBody className="p-5 relative h-full flex flex-col">
                       <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
                         {getStatusChip(item.evaluationStatus)}
                         <span className="text-[10px] text-gray-400">
                           {new Date(item.submittedAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white break-words practice-safe-wrap">
+                      <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white break-words practice-safe-wrap overflow-hidden leading-snug" style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}>
                         {item.questionText}
                       </Typography>
-                      <Typography className="text-xs text-gray-500 break-words practice-safe-wrap">
+                      <Typography className="text-xs text-gray-500 break-words practice-safe-wrap overflow-hidden" style={{ display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical" }}>
                         {item.subject} • {item.topic}
                       </Typography>
-                      <div className="mt-4 pt-4 border-t border-blue-gray-50 dark:border-gray-800 flex flex-wrap justify-between items-center gap-2 text-xs">
+                      <div className="mt-auto pt-4 border-t border-blue-gray-50 dark:border-gray-800 flex flex-wrap justify-between items-center gap-2 text-xs">
                         <Typography variant="small" className="text-gray-400 font-medium">Click to view feedback</Typography>
                         <ChevronRightIcon className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
                       </div>
