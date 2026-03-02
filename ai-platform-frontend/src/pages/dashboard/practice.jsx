@@ -869,20 +869,26 @@ export function Practice() {
         </div>
 
         {/* History Detail Dialog (unchanged logic) */}
-        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-gray-900 dark:bg-gray-950 border border-gray-800 shadow-2xl outline-none max-h-[90vh] overflow-hidden">
-          <DialogHeader className="text-gray-100 font-bold border-b border-gray-800 p-6 flex justify-between items-start relative">
-            <div className="font-bold leading-snug break-words pr-8 practice-safe-wrap prose prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {formatMarkdownText(selectedHistory?.questionText || "")}
-              </ReactMarkdown>
-            </div>
+        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-gray-900 dark:bg-gray-950 border border-gray-800 shadow-2xl outline-none w-[95vw] max-w-3xl h-[calc(100dvh-2rem)] sm:h-auto sm:max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="text-gray-100 font-bold border-b border-gray-800 p-4 sm:p-6 flex justify-between items-start relative">
+            <Typography variant="h6" className="font-bold">
+              Practice Details
+            </Typography>
             <button type="button" onClick={() => setSelectedHistory(null)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white shrink-0 z-50">
               <XMarkIcon className="h-6 w-6" />
             </button>
           </DialogHeader>
-          <DialogBody className="max-h-[70vh] sm:max-h-[25rem] overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] bg-gray-900/40 p-4 sm:p-6 custom-scroll">
+          <DialogBody className="flex-1 min-h-0 overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] bg-gray-900/40 p-4 sm:p-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] sm:pb-6 custom-scroll">
             {selectedHistory && (
               <div className="space-y-6">
+                <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">
+                  <Typography className="font-black text-[10px] uppercase text-gray-500 tracking-widest mb-3">Question</Typography>
+                  <div className="prose prose-invert max-w-none text-gray-200 practice-safe-wrap [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {formatMarkdownText(selectedHistory.questionText)}
+                    </ReactMarkdown>
+                  </div>
+                </div>
                 <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">
                   <Typography className="font-black text-[10px] uppercase text-gray-500 tracking-widest mb-3">Your Answer</Typography>
                   <div className="prose prose-invert max-w-none text-gray-200 [&_pre]:whitespace-pre-wrap [&_pre]:break-words [&_code]:break-words">
@@ -903,7 +909,7 @@ export function Practice() {
               </div>
             )}
           </DialogBody>
-          <DialogFooter className="border-t border-gray-800 p-4">
+          <DialogFooter className="shrink-0 border-t border-gray-800 p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] sm:pb-4">
             <Button variant="text" color="blue-gray" onClick={() => setSelectedHistory(null)} className="text-gray-400 hover:text-white transition-colors">
               Close
             </Button>

@@ -553,7 +553,7 @@ const VideoCard = ({ item, locked, onPlay, onComplete, onPractice }) => (
                 </div>
 
                 {!locked && (
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
                         <Button size="sm" variant="outlined" className="flex items-center gap-1 py-1 px-2 border-red-100 text-red-500 hover:border-red-500 dark:border-red-900/50 dark:text-red-400" onClick={onPlay}>
                             <PlayIcon className="h-3 w-3" /> Watch
                         </Button>
@@ -563,9 +563,9 @@ const VideoCard = ({ item, locked, onPlay, onComplete, onPractice }) => (
                             </Button>
                         )}
                         {item.xpReward > 0 && !item.completed && (
-                            <Chip value={`${item.xpReward} XP`} size="sm" variant="ghost" color="amber" className="ml-auto rounded-full" />
+                            <Chip value={`${item.xpReward} XP`} size="sm" variant="ghost" color="amber" className="rounded-full sm:ml-auto" />
                         )}
-                        <Button size="sm" variant="outlined" color="blue" className="flex items-center gap-1 py-1 px-2 border-blue-100 text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:border-blue-900/50 dark:text-blue-400" onClick={onPractice}>
+                        <Button size="sm" variant="outlined" color="blue" className="w-full sm:w-auto flex items-center justify-center gap-1 py-1 px-2 border-blue-100 text-blue-500 hover:border-blue-500 hover:bg-blue-50 dark:border-blue-900/50 dark:text-blue-400" onClick={onPractice}>
                             <SparklesIcon className="h-3 w-3" /> Practice
                         </Button>
                     </div>
