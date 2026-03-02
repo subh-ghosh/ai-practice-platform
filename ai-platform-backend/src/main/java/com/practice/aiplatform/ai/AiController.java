@@ -10,12 +10,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List;
+import java.util.Set;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ai")
 @CrossOrigin
 public class AiController {
+    private static final Set<String> ANSWERED_STATUSES = Set.of("CORRECT", "INCORRECT", "CLOSE", "REVEALED");
 
     private final AiService aiService;
     private final QuestionRepository questionRepository;
@@ -69,12 +72,32 @@ public class AiController {
                         .orElse(null);
             }
 
-            String questionText = aiService.generateQuestion(
-                    request.subject(),
-                    request.difficulty(),
-                    request.topic(),
-                    previousQuestionText,
-                    request.previousStatus());
+            boolean answeredPrevious = request.previousStatus() != null
+                    && ANSWERED_STATUSES.contains(request.previousStatus().trim().toUpperCase());
+            String questionText;
+
+            if (!answeredPrevious) {
+                // If the previous question is still unanswered, return the cached one for this context.
+                questionText = aiService.generateQuestionFromCache(
+                        request.subject(),
+                        request.difficulty(),
+                        request.topic());
+            } else {
+                List<String> recentQuestionTexts = questionRepository
+                        .findTop12ByStudent_IdAndTopicIgnoreCaseOrderByGeneratedAtDesc(student.getId(), request.topic())
+                        .stream()
+                        .map(Question::getQuestionText)
+                        .toList();
+
+                // After an answer is submitted, force a fresh question and refresh cache.
+                questionText = aiService.generateFreshQuestionAndRefreshCache(
+                        request.subject(),
+                        request.difficulty(),
+                        request.topic(),
+                        previousQuestionText,
+                        request.previousStatus(),
+                        recentQuestionTexts);
+            }
 
             Question question = new Question();
             question.setStudent(student);

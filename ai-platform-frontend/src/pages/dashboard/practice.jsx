@@ -440,7 +440,7 @@ export function Practice() {
   const visibleHistory = useMemo(() => filteredHistory.slice(0, itemsToShow), [filteredHistory, itemsToShow]);
 
   return (
-    <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)]">
+    <section className="relative isolate -mx-4 md:-mx-6 lg:-mx-8 px-4 md:px-6 lg:px-8 pb-10 min-h-[calc(100vh-4rem)] overflow-x-hidden">
 
       {/* Styles & Animations */}
       <style>{`
@@ -462,6 +462,19 @@ export function Practice() {
         .animate-pop-in { animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         .animate-fade-in-scale { animation: scaleIn 0.4s ease-out forwards; }
         .animate-pulse-soft { animation: pulseSoft 2s infinite ease-in-out; }
+
+        .practice-safe-wrap,
+        .practice-safe-wrap * {
+          overflow-wrap: anywhere;
+          word-break: break-word;
+        }
+        .practice-safe-wrap pre {
+          white-space: pre-wrap !important;
+          overflow-x: hidden !important;
+        }
+        .practice-safe-wrap code {
+          white-space: pre-wrap !important;
+        }
       `}</style>
 
       {/* Background Layer */}
@@ -469,7 +482,7 @@ export function Practice() {
       <div className="pointer-events-none absolute -top-10 right-[8%] h-64 w-64 rounded-full bg-sky-300/30 dark:bg-sky-600/30 blur-3xl animate-pulse-soft" />
       <div className="pointer-events-none absolute top-36 -left-10 h-72 w-72 rounded-full bg-blue-300/25 dark:bg-blue-700/25 blur-3xl animate-pulse-soft" style={{ animationDelay: '1s' }} />
 
-      <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto">
+      <div className="mt-6 page has-fixed-navbar space-y-8 max-w-7xl mx-auto overflow-x-hidden">
 
         {/* --- Active Study Plan Context Banner --- */}
         {activeContext && (
@@ -633,7 +646,7 @@ export function Practice() {
                 )}
 
                 <div className="mt-8 flex justify-end">
-                  <div className="flex items-center gap-4">
+                  <div className="flex w-full sm:w-auto flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                     {/* Circular Success Predictor */}
                     {prediction && (
                       <Tooltip content={`Win Probability: ${(prediction.winProbability * 100).toFixed(0)}% (${prediction.confidence} Confidence)`}>
@@ -649,7 +662,7 @@ export function Practice() {
                     <Button
                       onClick={handleGenerateQuestion}
                       disabled={generating || submitting}
-                      className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40"
+                      className="w-full sm:w-auto px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 shadow-blue-500/20 hover:shadow-blue-500/40"
                     >
                       {generating ? "Crafting..." : "Generate Question"}
                     </Button>
@@ -666,13 +679,15 @@ export function Practice() {
               <div className="space-y-6 animate-slide-up">
                 <Card className="border border-blue-gray-100 dark:border-gray-700 shadow-sm bg-white/80 dark:bg-gray-900/80 backdrop-blur-md">
                   <CardBody className="p-6 md:p-8">
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="flex flex-wrap justify-between items-start gap-2 mb-4">
                       <Chip value={question.difficulty} size="sm" variant="ghost" className="rounded-full bg-blue-50 text-blue-900" />
                       <Typography variant="small" className="text-gray-400">ID: {question.id}</Typography>
                     </div>
-                    <Typography variant="h5" color="blue-gray" className="mb-4 font-bold dark:text-gray-100 leading-snug">
-                      <ReactMarkdown>{question.questionText}</ReactMarkdown>
-                    </Typography>
+                    <div className="mb-4 prose dark:prose-invert max-w-none font-bold dark:text-gray-100 leading-snug text-xl practice-safe-wrap">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {formatMarkdownText(question.questionText)}
+                      </ReactMarkdown>
+                    </div>
 
                     <Textarea
                       rows={textareaRows}
@@ -727,7 +742,7 @@ export function Practice() {
                       ) : (
                         <>
                           <DynamicFeedbackTitle status={feedback.evaluationStatus} />
-                          <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                          <div className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 practice-safe-wrap">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {formatMarkdownText(feedback.feedback)}
                             </ReactMarkdown>
@@ -737,7 +752,7 @@ export function Practice() {
                               <Typography variant="small" className="font-bold text-gray-500 uppercase tracking-wide mb-2">
                                 Correct Answer
                               </Typography>
-                              <div className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-100">
+                              <div className="prose dark:prose-invert max-w-none text-gray-900 dark:text-gray-100 practice-safe-wrap">
                                 {feedback.answerText ? (
                                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                     {formatMarkdownText(feedback.answerText)}
@@ -765,18 +780,6 @@ export function Practice() {
               </div>
             )}
 
-            {/* Empty State */}
-            {!question && !generating && (
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center opacity-60">
-                <div className="w-48 h-48 bg-blue-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
-                  <SparklesIcon className="h-24 w-24 text-blue-200 dark:text-gray-700" />
-                </div>
-                <Typography variant="h5" color="blue-gray" className="mb-2 font-bold">Ready to Practice?</Typography>
-                <Typography className="max-w-md text-gray-500">
-                  Select a topic from your study plan or enter a custom one above to start your practice session.
-                </Typography>
-              </div>
-            )}
           </div>
 
           {/* Bottom Section: Recent Activity (Refactored to Grid) */}
@@ -815,19 +818,19 @@ export function Practice() {
                     className="cursor-pointer border border-blue-gray-100 dark:border-gray-700 hover:shadow-md transition-all group bg-white/80 dark:bg-gray-900/80 backdrop-blur-md"
                   >
                     <CardBody className="p-5 relative">
-                      <div className="flex justify-between items-start mb-3">
+                      <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
                         {getStatusChip(item.evaluationStatus)}
                         <span className="text-[10px] text-gray-400">
                           {new Date(item.submittedAt).toLocaleDateString()}
                         </span>
                       </div>
-                      <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white line-clamp-1 pr-4">
+                      <Typography variant="h6" color="blue-gray" className="mb-1 group-hover:text-blue-500 transition-colors dark:text-white break-words practice-safe-wrap">
                         {item.questionText}
                       </Typography>
-                      <Typography className="text-xs text-gray-500 line-clamp-1">
+                      <Typography className="text-xs text-gray-500 break-words practice-safe-wrap">
                         {item.subject} • {item.topic}
                       </Typography>
-                      <div className="mt-4 pt-4 border-t border-blue-gray-50 dark:border-gray-800 flex justify-between items-center text-xs">
+                      <div className="mt-4 pt-4 border-t border-blue-gray-50 dark:border-gray-800 flex flex-wrap justify-between items-center gap-2 text-xs">
                         <Typography variant="small" className="text-gray-400 font-medium">Click to view feedback</Typography>
                         <ChevronRightIcon className="h-4 w-4 text-gray-400 group-hover:translate-x-1 transition-transform" />
                       </div>
@@ -849,20 +852,35 @@ export function Practice() {
                 </Button>
               </div>
             )}
+
+            {/* Empty State */}
+            {!question && !generating && (
+              <div className="flex flex-col items-center justify-center py-12 px-4 text-center opacity-60">
+                <div className="w-48 h-48 bg-blue-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
+                  <SparklesIcon className="h-24 w-24 text-blue-200 dark:text-gray-700" />
+                </div>
+                <Typography variant="h5" color="blue-gray" className="mb-2 font-bold">Ready to Practice?</Typography>
+                <Typography className="max-w-md text-gray-500">
+                  Select a topic from your study plan or enter a custom one above to start your practice session.
+                </Typography>
+              </div>
+            )}
           </div>
         </div>
 
         {/* History Detail Dialog (unchanged logic) */}
-        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-gray-900 dark:bg-gray-950 border border-gray-800 shadow-2xl outline-none">
+        <Dialog open={!!selectedHistory} handler={() => setSelectedHistory(null)} size="lg" className="bg-gray-900 dark:bg-gray-950 border border-gray-800 shadow-2xl outline-none max-h-[90vh] overflow-hidden">
           <DialogHeader className="text-gray-100 font-bold border-b border-gray-800 p-6 flex justify-between items-start relative">
-            <Typography variant="h5" className="font-bold leading-snug break-words pr-8">
-              {selectedHistory?.questionText}
-            </Typography>
+            <div className="font-bold leading-snug break-words pr-8 practice-safe-wrap prose prose-invert max-w-none">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {formatMarkdownText(selectedHistory?.questionText || "")}
+              </ReactMarkdown>
+            </div>
             <button type="button" onClick={() => setSelectedHistory(null)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white shrink-0 z-50">
               <XMarkIcon className="h-6 w-6" />
             </button>
           </DialogHeader>
-          <DialogBody className="h-[25rem] overflow-y-scroll bg-gray-900/40 p-6 custom-scroll">
+          <DialogBody className="max-h-[70vh] sm:max-h-[25rem] overflow-y-auto overscroll-contain [webkit-overflow-scrolling:touch] bg-gray-900/40 p-4 sm:p-6 custom-scroll">
             {selectedHistory && (
               <div className="space-y-6">
                 <div className="p-5 bg-gray-800/40 border border-gray-700/30 rounded-2xl shadow-inner">

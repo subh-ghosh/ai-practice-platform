@@ -13,19 +13,23 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
 public class AiService {
         public static final String PRACTICE_UNAVAILABLE_CODE = "AI_PRACTICE_UNAVAILABLE";
         public static final String STUDY_PLAN_UNAVAILABLE_CODE = "STUDY_PLAN_AI_UNAVAILABLE";
+        private static final int MAX_QUESTION_ATTEMPTS = 3;
 
         private final WebClient webClient;
         private final String apiKey;
@@ -70,16 +74,41 @@ public class AiService {
         }
 
         public String generateQuestion(String subject, String difficulty, String topic) {
-                return generateQuestion(subject, difficulty, topic, null, null);
+                return generateQuestion(subject, difficulty, topic, null, null, List.of());
         }
 
-        @Cacheable(value = "AiQuestionCache", key = "#subject + '|' + #difficulty + '|' + #topic + '|' + (#previousQuestion ?: '') + '|' + (#previousStatus ?: '')", sync = true)
+        @Cacheable(value = "AiQuestionCache", key = "#subject + '|' + #difficulty + '|' + #topic", sync = true)
+        public String generateQuestionFromCache(String subject, String difficulty, String topic) {
+                return generateQuestion(subject, difficulty, topic, null, null, List.of());
+        }
+
+        @CachePut(value = "AiQuestionCache", key = "#subject + '|' + #difficulty + '|' + #topic")
+        public String generateFreshQuestionAndRefreshCache(
+                        String subject,
+                        String difficulty,
+                        String topic,
+                        String previousQuestion,
+                        String previousStatus,
+                        List<String> recentQuestionTexts) {
+                return generateQuestion(subject, difficulty, topic, previousQuestion, previousStatus, recentQuestionTexts);
+        }
+
         public String generateQuestion(
                         String subject,
                         String difficulty,
                         String topic,
                         String previousQuestion,
                         String previousStatus) {
+                return generateQuestion(subject, difficulty, topic, previousQuestion, previousStatus, List.of());
+        }
+
+        public String generateQuestion(
+                        String subject,
+                        String difficulty,
+                        String topic,
+                        String previousQuestion,
+                        String previousStatus,
+                        List<String> recentQuestionTexts) {
 
                 String contextPrompt = "";
                 if (previousQuestion != null && previousStatus != null) {
@@ -96,13 +125,34 @@ public class AiService {
                         }
                 }
 
-                String prompt = String.format(
-                                "%sGenerate one practice question for %s level in %s on topic %s. "
-                                                + "Return only question text.",
-                                contextPrompt, difficulty, subject, topic);
+                List<String> blockedQuestions = new ArrayList<>();
+                if (recentQuestionTexts != null) {
+                        for (String q : recentQuestionTexts) {
+                                if (q != null && !q.isBlank()) {
+                                        blockedQuestions.add(q.trim());
+                                }
+                        }
+                }
 
-                AiResponse response = self.executePracticeCompletion(prompt, practiceModel, "question");
-                return extractTextFromResponse(response);
+                if (previousQuestion != null && !previousQuestion.isBlank()) {
+                        blockedQuestions.add(previousQuestion.trim());
+                }
+
+                String lastGenerated = "";
+                for (int attempt = 1; attempt <= MAX_QUESTION_ATTEMPTS; attempt++) {
+                        String prompt = buildQuestionPrompt(subject, difficulty, topic, contextPrompt, blockedQuestions, attempt);
+                        AiResponse response = self.executePracticeCompletion(prompt, practiceModel, "question");
+                        String candidate = extractTextFromResponse(response).trim();
+                        lastGenerated = candidate;
+
+                        if (!isNearDuplicate(candidate, blockedQuestions)) {
+                                return candidate;
+                        }
+
+                        blockedQuestions.add(candidate);
+                }
+
+                return lastGenerated;
         }
 
         @Cacheable(value = "AiEvaluateCache", key = "#subject + '|' + #topic + '|' + #difficulty + '|' + #questionText + '|' + #answerText", sync = true)
@@ -263,5 +313,67 @@ public class AiService {
                 } catch (Exception e) {
                         return "Error: Could not parse generated response.";
                 }
+        }
+
+        private String buildQuestionPrompt(
+                        String subject,
+                        String difficulty,
+                        String topic,
+                        String contextPrompt,
+                        List<String> blockedQuestions,
+                        int attempt) {
+                StringBuilder prompt = new StringBuilder();
+                if (contextPrompt != null && !contextPrompt.isBlank()) {
+                        prompt.append(contextPrompt);
+                }
+
+                prompt.append(String.format(
+                                "Generate one fresh practice question for %s level in %s on topic %s. ",
+                                difficulty, subject, topic));
+
+                if (attempt > 1) {
+                        prompt.append("The last attempt was too similar. Make this one clearly different in wording and angle. ");
+                }
+
+                if (!blockedQuestions.isEmpty()) {
+                        prompt.append("Do not repeat or closely paraphrase any of these prior questions:\n");
+                        int limit = Math.min(blockedQuestions.size(), 12);
+                        for (int i = 0; i < limit; i++) {
+                                prompt.append("- ").append(blockedQuestions.get(i)).append("\n");
+                        }
+                }
+
+                prompt.append("Return only question text.");
+                return prompt.toString();
+        }
+
+        private boolean isNearDuplicate(String candidate, List<String> blockedQuestions) {
+                String normalizedCandidate = normalizeQuestion(candidate);
+                if (normalizedCandidate.isBlank()) {
+                        return true;
+                }
+
+                for (String existing : blockedQuestions) {
+                        String normalizedExisting = normalizeQuestion(existing);
+                        if (normalizedExisting.isBlank()) {
+                                continue;
+                        }
+                        if (normalizedCandidate.equals(normalizedExisting)) {
+                                return true;
+                        }
+                }
+
+                return false;
+        }
+
+        private String normalizeQuestion(String text) {
+                if (text == null) {
+                        return "";
+                }
+                return text
+                                .toLowerCase(Locale.ROOT)
+                                .replaceAll("[^a-z0-9 ]", " ")
+                                .replaceAll("\\s+", " ")
+                                .trim();
         }
 }
