@@ -6,6 +6,7 @@
   html {
     /* Default (light) mode colors */
     @apply bg-gray-50 text-blue-gray-900;
+    font-size: 85%;
   }
 
   html.dark {

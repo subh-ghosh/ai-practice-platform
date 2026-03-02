@@ -526,14 +526,17 @@ const ModularStudyJourney = () => {
   const step1Glow = useTransform(scrollYProgress, [0, 0.28, 0.38], ["0 0 20px rgba(59,130,246,0.5)", "0 0 20px rgba(59,130,246,0.5)", "0 0 0px transparent"]);
   const step2Glow = useTransform(scrollYProgress, [0.28, 0.38, 0.62, 0.72], ["0 0 0px transparent", "0 0 20px rgba(168,85,247,0.5)", "0 0 20px rgba(168,85,247,0.5)", "0 0 0px transparent"]);
   const step3Glow = useTransform(scrollYProgress, [0.62, 0.72, 1], ["0 0 0px transparent", "0 0 20px rgba(34,197,94,0.5)", "0 0 20px rgba(34,197,94,0.5)"]);
+  const railOpacity = useTransform(scrollYProgress, [0, 0.03, 0.97, 1], [0, 1, 1, 0]);
 
   return (
     <section ref={containerRef} className="bg-[#050505] relative border-t border-white/5 overflow-x-hidden">
 
       {/* Sticky Sidebar Progress */}
-      <div className="absolute left-8 md:left-20 top-0 bottom-0 w-16 hidden lg:block z-50 pointer-events-none">
-        <div className="sticky top-0 h-screen flex flex-col items-center justify-center">
-          <div className="h-[450px] flex flex-col items-center justify-between py-10 relative pointer-events-auto">
+      <motion.div
+        style={{ opacity: railOpacity }}
+        className="fixed left-8 md:left-20 top-24 h-[calc(100vh-6rem)] w-16 hidden lg:flex z-50 pointer-events-none"
+      >
+        <div className="h-full min-h-[420px] max-h-[680px] w-full flex flex-col items-center justify-between py-6 relative pointer-events-auto">
             {/* Background Track */}
             <div className="absolute inset-0 left-1/2 -translate-x-1/2 w-[2px] bg-white/10 rounded-full" />
 
@@ -557,9 +560,8 @@ const ModularStudyJourney = () => {
                 <step.icon className="w-5 h-5" />
               </motion.div>
             ))}
-          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* STEP 1: PLAN (Blue Theme) */}
       <div className="py-20 md:py-48 px-4 lg:pl-64 relative border-t border-white/5">
@@ -665,7 +667,7 @@ const BigCTA = () => {
 
       <div className="max-w-4xl mx-auto relative z-10 text-center">
         <div
-          className="bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] rounded-[2rem] md:rounded-[3rem] p-8 md:p-20 shadow-2xl relative overflow-hidden group hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-700"
+          className="no-magnetic-target bg-white/[0.02] backdrop-blur-3xl border border-white/[0.05] rounded-[2rem] md:rounded-[3rem] p-8 md:p-20 shadow-2xl relative overflow-hidden group hover:border-blue-500/30 hover:bg-white/[0.03] transition-all duration-700"
         >
           {/* Inner Glow on Hover */}
           <div className="absolute inset-0 bg-gradient-to-b from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>

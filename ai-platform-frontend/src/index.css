@@ -10,8 +10,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
-    /* Simulate 90% zoom user preference */
-    zoom: 0.9;
+    /* Global text scaling */
+    font-size: 70%;
   }
 
   body {

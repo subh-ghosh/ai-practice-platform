@@ -123,15 +123,20 @@ export const CustomCursor = () => {
             }
 
             // Magnetic snapping for Parallax Icons & Bento Cards
+            const magneticButtonTarget = el.closest('.magnetic-btn-target');
+            const inNoMagneticZone = el.closest('.no-magnetic-target');
+
             if (
-                (el.classList?.contains('bg-[#121215]') && el.classList?.contains('rounded-3xl')) ||
-                el.closest('.group.relative.rounded-\\[2rem\\]') ||
-                el.closest('.magnetic-btn-target')
+                magneticButtonTarget ||
+                (!inNoMagneticZone && (
+                    (el.classList?.contains('bg-[#121215]') && el.classList?.contains('rounded-3xl')) ||
+                    el.closest('.group.relative.rounded-\\[2rem\\]')
+                ))
             ) {
-                const targetEl = el.closest('.group.relative.rounded-\\[2rem\\]') ||
-                    el.closest('.magnetic-btn-target') ||
+                const targetEl = magneticButtonTarget ||
+                    el.closest('.group.relative.rounded-\\[2rem\\]') ||
                     el;
-                isButtonMagnetic.current = !!el.closest('.magnetic-btn-target');
+                isButtonMagnetic.current = !!magneticButtonTarget;
 
                 const rect = targetEl.getBoundingClientRect();
                 const computedStyle = window.getComputedStyle(targetEl);
