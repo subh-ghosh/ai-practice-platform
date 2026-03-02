@@ -659,9 +659,9 @@ export function Practice() {
                     {/* Circular Success Predictor */}
                     {prediction && (
                       <Tooltip content={`Win Probability: ${(prediction.winProbability * 100).toFixed(0)}% (${prediction.confidence} Confidence)`}>
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 animate-fade-in">
+                        <div className="flex items-center gap-2 px-3 py-2 min-h-[56px] bg-gray-50 dark:bg-gray-800 rounded-full border border-gray-200 dark:border-gray-700 animate-fade-in">
                           <CircularGauge value={prediction.winProbability * 100} loading={loadingPrediction} />
-                          <div className="flex flex-col">
+                          <div className="flex h-full items-center">
                             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide">Success Chance</span>
                           </div>
                         </div>
