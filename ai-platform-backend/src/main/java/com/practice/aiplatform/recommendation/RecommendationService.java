@@ -54,7 +54,7 @@ public class RecommendationService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student, PageRequest.of(0, 50));
+        List<Answer> history = answerRepository.findAllWithQuestionByStudentOrderBySubmittedAtDesc(student, PageRequest.of(0, 50));
         if (history.isEmpty()) {
             List<EnhancedRecommendation> fallback = new ArrayList<>();
             fallback.add(new EnhancedRecommendation(
@@ -184,7 +184,7 @@ public class RecommendationService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<Answer> recent = answerRepository.findTop20ByStudentOrderBySubmittedAtDesc(student);
+        List<Answer> recent = answerRepository.findTop20WithQuestionByStudent(student, PageRequest.of(0, 20));
         if (recent.isEmpty()) {
             return null;
         }
@@ -246,7 +246,7 @@ public class RecommendationService {
         Student student = studentRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        List<Answer> history = answerRepository.findAllByStudentOrderBySubmittedAtDesc(student, PageRequest.of(0, 50));
+        List<Answer> history = answerRepository.findAllWithQuestionByStudentOrderBySubmittedAtDesc(student, PageRequest.of(0, 50));
 
         List<Answer> topicHistory = new ArrayList<>();
         for (Answer answer : history) {

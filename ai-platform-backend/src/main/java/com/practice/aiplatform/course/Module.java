@@ -26,7 +26,7 @@ public class Module {
     @Column(nullable = false)
     private boolean isCompleted = false; // Match DB schema
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id")
     @JsonBackReference // Prevent infinite recursion
     private Course course;

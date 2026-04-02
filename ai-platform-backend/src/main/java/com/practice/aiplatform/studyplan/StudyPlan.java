@@ -42,7 +42,7 @@ public class StudyPlan {
     @Column(name = "is_generating", nullable = false, columnDefinition = "boolean default false")
     private boolean isGenerating = false;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     @JsonIgnoreProperties({ "password", "questions", "email", "paymentCustomerId", "subscriptionEndsAt",
             "freeActionsUsed" })

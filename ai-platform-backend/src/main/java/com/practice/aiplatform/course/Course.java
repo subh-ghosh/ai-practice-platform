@@ -33,7 +33,7 @@ public class Course {
     @Column(columnDefinition = "TEXT")
     private String description; // Optional: Brief summary
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 

@@ -229,6 +229,16 @@ public class StudentAuthController {
                 student.setStreakDays(1);
                 studentRepository.save(student);
 
+                try {
+                    notificationEventPublisher.publishNotificationEvent(
+                            NotificationEvent.builder()
+                                    .studentId(student.getId())
+                                    .type("REGISTER")
+                                    .message("Welcome! Your account has been created via Google.")
+                                    .build());
+                } catch (Exception ignored) {
+                }
+
                 Map<String, Object> response = new HashMap<>();
                 response.put("status", "NEEDS_REGISTRATION");
                 response.put("registrationData", Map.of(
@@ -246,6 +256,16 @@ public class StudentAuthController {
 
             refreshTokenService.deleteByUserId(student.getId());
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(student.getId());
+
+            try {
+                notificationEventPublisher.publishNotificationEvent(
+                        NotificationEvent.builder()
+                                .studentId(student.getId())
+                                .type("LOGIN")
+                                .message("New login detected via Google.")
+                                .build());
+            } catch (Exception ignored) {
+            }
 
             StudentDto dto = new StudentDto(
                     student.getId(),

@@ -15,14 +15,16 @@ public interface AnswerRepository extends JpaRepository<Answer, Long> {
 
         List<Answer> findAllByStudentOrderBySubmittedAtDesc(Student student, Pageable pageable);
 
-        /**
-         * Finds all "gradable" answers for a student, ordered by submission time
-         * ascending.
-         * We get them in ASC order to build the timeline from start to finish.
-         */
         List<Answer> findAllByStudentAndEvaluationStatusInOrderBySubmittedAtAsc(Student student, List<String> statuses);
 
         List<Answer> findTop20ByStudentOrderBySubmittedAtDesc(Student student);
+
+        // --- JOIN FETCH variants (N+1 safe) for RecommendationService ---
+        @Query("select a from Answer a join fetch a.question where a.student = :student order by a.submittedAt desc")
+        List<Answer> findAllWithQuestionByStudentOrderBySubmittedAtDesc(@Param("student") Student student, Pageable pageable);
+
+        @Query("select a from Answer a join fetch a.question where a.student = :student order by a.submittedAt desc")
+        List<Answer> findTop20WithQuestionByStudent(@Param("student") Student student, Pageable pageable);
 
         @Query("select a from Answer a join fetch a.question q where a.student.id = :studentId order by a.submittedAt desc")
         List<Answer> findAllWithQuestionByStudentIdOrderBySubmittedAtDesc(@Param("studentId") Long studentId,

@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -94,6 +95,7 @@ public class CourseController {
     }
 
     @DeleteMapping("/{id}")
+    @Transactional
     @CacheEvict(value = "UserCoursesCache", key = "#principal.name")
     public ResponseEntity<?> deleteCourse(@PathVariable Long id, Principal principal) {
         String email = principal.getName();
