@@ -17,7 +17,7 @@ public class GamificationEventListener {
     private final StudentRepository studentRepository;
 
     /**
-     * This method listens to the Aiven Kafka 'gamification.events' topic.
+     * This method listens to the Confluent Cloud Kafka 'gamification.events' topic.
      * Whenever the PracticeController broadcasts a user finishing a quiz,
      * this method automatically wakes up, pulls the message, and processes XP in
      * the background!

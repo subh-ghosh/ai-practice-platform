@@ -13,7 +13,7 @@ public class GamificationEventPublisher {
     // Spring Boot automatically configures this template using our application.properties!
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    // This must match the Topic name we are about to create in Aiven
+    // This must match the Topic name we are about to create in Confluent Cloud
     private static final String TOPIC_NAME = "gamification.events";
 
     public void publishPracticeCompletedEvent(PracticeCompletedEvent event) {

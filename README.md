@@ -44,13 +44,14 @@ The system is fully resilient against external AI provider degradation, ensuring
 - **Backend:** Spring Boot 3, Java 17, PostgreSQL, JPA/Hibernate.
 - **Frontend:** React 18, Vite, Material Tailwind, Framer Motion.
 - **AI:** Groq LLMs (Text reasoning & JSON orchestration).
+- **Messaging:** Confluent Cloud (Kafka).
 - **Infra:** Docker (Multi-stage), GitHub Actions, Vercel/Render.
 
 ---
 
 ## 🛠️ Getting Started (Quick Setup)
 1. **Clone the repo.**
-2. **Backend:** Set `GROQ_API_KEY` and `SPRING_DATASOURCE_URL`. Run `./mvnw spring-boot:run`.
+2. **Backend:** Set `GROQ_API_KEY`, `SPRING_DATASOURCE_URL`, and `SPRING_KAFKA_BOOTSTRAP_SERVERS`. Run `./mvnw spring-boot:run`.
 3. **Frontend:** `npm install` and `npm run dev`.
 4. **Docker:** `docker-compose up --build`.
 

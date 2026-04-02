@@ -12,7 +12,7 @@ public class KafkaTopicConfig {
     public NewTopic gamificationTopic() {
         return TopicBuilder.name("gamification.events")
                 .partitions(1)
-                .replicas(1) // Aiven free/small tiers usually support 1 or 3 depending on plan
+                .replicas(3) // Confluent Cloud usually requires/defaults to 3 replicas for high availability
                 .build();
     }
 

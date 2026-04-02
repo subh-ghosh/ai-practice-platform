@@ -6,6 +6,9 @@
 - **Spring Boot 3.3.0**: The backbone of the application, managing dependency injection, REST controllers, and application lifecycle.
 - **Java 17**: Provides modern features like records and sealed classes to ensure a clean and performant codebase.
 
+### Messaging & Event-Driven Architecture
+- **Confluent Cloud (Kafka)**: Decouples gamification logic from core quiz generation via asynchronous event publishing.
+
 ### Security & Authentication
 - **Spring Security**: Configures the security filter chain, path authorizations, and CORS policies.
 - **JJWT (io.jsonwebtoken) 0.11.5**: Used for generating, signing, and parsing JWTs. Handles both Access and Refresh tokens.
@@ -81,6 +84,13 @@
     - **Streak Warrior:** Maintain a 7-day practice streak.
 - **Dynamic Challenges:** The `DailyChallengeService` resets every 24 hours, providing a specific target (e.g., "Get 5 correct answers today") to drive daily active usage.
 - **Rationale:** By converting educational milestones into "Victories," we tap into dopamine-driven reinforcement loops, significantly increasing long-term retention.
+
+### 8. Event-Driven Gamification (Kafka)
+**Problem:** recalculating XP, checking for badge triggers, and updating daily challenges is a separate concern from "Returning a Quiz Result". Doing it synchronously slows down the user response.
+**Solution:**
+- **Asynchronous Decoupling:** The `PracticeController` publishes a `PracticeCompletedEvent` to the `gamification.events` topic on Confluent Cloud.
+- **Background Listeners:** The `GamificationEventListener` consumes these events independently, handling all XP and badge logic without blocking the main API response.
+- **Rationale:** This ensures that even if the gamification logic grows complex, it never impacts the latency of the core student experience.
 
 ### 7. Security Architecture: The Filter Chain
 **Problem:** Managing authentication, JWT extraction, and rate limiting in a single block leads to unmaintainable code.

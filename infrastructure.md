@@ -1,6 +1,7 @@
 # AI Practice Platform - Infrastructure & Setup
 
 ## Comprehensive Infrastructure Stack
+- **Messaging:** Confluent Cloud (Kafka) for event-driven asynchronous processing.
 
 ## Operational Decisions: The "Why" and "How"
 
@@ -33,6 +34,8 @@
 - `GEMINI_API_KEY`: **Critical** - Your Google Gemini API key.
 - `JWT_SECRET`: Secret key used for signing JWT tokens.
 - `FRONTEND_URL`: URL of the frontend (for CORS configuration).
+- `SPRING_KAFKA_BOOTSTRAP_SERVERS`: Confluent Cloud bootstrap server URL.
+- `SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG`: SASL Login module config with API Key and Secret.
 
 ### Frontend
 - `VITE_API_BASE_URL`: The URL of the backend API (e.g., `http://localhost:8080/api`).
